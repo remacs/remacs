@@ -263,7 +263,10 @@ variable `tab-line-tabs-function'."
 
 
 (defun tab-line-new-tab (&optional e)
-  "Add a new tab."
+  "Add a new tab to the tab line.
+Usually is invoked by clicking on the plus-shaped button.
+But any switching to other buffer also adds a new tab
+corresponding to the switched buffer."
   (interactive "e")
   (if (functionp tab-line-new-tab-choice)
       (funcall tab-line-new-tab-choice)
@@ -300,26 +303,47 @@ using the `previous-buffer' command."
         (switch-to-buffer buffer))))))
 
 (defun tab-line-switch-to-prev-tab (&optional e)
-  "Switch to the previous tab."
+  "Switch to the previous tab.
+Its effect is the same as using the `previous-buffer' command
+(\\[previous-buffer])."
   (interactive "e")
   (switch-to-prev-buffer (posn-window (event-start e))))
 
 (defun tab-line-switch-to-next-tab (&optional e)
-  "Switch to the next tab."
+  "Switch to the next tab.
+Its effect is the same as using the `next-buffer' command
+(\\[next-buffer])."
   (interactive "e")
   (switch-to-next-buffer (posn-window (event-start e))))
 
+(defcustom tab-line-close-tab-action 'bury-buffer
+  "Defines what to do on closing the tab.
+If `bury-buffer', put the tab's buffer at the end of the list of all
+buffers that effectively hides the buffer's tab from the tab line.
+If `kill-buffer', kills the tab's buffer."
+  :type '(choice (const :tag "Bury buffer" bury-buffer)
+                 (const :tag "Kill buffer" kill-buffer))
+  :group 'tab-line
+  :version "27.1")
+
 (defun tab-line-close-tab (&optional e)
-  "Close the selected tab."
+  "Close the selected tab.
+Usually is invoked by clicking on the close button on the right side
+of the tab.  This command buries the buffer, so it goes out of sight
+from the tab line."
   (interactive "e")
   (let* ((posnp (event-start e))
          (window (posn-window posnp))
          (buffer (get-pos-property 1 'tab (car (posn-string posnp)))))
     (with-selected-window window
-      (if (eq buffer (current-buffer))
-          (bury-buffer)
-        (set-window-prev-buffers nil (assq-delete-all buffer (window-prev-buffers)))
-        (set-window-next-buffers nil (delq buffer (window-next-buffers))))
+      (cond
+       ((eq tab-line-close-tab-action 'kill-buffer)
+        (kill-buffer buffer))
+       ((eq tab-line-close-tab-action 'bury-buffer)
+        (if (eq buffer (current-buffer))
+            (bury-buffer)
+          (set-window-prev-buffers nil (assq-delete-all buffer (window-prev-buffers)))
+          (set-window-next-buffers nil (delq buffer (window-next-buffers))))))
       (force-mode-line-update))))
 
 
