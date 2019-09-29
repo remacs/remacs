@@ -339,7 +339,8 @@ In quiet mode ERT prints only unexpected results and summary.
 
 You can specify selectors to only run a subset of your tests
 (@pxref{Test Selectors}).  For example, the following would run all
-tests where the name of the test matches the string ``to-match''.
+tests where the name of the test matches the regular expression
+``to-match''.
 
 @example
 emacs -batch -l ert -l my-tests.el \
