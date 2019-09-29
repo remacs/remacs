@@ -1269,6 +1269,10 @@ string name) to insert this group before."
 	     (consp entry))
 	(setq oldlevel (gnus-info-level (nth 1 entry)))
       (setq oldlevel (or oldlevel gnus-level-killed)))
+
+    ;; This table is used for completion, so put a dummy entry there.
+    (unless (gethash group gnus-active-hashtb)
+      (setf (gethash group gnus-active-hashtb) nil))
     ;; Group is already subscribed.
     (unless (and (>= oldlevel gnus-level-zombie)
 		 (gnus-group-entry group))
