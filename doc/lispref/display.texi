@@ -6044,14 +6044,6 @@ properties---for example,
 (create-image "foo.xpm" 'xpm nil :heuristic-mask t)
 @end example
 
-@vindex convert-images-externally
-If Emacs doesn't have native support for the image format in question,
-and @code{convert-images-externally} is non-@code{nil}, Emacs will try
-to determine whether there are external utilities that can be used to
-transform the image in question to @acronym{PNG} before displaying.
-GraphicsMagick, ImageMagick and @command{ffmpeg} are currently
-supported for image conversions.
-
 The function returns @code{nil} if images of this type are not
 supported.  Otherwise it returns an image descriptor.
 @end defun
