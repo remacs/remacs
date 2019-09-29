@@ -41,8 +41,11 @@ conversion programs (like ImageMagick \"convert\", GraphicsMagick
   :version "27.1")
 
 (defcustom image-converter nil
-  "What external converter to use.
-`imagemagick', `graphicsmagick' and `ffmpeg' are supported."
+  "Type of the external image converter to use.
+The value should a symbol, either `imagemagick', `graphicsmagick',
+or `ffmpeg'.
+If nil, Emacs will try to find one of the supported converters
+installed on the system."
   :group 'image
   :type 'symbol
   :version "27.1")
@@ -57,7 +60,7 @@ conversion programs (like ImageMagick \"convert\", GraphicsMagick
   "List of supported image converters to try.")
 
 (defun image-convert-p (file)
-  "Return `image-convert' if FILE can be converted."
+  "Return `image-convert' if FILE is an image file that can be converted."
   ;; Find an installed image converter.
   (unless image-converter
     (image-converter--find-converter))
@@ -66,7 +69,7 @@ conversion programs (like ImageMagick \"convert\", GraphicsMagick
        'image-convert))
 
 (defun image-convert (image)
-  "Convert IMAGE to a format Emacs can display.
+  "Convert IMAGE file to the PNG format.
 IMAGE can either be a file name, which will make the return value
 a string with the image data.  It can also be an image object as
 returned by `create-image'.  If so, it has to be an image object
@@ -75,7 +78,7 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
   (unless image-converter
     (image-converter--find-converter))
   (unless image-converter
-    (error "No external image converters installed"))
+    (error "No external image converters available"))
   (when (and (listp image)
              (not (plist-get (cdr image) :file)))
     (error "Only images that refer to files can be converted"))

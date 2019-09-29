@@ -143,11 +143,11 @@ based on the font pixel size."
 
 (defcustom convert-images-externally nil
   "If non-nil, `create-image' will use external converters for exotic formats.
-Emacs handles most of the common image formats (JPEG, PNG, GIF
-and so on) internally, but images that doesn't have native
-support in Emacs can still be displayed by Emacs if external
-conversion programs (like ImageMagick \"convert\", GraphicsMagick
-\"gm\" or \"ffmpeg\") are installed."
+Emacs handles most of the common image formats (SVG, JPEG, PNG, GIF
+and some others) internally, but images that don't have native
+support in Emacs can still be displayed if an external conversion
+program (like ImageMagick \"convert\", GraphicsMagick \"gm\"
+or \"ffmpeg\") is installed."
   :type 'bool
   :version "27.1")
 

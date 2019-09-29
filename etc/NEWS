@@ -2657,11 +2657,11 @@ data about creation times and orientation and the like.
 functions.
 
 *** New library image-converter.
-To view exotic image formats that Emacs doesn't have native support
-for, the new 'convert-images-externally' variable can be set to t.  If
-the system has GraphicsMagick, ImageMagick or ffmpeg installed, it
-will be used to convert images automatically before displaying with
-'create-image'.
+If you need to view exotic image formats for which Emacs doesn't have
+native support, customize the new variable 'convert-images-externally'
+to t.  If your system has GraphicsMagick, ImageMagick or 'ffmpeg'
+installed, they will then be used to convert images automatically
+before displaying them.
 
 *** 'image-mode' now uses this library to automatically rotate images
 according to the orientation in the Exif data, if any.
