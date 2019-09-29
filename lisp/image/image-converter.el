@@ -44,8 +44,8 @@ installed on the system."
 
 (defvar image-converter--converters
   '((graphicsmagick :command "gm convert" :probe "-list format")
-    (imagemagick :command "convert" :probe "-list format")
-    (ffmpeg :command "ffmpeg" :probe "-decoders"))
+    (ffmpeg :command "ffmpeg" :probe "-decoders")
+    (imagemagick :command "convert" :probe "-list format"))
   "List of supported image converters to try.")
 
 (defun image-convert-p (file)
