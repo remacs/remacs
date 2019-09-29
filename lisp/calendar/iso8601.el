@@ -111,7 +111,7 @@
          iso8601--duration-week-match
          iso8601--duration-combined-match)))
 
-(defun iso8601-parse (string)
+(defun iso8601-parse (string &optional form)
   "Parse an ISO 8601 date/time string and return a `decode-time' structure.
 
 The ISO 8601 date/time strings look like \"2008-03-02T13:47:30\",
@@ -119,9 +119,7 @@ but shorter, incomplete strings like \"2008-03-02\" are valid, as
 well as variants like \"2008W32\" (week number) and
 \"2008-234\" (ordinal day number).
 
-The `decode-time' value returned will have the same precision as
-STRING, so if a sub-second STRING is passed in, the `decode-time'
-seconds field will be on the (SECONDS . HZ) format."
+See `decode-time' for the meaning of FORM."
   (if (not (iso8601-valid-p string))
       (signal 'wrong-type-argument string)
     (let* ((date-string (match-string 1 string))
@@ -130,7 +128,7 @@ seconds field will be on the (SECONDS . HZ) format."
            (date (iso8601-parse-date date-string)))
       ;; The time portion is optional.
       (when time-string
-        (let ((time (iso8601-parse-time time-string)))
+        (let ((time (iso8601-parse-time time-string form)))
           (setf (decoded-time-hour date) (decoded-time-hour time))
           (setf (decoded-time-minute date) (decoded-time-minute time))
           (setf (decoded-time-second date) (decoded-time-second time))))
@@ -221,10 +219,12 @@ seconds field will be on the (SECONDS . HZ) format."
           (1- (- year))
         year))))
 
-(defun iso8601-parse-time (string)
+(defun iso8601-parse-time (string &optional form)
   "Parse STRING, which should be an ISO 8601 time string.
 The return value will be a `decode-time' structure with just the
-hour/minute/seconds/zone fields filled in."
+hour/minute/seconds/zone fields filled in.
+
+See `decode-time' for the meaning of FORM."
   (if (not (iso8601--match iso8601--full-time-match string))
       (signal 'wrong-type-argument string)
     (let ((time (match-string 1 string))
@@ -238,7 +238,8 @@ hour/minute/seconds/zone fields filled in."
                            (string-to-number (match-string 3 time))))
               (fraction (and (match-string 4 time)
                              (string-to-number (match-string 4 time)))))
-          (when fraction
+          (when (and fraction
+                     (eq form t))
             (cond
              ;; Sub-second time.
              (second
