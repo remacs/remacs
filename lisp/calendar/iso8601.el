@@ -83,7 +83,7 @@
          iso8601--ordinal-date-match)))
 
 (defconst iso8601--time-match
-  "\\([0-9][0-9]\\):?\\([0-9][0-9]\\)?:?\\([0-9][0-9]\\)?\\.?\\([0-9][0-9][0-9]\\)?")
+  "\\([0-9][0-9]\\):?\\([0-9][0-9]\\)?:?\\([0-9][0-9]\\)?[.,]?\\([0-9]+\\)?")
 
 (defconst iso8601--zone-match
   "\\(Z\\|\\([-+]\\)\\([0-9][0-9]\\):?\\([0-9][0-9]\\)?\\)")
@@ -232,7 +232,7 @@ well as variants like \"2008W32\" (week number) and
                            (string-to-number (match-string 3 time))))
               ;; Hm...
               (_millisecond (and (match-string 4 time)
-                                 (string-to-number (match-string 4 time)))))
+                             (string-to-number (match-string 4 time)))))
           (iso8601--decoded-time :hour hour
                                  :minute (or minute 0)
                                  :second (or second 0)
