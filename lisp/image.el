@@ -148,7 +148,6 @@ and so on) internally, but images that doesn't have native
 support in Emacs can still be displayed by Emacs if external
 conversion programs (like ImageMagick \"convert\", GraphicsMagick
 \"gm\" or \"ffmpeg\") are installed."
-  :group 'image
   :type 'bool
   :version "27.1")
 
