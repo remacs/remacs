@@ -172,6 +172,11 @@
   :type 'file
   :version "24.4")
 
+(defcustom doc-view-pdftotext-program-args '("-raw")
+  "Parameters to give to the pdftotext command."
+  :version "27.1"
+  :type '(repeat string))
+
 (defcustom doc-view-pdf->png-converter-function
   (if (executable-find doc-view-pdfdraw-program)
       #'doc-view-pdf->png-converter-mupdf
@@ -1132,7 +1137,8 @@ Start by converting PAGES, and then the rest."
   (or (executable-find doc-view-pdftotext-program)
       (error "You need the `pdftotext' program to convert a PDF to text"))
   (doc-view-start-process "pdf->txt" doc-view-pdftotext-program
-                          (list "-raw" pdf txt)
+                          (append doc-view-pdftotext-program-args
+                                  (list pdf txt))
                           callback))
 
 (defun doc-view-current-cache-doc-pdf ()

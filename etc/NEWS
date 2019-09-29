@@ -607,6 +607,9 @@ its functions.
 *** New commands 'doc-view-presentation' and 'doc-view-fit-window-to-page'.
 *** Added support for password-protected PDF files
 
+*** A new variable 'doc-view-pdftotext-program-args' has been added to
+allow controlling how the conversion to text is done.
+
 ** Ido
 *** New user option 'ido-big-directories' to mark directories whose
 names match certain regular expressions as big.  Ido won't attempt to
