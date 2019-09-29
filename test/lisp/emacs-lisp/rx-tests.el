@@ -416,5 +416,8 @@
     (should (equal (rx-to-string '(seq (delta a b c) (* (epsilon d e))) t)
                    "\\(?:<(delta a b c)>\\)\\(?:<(epsilon d e)>\\)*"))))
 
+(ert-deftest rx-compat ()
+  "Test old symbol retained for compatibility (bug#37517)."
+  (should (equal (rx-submatch-n '(group-n 3 (+ nonl) eol)) "\\(?3:.+$\\)")))
 
 (provide 'rx-tests)

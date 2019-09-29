@@ -1254,6 +1254,9 @@ following constructs:
                         `(app (match-string ,i) ,name))
                       (reverse rx--pcase-vars))))))
 
+;; Obsolete internal symbol, used in old versions of the `flycheck' package.
+(define-obsolete-function-alias 'rx-submatch-n 'rx-to-string "27.1")
+
 (provide 'rx)
 
 ;;; rx.el ends here
