@@ -29,17 +29,6 @@
 (require 'cl-generic)
 (eval-when-compile (require 'cl-lib))
 
-(defcustom convert-external-images nil
-  "If non-nil, `create-image' will use external converters for exotic formats.
-Emacs handles most of the common image formats (JPEG, PNG, GIF
-and so on) internally, but images that doesn't have native
-support in Emacs can still be displayed by Emacs if external
-conversion programs (like ImageMagick \"convert\", GraphicsMagick
-\"gm\" or \"ffmpeg\") are installed."
-  :group 'image
-  :type 'bool
-  :version "27.1")
-
 (defcustom image-converter nil
   "Type of the external image converter to use.
 The value should a symbol, either `imagemagick', `graphicsmagick',
