@@ -448,7 +448,12 @@ Typically \"page-%s.png\".")
       (setq-local undo-outer-limit (* 2 (buffer-size))))
   (cl-labels ((revert ()
                       (let ((revert-buffer-preserve-modes t))
-                        (apply orig-fun args))))
+                        (apply orig-fun args)
+                        ;; Update the cached version of the pdf file,
+                        ;; too.  This is the one that's used when
+                        ;; rendering.
+                        (doc-view-make-safe-dir doc-view-cache-directory)
+                        (write-region nil nil doc-view--buffer-file-name))))
     (if (and (eq 'pdf doc-view-doc-type)
              (executable-find "pdfinfo"))
         ;; We don't want to revert if the PDF file is corrupted which
