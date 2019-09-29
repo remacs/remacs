@@ -1472,9 +1472,9 @@ the TZ environment variable.  It can also be a list (as from
 without consideration for daylight saving time.
 
 The optional FORM specifies the form of the SEC member.  If `integer',
-SEC is an integer; if t, SEC uses the same resolution as TIME.  An
-omitted or nil FORM is currently treated like `integer', but this may
-change in future Emacs versions.
+SEC is an integer; if t, SEC is an integer or (TICKS . HZ) timestamp
+with the same precision as TIME.  An omitted or nil FORM is currently
+treated like `integer', but this may change in future Emacs versions.
 
 To access (or alter) the elements in the time value, the
 `decoded-time-second', `decoded-time-minute', `decoded-time-hour',
