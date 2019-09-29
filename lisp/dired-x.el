@@ -661,7 +661,7 @@ visit that file and turn on Virtual Dired mode.  But don't try to save
 this file, as dired-virtual indents the listing and thus changes the
 buffer.
 
-If you have save a Dired buffer in a file you can use \\[dired-virtual] to
+If you have saved a Dired buffer in a file you can use \\[dired-virtual] to
 resume it in a later session.
 
 Type \\<dired-mode-map>\\[revert-buffer] \
