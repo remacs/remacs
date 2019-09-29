@@ -2625,7 +2625,10 @@ Actual value is never used, only the text property.")
 	(make-overlay overlay-arrow-position overlay-arrow-position))
   (overlay-put compilation-arrow-overlay
                'before-string compilation--dummy-string)
-  (set-window-margins (selected-window) (+ (or (car (window-margins)) 0) 2)))
+  (set-window-margins (selected-window) (+ (or (car (window-margins)) 0) 2))
+  ;; Take precautions against `compilation-mode' getting reinitialized.
+  (add-hook 'change-major-mode-hook
+            'compilation-tear-down-arrow-spec-in-margin nil t))
 
 (defun compilation-tear-down-arrow-spec-in-margin ()
   "Restore compilation-arrow-overlay to not using the margin, which is removed."
