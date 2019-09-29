@@ -1911,6 +1911,8 @@ increase the score of each group you read."
   "\M-p" gnus-summary-prev-unread-subject
   "." gnus-summary-first-unread-article
   "," gnus-summary-best-unread-article
+  "[" gnus-summary-prev-unseen-article
+  "]" gnus-summary-next-unseen-article
   "\M-s" gnus-summary-search-article-forward
   "\M-r" gnus-summary-search-article-backward
   "\M-S" gnus-summary-repeat-search-article-forward
@@ -2088,6 +2090,8 @@ increase the score of each group you read."
   "\M-p" gnus-summary-prev-unread-subject
   "f" gnus-summary-first-unread-article
   "b" gnus-summary-best-unread-article
+  "u" gnus-summary-next-unseen-article
+  "U" gnus-summary-prev-unseen-article
   "j" gnus-summary-goto-article
   "g" gnus-summary-goto-subject
   "l" gnus-summary-goto-last-article
@@ -2796,6 +2800,8 @@ gnus-summary-show-article-from-menu-as-charset-%s" cs))))
 	 ["Previous article same subject" gnus-summary-prev-same-subject t]
 	 ["First unread article" gnus-summary-first-unread-article t]
 	 ["Best unread article" gnus-summary-best-unread-article t]
+	 ["Next unseen article" gnus-summary-next-unseen-article t]
+	 ["Prev unseen article" gnus-summary-prev-unseen-article t]
 	 ["Go to subject number..." gnus-summary-goto-subject t]
 	 ["Go to article number..." gnus-summary-goto-article t]
 	 ["Go to the last article" gnus-summary-goto-last-article t]
@@ -3174,6 +3180,9 @@ The following commands are available:
                ;; number, because we use `assq' on a list of gnus-data.
                (:type list))
   number mark pos header level)
+
+(defun gnus-data-unseen-p (data)
+  (memq (gnus-data-number data) gnus-newsgroup-unseen))
 
 (define-inline gnus-data-unread-p (data)
   (inline-quote (= (gnus-data-mark ,data) gnus-unread-mark)))
@@ -8118,6 +8127,32 @@ Return nil if there are no unread articles."
 	(gnus-summary-show-thread)
 	(gnus-summary-first-subject t))
     (gnus-summary-position-point)))
+
+(defun gnus-summary-next-unseen-article (&optional backward)
+  "Select the next unseen article."
+  (interactive)
+  (let* ((article (gnus-summary-article-number))
+	 (articles (gnus-data-find-list article (gnus-data-list backward))))
+    (when (or (not gnus-summary-check-current)
+	      (not (gnus-data-unseen-p (car articles)))
+	      (not (gnus-data-unread-p (car articles))))
+      (setq articles (cdr articles)))
+    (while (and articles
+		(or (not (gnus-data-unseen-p (car articles)))
+		    (not (gnus-data-unread-p (car articles)))))
+      (setq articles (cdr articles)))
+    (if (not articles)
+	(if backward
+	    (message "No previous unseen article")
+	  (message "No next unseen article"))
+      (goto-char (gnus-data-pos (car articles)))
+      (gnus-summary-select-article)
+      (gnus-data-number (car articles)))))
+
+(defun gnus-summary-prev-unseen-article ()
+  "Select the previous unseen article."
+  (interactive)
+  (gnus-summary-next-unseen-article t))
 
 (defun gnus-summary-first-unseen-subject ()
   "Place the point on the subject line of the first unseen article.

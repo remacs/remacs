@@ -5347,6 +5347,20 @@ Go to the next article (@code{gnus-summary-next-article}).
 @findex gnus-summary-prev-article
 Go to the previous article (@code{gnus-summary-prev-article}).
 
+@item G u
+@itemx ]
+@kindex ] @r{(Summary)}
+@kindex G u @r{(Summary)}
+@findex gnus-summary-next-unseen-article
+Go to the next unseen article (@code{gnus-summary-next-unseen-article}).
+
+@item G U
+@itemx [
+@kindex [ @r{(Summary)}
+@kindex G U @r{(Summary)}
+@findex gnus-summary-prev-unseen-article
+Go to the previous unseen article (@code{gnus-summary-prev-unseen-article}).
+
 @item G C-n
 @kindex G C-n @r{(Summary)}
 @findex gnus-summary-next-same-subject

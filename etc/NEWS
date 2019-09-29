@@ -1047,6 +1047,13 @@ Of course it will still find it if you have it in '~/.ecompleterc'.
 ** Gnus
 
 +++
+*** Two new Gnus summary mode navigation commands have been added,
+bound to the '[' and ']' keys: `gnus-summary-prev-unseen-article' and
+`gnus-summary-next-unseen-article'.  These take you (respectively) to
+the previous unseen or next unseen article.  (These are the ones that
+are marked with "." in the summary mode lines.)
+
++++
 *** The Gnus user variable 'nnimap-expunge' supports three new values:
 'never' for never expunging messages, 'immediately' for immediately
 expunging deleted messages, and 'on-exit' to expunge deleted articles
