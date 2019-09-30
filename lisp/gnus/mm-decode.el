@@ -1646,13 +1646,21 @@ If RECURSIVE, search recursively."
 	    (setq result (buffer-string))))))
     result))
 
-(defvar mm-security-handle nil)
-
 (defsubst mm-set-handle-multipart-parameter (handle parameter value)
   ;; HANDLE could be a CTL.
   (when handle
     (put-text-property 0 (length (car handle)) parameter value
 		       (car handle))))
+
+;; Interface functions and variables for the decryption/verification
+;; functions.
+(defvar mm-security-handle nil)
+(defun mm-sec-status (&rest keys)
+  (cl-loop for (key val) on keys by #'cddr
+	   do (mm-set-handle-multipart-parameter mm-security-handle key val)))
+
+(defun mm-sec-error (&rest keys)
+  (apply #'mm-sec-status (append '(sec-error t) keys)))
 
 (autoload 'mm-view-pkcs7 "mm-view")
 
@@ -1706,9 +1714,8 @@ If RECURSIVE, search recursively."
 	(save-excursion
 	  (if func
 	      (setq parts (funcall func parts ctl))
-	    (mm-set-handle-multipart-parameter
-	     mm-security-handle 'gnus-details
-	     (format "Unknown sign protocol (%s)" protocol))))))
+	    (mm-sec-error 'gnus-details
+			  (format "Unknown sign protocol (%s)" protocol))))))
      ((equal subtype "encrypted")
       (unless (setq protocol
 		    (mm-handle-multipart-ctl-parameter ctl 'protocol))
@@ -1738,22 +1745,23 @@ If RECURSIVE, search recursively."
 	(save-excursion
 	  (if func
 	      (setq parts (funcall func parts ctl))
-	    (mm-set-handle-multipart-parameter
-	     mm-security-handle 'gnus-details
+	    (mm-sec-error
+	     'gnus-details
 	     (format "Unknown encrypt protocol (%s)" protocol)))))))
     ;; Check the results (which are now in `parts').
-    (let ((info (get-text-property 0 'gnus-info (car mm-security-handle))))
-      (if (or (not info)
-	      (equal info "")
-	      (not (equal subtype "encrypted"))
-	      (member "OK" (split-string info "\n")))
+    (let ((err (get-text-property 0 'sec-error (car mm-security-handle))))
+      (if (or (not err)
+	      (not (equal subtype "encrypted")))
 	  parts
 	;; We had an error during decryption.  Report what it is.
 	(list
 	 (mm-make-handle
 	  (with-current-buffer (generate-new-buffer " *mm*")
 	    (insert "Error!  Result from decryption:\n\n"
-		    info "\n\n"
+		    (or (get-text-property 0 'gnus-details
+					   (car mm-security-handle))
+			"")
+		    "\n\n"
 		    (or (get-text-property 0 'gnus-details
 					   (car mm-security-handle))
 			""))

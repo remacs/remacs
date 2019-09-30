@@ -509,8 +509,8 @@ apply the face `mm-uu-extract'."
 					      'iso-8859-1)))
 	      (funcall (mml2015-clear-verify-function))))
 	(when (and mml2015-use (null (mml2015-clear-verify-function)))
-	  (mm-set-handle-multipart-parameter
-	   mm-security-handle 'gnus-details
+	  (mml2015--status
+	   'gnus-details
 	   (format-message
 	    "Clear verification not supported by `%s'.\n" mml2015-use)))
 	(mml2015-extract-cleartext-signature))
