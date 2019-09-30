@@ -43,9 +43,9 @@ installed on the system."
   "A regexp that matches the file name suffixes that can be converted.")
 
 (defvar image-converter--converters
-  '((graphicsmagick :command "gm convert" :probe "-list format")
+  '((graphicsmagick :command ("gm" "convert") :probe ("-list" "format"))
     (ffmpeg :command "ffmpeg" :probe "-decoders")
-    (imagemagick :command "convert" :probe "-list format"))
+    (imagemagick :command "convert" :probe ("-list" "format")))
   "List of supported image converters to try.")
 
 (defun image-convert-p (file)
@@ -90,17 +90,19 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
 
 (defun image-converter--value (type elem)
   "Return the value of ELEM of image converter TYPE."
-  (plist-get (cdr (assq type image-converter--converters)) elem))
+  (let ((value (plist-get (cdr (assq type image-converter--converters)) elem)))
+    (if (stringp value)
+        (list value)
+      value)))
 
 (cl-defmethod image-converter--probe ((type (eql graphicsmagick)))
   "Check whether the system has GraphicsMagick installed."
   (with-temp-buffer
-    (let ((command (split-string (image-converter--value type :command) " "))
+    (let ((command (image-converter--value type :command))
           formats)
       (when (zerop (apply #'call-process (car command) nil '(t nil) nil
                           (append (cdr command)
-                                  (split-string
-                                   (image-converter--value type :probe) " "))))
+                                  (image-converter--value type :probe))))
         (goto-char (point-min))
         (when (re-search-forward "^-" nil t)
           (forward-line 1)
@@ -113,13 +115,12 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
 (cl-defmethod image-converter--probe ((type (eql imagemagick)))
   "Check whether the system has ImageMagick installed."
   (with-temp-buffer
-    (let ((command (split-string (image-converter--value type :command) " "))
+    (let ((command (image-converter--value type :command))
           formats)
       ;; Can't check return value; ImageMagick convert usually returns
       ;; a non-zero result on "-list format".
       (apply #'call-process (car command) nil '(t nil) nil
-             (append (cdr command)
-                     (split-string (image-converter--value type :probe) " ")))
+             (append (cdr command) (image-converter--value type :probe)))
       (goto-char (point-min))
       (when (re-search-forward "^-" nil t)
         (forward-line 1)
@@ -134,8 +135,9 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
   (with-temp-buffer
     (let ((command (image-converter--value type :command))
           formats)
-      (when (zerop (call-process command nil '(t nil) nil
-                                 (image-converter--value type :probe)))
+      (when (zerop (apply #'call-process (car command) nil '(t nil) nil
+                          (append (cdr command)
+                                  (image-converter--value type :probe))))
         (goto-char (point-min))
         (when (re-search-forward "^ *-" nil t)
           (forward-line 1)
@@ -161,7 +163,7 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
   (image-converter--convert-magick type file))
 
 (defun image-converter--convert-magick (type file)
-  (let ((command (split-string (image-converter--value type :command) " ")))
+  (let ((command (image-converter--value type :command)))
     (unless (zerop (apply #'call-process (car command)
                           nil t nil
                           (append (cdr command)
@@ -172,11 +174,14 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
 
 (cl-defmethod image-converter--convert ((type (eql ffmpeg)) file)
   "Convert using ffmpeg."
-  (unless (zerop (call-process (image-converter--value type :command)
-                               nil '(t nil) nil
-                               "-i" (expand-file-name file)
-                               "-c:v" "png" "-f" "image2pipe" "-"))
-    "ffmpeg error when converting"))
+  (let ((command (image-converter--value type :command)))
+    (unless (zerop (apply #'call-process
+                          (car command)
+                          nil '(t nil) nil
+                          (append (cdr command)
+                                  (list "-i" (expand-file-name file)
+                                        "-c:v" "png" "-f" "image2pipe" "-"))))
+      "ffmpeg error when converting")))
 
 (provide 'image-converter)
 
