@@ -1993,8 +1993,16 @@ BASE is the URL of the HTML being rendered."
       `(tbody nil ,@(cl-reduce 'append
                                (mapcar 'dom-non-text-children tbodies)))))))
 
+(defun shr--fix-tbody (tbody)
+  (nconc (list 'tbody (dom-attributes tbody))
+         (cl-loop for child in (dom-children tbody)
+                  collect (if (or (stringp child)
+                                  (not (eq (dom-tag child) 'tr)))
+                              (list 'tr nil (list 'td nil child))
+                            child))))
+
 (defun shr--fix-table (dom caption header footer)
-  (let* ((body (dom-non-text-children (shr-table-body dom)))
+  (let* ((body (dom-non-text-children (shr--fix-tbody (shr-table-body dom))))
          (nheader (if header (shr-max-columns header)))
 	 (nbody (if body (shr-max-columns body) 0))
          (nfooter (if footer (shr-max-columns footer))))
