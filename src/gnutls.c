@@ -894,7 +894,7 @@ emacs_gnutls_handle_error (gnutls_session_t session, int err)
 }
 
 /* convert an integer error to a Lisp_Object; it will be either a
-   known symbol like `gnutls_e_interrupted' and `gnutls_e_again' or
+   known symbol like 'gnutls_e_interrupted' and 'gnutls_e_again' or
    simply the integer value of the error.  GNUTLS_E_SUCCESS is mapped
    to Qt.  */
 static Lisp_Object
@@ -1529,7 +1529,7 @@ returned as the :certificate entry.  */)
 }
 
 /* Initialize global GnuTLS state to defaults.
-   Call `gnutls-global-deinit' when GnuTLS usage is no longer needed.
+   Call 'gnutls-global-deinit' when GnuTLS usage is no longer needed.
    Return zero on success.  */
 Lisp_Object
 emacs_gnutls_global_init (void)
@@ -1560,7 +1560,7 @@ gnutls_ip_address_p (char *string)
 
 # if 0
 /* Deinitialize global GnuTLS state.
-   See also `gnutls-global-init'.  */
+   See also 'gnutls-global-init'.  */
 static Lisp_Object
 emacs_gnutls_global_deinit (void)
 {
@@ -2470,11 +2470,10 @@ The KEY can be specified as a buffer or string or in other ways (see
 Info node `(elisp)Format of GnuTLS Cryptography Inputs').  The KEY
 will be wiped after use if it's a string.
 
-The IV and INPUT and the optional AEAD_AUTH can be specified as a
-buffer or string or in other ways (see Info node `(elisp)Format of
-GnuTLS Cryptography Inputs').
+The IV and INPUT and the optional AEAD_AUTH can also be specified as a
+buffer or string or in other ways.
 
-The alist of symmetric ciphers can be obtained with `gnutls-ciphers`.
+The alist of symmetric ciphers can be obtained with `gnutls-ciphers'.
 The CIPHER may be a string or symbol matching a key in that alist, or
 a plist with the :cipher-id numeric property, or the number itself.
 
@@ -2497,11 +2496,10 @@ The KEY can be specified as a buffer or string or in other ways (see
 Info node `(elisp)Format of GnuTLS Cryptography Inputs').  The KEY
 will be wiped after use if it's a string.
 
-The IV and INPUT and the optional AEAD_AUTH can be specified as a
-buffer or string or in other ways (see Info node `(elisp)Format of
-GnuTLS Cryptography Inputs').
+The IV and INPUT and the optional AEAD_AUTH can also be specified as a
+buffer or string or in other ways.
 
-The alist of symmetric ciphers can be obtained with `gnutls-ciphers`.
+The alist of symmetric ciphers can be obtained with `gnutls-ciphers'.
 The CIPHER may be a string or symbol matching a key in that alist, or
 a plist with the `:cipher-id' numeric property, or the number itself.
 
@@ -2592,10 +2590,10 @@ The KEY can be specified as a buffer or string or in other ways (see
 Info node `(elisp)Format of GnuTLS Cryptography Inputs').  The KEY
 will be wiped after use if it's a string.
 
-The INPUT can be specified as a buffer or string or in other
-ways (see Info node `(elisp)Format of GnuTLS Cryptography Inputs').
+The INPUT can also be specified as a buffer or string or in other
+ways.
 
-The alist of MAC algorithms can be obtained with `gnutls-macs`.  The
+The alist of MAC algorithms can be obtained with `gnutls-macs'.  The
 HASH-METHOD may be a string or symbol matching a key in that alist, or
 a plist with the `:mac-algorithm-id' numeric property, or the number
 itself. */)
@@ -2690,7 +2688,7 @@ Return nil on error.
 The INPUT can be specified as a buffer or string or in other
 ways (see Info node `(elisp)Format of GnuTLS Cryptography Inputs').
 
-The alist of digest algorithms can be obtained with `gnutls-digests`.
+The alist of digest algorithms can be obtained with `gnutls-digests'.
 The DIGEST-METHOD may be a string or symbol matching a key in that
 alist, or a plist with the `:digest-algorithm-id' numeric property, or
 the number itself. */)
