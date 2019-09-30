@@ -141,7 +141,7 @@ based on the font pixel size."
                  (const :tag "Automatically compute" auto))
   :version "26.1")
 
-(defcustom convert-images-externally nil
+(defcustom image-use-external-converter nil
   "If non-nil, `create-image' will use external converters for exotic formats.
 Emacs handles most of the common image formats (SVG, JPEG, PNG, GIF
 and some others) internally, but images that don't have native
@@ -386,7 +386,7 @@ Optional DATA-P non-nil means SOURCE is a string containing image data."
 		   (image-type-from-data source)
 		 (or (image-type-from-file-header source)
 		     (image-type-from-file-name source)
-                     (and convert-images-externally
+                     (and image-use-external-converter
                           (progn
                             (require 'image-converter)
                             (image-convert-p source))))))

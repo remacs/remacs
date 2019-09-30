@@ -2161,9 +2161,9 @@ never be rendered using ImageMagick, regardless of the value of
 but Emacs should not).  To disable ImageMagick entirely, change
 @code{imagemagick-types-inhibit} to @code{t}.
 
-@vindex convert-images-externally
+@vindex image-use-external-converter
   If Emacs doesn't have native support for the image format in
-question, and @code{convert-images-externally} is non-@code{nil},
+question, and @code{image-use-external-converter} is non-@code{nil},
 Emacs will try to determine whether there are external utilities that
 can be used to transform the image in question to @acronym{PNG} before
 displaying.  GraphicsMagick, ImageMagick and @command{ffmpeg} are
