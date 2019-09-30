@@ -509,7 +509,7 @@ apply the face `mm-uu-extract'."
 					      'iso-8859-1)))
 	      (funcall (mml2015-clear-verify-function))))
 	(when (and mml2015-use (null (mml2015-clear-verify-function)))
-	  (mml2015--status
+	  (mm-sec-status
 	   'gnus-details
 	   (format-message
 	    "Clear verification not supported by `%s'.\n" mml2015-use)))
