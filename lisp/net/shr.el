@@ -1993,19 +1993,75 @@ BASE is the URL of the HTML being rendered."
       `(tbody nil ,@(cl-reduce 'append
                                (mapcar 'dom-non-text-children tbodies)))))))
 
+(defun shr--fix-table (dom caption header footer)
+  (let* ((body (dom-non-text-children (shr-table-body dom)))
+         (nheader (if header (shr-max-columns header)))
+	 (nbody (if body (shr-max-columns body) 0))
+         (nfooter (if footer (shr-max-columns footer))))
+    (nconc
+     (list 'table nil)
+     (if caption `((tr nil (td nil ,@caption))))
+     (cond
+      (header
+       (if footer
+	   ;; header + body + footer
+	   (if (= nheader nbody)
+	       (if (= nbody nfooter)
+		   `((tr nil (td nil (table nil
+					    (tbody nil ,@header
+						   ,@body ,@footer)))))
+	         (nconc `((tr nil (td nil (table nil
+					         (tbody nil ,@header
+						        ,@body)))))
+		        (if (= nfooter 1)
+			    footer
+			  `((tr nil (td nil (table
+					     nil (tbody
+						  nil ,@footer))))))))
+	     (nconc `((tr nil (td nil (table nil (tbody
+						  nil ,@header)))))
+		    (if (= nbody nfooter)
+		        `((tr nil (td nil (table
+					   nil (tbody nil ,@body
+						      ,@footer)))))
+		      (nconc `((tr nil (td nil (table
+					        nil (tbody nil
+							   ,@body)))))
+			     (if (= nfooter 1)
+			         footer
+			       `((tr nil (td nil (table
+						  nil
+						  (tbody
+						   nil
+						   ,@footer))))))))))
+         ;; header + body
+         (if (= nheader nbody)
+	     `((tr nil (td nil (table nil (tbody nil ,@header
+					         ,@body)))))
+	   (if (= nheader 1)
+	       `(,@header (tr nil (td nil (table
+					   nil (tbody nil ,@body)))))
+	     `((tr nil (td nil (table nil (tbody nil ,@header))))
+	       (tr nil (td nil (table nil (tbody nil ,@body)))))))))
+      (footer
+       ;; body + footer
+       (if (= nbody nfooter)
+	   `((tr nil (td nil (table
+			      nil (tbody nil ,@body ,@footer)))))
+         (nconc `((tr nil (td nil (table nil (tbody nil ,@body)))))
+	        (if (= nfooter 1)
+		    footer
+		  `((tr nil (td nil (table
+				     nil (tbody nil ,@footer)))))))))
+      (caption
+       `((tr nil (td nil (table nil (tbody nil ,@body))))))
+      (body)))))
+
 (defun shr-tag-table (dom)
   (shr-ensure-paragraph)
   (let* ((caption (dom-children (dom-child-by-tag dom 'caption)))
 	 (header (dom-non-text-children (dom-child-by-tag dom 'thead)))
-	 (body (dom-non-text-children (shr-table-body dom)))
-	 (footer (dom-non-text-children (dom-child-by-tag dom 'tfoot)))
-         (bgcolor (dom-attr dom 'bgcolor))
-	 (start (point))
-	 (shr-stylesheet (nconc (list (cons 'background-color bgcolor))
-				shr-stylesheet))
-	 (nheader (if header (shr-max-columns header)))
-	 (nbody (if body (shr-max-columns body) 0))
-	 (nfooter (if footer (shr-max-columns footer))))
+	 (footer (dom-non-text-children (dom-child-by-tag dom 'tfoot))))
     (if (and (not caption)
 	     (not header)
 	     (not (dom-child-by-tag dom 'tbody))
@@ -2018,83 +2074,29 @@ BASE is the URL of the HTML being rendered."
       (if (dom-attr dom 'shr-fixed-table)
 	  (shr-tag-table-1 dom)
 	;; Only fix up the table once.
-	(let ((table
-	       (nconc
-		(list 'table nil)
-		(if caption `((tr nil (td nil ,@caption))))
-		(cond
-		 (header
-		  (if footer
-		      ;; header + body + footer
-		      (if (= nheader nbody)
-			  (if (= nbody nfooter)
-			      `((tr nil (td nil (table nil
-						       (tbody nil ,@header
-							      ,@body ,@footer)))))
-			    (nconc `((tr nil (td nil (table nil
-							    (tbody nil ,@header
-								   ,@body)))))
-				   (if (= nfooter 1)
-				       footer
-				     `((tr nil (td nil (table
-							nil (tbody
-							     nil ,@footer))))))))
-			(nconc `((tr nil (td nil (table nil (tbody
-							     nil ,@header)))))
-			       (if (= nbody nfooter)
-				   `((tr nil (td nil (table
-						      nil (tbody nil ,@body
-								 ,@footer)))))
-				 (nconc `((tr nil (td nil (table
-							   nil (tbody nil
-								      ,@body)))))
-					(if (= nfooter 1)
-					    footer
-					  `((tr nil (td nil (table
-							     nil
-							     (tbody
-							      nil
-							      ,@footer))))))))))
-		    ;; header + body
-		    (if (= nheader nbody)
-			`((tr nil (td nil (table nil (tbody nil ,@header
-							    ,@body)))))
-		      (if (= nheader 1)
-			  `(,@header (tr nil (td nil (table
-						      nil (tbody nil ,@body)))))
-			`((tr nil (td nil (table nil (tbody nil ,@header))))
-			  (tr nil (td nil (table nil (tbody nil ,@body)))))))))
-		 (footer
-		  ;; body + footer
-		  (if (= nbody nfooter)
-		      `((tr nil (td nil (table
-					 nil (tbody nil ,@body ,@footer)))))
-		    (nconc `((tr nil (td nil (table nil (tbody nil ,@body)))))
-			   (if (= nfooter 1)
-			       footer
-			     `((tr nil (td nil (table
-						nil (tbody nil ,@footer)))))))))
-		 (caption
-		  `((tr nil (td nil (table nil (tbody nil ,@body))))))
-		 (body)))))
+	(let ((table (shr--fix-table dom caption header footer)))
 	  (dom-set-attribute table 'shr-fixed-table t)
 	  (setcdr dom (cdr table))
-	  (shr-tag-table-1 dom))))
-    (when bgcolor
-      (shr-colorize-region start (point) (cdr (assq 'color shr-stylesheet))
-			   bgcolor))
-    ;; Finally, insert all the images after the table.  The Emacs buffer
-    ;; model isn't strong enough to allow us to put the images actually
-    ;; into the tables.  It inserts also non-td/th objects.
-    (when (zerop shr-table-depth)
-      (save-excursion
-	(shr-expand-alignments start (point)))
-      (let ((strings (shr-collect-extra-strings-in-table dom)))
-	(when strings
-	  (save-restriction
-	    (narrow-to-region (point) (point))
-	    (insert (mapconcat #'identity strings "\n"))
-	    (shr-fill-lines (point-min) (point-max))))))))
+	  (shr-tag-table-1 dom)))
+      (let* ((bgcolor (dom-attr dom 'bgcolor))
+	     (start (point))
+	     (shr-stylesheet (nconc (list (cons 'background-color bgcolor))
+				    shr-stylesheet)))
+        (when bgcolor
+          (shr-colorize-region start (point) (cdr (assq 'color shr-stylesheet))
+			       bgcolor))
+        ;; Finally, insert all the images after the table.  The Emacs buffer
+        ;; model isn't strong enough to allow us to put the images actually
+        ;; into the tables.  It inserts also non-td/th objects.
+        (when (zerop shr-table-depth)
+          (save-excursion
+	    (shr-expand-alignments start (point)))
+          (let ((strings (shr-collect-extra-strings-in-table dom)))
+	    (when strings
+	      (save-restriction
+	        (narrow-to-region (point) (point))
+	        (insert (mapconcat #'identity strings "\n"))
+	        (shr-fill-lines (point-min) (point-max))))))))))
 
 (defun shr-collect-extra-strings-in-table (dom &optional flags)
   "Return extra strings in DOM of which the root is a table clause.
