@@ -923,11 +923,13 @@ type detected."
     (unless (eq encoding '7bit)
       (insert (format "Content-Transfer-Encoding: %s\n" encoding)))
     (when (setq description (cdr (assq 'description cont)))
-      (insert "Content-Description: ")
-      (setq description (prog1
-			    (point)
-			  (insert description "\n")))
-      (mail-encode-encoded-word-region description (point)))))
+      (insert "Content-Description: "
+	      ;; The current buffer is unibyte, so do the description
+	      ;; encoding in a temporary buffer.
+	      (with-temp-buffer
+		(insert description "\n")
+		(mail-encode-encoded-word-region (point-min) (point-max))
+		(buffer-string))))))
 
 (defun mml-parameter-string (cont types)
   (let ((string "")
@@ -1339,7 +1341,7 @@ If not set, `default-directory' will be used."
 	  (value (pop plist)))
       (when value
 	;; Quote VALUE if it contains suspicious characters.
-	(when (string-match "[\"'\\~/*;() \t\n]" value)
+	(when (string-match "[\"'\\~/*;() \t\n[:multibyte:]]" value)
 	  (setq value (with-output-to-string
 			(let (print-escape-nonascii)
 			  (prin1 value)))))
