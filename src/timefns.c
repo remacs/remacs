@@ -1437,8 +1437,12 @@ A %-sequence can contain optional flags, field width, and a modifier
 `^' Use upper case characters if possible.
 `#' Use opposite case characters if possible.
 
-A field width N is an unsigned decimal integer with a leading digit nonzero.
-%NX is like %X, but takes up at least N positions.
+A field width N is an unsigned decimal integer with a leading digit
+nonzero.  %NX is like %X, but takes up at least N positions.  The
+field width is (on GNU/Linux and some other systems) in measured in
+bytes, not characters.  It depends on the locale what the width (in
+characters) %NX will end up being, especially when there are non-ASCII
+characters in %X.
 
 The modifiers are:
 
