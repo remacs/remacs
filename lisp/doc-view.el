@@ -1715,11 +1715,11 @@ If BACKWARD is non-nil, jump to the previous match."
 	 (substitute-command-keys
 	  (concat "Type \\[doc-view-toggle-display] to toggle between "
 		  "editing or viewing the document."))))
-    (message
-     "%s"
-     (concat "No PNG support is available, or some conversion utility for "
-	     (file-name-extension doc-view--buffer-file-name)
-	     " files is missing."))
+    (if (image-type-available-p 'png)
+        (message "Conversion utility \"%s\" not available for %s"
+                 doc-view-ghostscript-program
+	         (file-name-extension doc-view--buffer-file-name))
+      (message "PNG support not available; can't view document"))
     (if (and (executable-find doc-view-pdftotext-program)
 	     (y-or-n-p
 	      "Unable to render file.  View extracted text instead? "))
