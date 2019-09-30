@@ -1761,15 +1761,28 @@ key, a click, or a menu-item"))
   (interactive)
   (info "(emacs)Glossary"))
 
+(defun emacs-index--prompt ()
+  (let* ((default (thing-at-point 'sexp))
+         (topic
+          (read-from-minibuffer
+           (format "Subject to look up%s: "
+                   (if default
+                       (format " (default \"%s\")" default)
+                     ""))
+           nil nil nil nil default)))
+    (list (if (zerop (length topic))
+              default
+            topic))))
+
 (defun emacs-index-search (topic)
   "Look up TOPIC in the indices of the Emacs User Manual."
-  (interactive "sSubject to look up: ")
+  (interactive (emacs-index--prompt))
   (info "emacs")
   (Info-index topic))
 
 (defun elisp-index-search (topic)
   "Look up TOPIC in the indices of the Emacs Lisp Reference Manual."
-  (interactive "sSubject to look up: ")
+  (interactive (emacs-index--prompt))
   (info "elisp")
   (Info-index topic))
 
