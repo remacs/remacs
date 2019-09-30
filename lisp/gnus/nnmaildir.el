@@ -1754,7 +1754,7 @@ This variable is set by `nnmaildir-request-article'.")
 	    (delete-file file))))
       t)))
 
-(defun nnmaildir-close-server (&optional server)
+(defun nnmaildir-close-server (&optional server _defs)
   "Close SERVER, or the current maildir server."
   (when (nnmaildir--prepare server nil)
     (setq server nnmaildir--cur-server
