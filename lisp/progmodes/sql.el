@@ -737,7 +737,7 @@ requirements.
 The package must be available to be loaded and activated."
   :group 'SQL
   :link '(url-link "https://elpa.gnu.org/packages/sql-indent.html")
-  :type 'booleanp
+  :type 'boolean
   :version "27.1")
 
 (defun sql-indent-enable ()

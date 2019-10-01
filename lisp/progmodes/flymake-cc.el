@@ -37,7 +37,8 @@ syntax of a (Obj)C(++) program passed to it via its standard
 input and prints the result on its standard output."
   :type '(choice
           (symbol :tag "Function")
-          ((repeat :) string))
+          (repeat :tag "Command(s)" string))
+  :version "27.1"
   :group 'flymake-cc)
 
 (defun flymake-cc--make-diagnostics (source)

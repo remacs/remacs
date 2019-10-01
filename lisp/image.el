@@ -148,7 +148,7 @@ and some others) internally, but images that don't have native
 support in Emacs can still be displayed if an external conversion
 program (like ImageMagick \"convert\", GraphicsMagick \"gm\"
 or \"ffmpeg\") is installed."
-  :type 'bool
+  :type 'boolean
   :version "27.1")
 
 ;; Map put into text properties on images.
