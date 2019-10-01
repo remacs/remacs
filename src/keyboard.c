@@ -2385,7 +2385,8 @@ read_char (int commandflag, Lisp_Object map,
       if (used_mouse_menu
 	  /* Also check was_disabled so last-nonmenu-event won't return
 	     a bad value when submenus are involved.  (Bug#447)  */
-	  && (EQ (c, Qtool_bar) || EQ (c, Qtab_bar) || EQ (c, Qmenu_bar) || was_disabled))
+	  && (EQ (c, Qtool_bar) || EQ (c, Qtab_bar) || EQ (c, Qmenu_bar)
+	      || was_disabled))
 	*used_mouse_menu = true;
 
       goto reread_for_input_method;
@@ -5043,14 +5044,15 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
       /* For mode line and header line clicks, return X, Y relative to
 	 the left window edge.  Use mode_line_string to look for a
 	 string on the click position.  */
-      else if (part == ON_MODE_LINE || part == ON_TAB_LINE || part == ON_HEADER_LINE)
+      else if (part == ON_MODE_LINE || part == ON_TAB_LINE
+	       || part == ON_HEADER_LINE)
 	{
 	  Lisp_Object string;
 	  ptrdiff_t charpos;
 
 	  posn = (part == ON_MODE_LINE ? Qmode_line
-                  : (part == ON_TAB_LINE ? Qtab_line
-                     : Qheader_line));
+		  : (part == ON_TAB_LINE ? Qtab_line
+		     : Qheader_line));
 
 	  /* Note that mode_line_string takes COL, ROW as pixels and
 	     converts them to characters.  */
@@ -8115,7 +8117,6 @@ parse_tab_bar_item (Lisp_Object key, Lisp_Object item)
   Lisp_Object filter = Qnil;
   Lisp_Object caption;
   int i;
-  bool have_label = false;
 
   /* Definition looks like `(menu-item CAPTION BINDING PROPS...)'.
      Rule out items that aren't lists, don't start with
@@ -8164,12 +8165,6 @@ parse_tab_bar_item (Lisp_Object key, Lisp_Object item)
     {
       if (menu_separator_name_p (SSDATA (caption)))
 	{
-	  set_prop_tab_bar (TAB_BAR_ITEM_TYPE, Qt);
-	  /* If we use build_desired_tab_bar_string to render the
-	     tab bar, the separator is rendered as an image.  */
-	  set_prop_tab_bar (TAB_BAR_ITEM_IMAGES,
-		    (menu_item_eval_property
-		     (Vtab_bar_separator_image_expression)));
 	  set_prop_tab_bar (TAB_BAR_ITEM_ENABLED_P, Qnil);
 	  set_prop_tab_bar (TAB_BAR_ITEM_SELECTED_P, Qnil);
 	  set_prop_tab_bar (TAB_BAR_ITEM_CAPTION, Qnil);
@@ -8212,17 +8207,6 @@ parse_tab_bar_item (Lisp_Object key, Lisp_Object item)
       else if (EQ (ikey, QChelp))
         /* `:help HELP-STRING'.  */
         set_prop_tab_bar (TAB_BAR_ITEM_HELP, value);
-      else if (EQ (ikey, QCvert_only))
-        /* `:vert-only t/nil'.  */
-        set_prop_tab_bar (TAB_BAR_ITEM_VERT_ONLY, value);
-      else if (EQ (ikey, QClabel))
-        {
-          const char *bad_label = "!!?GARBLED ITEM?!!";
-          /* `:label LABEL-STRING'.  */
-          set_prop_tab_bar (TAB_BAR_ITEM_LABEL,
-		    STRINGP (value) ? value : build_string (bad_label));
-          have_label = true;
-        }
       else if (EQ (ikey, QCfilter))
 	/* ':filter FORM'.  */
 	filter = value;
@@ -8236,64 +8220,8 @@ parse_tab_bar_item (Lisp_Object key, Lisp_Object item)
 	  if (EQ (type, QCtoggle) || EQ (type, QCradio))
 	    {
 	      set_prop_tab_bar (TAB_BAR_ITEM_SELECTED_P, selected);
-	      set_prop_tab_bar (TAB_BAR_ITEM_TYPE, type);
 	    }
 	}
-      else if (EQ (ikey, QCimage)
-	       && (CONSP (value)
-		   || (VECTORP (value) && ASIZE (value) == 4)))
-	/* Value is either a single image specification or a vector
-	   of 4 such specifications for the different button states.  */
-	set_prop_tab_bar (TAB_BAR_ITEM_IMAGES, value);
-      else if (EQ (ikey, QCrtl))
-        /* ':rtl STRING' */
-	set_prop_tab_bar (TAB_BAR_ITEM_RTL_IMAGE, value);
-    }
-
-
-  if (!have_label)
-    {
-      /* Try to make one from caption and key.  */
-      Lisp_Object tkey = PROP (TAB_BAR_ITEM_KEY);
-      Lisp_Object tcapt = PROP (TAB_BAR_ITEM_CAPTION);
-      const char *label = SYMBOLP (tkey) ? SSDATA (SYMBOL_NAME (tkey)) : "";
-      const char *capt = STRINGP (tcapt) ? SSDATA (tcapt) : "";
-      ptrdiff_t max_lbl_size =
-	2 * max (0, min (tab_bar_max_label_size, STRING_BYTES_BOUND / 2)) + 1;
-      char *buf = xmalloc (max_lbl_size);
-      Lisp_Object new_lbl;
-      ptrdiff_t caption_len = strnlen (capt, max_lbl_size);
-
-      if (0 < caption_len && caption_len < max_lbl_size)
-        {
-          strcpy (buf, capt);
-          while (caption_len > 0 && buf[caption_len - 1] == '.')
-            caption_len--;
-	  buf[caption_len] = '\0';
-	  label = capt = buf;
-        }
-
-      ptrdiff_t label_len = strnlen (label, max_lbl_size);
-      if (0 < label_len && label_len < max_lbl_size)
-        {
-          ptrdiff_t j;
-          if (label != buf)
-	    strcpy (buf, label);
-
-          for (j = 0; buf[j] != '\0'; ++j)
-	    if (buf[j] == '-')
-	      buf[j] = ' ';
-          label = buf;
-        }
-      else
-	label = "";
-
-      new_lbl = Fupcase_initials (build_string (label));
-      if (SCHARS (new_lbl) <= tab_bar_max_label_size)
-        set_prop_tab_bar (TAB_BAR_ITEM_LABEL, new_lbl);
-      else
-        set_prop_tab_bar (TAB_BAR_ITEM_LABEL, empty_unibyte_string);
-      xfree (buf);
     }
 
   /* If got a filter apply it on binding.  */
@@ -10711,7 +10639,8 @@ On such systems, Emacs starts a subshell instead of suspending.  */)
   get_tty_size (fileno (CURTTY ()->input), &width, &height);
   if (width != old_width || height != old_height)
     change_frame_size (SELECTED_FRAME (), width,
-		       height - FRAME_MENU_BAR_LINES (SELECTED_FRAME ()) - FRAME_TAB_BAR_LINES (SELECTED_FRAME ()),
+		       height - FRAME_MENU_BAR_LINES (SELECTED_FRAME ())
+		       - FRAME_TAB_BAR_LINES (SELECTED_FRAME ()),
 		       0, 0, 0, 0);
 
   run_hook (intern ("suspend-resume-hook"));

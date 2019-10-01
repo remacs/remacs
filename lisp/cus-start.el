@@ -591,7 +591,6 @@ since it could result in memory overflow and make Emacs crash."
 		      (const :tag "Text-image-horiz" :value text-image-horiz)
 		      (const :tag "System default" :value nil)) "24.1")
              (tool-bar-max-label-size frames integer "24.1")
-             (tab-bar-max-label-size frames integer "27.1")
 	     (auto-hscroll-mode scrolling
                                 (choice
                                  (const :tag "Don't scroll automatically"

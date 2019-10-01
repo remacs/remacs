@@ -6585,8 +6585,8 @@ syms_of_xfaces (void)
   DEFSYM (Qtool_bar, "tool-bar");
   DEFSYM (Qtab_bar, "tab-bar");
   DEFSYM (Qfringe, "fringe");
-  DEFSYM (Qheader_line, "header-line");
   DEFSYM (Qtab_line, "tab-line");
+  DEFSYM (Qheader_line, "header-line");
   DEFSYM (Qscroll_bar, "scroll-bar");
   DEFSYM (Qmenu, "menu");
   DEFSYM (Qcursor, "cursor");

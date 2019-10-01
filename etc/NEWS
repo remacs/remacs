@@ -1885,7 +1885,7 @@ good replacement, even in very large source files.
 
 ** 'tab-bar-mode' enables the tab-bar at the top of each frame,
 to switch named persistent window configurations in it using tabs.
-New tab-based keybindings (similar to frame-based):
+New tab-based keybindings (similar to frame-based commands):
 'C-x 6 2' creates a new tab;
 'C-x 6 0' deletes the current tab;
 'C-x 6 b' switches to buffer in another tab;
@@ -1897,7 +1897,7 @@ Also it's possible to switch named persistent window configurations
 without having graphical access to the tab-bar, even on a tty
 or when 'tab-bar-mode' is disabled, with these commands:
 'tab-new' creates a new window configuration;
-'tab-delete' deletes the current window configuration;
+'tab-close' deletes the current window configuration;
 'tab-select' switches to the window configuration by its name;
 'tab-previous' switches to the previous window configuration;
 'tab-next' switches to the next window configuration;

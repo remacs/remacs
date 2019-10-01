@@ -488,7 +488,7 @@ specified by `tab-bar-close-tab-select'."
   (unless tab-bar-mode
     (message "Added new tab with the current window configuration")))
 
-(defun tab-delete ()
+(defun tab-close ()
   "Delete the current window configuration without clicking a close button."
   (interactive)
   (tab-bar-close-current-tab)

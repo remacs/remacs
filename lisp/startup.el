@@ -731,9 +731,7 @@ It is the default value of the variable `top-level'."
     ("--background-color" . "-bg")
     ("--color"		  . "-color")))
 
-(defconst tab-bar-images-pixel-height 18
-  "Height in pixels of images in the tab-bar.")
-
+;; FIXME: this var unused?
 (defconst tool-bar-images-pixel-height 24
   "Height in pixels of images in the tool-bar.")
 

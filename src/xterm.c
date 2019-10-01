@@ -3223,8 +3223,8 @@ x_draw_image_relief (struct glyph_string *s)
       thick = (tab_bar_button_relief < 0
 	       ? DEFAULT_TAB_BAR_BUTTON_RELIEF
 	       : (tool_bar_button_relief < 0
-                  ? DEFAULT_TOOL_BAR_BUTTON_RELIEF
-                  : min (tool_bar_button_relief, 1000000)));
+		  ? DEFAULT_TOOL_BAR_BUTTON_RELIEF
+		  : min (tool_bar_button_relief, 1000000)));
       raised_p = s->hl == DRAW_IMAGE_RAISED;
     }
   else
@@ -10222,7 +10222,7 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
 			     false, Qfont);
 #ifndef USE_X_TOOLKIT
 	  if ((FRAME_MENU_BAR_HEIGHT (f) != old_menu_bar_height
-               || FRAME_TAB_BAR_HEIGHT (f) != old_tab_bar_height)
+	       || FRAME_TAB_BAR_HEIGHT (f) != old_tab_bar_height)
 	      && !f->after_make_frame
 	      && (EQ (frame_inhibit_implied_resize, Qt)
 		  || (CONSP (frame_inhibit_implied_resize)
@@ -10232,7 +10232,8 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
 	    /* If the menu/tab bar height changes, try to keep text height
 	       constant.  */
 	    adjust_frame_size
-	      (f, -1, FRAME_TEXT_HEIGHT (f) + FRAME_MENU_BAR_HEIGHT (f) + FRAME_TAB_BAR_HEIGHT (f)
+	      (f, -1, FRAME_TEXT_HEIGHT (f) + FRAME_MENU_BAR_HEIGHT (f)
+	       + FRAME_TAB_BAR_HEIGHT (f)
 	       - old_menu_bar_height - old_tab_bar_height, 1, false, Qfont);
 #endif /* USE_X_TOOLKIT  */
 	}
@@ -11168,7 +11169,7 @@ x_check_fullscreen (struct frame *f)
         case FULLSCREEN_WIDTH:
           lval = Qfullwidth;
           width = x_display_pixel_width (dpyinfo);
-	  height = height + FRAME_MENUBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f);
+	  height = height + FRAME_MENUBAR_HEIGHT (f);
 	  break;
         case FULLSCREEN_HEIGHT:
           lval = Qfullheight;
@@ -11190,7 +11191,7 @@ x_check_fullscreen (struct frame *f)
 	x_wait_for_event (f, ConfigureNotify);
       else
 	{
-	  change_frame_size (f, width, height - FRAME_MENUBAR_HEIGHT (f) - FRAME_TABBAR_HEIGHT (f),
+	  change_frame_size (f, width, height - FRAME_MENUBAR_HEIGHT (f),
 			     false, true, false, true);
 	  x_sync (f);
 	}
@@ -11366,10 +11367,10 @@ x_set_window_size_1 (struct frame *f, bool change_gravity,
     {
       frame_size_history_add
 	(f, Qx_set_window_size_1, width, height,
-	 list2i (old_height, pixelheight + FRAME_MENUBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f)));
+	 list2i (old_height, pixelheight + FRAME_MENUBAR_HEIGHT (f)));
 
       XResizeWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
-		     old_width, pixelheight + FRAME_MENUBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f));
+		     old_width, pixelheight + FRAME_MENUBAR_HEIGHT (f));
     }
   else if (EQ (fullscreen, Qfullheight) && height == FRAME_TEXT_HEIGHT (f))
     {
@@ -11385,12 +11386,13 @@ x_set_window_size_1 (struct frame *f, bool change_gravity,
     {
       frame_size_history_add
 	(f, Qx_set_window_size_3, width, height,
-	 list3i (pixelwidth + FRAME_TOOLBAR_WIDTH (f) + FRAME_TABBAR_WIDTH (f),
-		 (pixelheight + FRAME_TOOLBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f) + FRAME_MENUBAR_HEIGHT (f)),
-		 FRAME_MENUBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f)));
+	 list3i (pixelwidth + FRAME_TOOLBAR_WIDTH (f),
+		 (pixelheight + FRAME_TOOLBAR_HEIGHT (f)
+		  + FRAME_MENUBAR_HEIGHT (f)),
+		 FRAME_MENUBAR_HEIGHT (f)));
 
       XResizeWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
-		     pixelwidth, pixelheight + FRAME_MENUBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f));
+		     pixelwidth, pixelheight + FRAME_MENUBAR_HEIGHT (f));
       fullscreen = Qnil;
     }
 
@@ -11467,7 +11469,7 @@ x_set_window_size (struct frame *f, bool change_gravity,
 #ifdef USE_X_TOOLKIT
       /* The menu bar is not part of text lines.  The tool bar
          is however.  */
-      pixelh -= FRAME_MENUBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f);
+      pixelh -= FRAME_MENUBAR_HEIGHT (f);
 #endif
       text_width = FRAME_PIXEL_TO_TEXT_WIDTH (f, FRAME_PIXEL_WIDTH (f));
       text_height = FRAME_PIXEL_TO_TEXT_HEIGHT (f, pixelh);
@@ -12263,7 +12265,7 @@ x_wm_set_size_hint (struct frame *f, long flags, bool user_position)
 
     size_hints.flags |= PBaseSize;
     size_hints.base_width = base_width;
-    size_hints.base_height = base_height + FRAME_MENUBAR_HEIGHT (f) + FRAME_TABBAR_HEIGHT (f);
+    size_hints.base_height = base_height + FRAME_MENUBAR_HEIGHT (f);
     size_hints.min_width  = base_width;
     size_hints.min_height = base_height;
   }

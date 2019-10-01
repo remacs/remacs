@@ -1321,7 +1321,8 @@ coordinates_in_window (register struct window *w, int x, int y)
 	       && y < top_y + CURRENT_TAB_LINE_HEIGHT (w)
 	       && (part = ON_TAB_LINE))
 	   || (window_wants_header_line (w)
-	       && y < top_y + CURRENT_TAB_LINE_HEIGHT (w) + CURRENT_HEADER_LINE_HEIGHT (w)
+	       && y < top_y + CURRENT_TAB_LINE_HEIGHT (w)
+			    + CURRENT_HEADER_LINE_HEIGHT (w)
 	       && (part = ON_HEADER_LINE)))
     {
       /* If it's under/over the scroll bar portion of the mode/header
@@ -5808,8 +5809,9 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
       move_it_to (&it, PT, -1, -1, -1, MOVE_TO_POS);
       if (IT_CHARPOS (it) == PT
 	  && it.current_y >= this_scroll_margin
-	  && it.current_y <= last_y - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w)
-          && (NILP (Vscroll_preserve_screen_position)
+	  && it.current_y <= last_y - WINDOW_TAB_LINE_HEIGHT (w)
+				    - WINDOW_HEADER_LINE_HEIGHT (w)
+	  && (NILP (Vscroll_preserve_screen_position)
 	      || EQ (Vscroll_preserve_screen_position, Qt)))
 	/* We found PT at a legitimate height.  Leave it alone.  */
 	;
@@ -5824,7 +5826,8 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 		 is necessary because we set it.current_y to 0, above.  */
 	      move_it_to (&it, -1,
 			  window_scroll_pixel_based_preserve_x,
-			  goal_y - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w),
+			  goal_y - WINDOW_TAB_LINE_HEIGHT (w)
+				 - WINDOW_HEADER_LINE_HEIGHT (w),
 			  -1, MOVE_TO_Y | MOVE_TO_X);
 	    }
 
@@ -5860,8 +5863,9 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 		  /* We subtract WINDOW_HEADER_LINE_HEIGHT because
 		     it.y is relative to the bottom of the header
 		     line, see above.  */
-		  (it.last_visible_y - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w)
-                   - partial_line_height (&it) - this_scroll_margin - 1),
+		  (it.last_visible_y - WINDOW_TAB_LINE_HEIGHT (w)
+				     - WINDOW_HEADER_LINE_HEIGHT (w)
+		   - partial_line_height (&it) - this_scroll_margin - 1),
 		  -1,
 		  MOVE_TO_POS | MOVE_TO_Y);
 
@@ -5899,13 +5903,15 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
       if (it.what == IT_EOB)
 	partial_p =
 	  it.current_y + it.ascent + it.descent
-	  > it.last_visible_y - this_scroll_margin - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w);
+	  > it.last_visible_y - this_scroll_margin
+	  - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w);
       else
 	{
 	  move_it_by_lines (&it, 1);
 	  partial_p =
 	    it.current_y
-	    > it.last_visible_y - this_scroll_margin - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w);
+	    > it.last_visible_y - this_scroll_margin
+	      - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w);
 	}
 
       if (charpos == PT && !partial_p

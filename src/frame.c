@@ -1191,10 +1191,12 @@ make_terminal_frame (struct terminal *terminal)
 
   FRAME_MENU_BAR_LINES (f) = NILP (Vmenu_bar_mode) ? 0 : 1;
   FRAME_TAB_BAR_LINES (f) = NILP (Vtab_bar_mode) ? 0 : 1;
-  FRAME_LINES (f) = FRAME_LINES (f) - FRAME_MENU_BAR_LINES (f) - FRAME_TAB_BAR_LINES (f);
+  FRAME_LINES (f) = FRAME_LINES (f) - FRAME_MENU_BAR_LINES (f)
+    - FRAME_TAB_BAR_LINES (f);
   FRAME_MENU_BAR_HEIGHT (f) = FRAME_MENU_BAR_LINES (f) * FRAME_LINE_HEIGHT (f);
   FRAME_TAB_BAR_HEIGHT (f) = FRAME_TAB_BAR_LINES (f) * FRAME_LINE_HEIGHT (f);
-  FRAME_TEXT_HEIGHT (f) = FRAME_TEXT_HEIGHT (f) - FRAME_MENU_BAR_HEIGHT (f) - FRAME_TAB_BAR_HEIGHT (f);
+  FRAME_TEXT_HEIGHT (f) = FRAME_TEXT_HEIGHT (f) - FRAME_MENU_BAR_HEIGHT (f)
+    - FRAME_TAB_BAR_HEIGHT (f);
 
   /* Set the top frame to the newly created frame.  */
   if (FRAMEP (FRAME_TTY (f)->top_frame)
@@ -1316,7 +1318,8 @@ affects all frames on the same terminal device.  */)
   {
     int width, height;
     get_tty_size (fileno (FRAME_TTY (f)->input), &width, &height);
-    adjust_frame_size (f, width, height - FRAME_MENU_BAR_LINES (f) - FRAME_TAB_BAR_LINES (f),
+    adjust_frame_size (f, width, height - FRAME_MENU_BAR_LINES (f)
+		       - FRAME_TAB_BAR_LINES (f),
 		       5, 0, Qterminal_frame);
   }
 
@@ -3444,23 +3447,6 @@ to `frame-height'). */)
     return make_fixnum (FRAME_TOTAL_LINES (f));
 }
 
-DEFUN ("tab-bar-pixel-width", Ftab_bar_pixel_width,
-       Stab_bar_pixel_width, 0, 1, 0,
-       doc: /* Return width in pixels of FRAME's tab bar.
-The result is greater than zero only when the tab bar is on the left
-or right side of FRAME.  If FRAME is omitted or nil, the selected frame
-is used.  */)
-  (Lisp_Object frame)
-{
-#ifdef FRAME_TABBAR_WIDTH
-  struct frame *f = decode_any_frame (frame);
-
-  if (FRAME_WINDOW_P (f))
-    return make_fixnum (FRAME_TABBAR_WIDTH (f));
-#endif
-  return make_fixnum (0);
-}
-
 DEFUN ("tool-bar-pixel-width", Ftool_bar_pixel_width,
        Stool_bar_pixel_width, 0, 1, 0,
        doc: /* Return width in pixels of FRAME's tool bar.
@@ -5464,8 +5450,8 @@ On Nextstep, this just calls `ns-parse-geometry'.  */)
 #define DEFAULT_COLS 80
 
 long
-gui_figure_window_size (struct frame *f, Lisp_Object parms, bool tabbar_p, bool toolbar_p,
-                        int *x_width, int *x_height)
+gui_figure_window_size (struct frame *f, Lisp_Object parms, bool tabbar_p,
+                        bool toolbar_p, int *x_width, int *x_height)
 {
   Lisp_Object height, width, user_size, top, left, user_position;
   long window_prompting = 0;
@@ -6425,7 +6411,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_internal_border_width);
   defsubr (&Sright_divider_width);
   defsubr (&Sbottom_divider_width);
-  defsubr (&Stab_bar_pixel_width);
   defsubr (&Stool_bar_pixel_width);
   defsubr (&Sset_frame_height);
   defsubr (&Sset_frame_width);

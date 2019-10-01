@@ -1348,8 +1348,8 @@ button.  @xref{Repeat Events}.
 @var{position} slot of a click event, you should typically use the
 functions documented in @ref{Accessing Mouse}.  The explicit format of
 the list depends on where the click occurred.  For clicks in the text
-area, mode line, header line, tab line, or in the fringe or marginal areas, the
-mouse position list has the form
+area, mode line, header line, tab line, or in the fringe or marginal
+areas, the mouse position list has the form
 
 @example
 (@var{window} @var{pos-or-area} (@var{x} . @var{y}) @var{timestamp}
@@ -1368,8 +1368,9 @@ The window in which the click occurred.
 The buffer position of the character clicked on in the text area; or,
 if the click was outside the text area, the window area where it
 occurred.  It is one of the symbols @code{mode-line},
-@code{header-line}, @code{tab-line}, @code{vertical-line}, @code{left-margin},
-@code{right-margin}, @code{left-fringe}, or @code{right-fringe}.
+@code{header-line}, @code{tab-line}, @code{vertical-line},
+@code{left-margin}, @code{right-margin}, @code{left-fringe}, or
+@code{right-fringe}.
 
 In one special case, @var{pos-or-area} is a list containing a symbol
 (one of the symbols listed above) instead of just the symbol.  This
@@ -1380,12 +1381,12 @@ by Emacs.  @xref{Key Sequence Input}.
 The relative pixel coordinates of the click.  For clicks in the text
 area of a window, the coordinate origin @code{(0 . 0)} is taken to be
 the top left corner of the text area.  @xref{Window Sizes}.  For
-clicks in a mode line, header line or tab line, the coordinate origin is the top
-left corner of the window itself.  For fringes, margins, and the
-vertical border, @var{x} does not have meaningful data.  For fringes
-and margins, @var{y} is relative to the bottom edge of the header
-line.  In all cases, the @var{x} and @var{y} coordinates increase
-rightward and downward respectively.
+clicks in a mode line, header line or tab line, the coordinate origin
+is the top left corner of the window itself.  For fringes, margins,
+and the vertical border, @var{x} does not have meaningful data.
+For fringes and margins, @var{y} is relative to the bottom edge of the
+header line.  In all cases, the @var{x} and @var{y} coordinates
+increase rightward and downward respectively.
 
 @item @var{timestamp}
 The time at which the event occurred, as an integer number of
@@ -1407,18 +1408,18 @@ The position in the string where the click occurred.
 @item @var{text-pos}
 For clicks on a marginal area or on a fringe, this is the buffer
 position of the first visible character in the corresponding line in
-the window.  For clicks on the mode line, the header line or the tab line, this is
-@code{nil}.  For other events, it is the buffer position closest to
-the click.
+the window.  For clicks on the mode line, the header line or the tab
+line, this is @code{nil}.  For other events, it is the buffer position
+closest to the click.
 
 @item @var{col}, @var{row}
 These are the actual column and row coordinate numbers of the glyph
 under the @var{x}, @var{y} position.  If @var{x} lies beyond the last
 column of actual text on its line, @var{col} is reported by adding
-fictional extra columns that have the default character width.  Row 0
-is taken to be the header line if the window has one, or Row 1
-if the window also has the tab line, or the topmost
-row of the text area otherwise.  Column 0 is taken to be the leftmost
+fictional extra columns that have the default character width.
+Row 0 is taken to be the header line if the window has one, or Row 1
+if the window also has the tab line, or the topmost row of
+the text area otherwise.  Column 0 is taken to be the leftmost
 column of the text area for clicks on a window text area, or the
 leftmost mode line or header line column for clicks there.  For clicks
 on fringes or vertical borders, these have no meaningful data.  For
@@ -2095,7 +2096,8 @@ computed values.)
 
 Note that @var{row} is counted from the top of the text area.  If the
 window given by @var{position} possesses a header line (@pxref{Header
-Lines}) or a tab line, they are @emph{not} included in the @var{row} count.
+Lines}) or a tab line, they are @emph{not} included in the @var{row}
+count.
 @end defun
 
 @defun posn-actual-col-row position

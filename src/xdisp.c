@@ -1809,7 +1809,7 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 	  *rowh = max (0, (min (it2.current_y + it2.max_ascent + it2.max_descent,
 				it.last_visible_y)
 			   - max (max (it2.current_y,
-                                       WINDOW_TAB_LINE_HEIGHT (w)),
+				       WINDOW_TAB_LINE_HEIGHT (w)),
 				  WINDOW_HEADER_LINE_HEIGHT (w))));
 	  *vpos = it2.vpos;
 	  if (it2.bidi_it.paragraph_dir == R2L)
@@ -2532,8 +2532,8 @@ remember_mouse_glyph (struct frame *f, int gx, int gy, NativeRectangle *rect)
       gr = (part == ON_TAB_LINE
 	    ? MATRIX_TAB_LINE_ROW (w->current_matrix)
 	    : (part == ON_HEADER_LINE
-               ? MATRIX_HEADER_LINE_ROW (w->current_matrix)
-               : MATRIX_MODE_LINE_ROW (w->current_matrix)));
+	       ? MATRIX_HEADER_LINE_ROW (w->current_matrix)
+	       : MATRIX_MODE_LINE_ROW (w->current_matrix)));
       gy = gr->y;
       area = TEXT_AREA;
       goto text_glyph_row_found;
@@ -2579,7 +2579,8 @@ remember_mouse_glyph (struct frame *f, int gx, int gy, NativeRectangle *rect)
 	      gx += (x / width) * width;
 	    }
 
-	  if (part != ON_MODE_LINE && part != ON_HEADER_LINE && part != ON_TAB_LINE)
+	  if (part != ON_MODE_LINE && part != ON_HEADER_LINE
+	      && part != ON_TAB_LINE)
 	    {
 	      gx += window_box_left_offset (w, area);
 	      /* Don't expand over the modeline to make sure the vertical
@@ -2594,7 +2595,8 @@ remember_mouse_glyph (struct frame *f, int gx, int gy, NativeRectangle *rect)
 	  gx = (x / width) * width;
 	  y -= gy;
 	  gy += (y / height) * height;
-	  if (part != ON_MODE_LINE && part != ON_HEADER_LINE && part != ON_TAB_LINE)
+	  if (part != ON_MODE_LINE && part != ON_HEADER_LINE
+	      && part != ON_TAB_LINE)
 	    /* See comment above.  */
 	    height = min (height,
 			  max (0, WINDOW_BOX_HEIGHT_NO_MODE_LINE (w) - gy));
@@ -12688,7 +12690,9 @@ display_tab_bar (struct window *w)
 
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
   eassert (!FRAME_WINDOW_P (f));
-  init_iterator (&it, w, -1, -1, f->desired_matrix->rows + (FRAME_MENU_BAR_LINES (f) > 0 ? 1 : 0), TAB_BAR_FACE_ID);
+  init_iterator (&it, w, -1, -1, f->desired_matrix->rows
+                 + (FRAME_MENU_BAR_LINES (f) > 0 ? 1 : 0),
+                 TAB_BAR_FACE_ID);
   it.first_visible_x = 0;
   it.last_visible_x = FRAME_PIXEL_WIDTH (f);
 #elif defined (HAVE_X_WINDOWS) /* X without toolkit.  */
@@ -12708,7 +12712,8 @@ display_tab_bar (struct window *w)
     {
       /* This is a TTY frame, i.e. character hpos/vpos are used as
 	 pixel x/y.  */
-      init_iterator (&it, w, -1, -1, f->desired_matrix->rows + (FRAME_MENU_BAR_LINES (f) > 0 ? 1 : 0),
+      init_iterator (&it, w, -1, -1, f->desired_matrix->rows
+                     + (FRAME_MENU_BAR_LINES (f) > 0 ? 1 : 0),
 		     TAB_BAR_FACE_ID);
       it.first_visible_x = 0;
       it.last_visible_x = FRAME_COLS (f);
@@ -17164,7 +17169,8 @@ compute_window_start_on_continuation_line (struct window *w)
 
       /* Find the start of the continued line.  This should be fast
 	 because find_newline is fast (newline cache).  */
-      row = w->desired_matrix->rows + window_wants_tab_line (w) + window_wants_header_line (w);
+      row = w->desired_matrix->rows + window_wants_tab_line (w)
+				    + window_wants_header_line (w);
       init_iterator (&it, w, CHARPOS (start_pos), BYTEPOS (start_pos),
 		     row, DEFAULT_FACE_ID);
       reseat_at_previous_visible_line_start (&it);
@@ -18677,7 +18683,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
       /* This means that the window has a mode line.  */
       && (window_wants_mode_line (w)
 	  || window_wants_header_line (w)
-          || window_wants_tab_line (w)))
+	  || window_wants_tab_line (w)))
     {
 
       display_mode_lines (w);
@@ -20822,7 +20828,8 @@ do nothing.  */)
   EMACS_INT vpos;
 
   if (NILP (row))
-    vpos = WINDOWP (sf->tab_bar_window) ? 0 : FRAME_MENU_BAR_LINES (sf) > 0 ? 1 : 0;
+    vpos = WINDOWP (sf->tab_bar_window) ? 0 :
+      FRAME_MENU_BAR_LINES (sf) > 0 ? 1 : 0;
   else
     {
       CHECK_FIXNUM (row);
@@ -32350,8 +32357,8 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
       row = (area == ON_MODE_LINE
 	     ? MATRIX_MODE_LINE_ROW (w->current_matrix)
 	     : (area == ON_TAB_LINE
-                ? MATRIX_TAB_LINE_ROW (w->current_matrix)
-                : MATRIX_HEADER_LINE_ROW (w->current_matrix)));
+		? MATRIX_TAB_LINE_ROW (w->current_matrix)
+		: MATRIX_HEADER_LINE_ROW (w->current_matrix)));
 
       /* Find the glyph under the mouse pointer.  */
       if (row->mode_line_p && row->enabled_p)
@@ -32466,7 +32473,8 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
 	      /* Change the mouse pointer according to what is under X/Y.  */
 	      if (NILP (pointer)
-		  && (area == ON_MODE_LINE || area == ON_HEADER_LINE || area == ON_TAB_LINE))
+		  && (area == ON_MODE_LINE || area == ON_HEADER_LINE
+		      || area == ON_TAB_LINE))
 		{
 		  Lisp_Object map;
 
@@ -32492,7 +32500,8 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
     {
       mouse_face = Fget_text_property (pos, Qmouse_face, string);
       if (!NILP (Vmouse_highlight) && !NILP (mouse_face)
-	  && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE) || (area == ON_TAB_LINE))
+	  && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE)
+	      || (area == ON_TAB_LINE))
 	  && glyph)
 	{
 	  Lisp_Object b, e;
@@ -32564,10 +32573,10 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	  vpos = (area == ON_MODE_LINE
 		  ? (w->current_matrix)->nrows - 1
 		  : (area == ON_TAB_LINE
-                     ? 0
-                     : (w->current_matrix->tab_line_p
-                        ? 1
-                        : 0)));
+		     ? 0
+		     : (w->current_matrix->tab_line_p
+			? 1
+			: 0)));
 
 	  /* If GLYPH's position is included in the region that is
 	     already drawn in mouse face, we have nothing to do.  */
@@ -32623,7 +32632,8 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
   /* If mouse-face doesn't need to be shown, clear any existing
      mouse-face.  */
-  if ((area == ON_MODE_LINE || area == ON_HEADER_LINE || area == ON_TAB_LINE) && !mouse_face_shown)
+  if ((area == ON_MODE_LINE || area == ON_HEADER_LINE
+       || area == ON_TAB_LINE) && !mouse_face_shown)
     clear_mouse_face (hlinfo);
 
   define_frame_cursor1 (f, cursor, pointer);
@@ -34371,10 +34381,6 @@ vertical margin.  */);
   DEFVAR_INT ("tab-bar-button-relief", tab_bar_button_relief,
     doc: /* Relief thickness of tab-bar buttons.  */);
   tab_bar_button_relief = DEFAULT_TAB_BAR_BUTTON_RELIEF;
-
-  DEFVAR_INT ("tab-bar-max-label-size", tab_bar_max_label_size,
-    doc: /* Maximum number of characters a label can have to be shown.  */);
-  tab_bar_max_label_size = DEFAULT_TAB_BAR_LABEL_SIZE;
 
   DEFVAR_LISP ("tool-bar-border", Vtool_bar_border,
     doc: /* Border below tool-bar in pixels.

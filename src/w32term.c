@@ -5994,7 +5994,8 @@ w32_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
 	    = (WINDOW_TO_FRAME_PIXEL_Y (w, w->phys_cursor.y)
 	       + glyph_row->ascent - w->phys_cursor_ascent);
 	  w32_system_caret_window = w;
-	  w32_system_caret_hdr_height = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
+	  w32_system_caret_hdr_height = WINDOW_TAB_LINE_HEIGHT (w)
+	    + WINDOW_HEADER_LINE_HEIGHT (w);
 	  w32_system_caret_mode_height = WINDOW_MODE_LINE_HEIGHT (w);
 
 	  PostMessage (hwnd, WM_IME_STARTCOMPOSITION, 0, 0);

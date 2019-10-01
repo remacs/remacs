@@ -456,8 +456,10 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	      || (row == matrix->rows + dim.height - 1
 		  && window_wants_mode_line (w))
 	      || (row == matrix->rows && matrix->tab_line_p)
-	      || (row == matrix->rows && !matrix->tab_line_p && matrix->header_line_p)
-	      || (row == (matrix->rows + 1) && matrix->tab_line_p && matrix->header_line_p))
+	      || (row == matrix->rows
+		  && !matrix->tab_line_p && matrix->header_line_p)
+	      || (row == (matrix->rows + 1)
+		  && matrix->tab_line_p && matrix->header_line_p))
 	    {
 	      row->glyphs[TEXT_AREA]
 		= row->glyphs[LEFT_MARGIN_AREA];
@@ -504,8 +506,10 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	      if ((row == matrix->rows + dim.height - 1
 		   && !(w && window_wants_mode_line (w)))
 		  || (row == matrix->rows && matrix->tab_line_p)
-		  || (row == matrix->rows && !matrix->tab_line_p && matrix->header_line_p)
-		  || (row == (matrix->rows + 1) && matrix->tab_line_p && matrix->header_line_p))
+		  || (row == matrix->rows
+		      && !matrix->tab_line_p && matrix->header_line_p)
+		  || (row == (matrix->rows + 1)
+		      && matrix->tab_line_p && matrix->header_line_p))
 		{
 		  row->glyphs[TEXT_AREA]
 		    = row->glyphs[LEFT_MARGIN_AREA];
@@ -3550,7 +3554,8 @@ update_window (struct window *w, bool force_p)
       /* Try reusing part of the display by copying.  */
       if (row < end && !desired_matrix->no_scrolling_p)
 	{
-	  int rc = scrolling_window (w, (tab_line_row != NULL ? 1 : 0) + (header_line_row != NULL ? 1 : 0));
+	  int rc = scrolling_window (w, (tab_line_row != NULL ? 1 : 0)
+				     + (header_line_row != NULL ? 1 : 0));
 	  if (rc < 0)
 	    {
 	      /* All rows were found to be equal.  */
@@ -5428,7 +5433,8 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
      start position, i.e. it excludes the header-line row, but
      MATRIX_ROW includes the header-line row.  Adjust for a possible
      header-line row.  */
-  it_vpos = it.vpos + window_wants_header_line (w) + window_wants_tab_line (w);
+  it_vpos = it.vpos + window_wants_header_line (w)
+    + window_wants_tab_line (w);
   if (it_vpos < w->current_matrix->nrows
       && (row = MATRIX_ROW (w->current_matrix, it_vpos),
 	  row->enabled_p))
@@ -5675,7 +5681,8 @@ handle_window_change_signal (int sig)
              structures now.  Let that be done later outside of the
              signal handler.  */
           change_frame_size (XFRAME (frame), width,
-			     height - FRAME_MENU_BAR_LINES (XFRAME (frame)) - FRAME_TAB_BAR_LINES (XFRAME (frame)),
+			     height - FRAME_MENU_BAR_LINES (XFRAME (frame))
+			     - FRAME_TAB_BAR_LINES (XFRAME (frame)),
 			     0, 1, 0, 0);
     }
   }
@@ -6355,7 +6362,8 @@ init_display_interactive (void)
     change_frame_size (XFRAME (selected_frame),
                        FrameCols (t->display_info.tty),
                        FrameRows (t->display_info.tty)
-		       - FRAME_MENU_BAR_LINES (f) - FRAME_TAB_BAR_LINES (f), 0, 0, 1, 0);
+		       - FRAME_MENU_BAR_LINES (f)
+		       - FRAME_TAB_BAR_LINES (f), 0, 0, 1, 0);
 
     /* Delete the initial terminal. */
     if (--initial_terminal->reference_count == 0

@@ -3200,47 +3200,16 @@ enum tab_bar_item_idx
   /* Caption.  */
   TAB_BAR_ITEM_CAPTION,
 
-  /* Image(s) to display.  This is either a single image specification
-     or a vector of specifications.  */
-  TAB_BAR_ITEM_IMAGES,
-
   /* The binding.  */
   TAB_BAR_ITEM_BINDING,
 
-  /* Button type.  One of nil (default button), t (a separator),
-     `:radio', or `:toggle'.  The latter two currently do nothing.  */
-  TAB_BAR_ITEM_TYPE,
-
   /* Help string.  */
   TAB_BAR_ITEM_HELP,
-
-  /* Icon file name of right to left image when an RTL locale is used.  */
-  TAB_BAR_ITEM_RTL_IMAGE,
-
-  /* Label to show when text labels are enabled.  */
-  TAB_BAR_ITEM_LABEL,
-
-  /* If we shall show the label only below the icon and not beside it.  */
-  TAB_BAR_ITEM_VERT_ONLY,
 
   /* Sentinel = number of slots in tab_bar_items occupied by one
      tab-bar item.  */
   TAB_BAR_ITEM_NSLOTS
 };
-
-
-/* An enumeration for the different images that can be specified
-   for a tab-bar item.  */
-
-enum tab_bar_item_image
-{
-  TAB_BAR_IMAGE_ENABLED_SELECTED,
-  TAB_BAR_IMAGE_ENABLED_DESELECTED,
-  TAB_BAR_IMAGE_DISABLED_SELECTED,
-  TAB_BAR_IMAGE_DISABLED_DESELECTED
-};
-
-#define DEFAULT_TAB_BAR_LABEL_SIZE 14
 
 /* Default values of the above variables.  */
 

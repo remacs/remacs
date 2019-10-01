@@ -505,16 +505,6 @@ struct x_output
   int menubar_height;
 #endif
 
-  /* Height of tab bar widget, in pixels.  top_height is used if tab bar
-     at top, bottom_height if tab bar is at the bottom.
-     Zero if not using an external tab bar or if tab bar is vertical.  */
-  int tabbar_top_height, tabbar_bottom_height;
-
-  /* Width of tab bar widget, in pixels.  left_width is used if tab bar
-     at left, right_width if tab bar is at the right.
-     Zero if not using an external tab bar or if tab bar is horizontal.  */
-  int tabbar_left_width, tabbar_right_width;
-
   /* Height of tool bar widget, in pixels.  top_height is used if tool bar
      at top, bottom_height if tool bar is at the bottom.
      Zero if not using an external tool bar or if tool bar is vertical.  */
@@ -582,11 +572,6 @@ struct x_output
   GtkWidget *hbox_widget;
   /* The menubar in this frame.  */
   GtkWidget *menubar_widget;
-  /* The tab bar in this frame  */
-  GtkWidget *tabbar_widget;
-  /* True if tab bar is packed into the hbox widget (i.e. vertical).  */
-  bool_bf tabbar_in_hbox : 1;
-  bool_bf tabbar_is_packed : 1;
   /* The tool bar in this frame  */
   GtkWidget *toolbar_widget;
   /* True if tool bar is packed into the hbox widget (i.e. vertical).  */
@@ -830,15 +815,6 @@ extern void x_mark_frame_dirty (struct frame *f);
 
 #define FRAME_FONT(f) ((f)->output_data.x->font)
 #define FRAME_FONTSET(f) ((f)->output_data.x->fontset)
-#define FRAME_TABBAR_TOP_HEIGHT(f) ((f)->output_data.x->tabbar_top_height)
-#define FRAME_TABBAR_BOTTOM_HEIGHT(f) \
-  ((f)->output_data.x->tabbar_bottom_height)
-#define FRAME_TABBAR_HEIGHT(f) \
-  (FRAME_TABBAR_TOP_HEIGHT (f) + FRAME_TABBAR_BOTTOM_HEIGHT (f))
-#define FRAME_TABBAR_LEFT_WIDTH(f) ((f)->output_data.x->tabbar_left_width)
-#define FRAME_TABBAR_RIGHT_WIDTH(f) ((f)->output_data.x->tabbar_right_width)
-#define FRAME_TABBAR_WIDTH(f) \
-  (FRAME_TABBAR_LEFT_WIDTH (f) + FRAME_TABBAR_RIGHT_WIDTH (f))
 #define FRAME_TOOLBAR_TOP_HEIGHT(f) ((f)->output_data.x->toolbar_top_height)
 #define FRAME_TOOLBAR_BOTTOM_HEIGHT(f) \
   ((f)->output_data.x->toolbar_bottom_height)

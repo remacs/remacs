@@ -2820,7 +2820,6 @@ xic_set_statusarea (struct frame *f)
   area.x = FRAME_PIXEL_WIDTH (f) - area.width - FRAME_INTERNAL_BORDER_WIDTH (f);
   area.y = (FRAME_PIXEL_HEIGHT (f) - area.height
 	    - FRAME_MENUBAR_HEIGHT (f)
-	    - FRAME_TABBAR_TOP_HEIGHT (f)
 	    - FRAME_TOOLBAR_TOP_HEIGHT (f)
             - FRAME_INTERNAL_BORDER_WIDTH (f));
   XFree (needed);
