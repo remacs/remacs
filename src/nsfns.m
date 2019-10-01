@@ -610,6 +610,15 @@ ns_set_menu_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
 }
 
 
+/* tabbar support */
+static void
+ns_set_tab_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
+{
+  /* Currently unimplemented.  */
+  NSTRACE ("ns_set_tab_bar_lines");
+}
+
+
 /* toolbar support */
 static void
 ns_set_tool_bar_lines (struct frame *f, Lisp_Object value, Lisp_Object oldval)
@@ -923,6 +932,7 @@ frame_parm_handler ns_frame_parm_handlers[] =
   gui_set_vertical_scroll_bars, /* generic OK */
   gui_set_horizontal_scroll_bars, /* generic OK */
   gui_set_visibility, /* generic OK */
+  ns_set_tab_bar_lines,
   ns_set_tool_bar_lines,
   0, /* x_set_scroll_bar_foreground, will ignore (not possible on NS) */
   0, /* x_set_scroll_bar_background,  will ignore (not possible on NS) */
@@ -1297,7 +1307,7 @@ DEFUN ("x-create-frame", Fx_create_frame, Sx_create_frame,
                          RES_TYPE_STRING);
 
   parms = get_geometry_from_preferences (dpyinfo, parms);
-  window_prompting = gui_figure_window_size (f, parms, true,
+  window_prompting = gui_figure_window_size (f, parms, false, true,
                                              &x_width, &x_height);
 
   tem = gui_display_get_arg (dpyinfo, parms, Qunsplittable, 0, 0,

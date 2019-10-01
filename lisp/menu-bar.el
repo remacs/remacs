@@ -687,7 +687,7 @@ The selected font will be the default on both the existing and future frames."
 		   ;; side-effect that turning them off via X
 		   ;; resources acts like having customized them, but
 		   ;; that seems harmless.
-		   menu-bar-mode tool-bar-mode))
+		   menu-bar-mode tab-bar-mode tool-bar-mode))
       ;; FIXME ? It's a little annoying that running this command
       ;; always loads cua-base, paren, time, and battery, even if they
       ;; have not been customized in any way.  (Due to custom-load-symbol.)
@@ -1241,6 +1241,14 @@ mail status in mode line"))
                   (:toggle . (menu-bar-positive-p
                               (frame-parameter (menu-bar-frame-for-menubar)
                                                'menu-bar-lines)))))
+
+    (bindings--define-key menu [showhide-tab-bar]
+      '(menu-item "Tab Bar" toggle-tab-bar-mode-from-frame
+                  :help "Turn tab bar on/off"
+                  :button
+                  (:toggle . (menu-bar-positive-p
+                              (frame-parameter (menu-bar-frame-for-menubar)
+                                               'tab-bar-lines)))))
 
     (if (and (boundp 'menu-bar-showhide-tool-bar-menu)
              (keymapp menu-bar-showhide-tool-bar-menu))

@@ -324,20 +324,6 @@ consistency checks that make sure the new code computes the same results
 as the old code.  And once that works well, we can remove the old code
 and old fields.
 
-** Having tabs above a window to switch buffers in it.
-
-** "Perspectives" are named persistent window configurations.  We have
-had the window configuration mechanism in GNU Emacs since the
-beginning but we have never developed a good user interface to take
-advantage of them.  Eclipse's user interface seems to be good.
-
-Perspectives work well even if you do the equivalent of C-x 4 C-f
-because of the distinction between view windows vs file windows.  In
-Emacs this is more or less the "dedicated window" feature, but we have
-never really made it work for this.
-
-Perspectives also need to interact with the tabs.
-
 ** FFI (foreign function interface)
 See eg https://lists.gnu.org/r/emacs-devel/2013-10/msg00246.html
 

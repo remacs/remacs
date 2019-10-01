@@ -947,6 +947,8 @@ static int store_mode_line_string (const char *, Lisp_Object, bool, int, int,
 				   Lisp_Object);
 static const char *decode_mode_spec (struct window *, int, int, Lisp_Object *);
 static void display_menu_bar (struct window *);
+static void display_tab_bar (struct window *);
+static void update_tab_bar (struct frame *, bool);
 static ptrdiff_t display_count_lines (ptrdiff_t, ptrdiff_t, ptrdiff_t,
 				      ptrdiff_t *);
 static void pint2str (register char *, register int, register ptrdiff_t);
@@ -1080,7 +1082,7 @@ window_box_height (struct window *w)
   height -= WINDOW_BOTTOM_DIVIDER_WIDTH (w);
   height -= WINDOW_SCROLL_BAR_AREA_HEIGHT (w);
 
-  /* Note: the code below that determines the mode-line/header-line
+  /* Note: the code below that determines the mode-line/header-line/tab-line
      height is essentially the same as that contained in the macro
      CURRENT_{MODE,HEADER}_LINE_HEIGHT, except that it checks whether
      the appropriate glyph row has its `mode_line_p' flag set,
@@ -1096,6 +1098,18 @@ window_box_height (struct window *w)
 	height -= ml_row->height;
       else
 	height -= estimate_mode_line_height (f, CURRENT_MODE_LINE_FACE_ID (w));
+    }
+
+  if (window_wants_tab_line (w))
+    {
+      struct glyph_row *tl_row
+	= (w->current_matrix && w->current_matrix->rows
+	   ? MATRIX_TAB_LINE_ROW (w->current_matrix)
+	   : 0);
+      if (tl_row && tl_row->mode_line_p)
+	height -= tl_row->height;
+      else
+	height -= estimate_mode_line_height (f, TAB_LINE_FACE_ID);
     }
 
   if (window_wants_header_line (w))
@@ -1210,6 +1224,8 @@ window_box (struct window *w, enum glyph_row_area area, int *box_x,
   if (box_y)
     {
       *box_y = WINDOW_TOP_EDGE_Y (w);
+      if (window_wants_tab_line (w))
+	*box_y += CURRENT_TAB_LINE_HEIGHT (w);
       if (window_wants_header_line (w))
 	*box_y += CURRENT_HEADER_LINE_HEIGHT (w);
     }
@@ -1435,13 +1451,14 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 
   /* Some Lisp hook could call us in the middle of redisplaying this
      very window.  If, by some bad luck, we are retrying redisplay
-     because we found that the mode-line height and/or header-line
+     because we found that the mode-line height and/or tab/header-line
      height needs to be updated, the assignment of mode_line_height
      and header_line_height below could disrupt that, due to the
      selected/nonselected window dance during mode-line display, and
      we could infloop.  Avoid that.  */
   int prev_mode_line_height = w->mode_line_height;
   int prev_header_line_height = w->header_line_height;
+  int prev_tab_line_height = w->tab_line_height;
   /* Compute exact mode line heights.  */
   if (window_wants_mode_line (w))
     {
@@ -1453,6 +1470,18 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 			     NILP (window_mode_line_format)
 			     ? BVAR (current_buffer, mode_line_format)
 			     : window_mode_line_format);
+    }
+
+  if (window_wants_tab_line (w))
+    {
+      Lisp_Object window_tab_line_format
+	= window_parameter (w, Qtab_line_format);
+
+      w->tab_line_height
+	= display_mode_line (w, TAB_LINE_FACE_ID,
+			     NILP (window_tab_line_format)
+			     ? BVAR (current_buffer, tab_line_format)
+			     : window_tab_line_format);
     }
 
   if (window_wants_header_line (w))
@@ -1511,7 +1540,7 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 	 glyph.  */
       int top_x = it.current_x;
       int top_y = it.current_y;
-      int window_top_y = WINDOW_HEADER_LINE_HEIGHT (w);
+      int window_top_y = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
       int bottom_y;
       struct it save_it;
       void *save_it_data = NULL;
@@ -1779,7 +1808,8 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
 			   - it.last_visible_y));
 	  *rowh = max (0, (min (it2.current_y + it2.max_ascent + it2.max_descent,
 				it.last_visible_y)
-			   - max (it2.current_y,
+			   - max (max (it2.current_y,
+				       WINDOW_TAB_LINE_HEIGHT (w)),
 				  WINDOW_HEADER_LINE_HEIGHT (w))));
 	  *vpos = it2.vpos;
 	  if (it2.bidi_it.paragraph_dir == R2L)
@@ -1820,6 +1850,7 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
   /* Restore potentially overwritten values.  */
   w->mode_line_height = prev_mode_line_height;
   w->header_line_height = prev_header_line_height;
+  w->tab_line_height = prev_tab_line_height;
 
   return visible_p;
 }
@@ -2212,7 +2243,7 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
      intentionally draws over other lines.  */
   if (s->for_overlaps)
     {
-      r.y = WINDOW_HEADER_LINE_HEIGHT (s->w);
+      r.y = WINDOW_TAB_LINE_HEIGHT (s->w) + WINDOW_HEADER_LINE_HEIGHT (s->w);
       r.height = window_text_bottom_y (s->w) - r.y;
 
       /* Alas, the above simple strategy does not work for the
@@ -2239,7 +2270,7 @@ get_glyph_string_clip_rects (struct glyph_string *s, NativeRectangle *rects, int
 	 partially visible lines at the top of a window.  */
       if (!s->row->full_width_p
 	  && MATRIX_ROW_PARTIALLY_VISIBLE_AT_TOP_P (s->w, s->row))
-	r.y = WINDOW_HEADER_LINE_HEIGHT (s->w);
+	r.y = WINDOW_TAB_LINE_HEIGHT (s->w) + WINDOW_HEADER_LINE_HEIGHT (s->w);
       else
 	r.y = max (0, s->row->y);
     }
@@ -2416,7 +2447,7 @@ get_phys_cursor_geometry (struct window *w, struct glyph_row *row,
   h = min (h, row->height);
   h0 = min (h0, ascent + glyph->descent);
 
-  y0 = WINDOW_HEADER_LINE_HEIGHT (w);
+  y0 = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
   if (y < y0)
     {
       h = max (h - (y0 - y) + 1, h0);
@@ -2460,7 +2491,7 @@ remember_mouse_glyph (struct frame *f, int gx, int gy, NativeRectangle *rect)
       goto virtual_glyph;
     }
   else if (!f->glyphs_initialized_p
-	   || (window = window_from_coordinates (f, gx, gy, &part, false),
+	   || (window = window_from_coordinates (f, gx, gy, &part, false, false),
 	       NILP (window)))
     {
       width = FRAME_SMALLEST_CHAR_WIDTH (f);
@@ -2495,11 +2526,14 @@ remember_mouse_glyph (struct frame *f, int gx, int gy, NativeRectangle *rect)
       area = RIGHT_MARGIN_AREA;
       goto text_glyph;
 
+    case ON_TAB_LINE:
     case ON_HEADER_LINE:
     case ON_MODE_LINE:
-      gr = (part == ON_HEADER_LINE
-	    ? MATRIX_HEADER_LINE_ROW (w->current_matrix)
-	    : MATRIX_MODE_LINE_ROW (w->current_matrix));
+      gr = (part == ON_TAB_LINE
+	    ? MATRIX_TAB_LINE_ROW (w->current_matrix)
+	    : (part == ON_HEADER_LINE
+	       ? MATRIX_HEADER_LINE_ROW (w->current_matrix)
+	       : MATRIX_MODE_LINE_ROW (w->current_matrix)));
       gy = gr->y;
       area = TEXT_AREA;
       goto text_glyph_row_found;
@@ -2545,7 +2579,8 @@ remember_mouse_glyph (struct frame *f, int gx, int gy, NativeRectangle *rect)
 	      gx += (x / width) * width;
 	    }
 
-	  if (part != ON_MODE_LINE && part != ON_HEADER_LINE)
+	  if (part != ON_MODE_LINE && part != ON_HEADER_LINE
+	      && part != ON_TAB_LINE)
 	    {
 	      gx += window_box_left_offset (w, area);
 	      /* Don't expand over the modeline to make sure the vertical
@@ -2560,7 +2595,8 @@ remember_mouse_glyph (struct frame *f, int gx, int gy, NativeRectangle *rect)
 	  gx = (x / width) * width;
 	  y -= gy;
 	  gy += (y / height) * height;
-	  if (part != ON_MODE_LINE && part != ON_HEADER_LINE)
+	  if (part != ON_MODE_LINE && part != ON_HEADER_LINE
+	      && part != ON_TAB_LINE)
 	    /* See comment above.  */
 	    height = min (height,
 			  max (0, WINDOW_BOX_HEIGHT_NO_MODE_LINE (w) - gy));
@@ -2920,8 +2956,14 @@ init_iterator (struct it *it, struct window *w,
       if (base_face_id == MODE_LINE_FACE_ID
 	  || base_face_id == MODE_LINE_INACTIVE_FACE_ID)
 	row = MATRIX_MODE_LINE_ROW (w->desired_matrix);
+      else if (base_face_id == TAB_LINE_FACE_ID)
+	row = MATRIX_TAB_LINE_ROW (w->desired_matrix);
       else if (base_face_id == HEADER_LINE_FACE_ID)
-	row = MATRIX_HEADER_LINE_ROW (w->desired_matrix);
+	{
+	  /* Header line row depends on whether tab line is enabled.  */
+	  w->desired_matrix->tab_line_p = window_wants_tab_line (w);
+	  row = MATRIX_HEADER_LINE_ROW (w->desired_matrix);
+	}
     }
 
   /* Clear IT, and set it->object and other IT's Lisp objects to Qnil.
@@ -3097,8 +3139,9 @@ init_iterator (struct it *it, struct window *w,
 	    it->last_visible_x -= it->continuation_pixel_width;
 	}
 
+      it->tab_line_p = window_wants_tab_line (w);
       it->header_line_p = window_wants_header_line (w);
-      body_height = WINDOW_HEADER_LINE_HEIGHT (w);
+      body_height = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
       it->current_y =  body_height + w->vscroll;
     }
 
@@ -3201,7 +3244,7 @@ void
 start_display (struct it *it, struct window *w, struct text_pos pos)
 {
   struct glyph_row *row;
-  bool first_vpos = window_wants_header_line (w);
+  int first_vpos = window_wants_tab_line (w) + window_wants_header_line (w);
 
   row = w->desired_matrix->rows + first_vpos;
   init_iterator (it, w, CHARPOS (pos), BYTEPOS (pos), row, DEFAULT_FACE_ID);
@@ -10413,10 +10456,15 @@ include the height of both, if present, in the return value.  */)
   /* Subtract height of header-line which was counted automatically by
      start_display.  */
   y = it.current_y + it.max_ascent + it.max_descent
-    - WINDOW_HEADER_LINE_HEIGHT (w);
+    - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w);
   /* Don't return more than Y-LIMIT.  */
   if (y > max_y)
     y = max_y;
+
+  if (EQ (mode_and_header_line, Qtab_line)
+      || EQ (mode_and_header_line, Qt))
+    /* Re-add height of tab-line as requested.  */
+    y = y + WINDOW_TAB_LINE_HEIGHT (w);
 
   if (EQ (mode_and_header_line, Qheader_line)
       || EQ (mode_and_header_line, Qt))
@@ -12363,6 +12411,7 @@ prepare_menu_bars (void)
 	    continue;
 
 	  menu_bar_hooks_run = update_menu_bar (f, false, menu_bar_hooks_run);
+	  update_tab_bar (f, false);
 #ifdef HAVE_WINDOW_SYSTEM
 	  update_tool_bar (f, false);
 #endif
@@ -12374,6 +12423,7 @@ prepare_menu_bars (void)
     {
       struct frame *sf = SELECTED_FRAME ();
       update_menu_bar (sf, true, false);
+      update_tab_bar (sf, true);
 #ifdef HAVE_WINDOW_SYSTEM
       update_tool_bar (sf, true);
 #endif
@@ -12490,8 +12540,10 @@ update_menu_bar (struct frame *f, bool save_match_data, bool hooks_run)
   return hooks_run;
 }
 
+
+
 /***********************************************************************
-			       Tool-bars
+			       Tab-bars
  ***********************************************************************/
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -12509,6 +12561,871 @@ fast_set_selected_frame (Lisp_Object frame)
       selected_window = XFRAME (frame)->selected_window;
     }
 }
+
+#endif /* HAVE_WINDOW_SYSTEM */
+
+/* Update the tab-bar item list for frame F.  This has to be done
+   before we start to fill in any display lines.  Called from
+   prepare_menu_bars.  If SAVE_MATCH_DATA, we must save
+   and restore it here.  */
+
+static void
+update_tab_bar (struct frame *f, bool save_match_data)
+{
+  bool do_update = false;
+
+#ifdef HAVE_WINDOW_SYSTEM
+  if (FRAME_WINDOW_P (f) && WINDOWP (f->tab_bar_window)) {
+    if (WINDOW_TOTAL_LINES (XWINDOW (f->tab_bar_window)) > 0)
+      do_update = true;
+  }
+  else
+#endif
+  if (FRAME_TAB_BAR_LINES (f) > 0)
+    do_update = true;
+
+  if (do_update)
+    {
+      Lisp_Object window;
+      struct window *w;
+
+      window = FRAME_SELECTED_WINDOW (f);
+      w = XWINDOW (window);
+
+      /* If the user has switched buffers or windows, we need to
+	 recompute to reflect the new bindings.  But we'll
+	 recompute when update_mode_lines is set too; that means
+	 that people can use force-mode-line-update to request
+	 that the menu bar be recomputed.  The adverse effect on
+	 the rest of the redisplay algorithm is about the same as
+	 windows_or_buffers_changed anyway.  */
+      if (windows_or_buffers_changed
+	  || w->update_mode_line
+	  || update_mode_lines
+	  || window_buffer_changed (w))
+	{
+	  struct buffer *prev = current_buffer;
+	  ptrdiff_t count = SPECPDL_INDEX ();
+	  Lisp_Object new_tab_bar;
+          int new_n_tab_bar;
+
+	  /* Set current_buffer to the buffer of the selected
+	     window of the frame, so that we get the right local
+	     keymaps.  */
+	  set_buffer_internal_1 (XBUFFER (w->contents));
+
+	  /* Save match data, if we must.  */
+	  if (save_match_data)
+	    record_unwind_save_match_data ();
+
+	  /* Make sure that we don't accidentally use bogus keymaps.  */
+	  if (NILP (Voverriding_local_map_menu_flag))
+	    {
+	      specbind (Qoverriding_terminal_local_map, Qnil);
+	      specbind (Qoverriding_local_map, Qnil);
+	    }
+
+	  /* We must temporarily set the selected frame to this frame
+	     before calling tab_bar_items, because the calculation of
+	     the tab-bar keymap uses the selected frame (see
+	     `tab-bar-make-keymap' in tab-bar.el).  */
+	  eassert (EQ (selected_window,
+		       /* Since we only explicitly preserve selected_frame,
+			  check that selected_window would be redundant.  */
+		       XFRAME (selected_frame)->selected_window));
+#ifdef HAVE_WINDOW_SYSTEM
+	  Lisp_Object frame;
+	  record_unwind_protect (fast_set_selected_frame, selected_frame);
+	  XSETFRAME (frame, f);
+	  fast_set_selected_frame (frame);
+#endif
+
+	  /* Build desired tab-bar items from keymaps.  */
+          new_tab_bar
+	    = tab_bar_items (Fcopy_sequence (f->tab_bar_items),
+			      &new_n_tab_bar);
+
+	  /* Redisplay the tab-bar if we changed it.  */
+	  if (new_n_tab_bar != f->n_tab_bar_items
+	      || NILP (Fequal (new_tab_bar, f->tab_bar_items)))
+            {
+              /* Redisplay that happens asynchronously due to an expose event
+                 may access f->tab_bar_items.  Make sure we update both
+                 variables within BLOCK_INPUT so no such event interrupts.  */
+              block_input ();
+              fset_tab_bar_items (f, new_tab_bar);
+              f->n_tab_bar_items = new_n_tab_bar;
+              w->update_mode_line = true;
+              unblock_input ();
+            }
+
+	  unbind_to (count, Qnil);
+	  set_buffer_internal_1 (prev);
+	}
+    }
+}
+
+/* Redisplay the tab bar in the frame for window W.
+
+   The tab bar of X frames that don't have X toolkit support is
+   displayed in a special window W->frame->tab_bar_window.
+
+   The tab bar of terminal frames is treated specially as far as
+   glyph matrices are concerned.  Tab bar lines are not part of
+   windows, so the update is done directly on the frame matrix rows
+   for the tab bar.  */
+
+static void
+display_tab_bar (struct window *w)
+{
+  struct frame *f = XFRAME (WINDOW_FRAME (w));
+  struct it it;
+  Lisp_Object items;
+  int i;
+
+  /* Don't do all this for graphical frames.  */
+#ifdef HAVE_NTGUI
+  if (FRAME_W32_P (f))
+    return;
+#endif
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+  if (FRAME_X_P (f))
+    return;
+#endif
+
+#ifdef HAVE_NS
+  if (FRAME_NS_P (f))
+    return;
+#endif /* HAVE_NS */
+
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
+  eassert (!FRAME_WINDOW_P (f));
+  init_iterator (&it, w, -1, -1, f->desired_matrix->rows
+                 + (FRAME_MENU_BAR_LINES (f) > 0 ? 1 : 0),
+                 TAB_BAR_FACE_ID);
+  it.first_visible_x = 0;
+  it.last_visible_x = FRAME_PIXEL_WIDTH (f);
+#elif defined (HAVE_X_WINDOWS) /* X without toolkit.  */
+  if (FRAME_WINDOW_P (f))
+    {
+      /* Tab bar lines are displayed in the desired matrix of the
+	 dummy window tab_bar_window.  */
+      struct window *tab_w;
+      tab_w = XWINDOW (f->tab_bar_window);
+      init_iterator (&it, tab_w, -1, -1, tab_w->desired_matrix->rows,
+		     TAB_BAR_FACE_ID);
+      it.first_visible_x = 0;
+      it.last_visible_x = FRAME_PIXEL_WIDTH (f);
+    }
+  else
+#endif /* not USE_X_TOOLKIT and not USE_GTK */
+    {
+      /* This is a TTY frame, i.e. character hpos/vpos are used as
+	 pixel x/y.  */
+      init_iterator (&it, w, -1, -1, f->desired_matrix->rows
+                     + (FRAME_MENU_BAR_LINES (f) > 0 ? 1 : 0),
+		     TAB_BAR_FACE_ID);
+      it.first_visible_x = 0;
+      it.last_visible_x = FRAME_COLS (f);
+    }
+
+  /* FIXME: This should be controlled by a user option.  See the
+     comments in redisplay_tool_bar and display_mode_line about
+     this.  */
+  it.paragraph_embedding = L2R;
+
+  /* Clear all rows of the tab bar.  */
+  for (i = 0; i < FRAME_TAB_BAR_LINES (f); ++i)
+    {
+      struct glyph_row *row = it.glyph_row + i;
+      clear_glyph_row (row);
+      row->enabled_p = true;
+      row->full_width_p = true;
+      row->reversed_p = false;
+    }
+
+  /* Display all items of the tab bar.  */
+  items = it.f->tab_bar_items;
+  for (i = 0; i < it.f->n_tab_bar_items; ++i)
+    {
+      Lisp_Object string;
+
+      /* Stop at nil string.  */
+      string = AREF (items, i * TAB_BAR_ITEM_NSLOTS + TAB_BAR_ITEM_CAPTION);
+      if (NILP (string))
+	break;
+
+      if (it.current_x < it.last_visible_x)
+	display_string (NULL, string, Qnil, 0, 0, &it,
+			SCHARS (string), 0, 0, STRING_MULTIBYTE (string));
+    }
+
+  /* Fill out the line with spaces.  */
+  if (it.current_x < it.last_visible_x)
+    display_string ("", Qnil, Qnil, 0, 0, &it, -1, 0, 0, -1);
+
+  /* Compute the total height of the lines.  */
+  compute_line_metrics (&it);
+}
+
+#ifdef HAVE_WINDOW_SYSTEM
+
+/* Set F->desired_tab_bar_string to a Lisp string representing frame
+   F's desired tab-bar contents.  F->tab_bar_items must have
+   been set up previously by calling prepare_menu_bars.  */
+
+static void
+build_desired_tab_bar_string (struct frame *f)
+{
+  int i;
+  Lisp_Object caption;
+
+  caption = Qnil;
+
+  /* Prepare F->desired_tab_bar_string.  Make a new string.  */
+  fset_desired_tab_bar_string (f, build_string (""));
+
+  /* Put a `display' property on the string for the captions to display,
+     put a `menu_item' property on tab-bar items with a value that
+     is the index of the item in F's tab-bar item vector.  */
+  for (i = 0; i < f->n_tab_bar_items; ++i)
+    {
+#define PROP(IDX) \
+  AREF (f->tab_bar_items, i * TAB_BAR_ITEM_NSLOTS + (IDX))
+
+      caption = Fcopy_sequence (PROP (TAB_BAR_ITEM_CAPTION));
+
+      /* Put a `display' text property on the string for the caption to
+	 display.  Put a `menu-item' property on the string that gives
+	 the start of this item's properties in the tab-bar items
+	 vector.  */
+      AUTO_LIST2 (props, Qmenu_item, make_fixnum (i * TAB_BAR_ITEM_NSLOTS));
+
+      Fadd_text_properties (make_fixnum (0), make_fixnum (SCHARS (caption)),
+			    props, caption);
+
+      f->desired_tab_bar_string =
+	concat2 (f->desired_tab_bar_string, caption);
+
+#undef PROP
+    }
+}
+
+
+/* Display one line of the tab-bar of frame IT->f.
+
+   HEIGHT specifies the desired height of the tab-bar line.
+   If the actual height of the glyph row is less than HEIGHT, the
+   row's height is increased to HEIGHT, and the icons are centered
+   vertically in the new height.
+
+   If HEIGHT is -1, we are counting needed tab-bar lines, so don't
+   count a final empty row in case the tab-bar width exactly matches
+   the window width.
+*/
+
+static void
+display_tab_bar_line (struct it *it, int height)
+{
+  struct glyph_row *row = it->glyph_row;
+  int max_x = it->last_visible_x;
+  struct glyph *last;
+
+  /* Don't extend on a previously drawn tab bar items (Bug#16058).  */
+  clear_glyph_row (row);
+  row->enabled_p = true;
+  row->y = it->current_y;
+
+  /* Note that this isn't made use of if the face hasn't a box,
+     so there's no need to check the face here.  */
+  it->start_of_box_run_p = true;
+
+  while (it->current_x < max_x)
+    {
+      int x, n_glyphs_before, i, nglyphs;
+      struct it it_before;
+
+      /* Get the next display element.  */
+      if (!get_next_display_element (it))
+	{
+	  /* Don't count empty row if we are counting needed tab-bar lines.  */
+	  if (height < 0 && !it->hpos)
+	    return;
+	  break;
+	}
+
+      /* Produce glyphs.  */
+      n_glyphs_before = row->used[TEXT_AREA];
+      it_before = *it;
+
+      PRODUCE_GLYPHS (it);
+
+      nglyphs = row->used[TEXT_AREA] - n_glyphs_before;
+      i = 0;
+      x = it_before.current_x;
+      while (i < nglyphs)
+	{
+	  struct glyph *glyph = row->glyphs[TEXT_AREA] + n_glyphs_before + i;
+
+	  if (x + glyph->pixel_width > max_x)
+	    {
+	      /* Glyph doesn't fit on line.  Backtrack.  */
+	      row->used[TEXT_AREA] = n_glyphs_before;
+	      *it = it_before;
+	      /* If this is the only glyph on this line, it will never fit on the
+		 tab-bar, so skip it.  But ensure there is at least one glyph,
+		 so we don't accidentally disable the tab-bar.  */
+	      if (n_glyphs_before == 0
+		  && (it->vpos > 0 || IT_STRING_CHARPOS (*it) < it->end_charpos-1))
+		break;
+	      goto out;
+	    }
+
+	  ++it->hpos;
+	  x += glyph->pixel_width;
+	  ++i;
+	}
+
+      /* Stop at line end.  */
+      if (ITERATOR_AT_END_OF_LINE_P (it))
+	break;
+
+      set_iterator_to_next (it, true);
+    }
+
+ out:;
+
+  row->displays_text_p = row->used[TEXT_AREA] != 0;
+
+  /* Use default face for the border below the tab bar.
+
+     FIXME: When auto-resize-tab-bars is grow-only, there is
+     no additional border below the possibly empty tab-bar lines.
+     So to make the extra empty lines look "normal", we have to
+     use the tab-bar face for the border too.  */
+  if (!MATRIX_ROW_DISPLAYS_TEXT_P (row)
+      && !EQ (Vauto_resize_tab_bars, Qgrow_only))
+    it->face_id = DEFAULT_FACE_ID;
+
+  extend_face_to_end_of_line (it);
+  last = row->glyphs[TEXT_AREA] + row->used[TEXT_AREA] - 1;
+  last->right_box_line_p = true;
+  if (last == row->glyphs[TEXT_AREA])
+    last->left_box_line_p = true;
+
+  /* Make line the desired height and center it vertically.  */
+  if ((height -= it->max_ascent + it->max_descent) > 0)
+    {
+      /* Don't add more than one line height.  */
+      height %= FRAME_LINE_HEIGHT (it->f);
+      it->max_ascent += height / 2;
+      it->max_descent += (height + 1) / 2;
+    }
+
+  compute_line_metrics (it);
+
+  /* If line is empty, make it occupy the rest of the tab-bar.  */
+  if (!MATRIX_ROW_DISPLAYS_TEXT_P (row))
+    {
+      row->height = row->phys_height = it->last_visible_y - row->y;
+      row->visible_height = row->height;
+      row->ascent = row->phys_ascent = 0;
+      row->extra_line_spacing = 0;
+    }
+
+  row->full_width_p = true;
+  row->continued_p = false;
+  row->truncated_on_left_p = false;
+  row->truncated_on_right_p = false;
+
+  it->current_x = it->hpos = 0;
+  it->current_y += row->height;
+  ++it->vpos;
+  ++it->glyph_row;
+}
+
+
+/* Value is the number of pixels needed to make all tab-bar items of
+   frame F visible.  The actual number of glyph rows needed is
+   returned in *N_ROWS if non-NULL.  */
+static int
+tab_bar_height (struct frame *f, int *n_rows, bool pixelwise)
+{
+  struct window *w = XWINDOW (f->tab_bar_window);
+  struct it it;
+  /* tab_bar_height is called from redisplay_tab_bar after building
+     the desired matrix, so use (unused) mode-line row as temporary row to
+     avoid destroying the first tab-bar row.  */
+  struct glyph_row *temp_row = MATRIX_MODE_LINE_ROW (w->desired_matrix);
+
+  /* Initialize an iterator for iteration over
+     F->desired_tab_bar_string in the tab-bar window of frame F.  */
+  init_iterator (&it, w, -1, -1, temp_row, TAB_BAR_FACE_ID);
+  temp_row->reversed_p = false;
+  it.first_visible_x = 0;
+  it.last_visible_x = WINDOW_PIXEL_WIDTH (w);
+  reseat_to_string (&it, NULL, f->desired_tab_bar_string,
+                    0, 0, 0, STRING_MULTIBYTE (f->desired_tab_bar_string));
+  it.paragraph_embedding = L2R;
+
+  while (!ITERATOR_AT_END_P (&it))
+    {
+      clear_glyph_row (temp_row);
+      it.glyph_row = temp_row;
+      display_tab_bar_line (&it, -1);
+    }
+  clear_glyph_row (temp_row);
+
+  /* f->n_tab_bar_rows == 0 means "unknown"; -1 means no tab-bar.  */
+  if (n_rows)
+    *n_rows = it.vpos > 0 ? it.vpos : -1;
+
+  if (pixelwise)
+    return it.current_y;
+  else
+    return (it.current_y + FRAME_LINE_HEIGHT (f) - 1) / FRAME_LINE_HEIGHT (f);
+}
+
+DEFUN ("tab-bar-height", Ftab_bar_height, Stab_bar_height,
+       0, 2, 0,
+       doc: /* Return the number of lines occupied by the tab bar of FRAME.
+If FRAME is nil or omitted, use the selected frame.  Optional argument
+PIXELWISE non-nil means return the height of the tab bar in pixels.  */)
+  (Lisp_Object frame, Lisp_Object pixelwise)
+{
+  int height = 0;
+
+  struct frame *f = decode_any_frame (frame);
+
+  if (WINDOWP (f->tab_bar_window)
+      && WINDOW_PIXEL_HEIGHT (XWINDOW (f->tab_bar_window)) > 0)
+    {
+      update_tab_bar (f, true);
+      if (f->n_tab_bar_items)
+	{
+	  build_desired_tab_bar_string (f);
+	  height = tab_bar_height (f, NULL, !NILP (pixelwise));
+	}
+    }
+
+  return make_fixnum (height);
+}
+
+
+/* Display the tab-bar of frame F.  Value is true if tab-bar's
+   height should be changed.  */
+static bool
+redisplay_tab_bar (struct frame *f)
+{
+  f->tab_bar_redisplayed = true;
+
+  struct window *w;
+  struct it it;
+  struct glyph_row *row;
+
+  /* If frame hasn't a tab-bar window or if it is zero-height, don't
+     do anything.  This means you must start with tab-bar-lines
+     non-zero to get the auto-sizing effect.  Or in other words, you
+     can turn off tab-bars by specifying tab-bar-lines zero.  */
+  if (!WINDOWP (f->tab_bar_window)
+      || (w = XWINDOW (f->tab_bar_window),
+          WINDOW_TOTAL_LINES (w) == 0))
+    return false;
+
+  /* Set up an iterator for the tab-bar window.  */
+  init_iterator (&it, w, -1, -1, w->desired_matrix->rows, TAB_BAR_FACE_ID);
+  it.first_visible_x = 0;
+  it.last_visible_x = WINDOW_PIXEL_WIDTH (w);
+  row = it.glyph_row;
+  row->reversed_p = false;
+
+  /* Build a string that represents the contents of the tab-bar.  */
+  build_desired_tab_bar_string (f);
+  reseat_to_string (&it, NULL, f->desired_tab_bar_string, 0, 0, 0,
+                    STRING_MULTIBYTE (f->desired_tab_bar_string));
+  /* FIXME: This should be controlled by a user option.  But it
+     doesn't make sense to have an R2L tab bar if the menu bar cannot
+     be drawn also R2L, and making the menu bar R2L is tricky due
+     tabkit-specific code that implements it.  If an R2L tab bar is
+     ever supported, display_tab_bar_line should also be augmented to
+     call unproduce_glyphs like display_line and display_string
+     do.  */
+  it.paragraph_embedding = L2R;
+
+  if (f->n_tab_bar_rows == 0)
+    {
+      int new_height = tab_bar_height (f, &f->n_tab_bar_rows, true);
+
+      if (new_height != WINDOW_PIXEL_HEIGHT (w))
+	{
+          if (FRAME_TERMINAL (f)->change_tab_bar_height_hook)
+            FRAME_TERMINAL (f)->change_tab_bar_height_hook (f, new_height);
+	  frame_default_tab_bar_height = new_height;
+	  /* Always do that now.  */
+	  clear_glyph_matrix (w->desired_matrix);
+	  f->fonts_changed = true;
+	  return true;
+	}
+    }
+
+  /* Display as many lines as needed to display all tab-bar items.  */
+
+  if (f->n_tab_bar_rows > 0)
+    {
+      int border, rows, height, extra;
+
+      if (TYPE_RANGED_FIXNUMP (int, Vtab_bar_border))
+	border = XFIXNUM (Vtab_bar_border);
+      else if (EQ (Vtab_bar_border, Qinternal_border_width))
+	border = FRAME_INTERNAL_BORDER_WIDTH (f);
+      else if (EQ (Vtab_bar_border, Qborder_width))
+	border = f->border_width;
+      else
+	border = 0;
+      if (border < 0)
+	border = 0;
+
+      rows = f->n_tab_bar_rows;
+      height = max (1, (it.last_visible_y - border) / rows);
+      extra = it.last_visible_y - border - height * rows;
+
+      while (it.current_y < it.last_visible_y)
+	{
+	  int h = 0;
+	  if (extra > 0 && rows-- > 0)
+	    {
+	      h = (extra + rows - 1) / rows;
+	      extra -= h;
+	    }
+	  display_tab_bar_line (&it, height + h);
+	}
+    }
+  else
+    {
+      while (it.current_y < it.last_visible_y)
+	display_tab_bar_line (&it, 0);
+    }
+
+  /* It doesn't make much sense to try scrolling in the tab-bar
+     window, so don't do it.  */
+  w->desired_matrix->no_scrolling_p = true;
+  w->must_be_updated_p = true;
+
+  if (!NILP (Vauto_resize_tab_bars))
+    {
+      bool change_height_p = true;
+
+      /* If we couldn't display everything, change the tab-bar's
+	 height if there is room for more.  */
+      if (IT_STRING_CHARPOS (it) < it.end_charpos)
+	change_height_p = true;
+
+      /* We subtract 1 because display_tab_bar_line advances the
+	 glyph_row pointer before returning to its caller.  We want to
+	 examine the last glyph row produced by
+	 display_tab_bar_line.  */
+      row = it.glyph_row - 1;
+
+      /* If there are blank lines at the end, except for a partially
+	 visible blank line at the end that is smaller than
+	 FRAME_LINE_HEIGHT, change the tab-bar's height.  */
+      if (!MATRIX_ROW_DISPLAYS_TEXT_P (row)
+	  && row->height >= FRAME_LINE_HEIGHT (f))
+	change_height_p = true;
+
+      /* If row displays tab-bar items, but is partially visible,
+	 change the tab-bar's height.  */
+      if (MATRIX_ROW_DISPLAYS_TEXT_P (row)
+	  && MATRIX_ROW_BOTTOM_Y (row) > it.last_visible_y)
+	change_height_p = true;
+
+      /* Resize windows as needed by changing the `tab-bar-lines'
+	 frame parameter.  */
+      if (change_height_p)
+	{
+	  int nrows;
+	  int new_height = tab_bar_height (f, &nrows, true);
+
+	  change_height_p = ((EQ (Vauto_resize_tab_bars, Qgrow_only)
+			      && !f->minimize_tab_bar_window_p)
+			     ? (new_height > WINDOW_PIXEL_HEIGHT (w))
+			     : (new_height != WINDOW_PIXEL_HEIGHT (w)));
+	  f->minimize_tab_bar_window_p = false;
+
+	  if (change_height_p)
+	    {
+              if (FRAME_TERMINAL (f)->change_tab_bar_height_hook)
+                FRAME_TERMINAL (f)->change_tab_bar_height_hook (f, new_height);
+	      frame_default_tab_bar_height = new_height;
+	      clear_glyph_matrix (w->desired_matrix);
+	      f->n_tab_bar_rows = nrows;
+	      f->fonts_changed = true;
+
+	      return true;
+	    }
+	}
+    }
+
+  f->minimize_tab_bar_window_p = false;
+  return false;
+}
+
+/* Get information about the tab-bar item which is displayed in GLYPH
+   on frame F.  Return in *PROP_IDX the index where tab-bar item
+   properties start in F->tab_bar_items.  Value is false if
+   GLYPH doesn't display a tab-bar item.  */
+
+static bool
+tab_bar_item_info (struct frame *f, struct glyph *glyph, int *prop_idx, bool *close_p)
+{
+  Lisp_Object prop;
+  int charpos;
+
+  /* This function can be called asynchronously, which means we must
+     exclude any possibility that Fget_text_property signals an
+     error.  */
+  charpos = min (SCHARS (f->current_tab_bar_string), glyph->charpos);
+  charpos = max (0, charpos);
+
+  /* Get the text property `menu-item' at pos. The value of that
+     property is the start index of this item's properties in
+     F->tab_bar_items.  */
+  prop = Fget_text_property (make_fixnum (charpos),
+			     Qmenu_item, f->current_tab_bar_string);
+  if (! FIXNUMP (prop))
+    return false;
+  *prop_idx = XFIXNUM (prop);
+
+  *close_p = !NILP (Fget_text_property (make_fixnum (charpos),
+                                        Qclose_tab,
+                                        f->current_tab_bar_string));
+
+  return true;
+}
+
+
+/* Get information about the tab-bar item at position X/Y on frame F.
+   Return in *GLYPH a pointer to the glyph of the tab-bar item in
+   the current matrix of the tab-bar window of F, or NULL if not
+   on a tab-bar item.  Return in *PROP_IDX the index of the tab-bar
+   item in F->tab_bar_items.  Value is
+
+   -1	if X/Y is not on a tab-bar item
+   0	if X/Y is on the same item that was highlighted before.
+   1	otherwise.  */
+
+static int
+get_tab_bar_item (struct frame *f, int x, int y, struct glyph **glyph,
+		   int *hpos, int *vpos, int *prop_idx, bool *close_p)
+{
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
+  struct window *w = XWINDOW (f->tab_bar_window);
+  int area;
+
+  /* Find the glyph under X/Y.  */
+  *glyph = x_y_to_hpos_vpos (w, x, y, hpos, vpos, 0, 0, &area);
+  if (*glyph == NULL)
+    return -1;
+
+  /* Get the start of this tab-bar item's properties in
+     f->tab_bar_items.  */
+  if (!tab_bar_item_info (f, *glyph, prop_idx, close_p))
+    return -1;
+
+  /* Is mouse on the highlighted item?  */
+  if (EQ (f->tab_bar_window, hlinfo->mouse_face_window)
+      && *vpos >= hlinfo->mouse_face_beg_row
+      && *vpos <= hlinfo->mouse_face_end_row
+      && (*vpos > hlinfo->mouse_face_beg_row
+	  || *hpos >= hlinfo->mouse_face_beg_col)
+      && (*vpos < hlinfo->mouse_face_end_row
+	  || *hpos < hlinfo->mouse_face_end_col
+	  || hlinfo->mouse_face_past_end))
+    return 0;
+
+  return 1;
+}
+
+
+/* EXPORT:
+   Handle mouse button event on the tab-bar of frame F, at
+   frame-relative coordinates X/Y.  DOWN_P is true for a button press,
+   false for button release.  MODIFIERS is event modifiers for button
+   release.  */
+
+void
+handle_tab_bar_click (struct frame *f, int x, int y, bool down_p,
+		       int modifiers)
+{
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
+  struct window *w = XWINDOW (f->tab_bar_window);
+  int hpos, vpos, prop_idx;
+  bool close_p;
+  struct glyph *glyph;
+  Lisp_Object enabled_p;
+  int ts;
+
+  /* If not on the highlighted tab-bar item, and mouse-highlight is
+     non-nil, return.  This is so we generate the tab-bar button
+     click only when the mouse button is released on the same item as
+     where it was pressed.  However, when mouse-highlight is disabled,
+     generate the click when the button is released regardless of the
+     highlight, since tab-bar items are not highlighted in that
+     case.  */
+  frame_to_window_pixel_xy (w, &x, &y);
+  ts = get_tab_bar_item (f, x, y, &glyph, &hpos, &vpos, &prop_idx, &close_p);
+  if (ts == -1
+      || (ts != 0 && !NILP (Vmouse_highlight)))
+    return;
+
+  /* When mouse-highlight is off, generate the click for the item
+     where the button was pressed, disregarding where it was
+     released.  */
+  if (NILP (Vmouse_highlight) && !down_p)
+    prop_idx = f->last_tab_bar_item;
+
+  /* If item is disabled, do nothing.  */
+  enabled_p = AREF (f->tab_bar_items, prop_idx + TAB_BAR_ITEM_ENABLED_P);
+  if (NILP (enabled_p))
+    return;
+
+  if (down_p)
+    {
+      /* Show item in pressed state.  */
+      if (!NILP (Vmouse_highlight))
+	show_mouse_face (hlinfo, DRAW_IMAGE_SUNKEN);
+      f->last_tab_bar_item = prop_idx;
+    }
+  else
+    {
+      Lisp_Object key, frame;
+      struct input_event event;
+      EVENT_INIT (event);
+
+      /* Show item in released state.  */
+      if (!NILP (Vmouse_highlight))
+	show_mouse_face (hlinfo, DRAW_IMAGE_RAISED);
+
+      key = AREF (f->tab_bar_items, prop_idx + TAB_BAR_ITEM_KEY);
+
+      XSETFRAME (frame, f);
+      event.kind = TAB_BAR_EVENT;
+      event.frame_or_window = frame;
+      event.arg = frame;
+      kbd_buffer_store_event (&event);
+
+      event.kind = TAB_BAR_EVENT;
+      event.frame_or_window = frame;
+      event.arg = key;
+      event.modifiers = close_p ? ctrl_modifier | modifiers : modifiers;
+      kbd_buffer_store_event (&event);
+      f->last_tab_bar_item = -1;
+    }
+}
+
+
+/* Possibly highlight a tab-bar item on frame F when mouse moves to
+   tab-bar window-relative coordinates X/Y.  Called from
+   note_mouse_highlight.  */
+
+static void
+note_tab_bar_highlight (struct frame *f, int x, int y)
+{
+  Lisp_Object window = f->tab_bar_window;
+  struct window *w = XWINDOW (window);
+  Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
+  Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
+  int hpos, vpos;
+  struct glyph *glyph;
+  struct glyph_row *row;
+  int i;
+  Lisp_Object enabled_p;
+  int prop_idx;
+  bool close_p;
+  enum draw_glyphs_face draw = DRAW_IMAGE_RAISED;
+  bool mouse_down_p;
+  int rc;
+
+  /* Function note_mouse_highlight is called with negative X/Y
+     values when mouse moves outside of the frame.  */
+  if (x <= 0 || y <= 0)
+    {
+      clear_mouse_face (hlinfo);
+      return;
+    }
+
+  rc = get_tab_bar_item (f, x, y, &glyph, &hpos, &vpos, &prop_idx, &close_p);
+  if (rc < 0)
+    {
+      /* Not on tab-bar item.  */
+      clear_mouse_face (hlinfo);
+      return;
+    }
+  else if (rc == 0)
+    /* On same tab-bar item as before.  */
+    goto set_help_echo;
+
+  clear_mouse_face (hlinfo);
+
+#ifndef HAVE_NS
+  /* Mouse is down, but on different tab-bar item?  */
+  mouse_down_p = (gui_mouse_grabbed (dpyinfo)
+		  && f == dpyinfo->last_mouse_frame);
+
+  if (mouse_down_p && f->last_tab_bar_item != prop_idx)
+    return;
+
+  draw = mouse_down_p ? DRAW_IMAGE_SUNKEN : DRAW_IMAGE_RAISED;
+#else
+  draw = DRAW_IMAGE_RAISED;
+#endif /* HAVE_NS */
+
+  /* If tab-bar item is not enabled, don't highlight it.  */
+  enabled_p = AREF (f->tab_bar_items, prop_idx + TAB_BAR_ITEM_ENABLED_P);
+  if (!NILP (enabled_p) && !NILP (Vmouse_highlight))
+    {
+      /* Compute the x-position of the glyph.  In front and past the
+	 image is a space.  We include this in the highlighted area.  */
+      row = MATRIX_ROW (w->current_matrix, vpos);
+      for (i = x = 0; i < hpos; ++i)
+	x += row->glyphs[TEXT_AREA][i].pixel_width;
+
+      /* Record this as the current active region.  */
+      hlinfo->mouse_face_beg_col = hpos;
+      hlinfo->mouse_face_beg_row = vpos;
+      hlinfo->mouse_face_beg_x = x;
+      hlinfo->mouse_face_past_end = false;
+
+      hlinfo->mouse_face_end_col = hpos + 1;
+      hlinfo->mouse_face_end_row = vpos;
+      hlinfo->mouse_face_end_x = x + glyph->pixel_width;
+      hlinfo->mouse_face_window = window;
+      hlinfo->mouse_face_face_id = TAB_BAR_FACE_ID;
+
+      /* Display it as active.  */
+      show_mouse_face (hlinfo, draw);
+    }
+
+ set_help_echo:
+
+  /* Set help_echo_string to a help string to display for this tab-bar item.
+     XTread_socket does the rest.  */
+  help_echo_object = help_echo_window = Qnil;
+  help_echo_pos = -1;
+  help_echo_string = AREF (f->tab_bar_items, prop_idx + TAB_BAR_ITEM_HELP);
+  if (NILP (help_echo_string))
+    help_echo_string = AREF (f->tab_bar_items, prop_idx + TAB_BAR_ITEM_CAPTION);
+}
+
+#endif /* HAVE_WINDOW_SYSTEM */
+
+
+
+/***********************************************************************
+			       Tool-bars
+ ***********************************************************************/
+
+#ifdef HAVE_WINDOW_SYSTEM
 
 /* Update the tool-bar item list for frame F.  This has to be done
    before we start to fill in any display lines.  Called from
@@ -16265,7 +17182,8 @@ compute_window_start_on_continuation_line (struct window *w)
 
       /* Find the start of the continued line.  This should be fast
 	 because find_newline is fast (newline cache).  */
-      row = w->desired_matrix->rows + window_wants_header_line (w);
+      row = w->desired_matrix->rows + window_wants_tab_line (w)
+				    + window_wants_header_line (w);
       init_iterator (&it, w, CHARPOS (start_pos), BYTEPOS (start_pos),
 		     row, DEFAULT_FACE_ID);
       reseat_at_previous_visible_line_start (&it);
@@ -16428,6 +17346,8 @@ try_cursor_movement (Lisp_Object window, struct text_pos startp,
       this_scroll_margin = window_scroll_margin (w, MARGIN_IN_PIXELS);
 
       top_scroll_margin = this_scroll_margin;
+      if (window_wants_tab_line (w))
+	top_scroll_margin += CURRENT_TAB_LINE_HEIGHT (w);
       if (window_wants_header_line (w))
 	top_scroll_margin += CURRENT_HEADER_LINE_HEIGHT (w);
 
@@ -17197,13 +18117,14 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	     margin, even though this part handles windows that didn't
 	     scroll at all.  */
           int pixel_margin = margin * frame_line_height;
+	  bool tab_line = window_wants_tab_line (w);
 	  bool header_line = window_wants_header_line (w);
 
 	  /* Note: We add an extra FRAME_LINE_HEIGHT, because the loop
 	     below, which finds the row to move point to, advances by
 	     the Y coordinate of the _next_ row, see the definition of
 	     MATRIX_ROW_BOTTOM_Y.  */
-	  if (w->cursor.vpos < margin + header_line)
+	  if (w->cursor.vpos < margin + tab_line + header_line)
 	    {
 	      w->cursor.vpos = -1;
 	      clear_glyph_matrix (w->desired_matrix);
@@ -17213,6 +18134,8 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	    {
 	      int window_height = window_box_height (w);
 
+	      if (tab_line)
+		window_height += CURRENT_TAB_LINE_HEIGHT (w);
 	      if (header_line)
 		window_height += CURRENT_HEADER_LINE_HEIGHT (w);
 	      if (w->cursor.y >= window_height - pixel_margin)
@@ -17544,7 +18467,7 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 		centering_position -= pt_offset;
 	      centering_position -=
 		(frame_line_height * (1 + margin + last_line_misfit)
-		 + WINDOW_HEADER_LINE_HEIGHT (w));
+		 + WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w));
 	      /* Don't let point enter the scroll margin near top of
 		 the window.  */
 	      if (centering_position < margin * frame_line_height)
@@ -17772,7 +18695,8 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	   && (w->column_number_displayed != current_column ())))
       /* This means that the window has a mode line.  */
       && (window_wants_mode_line (w)
-	  || window_wants_header_line (w)))
+	  || window_wants_header_line (w)
+	  || window_wants_tab_line (w)))
     {
 
       display_mode_lines (w);
@@ -17786,6 +18710,17 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	  w->mode_line_height = -1;
 	  MATRIX_MODE_LINE_ROW (w->current_matrix)->height
 	    = DESIRED_MODE_LINE_HEIGHT (w);
+	}
+
+      /* If tab line height has changed, arrange for a thorough
+	 immediate redisplay using the correct tab line height.  */
+      if (window_wants_tab_line (w)
+	  && CURRENT_TAB_LINE_HEIGHT (w) != DESIRED_TAB_LINE_HEIGHT (w))
+	{
+	  f->fonts_changed = true;
+	  w->tab_line_height = -1;
+	  MATRIX_TAB_LINE_ROW (w->current_matrix)->height
+	    = DESIRED_TAB_LINE_HEIGHT (w);
 	}
 
       /* If header line height has changed, arrange for a thorough
@@ -17835,6 +18770,12 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 #ifdef HAVE_WINDOW_SYSTEM
       if (FRAME_WINDOW_P (f))
         {
+	  if (WINDOWP (f->tab_bar_window)
+	      && (FRAME_TAB_BAR_LINES (f) > 0
+		  || !NILP (Vauto_resize_tab_bars))
+	      && redisplay_tab_bar (f))
+	    ignore_mouse_drag_p = true;
+
 #ifdef HAVE_EXT_TOOL_BAR
 	  if (FRAME_EXTERNAL_TOOL_BAR (f))
 	    redisplay_tool_bar (f);
@@ -17846,7 +18787,16 @@ redisplay_window (Lisp_Object window, bool just_this_one_p)
 	    ignore_mouse_drag_p = true;
 #endif
         }
+      else
+        {
+          if ((FRAME_TAB_BAR_LINES (f) > 0))
+            display_tab_bar (w);
+        }
+
       gui_consider_frame_title (w->frame);
+#else
+      if ((FRAME_TAB_BAR_LINES (f) > 0))
+        display_tab_bar (w);
 #endif
     }
 
@@ -18058,6 +19008,11 @@ try_window_reusing_current_matrix (struct window *w)
     return false;
 
   /* If top-line visibility has changed, give up.  */
+  if (window_wants_tab_line (w)
+      != MATRIX_TAB_LINE_ROW (w->current_matrix)->mode_line_p)
+    return false;
+
+  /* If top-line visibility has changed, give up.  */
   if (window_wants_header_line (w)
       != MATRIX_HEADER_LINE_ROW (w->current_matrix)->mode_line_p)
     return false;
@@ -18202,7 +19157,7 @@ try_window_reusing_current_matrix (struct window *w)
 	    (start_row + i)->enabled_p = false;
 
 	  /* Re-compute Y positions.  */
-	  min_y = WINDOW_HEADER_LINE_HEIGHT (w);
+	  min_y = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
 	  max_y = it.last_visible_y;
 	  for (row = start_row + nrows_scrolled;
 	       row < bottom_row;
@@ -18229,7 +19184,7 @@ try_window_reusing_current_matrix (struct window *w)
 	  /* Disable lines in the current matrix which are now
 	     below the window.  */
 	  for (++row; row < bottom_row; ++row)
-	    row->enabled_p = row->mode_line_p = false;
+	    row->enabled_p = row->mode_line_p = row->tab_line_p = false;
 	}
 
       /* Update window_end_pos etc.; last_reused_text_row is the last
@@ -18307,7 +19262,7 @@ try_window_reusing_current_matrix (struct window *w)
       it.vpos = (MATRIX_ROW_VPOS (first_row_to_display, w->current_matrix)
 		 - nrows_scrolled);
       it.current_y = (first_row_to_display->y - first_reusable_row->y
-		      + WINDOW_HEADER_LINE_HEIGHT (w));
+		      + WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w));
 
       /* Display lines beginning with first_row_to_display in the
          desired matrix.  Set last_text_row to the last row displayed
@@ -18340,7 +19295,7 @@ try_window_reusing_current_matrix (struct window *w)
 
       /* Scroll the display.  */
       run.current_y = first_reusable_row->y;
-      run.desired_y = WINDOW_HEADER_LINE_HEIGHT (w);
+      run.desired_y = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
       run.height = it.last_visible_y - run.current_y;
       dy = run.current_y - run.desired_y;
 
@@ -18358,7 +19313,7 @@ try_window_reusing_current_matrix (struct window *w)
 
       /* Adjust Y positions of reused rows.  */
       bottom_row = MATRIX_BOTTOM_TEXT_ROW (w->current_matrix, w);
-      min_y = WINDOW_HEADER_LINE_HEIGHT (w);
+      min_y = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
       max_y = it.last_visible_y;
       for (row = first_reusable_row; row < first_row_to_display; ++row)
 	{
@@ -19316,6 +20271,7 @@ try_window_id (struct window *w)
 	    = MATRIX_ROW_VPOS (first_unchanged_at_end_row, w->current_matrix);
 	  int from = WINDOW_TOP_EDGE_LINE (w) + from_vpos;
 	  int end = (WINDOW_TOP_EDGE_LINE (w)
+		     + window_wants_tab_line (w)
 		     + window_wants_header_line (w)
 		     + window_internal_height (w));
 
@@ -19494,7 +20450,7 @@ try_window_id (struct window *w)
     {
       /* Displayed to end of window, but no line containing text was
 	 displayed.  Lines were deleted at the end of the window.  */
-      bool first_vpos = window_wants_header_line (w);
+      int first_vpos = window_wants_tab_line (w) + window_wants_header_line (w);
       int vpos = w->window_end_vpos;
       struct glyph_row *current_row = current_matrix->rows + vpos;
       struct glyph_row *desired_row = desired_matrix->rows + vpos;
@@ -19866,6 +20822,39 @@ GLYPHS > 1 or omitted means dump glyphs in long form.  */)
 }
 
 
+DEFUN ("dump-tab-bar-row", Fdump_tab_bar_row, Sdump_tab_bar_row, 1, 2, "P",
+       doc: /* Dump glyph row ROW of the tab-bar of the current frame to stderr.
+Interactively, ROW is the prefix numeric argument and defaults to zero.
+GLYPHS 0 means don't dump glyphs.
+GLYPHS 1 means dump glyphs in short form.
+GLYPHS > 1 or omitted means dump glyphs in long form.
+
+If there's no tab-bar, or if the tab-bar is not drawn by Emacs,
+do nothing.  */)
+  (Lisp_Object row, Lisp_Object glyphs)
+{
+#if defined (HAVE_WINDOW_SYSTEM)
+  struct frame *sf = SELECTED_FRAME ();
+  struct glyph_matrix *m = WINDOWP (sf->tab_bar_window)
+    ? XWINDOW (sf->tab_bar_window)->current_matrix
+    : sf->current_matrix;
+  EMACS_INT vpos;
+
+  if (NILP (row))
+    vpos = WINDOWP (sf->tab_bar_window) ? 0 :
+      FRAME_MENU_BAR_LINES (sf) > 0 ? 1 : 0;
+  else
+    {
+      CHECK_FIXNUM (row);
+      vpos = XFIXNUM (row);
+    }
+  if (vpos >= 0 && vpos < m->nrows)
+    dump_glyph_row (MATRIX_ROW (m, vpos), vpos,
+		    TYPE_RANGED_FIXNUMP (int, glyphs) ? XFIXNUM (glyphs) : 2);
+#endif
+  return Qnil;
+}
+
 DEFUN ("dump-tool-bar-row", Fdump_tool_bar_row, Sdump_tool_bar_row, 1, 2, "P",
        doc: /* Dump glyph row ROW of the tool-bar of the current frame to stderr.
 Interactively, ROW is the prefix numeric argument and defaults to zero.
@@ -20233,7 +21222,7 @@ compute_line_metrics (struct it *it)
       /* Compute how much of the line is visible.  */
       row->visible_height = row->height;
 
-      min_y = WINDOW_HEADER_LINE_HEIGHT (it->w);
+      min_y = WINDOW_TAB_LINE_HEIGHT (it->w) + WINDOW_HEADER_LINE_HEIGHT (it->w);
       max_y = WINDOW_BOX_HEIGHT_NO_MODE_LINE (it->w);
 
       if (row->y < min_y)
@@ -20547,6 +21536,8 @@ extend_face_to_end_of_line (struct it *it)
       /* Mode line and the header line don't have margins, and
 	 likewise the frame's tool-bar window, if there is any.  */
       if (!(it->glyph_row->mode_line_p
+	    || (WINDOWP (f->tab_bar_window)
+		&& it->w == XWINDOW (f->tab_bar_window))
 #ifndef HAVE_EXT_TOOL_BAR
 	    || (WINDOWP (f->tool_bar_window)
 		&& it->w == XWINDOW (f->tool_bar_window))
@@ -21743,9 +22734,10 @@ display_line (struct it *it, int cursor_vpos)
   ptrdiff_t min_pos = ZV + 1, max_pos = 0;
   ptrdiff_t min_bpos UNINIT, max_bpos UNINIT;
   bool pending_handle_line_prefix = false;
+  int tab_line = window_wants_tab_line (it->w);
   int header_line = window_wants_header_line (it->w);
   bool hscroll_this_line = (cursor_vpos >= 0
-			    && it->vpos == cursor_vpos - header_line
+			    && it->vpos == cursor_vpos - tab_line - header_line
 			    && hscrolling_current_line_p (it->w));
   int first_visible_x = it->first_visible_x;
   int last_visible_x = it->last_visible_x;
@@ -23786,6 +24778,18 @@ display_mode_lines (struct window *w)
       ++n;
     }
 
+  if (window_wants_tab_line (w))
+    {
+      Lisp_Object window_tab_line_format
+	= window_parameter (w, Qtab_line_format);
+
+      display_mode_line (w, TAB_LINE_FACE_ID,
+			 NILP (window_tab_line_format)
+			 ? BVAR (current_buffer, tab_line_format)
+			 : window_tab_line_format);
+      ++n;
+    }
+
   if (window_wants_header_line (w))
     {
       Lisp_Object window_header_line_format
@@ -23807,10 +24811,10 @@ display_mode_lines (struct window *w)
 }
 
 
-/* Display mode or header line of window W.  FACE_ID specifies which
-   line to display; it is either MODE_LINE_FACE_ID or
-   HEADER_LINE_FACE_ID.  FORMAT is the mode/header line format to
-   display.  Value is the pixel height of the mode/header line
+/* Display mode or header/tab line of window W.  FACE_ID specifies which
+   line to display; it is either MODE_LINE_FACE_ID, HEADER_LINE_FACE_ID or
+   TAB_LINE_FACE_ID.  FORMAT is the mode/header/tab line format to
+   display.  Value is the pixel height of the mode/header/tab line
    displayed.  */
 
 static int
@@ -23827,6 +24831,8 @@ display_mode_line (struct window *w, enum face_id face_id, Lisp_Object format)
   prepare_desired_row (w, it.glyph_row, true);
 
   it.glyph_row->mode_line_p = true;
+  if (face_id == TAB_LINE_FACE_ID)
+    it.glyph_row->tab_line_p = true;
 
   /* FIXME: This should be controlled by a user option.  But
      supporting such an option is not trivial, since the mode line is
@@ -24544,6 +25550,8 @@ are the selected window and the WINDOW's buffer).  */)
     : EQ (face, Qmode_line) ? MODE_LINE_FACE_ID
     : EQ (face, Qmode_line_inactive) ? MODE_LINE_INACTIVE_FACE_ID
     : EQ (face, Qheader_line) ? HEADER_LINE_FACE_ID
+    : EQ (face, Qtab_line) ? TAB_LINE_FACE_ID
+    : EQ (face, Qtab_bar) ? TAB_BAR_FACE_ID
     : EQ (face, Qtool_bar) ? TOOL_BAR_FACE_ID
     : DEFAULT_FACE_ID;
 
@@ -29475,7 +30483,7 @@ gui_clear_end_of_line (struct window *w, struct glyph_row *updated_row,
       to_x += area_left;
     }
 
-  min_y = WINDOW_HEADER_LINE_HEIGHT (w);
+  min_y = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
   from_y = WINDOW_TO_FRAME_PIXEL_Y (w, max (min_y, w->output_cursor.y));
   to_y = WINDOW_TO_FRAME_PIXEL_Y (w, to_y);
 
@@ -29985,6 +30993,7 @@ erase_phys_cursor (struct window *w)
   if (w->phys_cursor_type == HOLLOW_BOX_CURSOR)
     {
       int x, y;
+      int tab_line_height = WINDOW_TAB_LINE_HEIGHT (w);
       int header_line_height = WINDOW_HEADER_LINE_HEIGHT (w);
       int width;
 
@@ -30000,7 +31009,7 @@ erase_phys_cursor (struct window *w)
 	  x = 0;
 	}
       width = min (width, window_box_width (w, TEXT_AREA) - x);
-      y = WINDOW_TO_FRAME_PIXEL_Y (w, max (header_line_height, cursor_row->y));
+      y = WINDOW_TO_FRAME_PIXEL_Y (w, max (tab_line_height, max (header_line_height, cursor_row->y)));
       x = WINDOW_TEXT_TO_FRAME_PIXEL_X (w, x);
 
       if (width > 0)
@@ -30346,12 +31355,13 @@ show_mouse_face (Mouse_HLInfo *hlinfo, enum draw_glyphs_face draw)
   /* Change the mouse cursor.  */
   if (FRAME_WINDOW_P (f) && NILP (track_mouse))
     {
-#ifndef HAVE_EXT_TOOL_BAR
       if (draw == DRAW_NORMAL_TEXT
-	  && !EQ (hlinfo->mouse_face_window, f->tool_bar_window))
+#ifndef HAVE_EXT_TOOL_BAR
+	  && !EQ (hlinfo->mouse_face_window, f->tool_bar_window)
+#endif
+	  && !EQ (hlinfo->mouse_face_window, f->tab_bar_window))
 	FRAME_RIF (f)->define_frame_cursor (f, FRAME_OUTPUT_DATA (f)->text_cursor);
       else
-#endif
       if (draw == DRAW_MOUSE_FACE)
 	FRAME_RIF (f)->define_frame_cursor (f, FRAME_OUTPUT_DATA (f)->hand_cursor);
       else
@@ -31347,7 +32357,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
   struct glyph * glyph = NULL, * row_start_glyph = NULL;
   struct glyph_row *row UNINIT;
 
-  if (area == ON_MODE_LINE || area == ON_HEADER_LINE)
+  if (area == ON_MODE_LINE || area == ON_HEADER_LINE || area == ON_TAB_LINE)
     {
       int x0;
       struct glyph *end;
@@ -31359,7 +32369,9 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
       row = (area == ON_MODE_LINE
 	     ? MATRIX_MODE_LINE_ROW (w->current_matrix)
-	     : MATRIX_HEADER_LINE_ROW (w->current_matrix));
+	     : (area == ON_TAB_LINE
+		? MATRIX_TAB_LINE_ROW (w->current_matrix)
+		: MATRIX_HEADER_LINE_ROW (w->current_matrix)));
 
       /* Find the glyph under the mouse pointer.  */
       if (row->mode_line_p && row->enabled_p)
@@ -31474,7 +32486,8 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
 	      /* Change the mouse pointer according to what is under X/Y.  */
 	      if (NILP (pointer)
-		  && (area == ON_MODE_LINE || area == ON_HEADER_LINE))
+		  && (area == ON_MODE_LINE || area == ON_HEADER_LINE
+		      || area == ON_TAB_LINE))
 		{
 		  Lisp_Object map;
 
@@ -31500,7 +32513,8 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
     {
       mouse_face = Fget_text_property (pos, Qmouse_face, string);
       if (!NILP (Vmouse_highlight) && !NILP (mouse_face)
-	  && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE))
+	  && ((area == ON_MODE_LINE) || (area == ON_HEADER_LINE)
+	      || (area == ON_TAB_LINE))
 	  && glyph)
 	{
 	  Lisp_Object b, e;
@@ -31571,7 +32585,11 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 	  hpos = x - gpos;
 	  vpos = (area == ON_MODE_LINE
 		  ? (w->current_matrix)->nrows - 1
-		  : 0);
+		  : (area == ON_TAB_LINE
+		     ? 0
+		     : (w->current_matrix->tab_line_p
+			? 1
+			: 0)));
 
 	  /* If GLYPH's position is included in the region that is
 	     already drawn in mouse face, we have nothing to do.  */
@@ -31627,7 +32645,8 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 
   /* If mouse-face doesn't need to be shown, clear any existing
      mouse-face.  */
-  if ((area == ON_MODE_LINE || area == ON_HEADER_LINE) && !mouse_face_shown)
+  if ((area == ON_MODE_LINE || area == ON_HEADER_LINE
+       || area == ON_TAB_LINE) && !mouse_face_shown)
     clear_mouse_face (hlinfo);
 
   define_frame_cursor1 (f, cursor, pointer);
@@ -31671,7 +32690,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
     return;
 
   /* Which window is that in?  */
-  window = window_from_coordinates (f, x, y, &part, true);
+  window = window_from_coordinates (f, x, y, &part, true, true);
 
   /* If displaying active text in another window, clear that.  */
   if (! EQ (window, hlinfo->mouse_face_window)
@@ -31680,7 +32699,8 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	  && !NILP (window)
 	  && part != ON_TEXT
 	  && part != ON_MODE_LINE
-	  && part != ON_HEADER_LINE))
+	  && part != ON_HEADER_LINE
+	  && part != ON_TAB_LINE))
     clear_mouse_face (hlinfo);
 
   /* Reset help_echo_string. It will get recomputed below.  */
@@ -31748,6 +32768,16 @@ note_mouse_highlight (struct frame *f, int x, int y)
   w = XWINDOW (window);
   frame_to_window_pixel_xy (w, &x, &y);
 
+#if defined (HAVE_WINDOW_SYSTEM)
+  /* Handle tab-bar window differently since it doesn't display a
+     buffer.  */
+  if (EQ (window, f->tab_bar_window))
+    {
+      note_tab_bar_highlight (f, x, y);
+      return;
+    }
+#endif
+
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   /* Handle tool-bar window differently since it doesn't display a
      buffer.  */
@@ -31759,7 +32789,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
 #endif
 
   /* Mouse is on the mode, header line or margin?  */
-  if (part == ON_MODE_LINE || part == ON_HEADER_LINE
+  if (part == ON_MODE_LINE || part == ON_HEADER_LINE || part == ON_TAB_LINE
       || part == ON_LEFT_MARGIN || part == ON_RIGHT_MARGIN)
     {
       note_mode_line_or_margin_highlight (window, x, y, part);
@@ -32774,6 +33804,10 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
 		   r.x, r.y, r.width, r.height);
   mouse_face_overwritten_p = expose_window_tree (XWINDOW (f->root_window), &r);
 
+  if (WINDOWP (f->tab_bar_window))
+    mouse_face_overwritten_p
+      |= expose_window (XWINDOW (f->tab_bar_window), &r);
+
 #ifndef HAVE_EXT_TOOL_BAR
   if (WINDOWP (f->tool_bar_window))
     mouse_face_overwritten_p
@@ -32914,11 +33948,13 @@ be let-bound around code that needs to disable messages temporarily. */);
   defsubr (&Sdump_frame_glyph_matrix);
   defsubr (&Sdump_glyph_matrix);
   defsubr (&Sdump_glyph_row);
+  defsubr (&Sdump_tab_bar_row);
   defsubr (&Sdump_tool_bar_row);
   defsubr (&Strace_redisplay);
   defsubr (&Strace_to_stderr);
 #endif
 #ifdef HAVE_WINDOW_SYSTEM
+  defsubr (&Stab_bar_height);
   defsubr (&Stool_bar_height);
   defsubr (&Slookup_image_map);
 #endif
@@ -33304,6 +34340,18 @@ make sure that (1) your window manager has focus follow the mouse and
 of your window manager.  */);
   Vmouse_autoselect_window = Qnil;
 
+  DEFVAR_LISP ("auto-resize-tab-bars", Vauto_resize_tab_bars,
+    doc: /* Non-nil means automatically resize tab-bars.
+This dynamically changes the tab-bar's height to the minimum height
+that is needed to make all tab-bar items visible.
+If value is `grow-only', the tab-bar's height is only increased
+automatically; to decrease the tab-bar height, use \\[recenter].  */);
+  Vauto_resize_tab_bars = Qt;
+
+  DEFVAR_BOOL ("auto-raise-tab-bar-buttons", auto_raise_tab_bar_buttons_p,
+    doc: /* Non-nil means raise tab-bar buttons when the mouse moves over them.  */);
+  auto_raise_tab_bar_buttons_p = true;
+
   DEFVAR_LISP ("auto-resize-tool-bars", Vauto_resize_tool_bars,
     doc: /* Non-nil means automatically resize tool-bars.
 This dynamically changes the tool-bar's height to the minimum height
@@ -33325,6 +34373,27 @@ return non-nil if the partially-visible cursor requires scrolling the
 window, nil if it's okay to leave the cursor partially-visible.  */);
   Vmake_cursor_line_fully_visible = Qt;
   DEFSYM (Qmake_cursor_line_fully_visible, "make-cursor-line-fully-visible");
+
+  DEFSYM (Qclose_tab, "close-tab");
+  DEFVAR_LISP ("tab-bar-border", Vtab_bar_border,
+    doc: /* Border below tab-bar in pixels.
+If an integer, use it as the height of the border.
+If it is one of `internal-border-width' or `border-width', use the
+value of the corresponding frame parameter.
+Otherwise, no border is added below the tab-bar.  */);
+  Vtab_bar_border = Qinternal_border_width;
+
+  DEFVAR_LISP ("tab-bar-button-margin", Vtab_bar_button_margin,
+    doc: /* Margin around tab-bar buttons in pixels.
+If an integer, use that for both horizontal and vertical margins.
+Otherwise, value should be a pair of integers `(HORZ . VERT)' with
+HORZ specifying the horizontal margin, and VERT specifying the
+vertical margin.  */);
+  Vtab_bar_button_margin = make_fixnum (DEFAULT_TAB_BAR_BUTTON_MARGIN);
+
+  DEFVAR_INT ("tab-bar-button-relief", tab_bar_button_relief,
+    doc: /* Relief thickness of tab-bar buttons.  */);
+  tab_bar_button_relief = DEFAULT_TAB_BAR_BUTTON_RELIEF;
 
   DEFVAR_LISP ("tool-bar-border", Vtool_bar_border,
     doc: /* Border below tool-bar in pixels.

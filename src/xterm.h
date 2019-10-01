@@ -1178,6 +1178,7 @@ extern void initial_set_up_x_back_buffer (struct frame *f);
 
 /* Defined in xfns.c.  */
 extern void x_real_positions (struct frame *, int *, int *);
+extern void x_change_tab_bar_height (struct frame *, int);
 extern void x_change_tool_bar_height (struct frame *, int);
 extern void x_implicitly_set_name (struct frame *, Lisp_Object, Lisp_Object);
 extern void x_set_scroll_bar_default_width (struct frame *);

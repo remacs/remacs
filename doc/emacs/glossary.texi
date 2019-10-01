@@ -1360,6 +1360,15 @@ your buffers, unsaved edits, undo history, etc.  @xref{Exiting}.
 @key{TAB} is the tab character.  In Emacs it is typically used for
 indentation or completion.
 
+@item Tab Bar
+The tab bar is a row of tabs at the top of an Emacs frame.
+Clicking on one of these tabs switches named persistent window
+configurations.  @xref{Tab Bars}.
+
+@item Tab Line
+The tab line is a line of tabs at the top of an Emacs window.
+Clicking on one of these tabs switches window buffers.
+
 @anchor{Glossary---Tags Table}
 @item Tags Table
 A tags table is a file that serves as an index to the function

@@ -1002,6 +1002,7 @@ static int
 window_body_height (struct window *w, bool pixelwise)
 {
   int height = (w->pixel_height
+		- WINDOW_TAB_LINE_HEIGHT (w)
 		- WINDOW_HEADER_LINE_HEIGHT (w)
 		- (WINDOW_HAS_HORIZONTAL_SCROLL_BAR (w)
 		   ? WINDOW_SCROLL_BAR_AREA_HEIGHT (w)
@@ -1131,6 +1132,15 @@ WINDOW must be a live window and defaults to the selected one.  */)
   return (make_fixnum (WINDOW_HEADER_LINE_HEIGHT (decode_live_window (window))));
 }
 
+DEFUN ("window-tab-line-height", Fwindow_tab_line_height,
+       Swindow_tab_line_height, 0, 1, 0,
+       doc: /* Return the height in pixels of WINDOW's tab-line.
+WINDOW must be a live window and defaults to the selected one.  */)
+  (Lisp_Object window)
+{
+  return (make_fixnum (WINDOW_TAB_LINE_HEIGHT (decode_live_window (window))));
+}
+
 DEFUN ("window-right-divider-width", Fwindow_right_divider_width,
        Swindow_right_divider_width, 0, 1, 0,
        doc: /* Return the width in pixels of WINDOW's right divider.
@@ -1249,7 +1259,8 @@ end-trigger value is reset to nil.  */)
    if it is on the border between the window and its right sibling,
       return ON_VERTICAL_BORDER;
    if it is on a scroll bar, return ON_SCROLL_BAR;
-   if it is on the window's top line, return ON_HEADER_LINE;
+   if it is on the window's top line, return ON_TAB_LINE;
+   if it is on the window's header line, return ON_HEADER_LINE;
    if it is in left or right fringe of the window,
       return ON_LEFT_FRINGE or ON_RIGHT_FRINGE;
    if it is in the marginal area to the left/right of the window,
@@ -1299,15 +1310,19 @@ coordinates_in_window (register struct window *w, int x, int y)
 		     - CURRENT_MODE_LINE_HEIGHT (w)
 		     - WINDOW_BOTTOM_DIVIDER_WIDTH (w))))
     return ON_HORIZONTAL_SCROLL_BAR;
-  /* On the mode or header line?   */
+  /* On the mode or header/tab line?   */
   else if ((window_wants_mode_line (w)
 	    && y >= (bottom_y
 		     - CURRENT_MODE_LINE_HEIGHT (w)
 		     - WINDOW_BOTTOM_DIVIDER_WIDTH (w))
 	    && y <= bottom_y - WINDOW_BOTTOM_DIVIDER_WIDTH (w)
 	    && (part = ON_MODE_LINE))
+	   || (window_wants_tab_line (w)
+	       && y < top_y + CURRENT_TAB_LINE_HEIGHT (w)
+	       && (part = ON_TAB_LINE))
 	   || (window_wants_header_line (w)
-	       && y < top_y + CURRENT_HEADER_LINE_HEIGHT (w)
+	       && y < top_y + CURRENT_TAB_LINE_HEIGHT (w)
+			    + CURRENT_HEADER_LINE_HEIGHT (w)
 	       && (part = ON_HEADER_LINE)))
     {
       /* If it's under/over the scroll bar portion of the mode/header
@@ -1407,6 +1422,7 @@ window_relative_x_coord (struct window *w, enum window_part part, int x)
     case ON_TEXT:
       return x - window_box_left (w, TEXT_AREA);
 
+    case ON_TAB_LINE:
     case ON_HEADER_LINE:
     case ON_MODE_LINE:
     case ON_LEFT_FRINGE:
@@ -1457,6 +1473,7 @@ If they are in the bottom divider of WINDOW, `bottom-divider' is returned.
 If they are in the right divider of WINDOW, `right-divider' is returned.
 If they are in the mode line of WINDOW, `mode-line' is returned.
 If they are in the header line of WINDOW, `header-line' is returned.
+If they are in the tab line of WINDOW, `tab-line' is returned.
 If they are in the left fringe of WINDOW, `left-fringe' is returned.
 If they are in the right fringe of WINDOW, `right-fringe' is returned.
 If they are on the border between WINDOW and its right sibling,
@@ -1501,6 +1518,9 @@ If they are in the windows's left or right marginal areas, `left-margin'\n\
 
     case ON_HEADER_LINE:
       return Qheader_line;
+
+    case ON_TAB_LINE:
+      return Qtab_line;
 
     case ON_LEFT_FRINGE:
       return Qleft_fringe;
@@ -1585,7 +1605,7 @@ check_window_containing (struct window *w, void *user_data)
 
 Lisp_Object
 window_from_coordinates (struct frame *f, int x, int y,
-			 enum window_part *part, bool tool_bar_p)
+			 enum window_part *part, bool tab_bar_p, bool tool_bar_p)
 {
   Lisp_Object window;
   struct check_window_data cw;
@@ -1597,6 +1617,21 @@ window_from_coordinates (struct frame *f, int x, int y,
   window = Qnil;
   cw.window = &window, cw.x = x, cw.y = y; cw.part = part;
   foreach_window (f, check_window_containing, &cw);
+
+#if defined (HAVE_WINDOW_SYSTEM)
+  /* If not found above, see if it's in the tab bar window, if a tab
+     bar exists.  */
+  if (NILP (window)
+      && tab_bar_p
+      && WINDOWP (f->tab_bar_window)
+      && WINDOW_TOTAL_LINES (XWINDOW (f->tab_bar_window)) > 0
+      && (coordinates_in_window (XWINDOW (f->tab_bar_window), x, y)
+	  != ON_NOTHING))
+    {
+      *part = ON_TEXT;
+      window = f->tab_bar_window;
+    }
+#endif
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   /* If not found above, see if it's in the tool bar window, if a tool
@@ -1633,7 +1668,7 @@ column 0.  */)
 				   + FRAME_INTERNAL_BORDER_WIDTH (f)),
 				  (FRAME_PIXEL_Y_FROM_CANON_Y (f, y)
 				   + FRAME_INTERNAL_BORDER_WIDTH (f)),
-				  0, false);
+				  0, false, false);
 }
 
 DEFUN ("window-point", Fwindow_point, Swindow_point, 0, 1, 0,
@@ -1945,6 +1980,14 @@ Return nil if window display is not up-to-date.  In that case, use
       goto found_row;
     }
 
+  if (EQ (line, Qtab_line))
+    {
+      if (!window_wants_tab_line (w))
+	return Qnil;
+      row = MATRIX_TAB_LINE_ROW (w->current_matrix);
+      return row->enabled_p ? list4i (row->height, 0, 0, 0) : Qnil;
+    }
+
   if (EQ (line, Qheader_line))
     {
       if (!window_wants_header_line (w))
@@ -1959,7 +2002,8 @@ Return nil if window display is not up-to-date.  In that case, use
       return (row->enabled_p ?
 	      list4i (row->height,
 		      0, /* not accurate */
-		      (WINDOW_HEADER_LINE_HEIGHT (w)
+		      (WINDOW_TAB_LINE_HEIGHT (w)
+		       + WINDOW_HEADER_LINE_HEIGHT (w)
 		       + window_text_bottom_y (w)),
 		      0)
 	      : Qnil);
@@ -2045,8 +2089,9 @@ though when run from an idle timer with a delay of zero seconds.  */)
   int max_y = NILP (body) ? WINDOW_PIXEL_HEIGHT (w) : window_text_bottom_y (w);
   Lisp_Object rows = Qnil;
   int window_width = NILP (body) ? w->pixel_width : window_body_width (w, true);
+  int tab_line_height = WINDOW_TAB_LINE_HEIGHT (w);
   int header_line_height = WINDOW_HEADER_LINE_HEIGHT (w);
-  int subtract = NILP (body) ? 0 : header_line_height;
+  int subtract = NILP (body) ? 0 : (tab_line_height + header_line_height);
   bool invert = !NILP (inverse);
   bool left_flag = !NILP (left);
 
@@ -4246,7 +4291,7 @@ make_window (void)
      non-Lisp data, so do it only for slots which should not be zero.  */
   w->nrows_scale_factor = w->ncols_scale_factor = 1;
   w->left_fringe_width = w->right_fringe_width = -1;
-  w->mode_line_height = w->header_line_height = -1;
+  w->mode_line_height = w->tab_line_height = w->header_line_height = -1;
 #ifdef HAVE_WINDOW_SYSTEM
   w->phys_cursor_type = NO_CURSOR;
   w->phys_cursor_width = -1;
@@ -4772,7 +4817,7 @@ Third argument SIDE nil (or `below') specifies that the new window shall
 be located below WINDOW.  SIDE `above' means the new window shall be
 located above WINDOW.  In both cases PIXEL-SIZE specifies the pixel
 height of the new window including space reserved for the mode and/or
-header line.
+header/tab line.
 
 SIDE t (or `right') specifies that the new window shall be located on
 the right side of WINDOW.  SIDE `left' means the new window shall be
@@ -5350,6 +5395,41 @@ window_wants_header_line (struct window *w)
 	  : 0);
 }
 
+
+/**
+ * window_wants_tab_line:
+ *
+ * Return 1 if window W wants a tab line and is high enough to
+ * accommodate it, 0 otherwise.
+ *
+ * W wants a tab line if it's a leaf window and neither a minibuffer
+ * nor a pseudo window.  Moreover, its 'window-mode-line-format'
+ * parameter must not be 'none' and either that parameter or W's
+ * buffer's 'mode-line-format' value must be non-nil.  Finally, W must
+ * be higher than its frame's canonical character height and be able
+ * to accommodate a mode line and a header line too if necessary (the
+ * mode line and a header line prevail).
+ */
+bool
+window_wants_tab_line (struct window *w)
+{
+  Lisp_Object window_tab_line_format =
+    window_parameter (w, Qtab_line_format);
+
+  return ((WINDOW_LEAF_P (w)
+	   && !MINI_WINDOW_P (w)
+	   && !WINDOW_PSEUDO_P (w)
+	   && !EQ (window_tab_line_format, Qnone)
+	   && (!NILP (window_tab_line_format)
+	       || !NILP (BVAR (XBUFFER (WINDOW_BUFFER (w)), tab_line_format)))
+	   && (WINDOW_PIXEL_HEIGHT (w)
+	       > (((window_wants_mode_line (w) ? 1 : 0)
+                   + (window_wants_header_line (w) ? 1 : 0)
+                   + 1) * WINDOW_FRAME_LINE_HEIGHT (w))))
+	  ? 1
+	  : 0);
+}
+
 /* Return number of lines of text in window W, not counting the mode
    line and header line, if any.  Do NOT use this for windows on GUI
    frames; use window_body_height instead.  This function is only for
@@ -5364,6 +5444,9 @@ window_internal_height (struct window *w)
     --ht;
 
   if (window_wants_header_line (w))
+    --ht;
+
+  if (window_wants_tab_line (w))
     --ht;
 
   return ht;
@@ -5726,8 +5809,9 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
       move_it_to (&it, PT, -1, -1, -1, MOVE_TO_POS);
       if (IT_CHARPOS (it) == PT
 	  && it.current_y >= this_scroll_margin
-	  && it.current_y <= last_y - WINDOW_HEADER_LINE_HEIGHT (w)
-          && (NILP (Vscroll_preserve_screen_position)
+	  && it.current_y <= last_y - WINDOW_TAB_LINE_HEIGHT (w)
+				    - WINDOW_HEADER_LINE_HEIGHT (w)
+	  && (NILP (Vscroll_preserve_screen_position)
 	      || EQ (Vscroll_preserve_screen_position, Qt)))
 	/* We found PT at a legitimate height.  Leave it alone.  */
 	;
@@ -5742,7 +5826,8 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 		 is necessary because we set it.current_y to 0, above.  */
 	      move_it_to (&it, -1,
 			  window_scroll_pixel_based_preserve_x,
-			  goal_y - WINDOW_HEADER_LINE_HEIGHT (w),
+			  goal_y - WINDOW_TAB_LINE_HEIGHT (w)
+				 - WINDOW_HEADER_LINE_HEIGHT (w),
 			  -1, MOVE_TO_Y | MOVE_TO_X);
 	    }
 
@@ -5778,8 +5863,9 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
 		  /* We subtract WINDOW_HEADER_LINE_HEIGHT because
 		     it.y is relative to the bottom of the header
 		     line, see above.  */
-		  (it.last_visible_y - WINDOW_HEADER_LINE_HEIGHT (w)
-                   - partial_line_height (&it) - this_scroll_margin - 1),
+		  (it.last_visible_y - WINDOW_TAB_LINE_HEIGHT (w)
+				     - WINDOW_HEADER_LINE_HEIGHT (w)
+		   - partial_line_height (&it) - this_scroll_margin - 1),
 		  -1,
 		  MOVE_TO_POS | MOVE_TO_Y);
 
@@ -5817,13 +5903,15 @@ window_scroll_pixel_based (Lisp_Object window, int n, bool whole, bool noerror)
       if (it.what == IT_EOB)
 	partial_p =
 	  it.current_y + it.ascent + it.descent
-	  > it.last_visible_y - this_scroll_margin - WINDOW_HEADER_LINE_HEIGHT (w);
+	  > it.last_visible_y - this_scroll_margin
+	  - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w);
       else
 	{
 	  move_it_by_lines (&it, 1);
 	  partial_p =
 	    it.current_y
-	    > it.last_visible_y - this_scroll_margin - WINDOW_HEADER_LINE_HEIGHT (w);
+	    > it.last_visible_y - this_scroll_margin
+	      - WINDOW_TAB_LINE_HEIGHT (w) - WINDOW_HEADER_LINE_HEIGHT (w);
 	}
 
       if (charpos == PT && !partial_p
@@ -6370,6 +6458,9 @@ and redisplay normally--don't erase and redraw the frame.  */)
 	  /* Invalidate pixel data calculated for all compositions.  */
 	  for (i = 0; i < n_compositions; i++)
 	    composition_table[i]->font = NULL;
+#if defined (HAVE_WINDOW_SYSTEM)
+	  WINDOW_XFRAME (w)->minimize_tab_bar_window_p = 1;
+#endif
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
 	  WINDOW_XFRAME (w)->minimize_tool_bar_window_p = 1;
 #endif
@@ -6686,13 +6777,13 @@ struct save_window_data
 
     /* We should be able to do without the following two.  */
     int frame_cols, frame_lines;
-    /* These two should get eventually replaced by their pixel
+    /* These three should get eventually replaced by their pixel
        counterparts.  */
-    int frame_menu_bar_lines, frame_tool_bar_lines;
+    int frame_menu_bar_lines, frame_tab_bar_lines, frame_tool_bar_lines;
     int frame_text_width, frame_text_height;
     /* These are currently unused.  We need them as soon as we convert
        to pixels.  */
-    int frame_menu_bar_height, frame_tool_bar_height;
+    int frame_menu_bar_height, frame_tab_bar_height, frame_tool_bar_height;
   } GCALIGNED_STRUCT;
 
 /* This is saved as a Lisp_Vector.  */
@@ -7370,10 +7461,12 @@ saved by this function.  */)
   data->frame_cols = FRAME_COLS (f);
   data->frame_lines = FRAME_LINES (f);
   data->frame_menu_bar_lines = FRAME_MENU_BAR_LINES (f);
+  data->frame_tab_bar_lines = FRAME_TAB_BAR_LINES (f);
   data->frame_tool_bar_lines = FRAME_TOOL_BAR_LINES (f);
   data->frame_text_width = FRAME_TEXT_WIDTH (f);
   data->frame_text_height = FRAME_TEXT_HEIGHT (f);
   data->frame_menu_bar_height = FRAME_MENU_BAR_HEIGHT (f);
+  data->frame_tab_bar_height = FRAME_TAB_BAR_HEIGHT (f);
   data->frame_tool_bar_height = FRAME_TOOL_BAR_HEIGHT (f);
   data->selected_frame = selected_frame;
   data->current_window = FRAME_SELECTED_WINDOW (f);
@@ -7663,6 +7756,7 @@ set_window_scroll_bars (struct window *w, Lisp_Object width,
 
       /* Don't change anything if new scroll bar won't fit.  */
       if ((WINDOW_PIXEL_HEIGHT (w)
+	   - WINDOW_TAB_LINE_HEIGHT (w)
 	   - WINDOW_HEADER_LINE_HEIGHT (w)
 	   - WINDOW_MODE_LINE_HEIGHT (w)
 	   - (new_height == -1 ? FRAME_SCROLL_BAR_AREA_HEIGHT (f) : new_height))
@@ -8086,6 +8180,7 @@ syms_of_window (void)
   DEFSYM (Qmark_for_redisplay, "mark-for-redisplay");
   DEFSYM (Qmode_line_format, "mode-line-format");
   DEFSYM (Qheader_line_format, "header-line-format");
+  DEFSYM (Qtab_line_format, "tab-line-format");
 
   DEFVAR_LISP ("temp-buffer-show-function", Vtemp_buffer_show_function,
 	       doc: /* Non-nil means call as function to display a help buffer.
@@ -8389,6 +8484,7 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_redisplay_end_trigger);
   defsubr (&Swindow_mode_line_height);
   defsubr (&Swindow_header_line_height);
+  defsubr (&Swindow_tab_line_height);
   defsubr (&Swindow_right_divider_width);
   defsubr (&Swindow_bottom_divider_width);
   defsubr (&Swindow_scroll_bar_width);

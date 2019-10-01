@@ -253,7 +253,13 @@ which is the \"1006\" extension implemented in Xterm >= 277."
              (top (nth 1 ltrb))
              (posn (if w
 		       (posn-at-x-y (- x left) (- y top) w t)
-		     (append (list nil 'menu-bar)
+		     (append (list nil (if (and tab-bar-mode
+                                                (or (not menu-bar-mode)
+                                                    ;; The tab-bar is on the
+                                                    ;; second row below menu-bar
+                                                    (eq y 1)))
+                                           'tab-bar
+                                         'menu-bar))
                              (nthcdr 2 (posn-at-x-y x y)))))
              (event (list type posn)))
         (setcar (nthcdr 3 posn) timestamp)

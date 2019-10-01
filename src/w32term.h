@@ -233,6 +233,7 @@ extern void w32_real_positions (struct frame *f, int *xptr, int *yptr);
 
 extern void w32_clear_under_internal_border (struct frame *);
 
+extern void w32_change_tab_bar_height (struct frame *, int);
 extern void w32_change_tool_bar_height (struct frame *, int);
 extern void w32_implicitly_set_name (struct frame *, Lisp_Object, Lisp_Object);
 extern void w32_set_scroll_bar_default_width (struct frame *);

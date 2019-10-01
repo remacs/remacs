@@ -168,6 +168,8 @@ int w32_keyboard_codepage;
 int w32_message_fd = -1;
 #endif /* CYGWIN */
 
+static void w32_handle_tab_bar_click (struct frame *,
+                                      struct input_event *);
 static void w32_handle_tool_bar_click (struct frame *,
                                        struct input_event *);
 static void w32_define_cursor (Window, Emacs_Cursor);
@@ -3604,6 +3606,29 @@ w32_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 
 
 /***********************************************************************
+			       Tab-bars
+ ***********************************************************************/
+
+/* Handle mouse button event on the tab-bar of frame F, at
+   frame-relative coordinates X/Y.  EVENT_TYPE is either ButtonPress
+   or ButtonRelease.  */
+
+static void
+w32_handle_tab_bar_click (struct frame *f, struct input_event *button_event)
+{
+  int x = XFIXNAT (button_event->x);
+  int y = XFIXNAT (button_event->y);
+
+  if (button_event->modifiers & down_modifier)
+    handle_tab_bar_click (f, x, y, 1, 0);
+  else
+    handle_tab_bar_click (f, x, y, 0,
+                          button_event->modifiers & ~up_modifier);
+}
+
+
+
+/***********************************************************************
 			       Tool-bars
  ***********************************************************************/
 
@@ -4843,6 +4868,7 @@ w32_read_socket (struct terminal *terminal,
 	  if (f && !FRAME_ICONIFIED_P (f))
 	    {
 	      if (!hlinfo->mouse_face_hidden && FIXNUMP (Vmouse_highlight)
+		  && !EQ (f->tab_bar_window, hlinfo->mouse_face_window)
 		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
 		  clear_mouse_face (hlinfo);
@@ -4868,6 +4894,7 @@ w32_read_socket (struct terminal *terminal,
 	  if (f && !FRAME_ICONIFIED_P (f))
 	    {
 	      if (!hlinfo->mouse_face_hidden && FIXNUMP (Vmouse_highlight)
+		  && !EQ (f->tab_bar_window, hlinfo->mouse_face_window)
 		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
 		  clear_mouse_face (hlinfo);
@@ -4946,6 +4973,7 @@ w32_read_socket (struct terminal *terminal,
 	  if (f && !FRAME_ICONIFIED_P (f))
 	    {
 	      if (!hlinfo->mouse_face_hidden && FIXNUMP (Vmouse_highlight)
+		  && !EQ (f->tab_bar_window, hlinfo->mouse_face_window)
 		  && !EQ (f->tool_bar_window, hlinfo->mouse_face_window))
 		{
 		  clear_mouse_face (hlinfo);
@@ -4998,7 +5026,7 @@ w32_read_socket (struct terminal *terminal,
 		{
 		  static Lisp_Object last_mouse_window;
 		  Lisp_Object window = window_from_coordinates
-		    (f, LOWORD (msg.msg.lParam), HIWORD (msg.msg.lParam), 0, 0);
+		    (f, LOWORD (msg.msg.lParam), HIWORD (msg.msg.lParam), 0, 0, 0);
 
 		  /* Window will be selected only when it is not
 		     selected now and last mouse movement event was
@@ -5051,6 +5079,7 @@ w32_read_socket (struct terminal *terminal,
 	  {
             /* If we decide we want to generate an event to be seen
                by the rest of Emacs, we put it here.  */
+	    bool tab_bar_p = 0;
 	    bool tool_bar_p = 0;
 	    int button = 0;
 	    int up = 0;
@@ -5060,6 +5089,31 @@ w32_read_socket (struct terminal *terminal,
 	      {
                 w32_construct_mouse_click (&inev, &msg, f);
 
+                /* Is this in the tab-bar?  */
+                if (WINDOWP (f->tab_bar_window)
+                    && WINDOW_TOTAL_LINES (XWINDOW (f->tab_bar_window)))
+                  {
+                    Lisp_Object window;
+		    int x = XFIXNAT (inev.x);
+		    int y = XFIXNAT (inev.y);
+
+                    window = window_from_coordinates (f, x, y, 0, 1, 1);
+
+                    if (EQ (window, f->tab_bar_window))
+                      {
+                        w32_handle_tab_bar_click (f, &inev);
+                        tab_bar_p = 1;
+                      }
+                  }
+
+                if (tab_bar_p
+		    || (dpyinfo->w32_focus_frame
+			&& f != dpyinfo->w32_focus_frame
+			/* This does not help when the click happens in
+			   a grand-parent frame.  */
+			&& !frame_ancestor_p (f, dpyinfo->w32_focus_frame)))
+		  inev.kind = NO_EVENT;
+
                 /* Is this in the tool-bar?  */
                 if (WINDOWP (f->tool_bar_window)
                     && WINDOW_TOTAL_LINES (XWINDOW (f->tool_bar_window)))
@@ -5068,7 +5122,7 @@ w32_read_socket (struct terminal *terminal,
 		    int x = XFIXNAT (inev.x);
 		    int y = XFIXNAT (inev.y);
 
-                    window = window_from_coordinates (f, x, y, 0, 1);
+                    window = window_from_coordinates (f, x, y, 0, 1, 1);
 
                     if (EQ (window, f->tool_bar_window))
                       {
@@ -5104,6 +5158,8 @@ w32_read_socket (struct terminal *terminal,
                 if (f != 0)
 		  {
 		    f->mouse_moved = false;
+		    if (!tab_bar_p)
+		      f->last_tab_bar_item = -1;
 		    if (!tool_bar_p)
 		      f->last_tool_bar_item = -1;
 		  }
@@ -5127,6 +5183,7 @@ w32_read_socket (struct terminal *terminal,
 		       event; any subsequent mouse-movement Emacs events
 		       should reflect only motion after the ButtonPress.  */
 		    f->mouse_moved = false;
+		    f->last_tab_bar_item = -1;
 		    f->last_tool_bar_item = -1;
 		    dpyinfo->last_mouse_frame = f;
 		  }
@@ -5140,6 +5197,7 @@ w32_read_socket (struct terminal *terminal,
 		      {
 			w32_construct_mouse_wheel (&inev, &msg, f1);
 			f1->mouse_moved = false;
+			f1->last_tab_bar_item = -1;
 			f1->last_tool_bar_item = -1;
 			dpyinfo->last_mouse_frame = f1;
 		      }
@@ -5936,7 +5994,8 @@ w32_draw_window_cursor (struct window *w, struct glyph_row *glyph_row,
 	    = (WINDOW_TO_FRAME_PIXEL_Y (w, w->phys_cursor.y)
 	       + glyph_row->ascent - w->phys_cursor_ascent);
 	  w32_system_caret_window = w;
-	  w32_system_caret_hdr_height = WINDOW_HEADER_LINE_HEIGHT (w);
+	  w32_system_caret_hdr_height = WINDOW_TAB_LINE_HEIGHT (w)
+	    + WINDOW_HEADER_LINE_HEIGHT (w);
 	  w32_system_caret_mode_height = WINDOW_MODE_LINE_HEIGHT (w);
 
 	  PostMessage (hwnd, WM_IME_STARTCOMPOSITION, 0, 0);
@@ -7192,6 +7251,7 @@ w32_create_terminal (struct w32_display_info *dpyinfo)
   terminal->menu_show_hook = w32_menu_show;
   terminal->activate_menubar_hook = w32_activate_menubar;
   terminal->popup_dialog_hook = w32_popup_dialog;
+  terminal->change_tab_bar_height_hook = w32_change_tab_bar_height;
   terminal->change_tool_bar_height_hook = w32_change_tool_bar_height;
   terminal->set_vertical_scroll_bar_hook = w32_set_vertical_scroll_bar;
   terminal->set_horizontal_scroll_bar_hook = w32_set_horizontal_scroll_bar;

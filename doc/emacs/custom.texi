@@ -2150,6 +2150,10 @@ The mouse was in a vertical scroll bar.  (This is the only kind of
 scroll bar Emacs currently supports.)
 @item menu-bar
 The mouse was in the menu bar.
+@item tab-bar
+The mouse was in a tab bar.
+@item tab-line
+The mouse was in a tab line.
 @item header-line
 The mouse was in a header line.
 @ignore

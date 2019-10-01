@@ -6859,7 +6859,7 @@ not_in_argv (NSString *arg)
       NSTRACE_MSG ("mouse_autoselect_window");
       static Lisp_Object last_mouse_window;
       Lisp_Object window
-	= window_from_coordinates (emacsframe, pt.x, pt.y, 0, 0);
+	= window_from_coordinates (emacsframe, pt.x, pt.y, 0, 0, 0);
 
       if (WINDOWP (window)
           && !EQ (window, last_mouse_window)

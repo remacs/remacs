@@ -722,6 +722,10 @@ Similar to @code{highlight} and @code{mode-line-highlight}, but used
 for mouse-sensitive portions of text on header lines.  This is a
 separate face because the @code{header-line} face might be customized
 in a way that does not interact well with @code{highlight}.
+@item tab-line
+@cindex @code{tab-line} face
+Similar to @code{mode-line} for a window's tab line, which appears
+at the top of a window with tabs representing window buffers.
 @item vertical-border
 @cindex @code{vertical-border} face
 This face is used for the vertical divider between windows on text
@@ -763,6 +767,8 @@ This face determines the visual appearance of the scroll bar.
 @xref{Scroll Bars}.
 @item tool-bar
 This face determines the color of tool bar icons.  @xref{Tool Bars}.
+@item tab-bar
+This face determines the color of tab bar icons.  @xref{Tab Bars}.
 @item menu
 @cindex menu bar appearance
 @cindex @code{menu} face, no effect if customized

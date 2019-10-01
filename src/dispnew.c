@@ -80,7 +80,7 @@ static void adjust_decode_mode_spec_buffer (struct frame *);
 static void fill_up_glyph_row_with_spaces (struct glyph_row *);
 static void clear_window_matrices (struct window *, bool);
 static void fill_up_glyph_row_area_with_spaces (struct glyph_row *, int);
-static int scrolling_window (struct window *, bool);
+static int scrolling_window (struct window *, int);
 static bool update_window_line (struct window *, int, bool *);
 static void mirror_make_current (struct window *, int);
 #ifdef GLYPH_DEBUG
@@ -366,6 +366,8 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
   int i;
   int new_rows;
   bool marginal_areas_changed_p = 0;
+  bool tab_line_changed_p = 0;
+  bool tab_line_p = 0;
   bool header_line_changed_p = 0;
   bool header_line_p = 0;
   int left = -1, right = -1;
@@ -377,9 +379,13 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
     {
       window_box (w, ANY_AREA, 0, 0, &window_width, &window_height);
 
+      tab_line_p = window_wants_tab_line (w);
+      tab_line_changed_p = tab_line_p != matrix->tab_line_p;
+
       header_line_p = window_wants_header_line (w);
       header_line_changed_p = header_line_p != matrix->header_line_p;
     }
+  matrix->tab_line_p = tab_line_p;
   matrix->header_line_p = header_line_p;
 
   /* If POOL is null, MATRIX is a window matrix for window-based redisplay.
@@ -397,6 +403,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 
       if (!marginal_areas_changed_p
 	  && !XFRAME (w->frame)->fonts_changed
+	  && !tab_line_changed_p
 	  && !header_line_changed_p
 	  && matrix->window_pixel_left == WINDOW_LEFT_PIXEL_EDGE (w)
 	  && matrix->window_pixel_top == WINDOW_TOP_PIXEL_EDGE (w)
@@ -448,7 +455,11 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	  if (w == NULL
 	      || (row == matrix->rows + dim.height - 1
 		  && window_wants_mode_line (w))
-	      || (row == matrix->rows && matrix->header_line_p))
+	      || (row == matrix->rows && matrix->tab_line_p)
+	      || (row == matrix->rows
+		  && !matrix->tab_line_p && matrix->header_line_p)
+	      || (row == (matrix->rows + 1)
+		  && matrix->tab_line_p && matrix->header_line_p))
 	    {
 	      row->glyphs[TEXT_AREA]
 		= row->glyphs[LEFT_MARGIN_AREA];
@@ -478,6 +489,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	 Allocate glyph memory from the heap.  */
       if (dim.width > matrix->matrix_w
 	  || new_rows
+	  || tab_line_changed_p
 	  || header_line_changed_p
 	  || marginal_areas_changed_p)
 	{
@@ -493,7 +505,11 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	      /* The mode line, if displayed, never has marginal areas.  */
 	      if ((row == matrix->rows + dim.height - 1
 		   && !(w && window_wants_mode_line (w)))
-		  || (row == matrix->rows && matrix->header_line_p))
+		  || (row == matrix->rows && matrix->tab_line_p)
+		  || (row == matrix->rows
+		      && !matrix->tab_line_p && matrix->header_line_p)
+		  || (row == (matrix->rows + 1)
+		      && matrix->tab_line_p && matrix->header_line_p))
 		{
 		  row->glyphs[TEXT_AREA]
 		    = row->glyphs[LEFT_MARGIN_AREA];
@@ -539,6 +555,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
 	     upper window).  Invalidate all rows that are no longer part
 	     of the window.  */
 	  if (!marginal_areas_changed_p
+	      && !tab_line_changed_p
 	      && !header_line_changed_p
 	      && new_rows == 0
 	      && dim.width == matrix->matrix_w
@@ -728,7 +745,7 @@ shift_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int start, in
   eassert (start >= 0 && start < matrix->nrows);
   eassert (end >= 0 && end <= matrix->nrows);
 
-  min_y = WINDOW_HEADER_LINE_HEIGHT (w);
+  min_y = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
   max_y = WINDOW_BOX_HEIGHT_NO_MODE_LINE (w);
 
   for (; start < end; ++start)
@@ -767,6 +784,12 @@ clear_current_matrices (register struct frame *f)
     clear_glyph_matrix (XWINDOW (f->menu_bar_window)->current_matrix);
 #endif
 
+#if defined (HAVE_WINDOW_SYSTEM)
+  /* Clear the matrix of the tab-bar window, if any.  */
+  if (WINDOWP (f->tab_bar_window))
+    clear_glyph_matrix (XWINDOW (f->tab_bar_window)->current_matrix);
+#endif
+
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   /* Clear the matrix of the tool-bar window, if any.  */
   if (WINDOWP (f->tool_bar_window))
@@ -790,6 +813,11 @@ clear_desired_matrices (register struct frame *f)
 #if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
   if (WINDOWP (f->menu_bar_window))
     clear_glyph_matrix (XWINDOW (f->menu_bar_window)->desired_matrix);
+#endif
+
+#if defined (HAVE_WINDOW_SYSTEM)
+  if (WINDOWP (f->tab_bar_window))
+    clear_glyph_matrix (XWINDOW (f->tab_bar_window)->desired_matrix);
 #endif
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
@@ -857,7 +885,7 @@ blank_row (struct window *w, struct glyph_row *row, int y)
 {
   int min_y, max_y;
 
-  min_y = WINDOW_HEADER_LINE_HEIGHT (w);
+  min_y = WINDOW_TAB_LINE_HEIGHT (w) + WINDOW_HEADER_LINE_HEIGHT (w);
   max_y = WINDOW_BOX_HEIGHT_NO_MODE_LINE (w);
 
   clear_glyph_row (row);
@@ -1062,7 +1090,7 @@ find_glyph_row_slice (struct glyph_matrix *window_matrix,
    call to this function really clears it.  In addition, this function
    makes sure the marginal areas of ROW are in sync with the window's
    display margins.  MODE_LINE_P non-zero means we are preparing a
-   glyph row for header line or mode line.  */
+   glyph row for tab/header line or mode line.  */
 
 void
 prepare_desired_row (struct window *w, struct glyph_row *row, bool mode_line_p)
@@ -1077,11 +1105,11 @@ prepare_desired_row (struct window *w, struct glyph_row *row, bool mode_line_p)
     }
   if (mode_line_p)
     {
-      /* Mode and header lines, if displayed, never have marginal
+      /* Mode and header/tab lines, if displayed, never have marginal
 	 areas.  If we are called with MODE_LINE_P non-zero, we are
-	 displaying the mode/header line in this window, and so the
+	 displaying the mode/header/tab line in this window, and so the
 	 marginal areas of this glyph row should be eliminated.  This
-	 is needed when the mode/header line is switched on in a
+	 is needed when the mode/header/tab line is switched on in a
 	 window that has display margins.  */
       if (w->left_margin_cols > 0)
 	row->glyphs[TEXT_AREA] = row->glyphs[LEFT_MARGIN_AREA];
@@ -1099,7 +1127,7 @@ prepare_desired_row (struct window *w, struct glyph_row *row, bool mode_line_p)
 
       /* Make sure the marginal areas of this row are in sync with
 	 what the window wants, when the row actually displays text
-	 and not header/mode line.  */
+	 and not tab/header/mode line.  */
       if (w->left_margin_cols > 0
 	  && (left != row->glyphs[TEXT_AREA] - row->glyphs[LEFT_MARGIN_AREA]))
 	row->glyphs[TEXT_AREA] = row->glyphs[LEFT_MARGIN_AREA] + left;
@@ -1708,8 +1736,8 @@ required_matrix_height (struct window *w)
 	      /* One partially visible line at the top and
 		 bottom of the window.  */
 	      + 2
-	      /* 2 for header and mode line.  */
-	      + 2);
+	      /* 3 for tab, header and mode line.  */
+	      + 3);
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 
@@ -1862,6 +1890,7 @@ fake_current_matrices (Lisp_Object window)
 					- r->used[LEFT_MARGIN_AREA]
 					- r->used[RIGHT_MARGIN_AREA]);
 		  r->mode_line_p = 0;
+		  r->tab_line_p = 0;
 		}
 	    }
 	}
@@ -2106,6 +2135,36 @@ adjust_frame_glyphs_for_window_redisplay (struct frame *f)
   }
 #endif
 
+#if defined (HAVE_WINDOW_SYSTEM)
+  {
+    /* Allocate/ reallocate matrices of the tab bar window.  If we
+       don't have a tab bar window yet, make one.  */
+    struct window *w;
+    if (NILP (f->tab_bar_window))
+      {
+	Lisp_Object frame;
+	fset_tab_bar_window (f, make_window ());
+	w = XWINDOW (f->tab_bar_window);
+	XSETFRAME (frame, f);
+	wset_frame (w, frame);
+	w->pseudo_window_p = 1;
+      }
+    else
+      w = XWINDOW (f->tab_bar_window);
+
+    w->pixel_left = 0;
+    w->left_col = 0;
+    w->pixel_top = FRAME_MENU_BAR_HEIGHT (f);
+    w->top_line = FRAME_MENU_BAR_LINES (f);
+    w->total_cols = FRAME_TOTAL_COLS (f);
+    w->pixel_width = (FRAME_PIXEL_WIDTH (f)
+		       - 2 * FRAME_INTERNAL_BORDER_WIDTH (f));
+    w->total_lines = FRAME_TAB_BAR_LINES (f);
+    w->pixel_height = FRAME_TAB_BAR_HEIGHT (f);
+    allocate_matrices_for_window_redisplay (w);
+  }
+#endif
+
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   {
     /* Allocate/ reallocate matrices of the tool bar window.  If we
@@ -2125,8 +2184,8 @@ adjust_frame_glyphs_for_window_redisplay (struct frame *f)
 
     w->pixel_left = 0;
     w->left_col = 0;
-    w->pixel_top = FRAME_MENU_BAR_HEIGHT (f);
-    w->top_line = FRAME_MENU_BAR_LINES (f);
+    w->pixel_top = FRAME_MENU_BAR_HEIGHT (f) + FRAME_TAB_BAR_HEIGHT (f);
+    w->top_line = FRAME_MENU_BAR_LINES (f) + FRAME_TAB_BAR_LINES (f);
     w->total_cols = FRAME_TOTAL_COLS (f);
     w->pixel_width = (FRAME_PIXEL_WIDTH (f)
 		       - 2 * FRAME_INTERNAL_BORDER_WIDTH (f));
@@ -2185,6 +2244,18 @@ free_glyphs (struct frame *f)
 	  free_glyph_matrix (w->current_matrix);
 	  w->desired_matrix = w->current_matrix = NULL;
 	  fset_menu_bar_window (f, Qnil);
+	}
+#endif
+
+#if defined (HAVE_WINDOW_SYSTEM)
+      /* Free the tab bar window and its glyph matrices.  */
+      if (!NILP (f->tab_bar_window))
+	{
+	  struct window *w = XWINDOW (f->tab_bar_window);
+	  free_glyph_matrix (w->desired_matrix);
+	  free_glyph_matrix (w->current_matrix);
+	  w->desired_matrix = w->current_matrix = NULL;
+	  fset_tab_bar_window (f, Qnil);
 	}
 #endif
 
@@ -3082,6 +3153,29 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
 	update_window (XWINDOW (f->menu_bar_window), true);
 #endif
 
+#if defined (HAVE_WINDOW_SYSTEM)
+      /* Update the tab-bar window, if present.  */
+      if (WINDOWP (f->tab_bar_window))
+	{
+	  struct window *w = XWINDOW (f->tab_bar_window);
+
+	  /* Update tab-bar window.  */
+	  if (w->must_be_updated_p)
+	    {
+	      Lisp_Object tem;
+
+	      update_window (w, true);
+	      w->must_be_updated_p = false;
+
+	      /* Swap tab-bar strings.  We swap because we want to
+		 reuse strings.  */
+	      tem = f->current_tab_bar_string;
+	      fset_current_tab_bar_string (f, f->desired_tab_bar_string);
+	      fset_desired_tab_bar_string (f, tem);
+	    }
+	}
+#endif
+
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
       /* Update the tool-bar window, if present.  */
       if (WINDOWP (f->tool_bar_window))
@@ -3408,6 +3502,7 @@ update_window (struct window *w, bool force_p)
     {
       struct glyph_row *row, *end;
       struct glyph_row *mode_line_row;
+      struct glyph_row *tab_line_row;
       struct glyph_row *header_line_row;
       int yb;
       bool changed_p = 0, mouse_face_overwritten_p = 0;
@@ -3419,6 +3514,16 @@ update_window (struct window *w, bool force_p)
       yb = window_text_bottom_y (w);
       row = MATRIX_ROW (desired_matrix, 0);
       end = MATRIX_MODE_LINE_ROW (desired_matrix);
+
+      /* Take note of the tab line, if there is one.  We will
+	 update it below, after updating all of the window's lines.  */
+      if (row->mode_line_p && row->tab_line_p)
+	{
+	  tab_line_row = row;
+	  ++row;
+	}
+      else
+	tab_line_row = NULL;
 
       /* Take note of the header line, if there is one.  We will
 	 update it below, after updating all of the window's lines.  */
@@ -3449,7 +3554,8 @@ update_window (struct window *w, bool force_p)
       /* Try reusing part of the display by copying.  */
       if (row < end && !desired_matrix->no_scrolling_p)
 	{
-	  int rc = scrolling_window (w, header_line_row != NULL);
+	  int rc = scrolling_window (w, (tab_line_row != NULL ? 1 : 0)
+				     + (header_line_row != NULL ? 1 : 0));
 	  if (rc < 0)
 	    {
 	      /* All rows were found to be equal.  */
@@ -3501,13 +3607,22 @@ update_window (struct window *w, bool force_p)
 
     set_cursor:
 
+      /* Update the tab line after scrolling because a new tab
+	 line would otherwise overwrite lines at the top of the window
+	 that can be scrolled.  */
+      if (tab_line_row && tab_line_row->enabled_p)
+	{
+	  tab_line_row->y = 0;
+	  update_window_line (w, 0, &mouse_face_overwritten_p);
+	}
+
       /* Update the header line after scrolling because a new header
 	 line would otherwise overwrite lines at the top of the window
 	 that can be scrolled.  */
       if (header_line_row && header_line_row->enabled_p)
 	{
-	  header_line_row->y = 0;
-	  update_window_line (w, 0, &mouse_face_overwritten_p);
+	  header_line_row->y = tab_line_row ? CURRENT_TAB_LINE_HEIGHT (w) : 0;
+	  update_window_line (w, tab_line_row ? 1 : 0, &mouse_face_overwritten_p);
 	}
 
       /* Fix the appearance of overlapping/overlapped rows.  */
@@ -4178,7 +4293,7 @@ add_row_entry (struct glyph_row *row)
    1	if we did scroll.  */
 
 static int
-scrolling_window (struct window *w, bool header_line_p)
+scrolling_window (struct window *w, int tab_line_p)
 {
   struct glyph_matrix *desired_matrix = w->desired_matrix;
   struct glyph_matrix *current_matrix = w->current_matrix;
@@ -4191,7 +4306,7 @@ scrolling_window (struct window *w, bool header_line_p)
   struct redisplay_interface *rif = FRAME_RIF (XFRAME (WINDOW_FRAME (w)));
 
   /* Skip over rows equal at the start.  */
-  for (i = header_line_p; i < current_matrix->nrows - 1; ++i)
+  for (i = tab_line_p; i < current_matrix->nrows - 1; ++i)
     {
       struct glyph_row *d = MATRIX_ROW (desired_matrix, i);
       struct glyph_row *c = MATRIX_ROW (current_matrix, i);
@@ -5318,7 +5433,8 @@ buffer_posn_from_coords (struct window *w, int *x, int *y, struct display_pos *p
      start position, i.e. it excludes the header-line row, but
      MATRIX_ROW includes the header-line row.  Adjust for a possible
      header-line row.  */
-  it_vpos = it.vpos + window_wants_header_line (w);
+  it_vpos = it.vpos + window_wants_header_line (w)
+    + window_wants_tab_line (w);
   if (it_vpos < w->current_matrix->nrows
       && (row = MATRIX_ROW (w->current_matrix, it_vpos),
 	  row->enabled_p))
@@ -5382,6 +5498,8 @@ mode_line_string (struct window *w, enum window_part part,
 
   if (part == ON_MODE_LINE)
     row = MATRIX_MODE_LINE_ROW (w->current_matrix);
+  else if (part == ON_TAB_LINE)
+    row = MATRIX_TAB_LINE_ROW (w->current_matrix);
   else
     row = MATRIX_HEADER_LINE_ROW (w->current_matrix);
   y0 = *y - row->y;
@@ -5563,7 +5681,8 @@ handle_window_change_signal (int sig)
              structures now.  Let that be done later outside of the
              signal handler.  */
           change_frame_size (XFRAME (frame), width,
-			     height - FRAME_MENU_BAR_LINES (XFRAME (frame)),
+			     height - FRAME_MENU_BAR_LINES (XFRAME (frame))
+			     - FRAME_TAB_BAR_LINES (XFRAME (frame)),
 			     0, 1, 0, 0);
     }
   }
@@ -6243,7 +6362,8 @@ init_display_interactive (void)
     change_frame_size (XFRAME (selected_frame),
                        FrameCols (t->display_info.tty),
                        FrameRows (t->display_info.tty)
-		       - FRAME_MENU_BAR_LINES (f), 0, 0, 1, 0);
+		       - FRAME_MENU_BAR_LINES (f)
+		       - FRAME_TAB_BAR_LINES (f), 0, 0, 1, 0);
 
     /* Delete the initial terminal. */
     if (--initial_terminal->reference_count == 0

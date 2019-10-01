@@ -2030,6 +2030,34 @@ file-local variable, you may need to update the value.
 
 * New Modes and Packages in Emacs 27.1
 
+** 'tab-bar-mode' enables the tab-bar at the top of each frame,
+to switch named persistent window configurations in it using tabs.
+New tab-based keybindings (similar to frame-based commands):
+'C-x 6 2' creates a new tab;
+'C-x 6 0' deletes the current tab;
+'C-x 6 b' switches to buffer in another tab;
+'C-x 6 f' and 'C-x 6 C-f' edit file in another tab;
+'C-TAB' switches to the next tab;
+'S-C-TAB' switches to the previous tab.
+
+Also it's possible to switch named persistent window configurations
+without having graphical access to the tab-bar, even on a tty
+or when 'tab-bar-mode' is disabled, with these commands:
+'tab-new' creates a new window configuration;
+'tab-close' deletes the current window configuration;
+'tab-select' switches to the window configuration by its name;
+'tab-previous' switches to the previous window configuration;
+'tab-next' switches to the next window configuration;
+'tab-list' displays a list of named window configurations for switching.
+
+** 'global-tab-line-mode' enables the tab-line above each window to
+switch buffers in it to previous/next buffers.  Selecting a previous
+window-local tab is the same as running 'C-x <left>' (previous-buffer),
+selecting a next tab switches to the tab available by 'C-x <right>'
+(next-buffer).  Clicking on the plus icon adds a new buffer to the
+window-local tab-line of window buffers.  Using the mouse wheel on the
+tab-line scrolls the window buffers whose names are displayed in tabs.
+
 ** fileloop.el lets one setup multifile operations like search&replace.
 
 +++
