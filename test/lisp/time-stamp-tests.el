@@ -63,9 +63,10 @@
     ;; implemented and documented since 1997
     (should (equal (time-stamp-string "%3a" ref-time) "Mon"))
     (should (equal (time-stamp-string "%#A" ref-time) "MONDAY"))
+    ;; documented 1997-2019
     (should (equal (time-stamp-string "%3A" ref-time) "MON"))
     (should (equal (time-stamp-string "%:a" ref-time) "Monday"))
-    ;; implemented since 2001, undocumented future formats
+    ;; implemented since 2001, documented since 2019
     (should (equal (time-stamp-string "%#a" ref-time) "MON"))
     (should (equal (time-stamp-string "%:A" ref-time) "Monday"))
     ;; warned since 1997, will change
@@ -82,9 +83,10 @@
     ;; implemented and documented since 1997
     (should (equal (time-stamp-string "%3b" ref-time) "Jan"))
     (should (equal (time-stamp-string "%#B" ref-time) "JANUARY"))
+    ;; documented 1997-2019
     (should (equal (time-stamp-string "%3B" ref-time) "JAN"))
     (should (equal (time-stamp-string "%:b" ref-time) "January"))
-    ;; implemented since 2001, undocumented future formats
+    ;; implemented since 2001, documented since 2019
     (should (equal (time-stamp-string "%#b" ref-time) "JAN"))
     (should (equal (time-stamp-string "%:B" ref-time) "January"))
     ;; warned since 1997, will change
@@ -103,10 +105,10 @@
     (should (equal (time-stamp-string "%2d" ref-time2) "18"))
     (should (equal (time-stamp-string "%02d" ref-time) "02"))
     (should (equal (time-stamp-string "%02d" ref-time2) "18"))
-    ;; implemented and documented since 1997
+    ;; documented 1997-2019
     (should (equal (time-stamp-string "%:d" ref-time) "2"))
     (should (equal (time-stamp-string "%:d" ref-time2) "18"))
-    ;; implemented since 1997, undocumented future format
+    ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1d" ref-time) "2"))
     (should (equal (time-stamp-string "%1d" ref-time2) "18"))
     ;; warned since 1997, will change
@@ -125,11 +127,11 @@
     (should (equal (time-stamp-string "%02H" ref-time) "15"))
     (should (equal (time-stamp-string "%02H" ref-time2) "12"))
     (should (equal (time-stamp-string "%02H" ref-time3) "06"))
-    ;; implemented and documented since 1997
+    ;; documented 1997-2019
     (should (equal (time-stamp-string "%:H" ref-time) "15"))
     (should (equal (time-stamp-string "%:H" ref-time2) "12"))
     (should (equal (time-stamp-string "%:H" ref-time3) "6"))
-    ;; implemented since 1997, undocumented future format
+    ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1H" ref-time) "15"))
     (should (equal (time-stamp-string "%1H" ref-time2) "12"))
     (should (equal (time-stamp-string "%1H" ref-time3) "6"))
@@ -151,11 +153,11 @@
     (should (equal (time-stamp-string "%02I" ref-time) "03"))
     (should (equal (time-stamp-string "%02I" ref-time2) "12"))
     (should (equal (time-stamp-string "%02I" ref-time3) "06"))
-    ;; implemented and documented since 1997
+    ;; documented 1997-2019
     (should (equal (time-stamp-string "%:I" ref-time) "3")) ;PM
     (should (equal (time-stamp-string "%:I" ref-time2) "12")) ;PM
     (should (equal (time-stamp-string "%:I" ref-time3) "6")) ;AM
-    ;; implemented since 1997, undocumented future format
+    ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1I" ref-time) "3"))
     (should (equal (time-stamp-string "%1I" ref-time2) "12"))
     (should (equal (time-stamp-string "%1I" ref-time3) "6"))
@@ -175,10 +177,10 @@
     (should (equal (time-stamp-string "%2m" ref-time2) "11"))
     (should (equal (time-stamp-string "%02m" ref-time) "01"))
     (should (equal (time-stamp-string "%02m" ref-time2) "11"))
-    ;; implemented and documented since 1997
+    ;; documented 1997-2019
     (should (equal (time-stamp-string "%:m" ref-time) "1"))
     (should (equal (time-stamp-string "%:m" ref-time2) "11"))
-    ;; implemented since 1997, undocumented future format
+    ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1m" ref-time) "1"))
     (should (equal (time-stamp-string "%1m" ref-time2) "11"))
     ;; warned since 1997, will change
@@ -195,10 +197,10 @@
     (should (equal (time-stamp-string "%2M" ref-time2) "14"))
     (should (equal (time-stamp-string "%02M" ref-time) "04"))
     (should (equal (time-stamp-string "%02M" ref-time2) "14"))
-    ;; implemented and documented since 1997
+    ;; documented 1997-2019
     (should (equal (time-stamp-string "%:M" ref-time) "4"))
     (should (equal (time-stamp-string "%:M" ref-time2) "14"))
-    ;; implemented since 1997, undocumented future format
+    ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1M" ref-time) "4"))
     (should (equal (time-stamp-string "%1M" ref-time2) "14"))
     ;; warned since 1997, will change
@@ -215,10 +217,10 @@
     (should (equal (time-stamp-string "%2S" ref-time2) "15"))
     (should (equal (time-stamp-string "%02S" ref-time) "05"))
     (should (equal (time-stamp-string "%02S" ref-time2) "15"))
-    ;; implemented and documented since 1997
+    ;; documented 1997-2019
     (should (equal (time-stamp-string "%:S" ref-time) "5"))
     (should (equal (time-stamp-string "%:S" ref-time2) "15"))
-    ;; implemented since 1997, undocumented future format
+    ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1S" ref-time) "5"))
     (should (equal (time-stamp-string "%1S" ref-time2) "15"))
     ;; warned since 1997, will change
@@ -251,9 +253,9 @@
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
     (should (equal (time-stamp-string "%02y" ref-time) "06"))
-    ;; implemented and documented since 1997
+    ;; documented 1997-2019
     (should (equal (time-stamp-string "%:y" ref-time) "2006"))
-    ;; implemented since 1997, undocumented future format
+    ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%Y" ref-time) "2006"))
     ;; warned since 1997, will change
     (time-stamp-should-warn (equal (time-stamp-string "%y" ref-time) "2006"))))
@@ -263,8 +265,9 @@
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
     (should (equal (time-stamp-string "%Z" ref-time) "GMT"))
+    ;; documented 1995-2019
     (should (equal (time-stamp-string "%z" ref-time) "gmt"))
-    ;; implemented since 1997, undocumented future format
+    ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%#Z" ref-time) "gmt"))))
 
 (ert-deftest time-stamp-test-non-date-conversions ()
@@ -277,14 +280,15 @@
     (should (equal
              (time-stamp-string "%F" ref-time) "/emacs/test/time-stamped-file"))
     (should (equal (time-stamp-string "%h" ref-time) "test-mail-host-name"))
+    ;; documented 1995-2019
     (should (equal
              (time-stamp-string "%s" ref-time) "test-system-name.example.org"))
     (should (equal (time-stamp-string "%U" ref-time) "Time Stamp Tester"))
     (should (equal (time-stamp-string "%u" ref-time) "test-logname"))
-    ;; implemented since 2001, undocumented future formats
+    ;; implemented since 2001, documented since 2019
     (should (equal (time-stamp-string "%L" ref-time) "Time Stamp Tester"))
     (should (equal (time-stamp-string "%l" ref-time) "test-logname"))
-    ;; implemented since 2007, undocumented future formats
+    ;; implemented since 2007, documented since 2019
     (should (equal
              (time-stamp-string "%Q" ref-time) "test-system-name.example.org"))
     (should (equal

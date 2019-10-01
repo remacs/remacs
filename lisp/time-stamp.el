@@ -41,7 +41,7 @@
   :group 'data
   :group 'extensions)
 
-(defcustom time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S %u"
+(defcustom time-stamp-format "%Y-%02m-%02d %02H:%02M:%02S %l"
   "Format of the string inserted by \\[time-stamp].
 This is a string, used verbatim except for character sequences beginning
 with %, as follows.  The values of non-numeric formatted items depend
@@ -49,26 +49,26 @@ on the locale setting recorded in `system-time-locale' and
 `locale-coding-system'.  The examples here are for the default
 \(`C') locale.
 
-%:a  weekday name: `Monday'.		%#A gives uppercase: `MONDAY'
-%3a  abbreviated weekday: `Mon'.	%3A gives uppercase: `MON'
-%:b  month name: `January'.		%#B gives uppercase: `JANUARY'
-%3b  abbreviated month: `Jan'.		%3B gives uppercase: `JAN'
+%:A  weekday name: `Monday'		%#A gives uppercase: `MONDAY'
+%3a  abbreviated weekday: `Mon' 	%#a gives uppercase: `MON'
+%:B  month name: `January'		%#B gives uppercase: `JANUARY'
+%3b  abbreviated month: `Jan'		%#b gives uppercase: `JAN'
 %02d day of month
 %02H 24-hour clock hour
 %02I 12-hour clock hour
 %02m month number
 %02M minute
-%#p  `am' or `pm'.			%P  gives uppercase: `AM' or `PM'
+%#p  `am' or `pm'			%P  gives uppercase: `AM' or `PM'
 %02S seconds
 %w   day number of week, Sunday is 0
-%02y 2-digit year: `03'			%:y 4-digit year: `2003'
-%z   time zone name: `est'.		%Z  gives uppercase: `EST'
+%02y 2-digit year: `03'			%Y  4-digit year: `2003'
+%#Z  lowercase time zone name: `est'	%Z  gives uppercase: `EST'
 
 Non-date items:
 %%   a literal percent character: `%'
 %f   file name without directory	%F  gives absolute pathname
-%s   system name
-%u   user's login name			%U  user's full name
+%l   login name 			%L  full name of logged-in user
+%q   unqualified host name		%Q  fully-qualified host name
 %h   mail host name
 
 Decimal digits between the % and the type character specify the
@@ -76,16 +76,15 @@ field width.  Strings are truncated on the right; years on the left.
 A leading zero in the field width zero-fills a number.
 
 For example, to get the format used by the `date' command,
-use \"%3a %3b %2d %02H:%02M:%02S %Z %:y\".
+use \"%3a %3b %2d %02H:%02M:%02S %Z %Y\".
 
-In the future these formats will be aligned more with `format-time-string'.
-Because of this transition, the default padding for numeric formats will
-change in a future version.  Therefore either a padding width should be
-specified, or the : modifier should be used to explicitly request the
-historical default."
+The default padding of some formats has changed to be more compatible
+with format-time-string.  To be compatible with older versions of Emacs,
+specify a padding width (as shown) or use the : modifier to request the
+transitional behavior (again, as shown)."
   :type 'string
   :group 'time-stamp
-  :version "20.1")
+  :version "27.1")
 ;;;###autoload(put 'time-stamp-format 'safe-local-variable 'stringp)
 
 (defcustom time-stamp-active t
@@ -227,13 +226,13 @@ Examples:
 \"-10/\" (sets only `time-stamp-line-limit')
 
 \"-9/^Last modified: %%$\" (sets `time-stamp-line-limit',
-`time-stamp-start', `time-stamp-end' and `time-stamp-format')
+`time-stamp-start' and `time-stamp-end')
 
-\"@set Time-stamp: %:b %:d, %:y$\" (sets `time-stamp-start',
-`time-stamp-end' and `time-stamp-format')
+\"@set Time-stamp: %:B %1d, %Y$\" (sets `time-stamp-start',
+`time-stamp-format' and `time-stamp-end')
 
-\"newcommand{\\\\\\\\timestamp}{%%}\" (sets `time-stamp-start',
-`time-stamp-end' and `time-stamp-format')
+\"newcommand{\\\\\\\\timestamp}{%%}\" (sets `time-stamp-start'
+and `time-stamp-end')
 
 Do not change `time-stamp-pattern' `time-stamp-line-limit',
 `time-stamp-start', or `time-stamp-end' for yourself or you will be

@@ -1995,6 +1995,27 @@ and 'gravatar-force-default'.
 *** The built-in ada-mode is now deleted.  The GNU ELPA package is a
 good replacement, even in very large source files.
 
+** Some conversions recommended for 'time-stamp-format' have changed.
+The new documented/recommended %-conversions are closer to those
+used by 'format-time-string' and are compatible at least as far back
+as Emacs 22.1 (released in 2007).
+
+Uppercase abbreviated day name of week: was %3A, now %#a
+Full day name of week: was %:a, now %:A
+Uppercase abbreviated month name: was %3B, now %#b
+Full month name: was %:b, now %:B
+Four-digit year: was %:y, now %Y
+Lowercase timezone name: was %z, now %#Z
+Fully-qualified host name: was %s, now %Q
+Unqualified host name: (was none), now %q
+Login name: was %u, now %l
+User's full name: was %U, now %L
+
+Merely having (add-hook 'before-save-hook 'time-stamp) in your
+Emacs init file does not expose you to this change.  However,
+if you set 'time-stamp-format' or 'time-stamp-pattern' with a
+file-local variable, you may need to update the value.
+
 
 * New Modes and Packages in Emacs 27.1
 
