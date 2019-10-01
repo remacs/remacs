@@ -2119,6 +2119,20 @@ displayed.  You can press @kbd{n} (@code{image-next-file}) and @kbd{p}
 (@code{image-previous-file}) to visit the next image file and the
 previous image file in the same directory, respectively.
 
+@findex image-mode-mark-file
+@findex image-mode-unmark-file
+@findex image-mode-copy-file-name-as-kill
+  When looking through images, it's sometimes convenient to be able to
+mark the files for later processing (for instance, if you want to
+select a group of images to copy somewhere else).  The @kbd{m}
+(@code{image-mode-mark-file}) command will mark the current file in
+any Dired buffer(s) that display the current file's directory.  If no
+such buffer is open, the directory is opened in a new buffer.  To
+unmark files, use the @kbd{u} (@code{image-mode-mark-file}) command.
+Finally, if you just want to copy the current buffers file name to the
+kill ring, you can use the @kbd{w}
+(@code{image-mode-copy-file-name-as-kill}) command.
+
 @findex image-toggle-animation
 @findex image-next-frame
 @findex image-previous-frame

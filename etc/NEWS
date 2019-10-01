@@ -2726,6 +2726,12 @@ buffer-local, so each buffer could have its own values for these
 parameters.
 
 +++
+*** Three new 'image-mode' commands have been added: 'm', which marks
+the file in the dired buffer(s) for the directory the file is in; 'u',
+which unmarks the file; and 'w', which pushes the current buffer's file
+name to the kill ring.
+
++++
 *** The command 'image-rotate' now accepts a prefix argument.
 With a prefix argument, 'image-rotate' now rotates the image at point
 90 degrees counter-clockwise, instead of the default clockwise.
