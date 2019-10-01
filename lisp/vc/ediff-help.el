@@ -156,10 +156,7 @@ the value of this variable and the variables `ediff-help-message-*' in
 ;; the keymap that defines clicks over the quick help regions
 (defvar ediff-help-region-map (make-sparse-keymap))
 
-(define-key
-  ediff-help-region-map
-  (if (featurep 'emacs) [mouse-2] [button2])
-  'ediff-help-for-quick-help)
+(define-key ediff-help-region-map [mouse-2] 'ediff-help-for-quick-help)
 
 ;; runs in the control buffer
 (defun ediff-set-help-overlays ()
@@ -170,9 +167,7 @@ the value of this variable and the variables `ediff-help-message-*' in
 	    end (match-end 0)
 	    cmd (buffer-substring (match-beginning 1) (match-end 1)))
       (setq overl (ediff-make-overlay beg end))
-      (if (featurep 'emacs)
-	  (ediff-overlay-put overl 'mouse-face 'highlight)
-	(ediff-overlay-put overl 'highlight t))
+      (ediff-overlay-put overl 'mouse-face 'highlight)
       (ediff-overlay-put overl 'ediff-help-info cmd))))
 
 
@@ -181,14 +176,11 @@ the value of this variable and the variables `ediff-help-message-*' in
   (interactive)
   (ediff-barf-if-not-control-buffer)
   (let ((pos (ediff-event-point last-command-event))
-	overl cmd)
+	cmd)
 
-    (if (featurep 'xemacs)
-	(setq overl (extent-at pos (current-buffer) 'ediff-help-info)
-	      cmd   (ediff-overlay-get overl 'ediff-help-info))
-      (setq cmd (car (mapcar (lambda (elt)
-			       (overlay-get elt 'ediff-help-info))
-			     (overlays-at pos)))))
+    (setq cmd (car (mapcar (lambda (elt)
+			     (overlay-get elt 'ediff-help-info))
+			   (overlays-at pos))))
 
     (if (not (stringp cmd))
 	(user-error "Hmm...  I don't see an Ediff command around here..."))
