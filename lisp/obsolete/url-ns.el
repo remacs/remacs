@@ -3,6 +3,7 @@
 ;; Copyright (C) 1997-1999, 2004-2019 Free Software Foundation, Inc.
 
 ;; Keywords: comm, data, processes, hypermedia
+;; Obsolete-since: 27.1
 
 ;; This file is part of GNU Emacs.
 
@@ -18,6 +19,11 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; This file is obsolete.  For more information, see:
+;; https://debbugs.gnu.org/19822
 
 ;;; Code:
 

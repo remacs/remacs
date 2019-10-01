@@ -2690,6 +2690,11 @@ directories if you ask it for a "file:///dir" URL.  Since this is a
 low-level library, such decisions (if they are to be made at all) are
 left to higher-level functions.
 
+---
+** The url-ns.el library is now marked obsolete.
+This library is used to open configuration files for the long defunct
+web browser Netscape, and is no longer relevant.
+
 ** Image mode
 
 *** New library Exif.
