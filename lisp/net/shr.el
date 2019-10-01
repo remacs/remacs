@@ -1199,7 +1199,9 @@ Return a string with image data."
         "<svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xi=\"http://www.w3.org/2001/XInclude\" style=\"color: %s;\" viewBox=\"0 0 %d %d\"> <xi:include href=\"data:image/svg+xml;base64,%s\"></xi:include></svg>"
         (face-foreground 'default)
         (car size) (cdr size)
-        (base64-encode-string data t)))
+        (base64-encode-string (encode-coding-string
+                               data (car (detect-coding-string data)))
+                              t)))
       (buffer-string))))
 
 (defun shr-image-displayer (content-function)
