@@ -46,7 +46,8 @@
 (put 'with-time-stamp-test-env 'lisp-indent-hook 'defun)
 
 (defmacro time-stamp-should-warn (form)
-  "Similar to `should' but verifies that a format warning is generated."
+  "Similar to `should' but verifies that a format warning is generated.
+In use before 2019 changes; will be used again after those changes settle."
   `(let ((warning-count 0))
      (cl-letf (((symbol-function 'time-stamp-conv-warn)
                 (lambda (_old _new)
@@ -69,13 +70,12 @@
     ;; implemented since 2001, documented since 2019
     (should (equal (time-stamp-string "%#a" ref-time) "MON"))
     (should (equal (time-stamp-string "%:A" ref-time) "Monday"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal
-                             (time-stamp-string "%a" ref-time) "Monday"))
-    (time-stamp-should-warn (equal
-                             (time-stamp-string "%^a" ref-time) "Monday"))
-    (time-stamp-should-warn (equal
-                             (time-stamp-string "%A" ref-time) "MONDAY"))))
+    ;; allowed but undocumented since 2019 (warned 1997-2019)
+    (should (equal (time-stamp-string "%^A" ref-time) "MONDAY"))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%a" ref-time) "Mon"))
+    (should (equal (time-stamp-string "%^a" ref-time) "MON"))
+    (should (equal (time-stamp-string "%A" ref-time) "Monday"))))
 
 (ert-deftest time-stamp-test-month-name ()
   "Test time-stamp formats for month name."
@@ -89,13 +89,12 @@
     ;; implemented since 2001, documented since 2019
     (should (equal (time-stamp-string "%#b" ref-time) "JAN"))
     (should (equal (time-stamp-string "%:B" ref-time) "January"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal
-                             (time-stamp-string "%b" ref-time) "January"))
-    (time-stamp-should-warn (equal
-                             (time-stamp-string "%^b" ref-time) "January"))
-    (time-stamp-should-warn (equal
-                             (time-stamp-string "%B" ref-time) "JANUARY"))))
+    ;; allowed but undocumented since 2019 (warned 1997-2019)
+    (should (equal (time-stamp-string "%^B" ref-time) "JANUARY"))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%b" ref-time) "Jan"))
+    (should (equal (time-stamp-string "%^b" ref-time) "JAN"))
+    (should (equal (time-stamp-string "%B" ref-time) "January"))))
 
 (ert-deftest time-stamp-test-day-of-month ()
   "Test time-stamp formats for day of month."
@@ -111,11 +110,14 @@
     ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1d" ref-time) "2"))
     (should (equal (time-stamp-string "%1d" ref-time2) "18"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal (time-stamp-string "%_d" ref-time) "2"))
-    (time-stamp-should-warn (equal (time-stamp-string "%_d" ref-time2) "18"))
-    (time-stamp-should-warn (equal (time-stamp-string "%d" ref-time) "2"))
-    (time-stamp-should-warn (equal (time-stamp-string "%d" ref-time2) "18"))))
+    ;; allowed but undocumented since 2019 (warned 1997-2019)
+    (should (equal (time-stamp-string "%-d" ref-time) "2"))
+    (should (equal (time-stamp-string "%-d" ref-time2) "18"))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%_d" ref-time) " 2"))
+    (should (equal (time-stamp-string "%_d" ref-time2) "18"))
+    (should (equal (time-stamp-string "%d" ref-time) "02"))
+    (should (equal (time-stamp-string "%d" ref-time2) "18"))))
 
 (ert-deftest time-stamp-test-hours-24 ()
   "Test time-stamp formats for hour on a 24-hour clock."
@@ -135,13 +137,17 @@
     (should (equal (time-stamp-string "%1H" ref-time) "15"))
     (should (equal (time-stamp-string "%1H" ref-time2) "12"))
     (should (equal (time-stamp-string "%1H" ref-time3) "6"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal (time-stamp-string "%_H" ref-time) "15"))
-    (time-stamp-should-warn (equal (time-stamp-string "%_H" ref-time2) "12"))
-    (time-stamp-should-warn (equal (time-stamp-string "%_H" ref-time3) "6"))
-    (time-stamp-should-warn (equal (time-stamp-string "%H" ref-time) "15"))
-    (time-stamp-should-warn (equal (time-stamp-string "%H" ref-time2) "12"))
-    (time-stamp-should-warn (equal (time-stamp-string "%H" ref-time3) "6"))))
+    ;; allowed but undocumented since 2019 (warned 1997-2019)
+    (should (equal (time-stamp-string "%-H" ref-time) "15"))
+    (should (equal (time-stamp-string "%-H" ref-time2) "12"))
+    (should (equal (time-stamp-string "%-H" ref-time3) "6"))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%_H" ref-time) "15"))
+    (should (equal (time-stamp-string "%_H" ref-time2) "12"))
+    (should (equal (time-stamp-string "%_H" ref-time3) " 6"))
+    (should (equal (time-stamp-string "%H" ref-time) "15"))
+    (should (equal (time-stamp-string "%H" ref-time2) "12"))
+    (should (equal (time-stamp-string "%H" ref-time3) "06"))))
 
 (ert-deftest time-stamp-test-hours-12 ()
   "Test time-stamp formats for hour on a 12-hour clock."
@@ -161,13 +167,17 @@
     (should (equal (time-stamp-string "%1I" ref-time) "3"))
     (should (equal (time-stamp-string "%1I" ref-time2) "12"))
     (should (equal (time-stamp-string "%1I" ref-time3) "6"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal (time-stamp-string "%_I" ref-time) "3"))
-    (time-stamp-should-warn (equal (time-stamp-string "%_I" ref-time2) "12"))
-    (time-stamp-should-warn (equal (time-stamp-string "%_I" ref-time3) "6"))
-    (time-stamp-should-warn (equal (time-stamp-string "%I" ref-time) "3"))
-    (time-stamp-should-warn (equal (time-stamp-string "%I" ref-time2) "12"))
-    (time-stamp-should-warn (equal (time-stamp-string "%I" ref-time3) "6"))))
+    ;; allowed but undocumented since 2019 (warned 1997-2019)
+    (should (equal (time-stamp-string "%-I" ref-time) "3"))
+    (should (equal (time-stamp-string "%-I" ref-time2) "12"))
+    (should (equal (time-stamp-string "%-I" ref-time3) "6"))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%_I" ref-time) " 3"))
+    (should (equal (time-stamp-string "%_I" ref-time2) "12"))
+    (should (equal (time-stamp-string "%_I" ref-time3) " 6"))
+    (should (equal (time-stamp-string "%I" ref-time) "03"))
+    (should (equal (time-stamp-string "%I" ref-time2) "12"))
+    (should (equal (time-stamp-string "%I" ref-time3) "06"))))
 
 (ert-deftest time-stamp-test-month-number ()
   "Test time-stamp formats for month number."
@@ -183,11 +193,14 @@
     ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1m" ref-time) "1"))
     (should (equal (time-stamp-string "%1m" ref-time2) "11"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal (time-stamp-string "%_m" ref-time) "1"))
-    (time-stamp-should-warn (equal (time-stamp-string "%_m" ref-time2) "11"))
-    (time-stamp-should-warn (equal (time-stamp-string "%m" ref-time) "1"))
-    (time-stamp-should-warn (equal (time-stamp-string "%m" ref-time2) "11"))))
+    ;; allowed but undocumented since 2019 (warned 1997-2019)
+    (should (equal (time-stamp-string "%-m" ref-time) "1"))
+    (should (equal (time-stamp-string "%-m" ref-time2) "11"))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%_m" ref-time) " 1"))
+    (should (equal (time-stamp-string "%_m" ref-time2) "11"))
+    (should (equal (time-stamp-string "%m" ref-time) "01"))
+    (should (equal (time-stamp-string "%m" ref-time2) "11"))))
 
 (ert-deftest time-stamp-test-minute ()
   "Test time-stamp formats for minute."
@@ -203,11 +216,14 @@
     ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1M" ref-time) "4"))
     (should (equal (time-stamp-string "%1M" ref-time2) "14"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal (time-stamp-string "%_M" ref-time) "4"))
-    (time-stamp-should-warn (equal (time-stamp-string "%_M" ref-time2) "14"))
-    (time-stamp-should-warn (equal (time-stamp-string "%M" ref-time) "4"))
-    (time-stamp-should-warn (equal (time-stamp-string "%M" ref-time2) "14"))))
+    ;; allowed but undocumented since 2019 (warned 1997-2019)
+    (should (equal (time-stamp-string "%-M" ref-time) "4"))
+    (should (equal (time-stamp-string "%-M" ref-time2) "14"))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%_M" ref-time) " 4"))
+    (should (equal (time-stamp-string "%_M" ref-time2) "14"))
+    (should (equal (time-stamp-string "%M" ref-time) "04"))
+    (should (equal (time-stamp-string "%M" ref-time2) "14"))))
 
 (ert-deftest time-stamp-test-second ()
   "Test time-stamp formats for second."
@@ -223,11 +239,14 @@
     ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%1S" ref-time) "5"))
     (should (equal (time-stamp-string "%1S" ref-time2) "15"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal (time-stamp-string "%_S" ref-time) "5"))
-    (time-stamp-should-warn (equal (time-stamp-string "%_S" ref-time2) "15"))
-    (time-stamp-should-warn (equal (time-stamp-string "%S" ref-time) "5"))
-    (time-stamp-should-warn (equal (time-stamp-string "%S" ref-time2) "15"))))
+    ;; allowed but undocumented since 2019 (warned 1997-2019)
+    (should (equal (time-stamp-string "%-S" ref-time) "5"))
+    (should (equal (time-stamp-string "%-S" ref-time2) "15"))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%_S" ref-time) " 5"))
+    (should (equal (time-stamp-string "%_S" ref-time2) "15"))
+    (should (equal (time-stamp-string "%S" ref-time) "05"))
+    (should (equal (time-stamp-string "%S" ref-time2) "15"))))
 
 (ert-deftest time-stamp-test-am-pm ()
   "Test time-stamp formats for AM and PM strings."
@@ -237,9 +256,9 @@
     (should (equal (time-stamp-string "%#p" ref-time3) "am"))
     (should (equal (time-stamp-string "%P" ref-time) "PM"))
     (should (equal (time-stamp-string "%P" ref-time3) "AM"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal (time-stamp-string "%p" ref-time) "pm"))
-    (time-stamp-should-warn (equal (time-stamp-string "%p" ref-time3) "am"))))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%p" ref-time) "PM"))
+    (should (equal (time-stamp-string "%p" ref-time3) "AM"))))
 
 (ert-deftest time-stamp-test-day-number-in-week ()
   "Test time-stamp formats for day number in week."
@@ -257,8 +276,8 @@
     (should (equal (time-stamp-string "%:y" ref-time) "2006"))
     ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%Y" ref-time) "2006"))
-    ;; warned since 1997, will change
-    (time-stamp-should-warn (equal (time-stamp-string "%y" ref-time) "2006"))))
+    ;; warned 1997-2019, changed in 2019
+    (should (equal (time-stamp-string "%y" ref-time) "06"))))
 
 (ert-deftest time-stamp-test-time-zone ()
   "Test time-stamp formats for time zone."

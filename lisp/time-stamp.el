@@ -72,7 +72,7 @@ Non-date items:
 %h   mail host name
 
 Decimal digits between the % and the type character specify the
-field width.  Strings are truncated on the right; years on the left.
+field width.  Strings are truncated on the right.
 A leading zero in the field width zero-fills a number.
 
 For example, to get the format used by the `date' command,
@@ -420,13 +420,9 @@ normally the current time is used."
 (defconst time-stamp-no-file "(no file)"
   "String to use when the buffer is not associated with a file.")
 
-;;; FIXME This comment was written in 1996!
-;;; time-stamp is transitioning to using the new, expanded capabilities
-;;; of format-time-string.  During the process, this function implements
-;;; intermediate, compatible formats and complains about old, soon to
-;;; be unsupported, formats.  This function will get a lot (a LOT) shorter
-;;; when the transition is complete and we can just pass most things
-;;; straight through to format-time-string.
+;;; time-stamp is transitioning to be compatible with format-time-string.
+;;; During the process, this function implements
+;;; intermediate, compatible formats.
 ;;;      At all times, all the formats recommended in the doc string
 ;;; of time-stamp-format will work not only in the current version of
 ;;; Emacs, but in all versions that have been released within the past
@@ -445,7 +441,7 @@ and all `time-stamp-format' compatibility."
 	(result "")
 	field-width
 	field-result
-	alt-form change-case
+	alt-form change-case upcase
 	(paren-level 0))
     (while (< ind fmt-len)
       (setq cur-char (aref format ind))
@@ -455,7 +451,7 @@ and all `time-stamp-format' compatibility."
       (cond
        ((eq cur-char ?%)
 	;; eat any additional args to allow for future expansion
-	(setq alt-form nil change-case nil field-width "")
+	(setq alt-form nil change-case nil upcase nil field-width "")
 	(while (progn
 		 (setq ind (1+ ind))
 		 (setq cur-char (if (< ind fmt-len)
@@ -491,39 +487,41 @@ and all `time-stamp-format' compatibility."
 	  (cond ((eq cur-char ?:)
 		 (setq alt-form t))
 		((eq cur-char ?#)
-		 (setq change-case t))))
+		 (setq change-case t))
+		((eq cur-char ?^)
+		 (setq upcase t))
+		((eq cur-char ?-)
+		 (setq field-width "1"))
+		((eq cur-char ?_)
+		 (setq field-width "2"))))
 	(setq field-result
 	(cond
 	 ((eq cur-char ?%)
 	  "%")
 	 ((eq cur-char ?a)		;day of week
-	  (if change-case
-	      (time-stamp--format "%#a" time)
-	    (or alt-form (not (string-equal field-width ""))
-		(time-stamp-conv-warn "%a" "%:a"))
-	    (if (and alt-form (not (string-equal field-width "")))
-		""			;discourage "%:3a"
-	      (time-stamp--format "%A" time))))
+          (if alt-form
+               (if (string-equal field-width "")
+                   (time-stamp--format "%A" time)
+                 "")			;discourage "%:3a"
+            (if (or change-case upcase)
+                (time-stamp--format "%#a" time)
+	      (time-stamp--format "%a" time))))
 	 ((eq cur-char ?A)
-	  (if alt-form
-	      (time-stamp--format "%A" time)
-	    (or change-case (not (string-equal field-width ""))
-		(time-stamp-conv-warn "%A" "%#A"))
-	    (time-stamp--format "%#A" time)))
+	  (if (or change-case upcase (not (string-equal field-width "")))
+	      (time-stamp--format "%#A" time)
+	    (time-stamp--format "%A" time)))
 	 ((eq cur-char ?b)		;month name
-	  (if change-case
-	      (time-stamp--format "%#b" time)
-	    (or alt-form (not (string-equal field-width ""))
-		(time-stamp-conv-warn "%b" "%:b"))
-	    (if (and alt-form (not (string-equal field-width "")))
-		""			;discourage "%:3b"
-	    (time-stamp--format "%B" time))))
+          (if alt-form
+               (if (string-equal field-width "")
+                   (time-stamp--format "%B" time)
+                 "")			;discourage "%:3b"
+            (if (or change-case upcase)
+                (time-stamp--format "%#b" time)
+	      (time-stamp--format "%b" time))))
 	 ((eq cur-char ?B)
-	  (if alt-form
-	      (time-stamp--format "%B" time)
-	    (or change-case (not (string-equal field-width ""))
-		(time-stamp-conv-warn "%B" "%#B"))
-	    (time-stamp--format "%#B" time)))
+	  (if (or change-case upcase (not (string-equal field-width "")))
+	      (time-stamp--format "%#B" time)
+	    (time-stamp--format "%B" time)))
 	 ((eq cur-char ?d)		;day of month, 1-31
 	  (time-stamp-do-number cur-char alt-form field-width time))
 	 ((eq cur-char ?H)		;hour, 0-23
@@ -535,9 +533,9 @@ and all `time-stamp-format' compatibility."
 	 ((eq cur-char ?M)		;minute, 0-59
 	  (time-stamp-do-number cur-char alt-form field-width time))
 	 ((eq cur-char ?p)		;am or pm
-	  (or change-case
-	      (time-stamp-conv-warn "%p" "%#p"))
-	  (time-stamp--format "%#p" time))
+	  (if change-case
+              (time-stamp--format "%#p" time)
+            (time-stamp--format "%p" time)))
 	 ((eq cur-char ?P)		;AM or PM
 	  (time-stamp--format "%p" time))
 	 ((eq cur-char ?S)		;seconds, 00-60
@@ -545,10 +543,10 @@ and all `time-stamp-format' compatibility."
 	 ((eq cur-char ?w)		;weekday number, Sunday is 0
 	  (time-stamp--format "%w" time))
 	 ((eq cur-char ?y)		;year
-	  (or alt-form (not (string-equal field-width ""))
-	      (time-stamp-conv-warn "%y" "%:y"))
-	  (string-to-number (time-stamp--format "%Y" time)))
-	 ((eq cur-char ?Y)		;4-digit year, new style
+          (if alt-form
+              (string-to-number (time-stamp--format "%Y" time))
+            (string-to-number (time-stamp--format "%y" time))))
+	 ((eq cur-char ?Y)		;4-digit year
 	  (string-to-number (time-stamp--format "%Y" time)))
 	 ((eq cur-char ?z)		;time zone lower case
 	  (if change-case
@@ -585,6 +583,11 @@ and all `time-stamp-format' compatibility."
 	 ((eq cur-char ?Q)		;(undocumented fully-qualified host)
 	  (system-name))
 	 ))
+        (and (numberp field-result)
+             (not alt-form)
+             (string-equal field-width "")
+             ;; no width provided; set width for default
+             (setq field-width "02"))
 	(let ((padded-result
 	       (format (format "%%%s%c"
 			       field-width
@@ -595,12 +598,10 @@ and all `time-stamp-format' compatibility."
 				     initial-length
 				   (string-to-number field-width))))
 	    (if (> initial-length desired-length)
-		;; truncate strings on right, years on left
+		;; truncate strings on right
 		(if (stringp field-result)
 		    (substring padded-result 0 desired-length)
-		  (if (eq cur-char ?y)
-		      (substring padded-result (- desired-length))
-		    padded-result))	;non-year numbers don't truncate
+                  padded-result)	;numbers don't truncate
 	      padded-result))))
        (t
 	(char-to-string cur-char)))))
@@ -612,9 +613,6 @@ and all `time-stamp-format' compatibility."
 ALT-FORM is whether `#' specified.  FIELD-WIDTH is the string
 width specification or \"\".  TIME is the time to convert."
   (let ((format-string (concat "%" (char-to-string format-char))))
-    (and (not alt-form) (string-equal field-width "")
-	 (time-stamp-conv-warn format-string
-			       (format "%%:%c" format-char)))
     (if (and alt-form (not (string-equal field-width "")))
 	""				;discourage "%:2d" and the like
       (string-to-number (time-stamp--format format-string time)))))
@@ -632,7 +630,8 @@ The new forms being recommended now will continue to work then.")
 
 (defun time-stamp-conv-warn (old-form new-form)
   "Display a warning about a soon-to-be-obsolete format.
-Suggests replacing OLD-FORM with NEW-FORM."
+Suggests replacing OLD-FORM with NEW-FORM.
+In use before 2019 changes; will be used again after those changes settle."
   (cond
    (time-stamp-conversion-warn
     (with-current-buffer (get-buffer-create "*Time-stamp-compatibility*")
