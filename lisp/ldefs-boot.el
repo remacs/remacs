@@ -811,7 +811,7 @@ Also enable `allout-auto-activation' for this to take effect upon
 visiting an outline.
 
 When this is set you can disable allout widgets in select files
-by setting `allout-widgets-mode-inhibit'
+by setting `allout-widgets-mode-inhibit'.
 
 Instead of setting `allout-widgets-auto-activation' you can
 explicitly invoke `allout-widgets-mode' in allout buffers where
@@ -1477,7 +1477,17 @@ let-binding.")
 
 (custom-autoload 'auth-source-cache-expiry "auth-source" t)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "auth-source" '("auth-source")))
+(autoload 'authinfo-mode "auth-source" "\
+Mode for editing .authinfo/.netrc files.
+
+This is just like `fundamental-mode', but hides passwords.  The
+passwords are revealed when point moved into the password.
+
+\\{authinfo-mode-map}
+
+\(fn)" t nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "auth-source" '("auth")))
 
 ;;;***
 
@@ -1959,7 +1969,7 @@ already set.  If SELECT is non-nil interactively select a BibTeX buffer.
 
 When called interactively, FORCE is t, CURRENT is t if current buffer
 visits a file using `bibtex-mode', and SELECT is t if current buffer
-does not use `bibtex-mode',
+does not use `bibtex-mode'.
 
 \(fn &optional CURRENT FORCE SELECT)" t nil)
 
@@ -3151,7 +3161,7 @@ Invoke the GNU Emacs Calculator.  See \\[calc-dispatch-help] for details.
 \(fn &optional ARG)" t nil)
 
 (autoload 'calc "calc" "\
-The Emacs Calculator.  Full documentation is listed under \"calc-mode\".
+The Emacs Calculator.  Full documentation is listed under `calc-mode'.
 
 \(fn &optional ARG FULL-DISPLAY INTERACTIVE)" t nil)
 
@@ -4582,47 +4592,47 @@ space at the end of each line.
 (autoload 'checkdoc-ispell "checkdoc" "\
 Check the style and spelling of everything interactively.
 Calls `checkdoc' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc'" t nil)
+Prefix argument is the same as for `checkdoc'." t nil)
 
 (autoload 'checkdoc-ispell-current-buffer "checkdoc" "\
 Check the style and spelling of the current buffer.
 Calls `checkdoc-current-buffer' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-current-buffer'" t nil)
+Prefix argument is the same as for `checkdoc-current-buffer'." t nil)
 
 (autoload 'checkdoc-ispell-interactive "checkdoc" "\
 Check the style and spelling of the current buffer interactively.
 Calls `checkdoc-interactive' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-interactive'" t nil)
+Prefix argument is the same as for `checkdoc-interactive'." t nil)
 
 (autoload 'checkdoc-ispell-message-interactive "checkdoc" "\
 Check the style and spelling of message text interactively.
 Calls `checkdoc-message-interactive' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-message-interactive'" t nil)
+Prefix argument is the same as for `checkdoc-message-interactive'." t nil)
 
 (autoload 'checkdoc-ispell-message-text "checkdoc" "\
 Check the style and spelling of message text interactively.
 Calls `checkdoc-message-text' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-message-text'" t nil)
+Prefix argument is the same as for `checkdoc-message-text'." t nil)
 
 (autoload 'checkdoc-ispell-start "checkdoc" "\
 Check the style and spelling of the current buffer.
 Calls `checkdoc-start' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-start'" t nil)
+Prefix argument is the same as for `checkdoc-start'." t nil)
 
 (autoload 'checkdoc-ispell-continue "checkdoc" "\
 Check the style and spelling of the current buffer after point.
 Calls `checkdoc-continue' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-continue'" t nil)
+Prefix argument is the same as for `checkdoc-continue'." t nil)
 
 (autoload 'checkdoc-ispell-comments "checkdoc" "\
 Check the style and spelling of the current buffer's comments.
 Calls `checkdoc-comments' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-comments'" t nil)
+Prefix argument is the same as for `checkdoc-comments'." t nil)
 
 (autoload 'checkdoc-ispell-defun "checkdoc" "\
 Check the style and spelling of the current defun with Ispell.
 Calls `checkdoc-defun' with spell-checking turned on.
-Prefix argument is the same as for `checkdoc-defun'" t nil)
+Prefix argument is the same as for `checkdoc-defun'." t nil)
 
 (autoload 'checkdoc-minor-mode "checkdoc" "\
 Toggle automatic docstring checking (Checkdoc minor mode).
@@ -4836,6 +4846,13 @@ printer proceeds to the next function on the list.
 
 This variable is not used at present, but it is defined in hopes that
 a future Emacs interpreter will be able to use it.")
+
+(autoload 'cl-incf "cl-lib" "\
+Increment PLACE by X (1 by default).
+PLACE may be a symbol, or any generalized variable allowed by `setf'.
+The return value is the incremented value of PLACE.
+
+\(fn PLACE &optional X)" nil t)
 
 (defvar cl-old-struct-compat-mode nil "\
 Non-nil if Cl-Old-Struct-Compat mode is enabled.
@@ -5334,7 +5351,7 @@ This is the value of `next-error-function' in Compilation buffers.
 
 \(fn N &optional RESET)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "compile" '("compil" "define-compilation-mode" "kill-compilation" "overlay-arrow-overlay" "recompile")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "compile" '("compil" "define-compilation-mode" "kill-compilation" "recompile")))
 
 ;;;***
 
@@ -6672,6 +6689,9 @@ You may call with no args, or you may pass nil as the first arg and
 any other args you like.  In that case, the list of args after the
 first will be printed into the backtrace buffer.
 
+If `inhibit-redisplay' is non-nil when this function is called,
+the debugger will not be entered.
+
 \(fn &rest ARGS)" t nil)
 
 (autoload 'debug-on-entry "debug" "\
@@ -7168,10 +7188,11 @@ Look for a desktop file in DIRNAME, or if DIRNAME is omitted, look in
 directories listed in `desktop-path'.  If a desktop file is found, it
 is processed and `desktop-after-read-hook' is run.  If no desktop file
 is found, clear the desktop and run `desktop-no-desktop-file-hook'.
+Interactively, with prefix arg \\[universal-argument], ask for DIRNAME.
 This function is a no-op when Emacs is running in batch mode.
 It returns t if a desktop file was loaded, nil otherwise.
 
-\(fn &optional DIRNAME)" t nil)
+\(fn DIRNAME)" t nil)
 
 (autoload 'desktop-change-dir "desktop" "\
 Change to desktop saved in DIRNAME.
@@ -7211,8 +7232,9 @@ If NODISPLAY is non-nil, don't redisplay the article buffer.
 
 (autoload 'gnus-outlook-deuglify-article "deuglify" "\
 Full deuglify of broken Outlook (Express) articles.
-Treat dumbquotes, unwrap lines, repair attribution and rearrange citation.  If
-NODISPLAY is non-nil, don't redisplay the article buffer.
+Treat \"smartquotes\", unwrap lines, repair attribution and
+rearrange citation.  If NODISPLAY is non-nil, don't redisplay the
+article buffer.
 
 \(fn &optional NODISPLAY)" t nil)
 
@@ -11512,7 +11534,7 @@ After querying the server for the given string, the expansion specified by
 If REPLACE is non-nil, then this expansion replaces the name in the buffer.
 `eudc-expansion-overwrites-query' being non-nil inverts the meaning of REPLACE.
 Multiple servers can be tried with the same query until one finds a match,
-see `eudc-inline-expansion-servers'
+see `eudc-inline-expansion-servers'.
 
 \(fn &optional REPLACE)" t nil)
 
@@ -11737,6 +11759,13 @@ If file already has any execute bits set at all, do not change existing
 file modes." nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "executable" '("executable-")))
+
+;;;***
+
+;;;### (autoloads nil "exif" "image/exif.el" (0 0 0 0))
+;;; Generated autoloads from image/exif.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "exif" '("exif-")))
 
 ;;;***
 
@@ -12849,7 +12878,7 @@ TYPE is a key to symbol and TEXT is a description of the problem
 detected in this region.  DATA is any object that the caller
 wishes to attach to the created diagnostic for later retrieval.
 
-OVERLAY-PROPERTIES is an an alist of properties attached to the
+OVERLAY-PROPERTIES is an alist of properties attached to the
 created diagnostic, overriding the default properties and any
 properties of `flymake-overlay-control' of the diagnostic's
 type.
@@ -12905,7 +12934,7 @@ buffer happens via the special hook
 
 Some backends may take longer than others to respond or complete,
 and some may decide to disable themselves if they are not
-suitable for the current buffer. The commands
+suitable for the current buffer.  The commands
 `flymake-running-backends', `flymake-disabled-backends' and
 `flymake-reporting-backends' summarize the situation, as does the
 special *Flymake log* buffer.
@@ -13831,10 +13860,10 @@ Read network news as a slave, without connecting to the local server.
 
 (autoload 'gnus-no-server "gnus" "\
 Read network news.
-If ARG is a positive number, Gnus will use that as the startup
-level. If ARG is nil, Gnus will be started at level 2.  If ARG is
-non-nil and not a positive number, Gnus will prompt the user for the
-name of an NNTP server to use.
+If ARG is a positive number, Gnus will use that as the startup level.
+If ARG is nil, Gnus will be started at level 2.  If ARG is non-nil
+and not a positive number, Gnus will prompt the user for the name of
+an NNTP server to use.
 As opposed to `gnus', this command will not connect to the local
 server.
 
@@ -15278,7 +15307,7 @@ to be updated." t nil)
 ;;; Generated autoloads from mail/hashcash.el
 
 (autoload 'hashcash-insert-payment "hashcash" "\
-Insert X-Payment and X-Hashcash headers with a payment for ARG
+Insert X-Payment and X-Hashcash headers with a payment for ARG.
 
 \(fn ARG)" t nil)
 
@@ -15289,7 +15318,7 @@ Only start calculation.  Results are inserted when ready.
 \(fn ARG)" t nil)
 
 (autoload 'hashcash-verify-payment "hashcash" "\
-Verify a hashcash payment
+Verify a hashcash payment.
 
 \(fn TOKEN &optional RESOURCE AMOUNT)" nil nil)
 
@@ -15493,6 +15522,17 @@ If VARIABLE has a buffer-local value in BUFFER or FRAME
 it is displayed along with the global value.
 
 \(fn VARIABLE &optional BUFFER FRAME)" t nil)
+
+(autoload 'describe-face "help-fns" "\
+Display the properties of face FACE on FRAME.
+Interactively, FACE defaults to the faces of the character after point
+and FRAME defaults to the selected frame.
+
+If the optional argument FRAME is given, report on face FACE in that frame.
+If FRAME is t, report on the defaults for face FACE (for new frames).
+If FRAME is omitted or nil, use the selected frame.
+
+\(fn FACE &optional FRAME)" t nil)
 
 (autoload 'describe-symbol "help-fns" "\
 Display the full documentation of SYMBOL.
@@ -17426,6 +17466,14 @@ If Emacs is compiled without ImageMagick support, this does nothing." nil nil)
 
 ;;;***
 
+;;;### (autoloads nil "image-converter" "image/image-converter.el"
+;;;;;;  (0 0 0 0))
+;;; Generated autoloads from image/image-converter.el
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "image-converter" '("image-convert")))
+
+;;;***
+
 ;;;### (autoloads nil "image-dired" "image-dired.el" (0 0 0 0))
 ;;; Generated autoloads from image-dired.el
 (push (purecopy '(image-dired 0 4 11)) package--builtin-versions)
@@ -19134,7 +19182,7 @@ use either \\[customize] or the function `latin1-display'.")
 Set up Latin-1/ASCII display for the arguments character SETS.
 See option `latin1-display' for the method.  The members of the list
 must be in `latin1-display-sets'.  With no arguments, reset the
-display for all of `latin1-display-sets'. See also
+display for all of `latin1-display-sets'.  See also
 `latin1-display-setup'.
 
 \(fn &rest SETS)" nil nil)
@@ -21066,7 +21114,7 @@ Put the external-body part of HANDLE into its cache.
 Show the external-body part of HANDLE.
 This function replaces the buffer of HANDLE with a buffer contains
 the entire message.
-If NO-DISPLAY is nil, display it. Otherwise, do nothing after replacing.
+If NO-DISPLAY is nil, display it.  Otherwise, do nothing after replacing.
 
 \(fn HANDLE &optional NO-DISPLAY)" nil nil)
 
@@ -21081,7 +21129,7 @@ If NO-DISPLAY is nil, display it. Otherwise, do nothing after replacing.
 Show the partial part of HANDLE.
 This function replaces the buffer of HANDLE with a buffer contains
 the entire message.
-If NO-DISPLAY is nil, display it. Otherwise, do nothing after replacing.
+If NO-DISPLAY is nil, display it.  Otherwise, do nothing after replacing.
 
 \(fn HANDLE &optional NO-DISPLAY)" nil nil)
 
@@ -21830,7 +21878,7 @@ Open a network connection to HOST on PORT.
 
 \(fn HOST PORT)" t nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "net-utils" '("arp-program" "dig-program" "dns-lookup-program" "finger-X.500-host-regexps" "ftp-" "ifconfig-program" "iwconfig-program" "net" "nslookup-" "ping-program" "route-program" "run-network-program" "smbclient" "traceroute-program" "whois-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "net-utils" '("arp-program" "dig-program" "dns-lookup-program" "finger-X.500-host-regexps" "ftp-" "ifconfig-program" "ipconfig" "iwconfig-program" "net" "nslookup-" "ping-program" "route-program" "run-network-program" "smbclient" "traceroute-program" "whois-")))
 
 ;;;***
 
@@ -23103,7 +23151,7 @@ Follow a link or time-stamp like Org mode does.
 This command can be called in any mode to follow an external link
 or a time-stamp that has Org mode syntax.  Its behavior is
 undefined when called on internal links (e.g., fuzzy links).
-Raise an error when there is nothing to follow.  " t nil)
+Raise an error when there is nothing to follow." t nil)
 
 (autoload 'org-open-link-from-string "org" "\
 Open a link in the string S, as if it was in Org mode.
@@ -24133,7 +24181,7 @@ is derived from the main .el file in the directory.
 Downloads and installs required packages as needed." t nil)
 
 (autoload 'package-install-file "package" "\
-Install a package from a file.
+Install a package from FILE.
 The file can either be a tar file, an Emacs Lisp file, or a
 directory.
 
@@ -24151,7 +24199,7 @@ object.
 \(fn PKG)" t nil)
 
 (autoload 'package-autoremove "package" "\
-Remove packages that are no more needed.
+Remove packages that are no longer needed.
 
 Packages that are no more needed by other packages in
 `package-selected-packages' and their dependencies
@@ -25784,7 +25832,7 @@ The keymap for this second window is:
 
 
 When Ghostscript encounters an error it displays an error message
-with a file position. Clicking mouse-2 on this number will bring
+with a file position.  Clicking mouse-2 on this number will bring
 point to the corresponding spot in the PostScript window, if input
 to the interpreter was sent from that window.
 Typing \\<ps-run-mode-map>\\[ps-run-goto-error] when the cursor is at the number has the same effect.
@@ -27739,6 +27787,11 @@ Validation will be enabled if `rng-nxml-auto-validate-flag' is non-nil." t nil)
 (autoload 'rng-validate-mode "rng-valid" "\
 Minor mode performing continual validation against a RELAX NG schema.
 
+If called interactively, enable Rng-Validate mode if ARG is positive, and
+disable it if ARG is zero or negative.  If called from Lisp,
+also enable the mode if ARG is omitted or nil, and toggle it
+if ARG is `toggle'; disable the mode otherwise.
+
 Checks whether the buffer is a well-formed XML 1.0 document,
 conforming to the XML Namespaces Recommendation and valid against a
 RELAX NG schema.  The mode-line indicates whether it is or not.  Any
@@ -27759,7 +27812,7 @@ conventionally have a suffix of `.rnc').  The variable
 `rng-schema-locating-files' specifies files containing rules
 to use for finding the schema.
 
-\(fn &optional ARG NO-CHANGE-SCHEMA)" t nil)
+\(fn &optional ARG)" t nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "rng-valid" '("rng-")))
 
@@ -27951,13 +28004,13 @@ if ARG is `toggle'; disable the mode otherwise.
 ;;; Generated autoloads from emacs-lisp/rx.el
 
 (autoload 'rx-to-string "rx" "\
-Parse and produce code for regular expression FORM.
-FORM is a regular expression in sexp form.
-NO-GROUP non-nil means don't put shy groups around the result.
+Translate FORM from `rx' sexp syntax into a string regexp.
+The arguments to `literal' and `regexp' forms inside FORM must be
+constant strings.
+If NO-GROUP is non-nil, don't bracket the result in a non-capturing
+group.
 
-In contrast to the `rx' macro, subforms `literal' and `regexp'
-will not accept non-string arguments, i.e., (literal STRING)
-becomes just a more verbose version of STRING.
+For extending the `rx' notation in FORM, use `rx-define' or `rx-let-eval'.
 
 \(fn FORM &optional NO-GROUP)" nil nil)
 
@@ -28060,7 +28113,77 @@ Zero-width assertions: these all match the empty string in specific places.
 \(regexp EXPR)  Match the string regexp from evaluating EXPR at run time.
 \(eval EXPR)    Match the rx sexp from evaluating EXPR at compile time.
 
-\(fn &rest REGEXPS)" nil t)
+Additional constructs can be defined using `rx-define' and `rx-let',
+which see.
+
+\(fn REGEXPS...)" nil t)
+
+(autoload 'rx-let-eval "rx" "\
+Evaluate BODY with local BINDINGS for `rx-to-string'.
+BINDINGS, after evaluation, is a list of definitions each on the form
+\(NAME [(ARGS...)] RX), in effect for calls to `rx-to-string'
+in BODY.
+
+For bindings without an ARGS list, NAME is defined as an alias
+for the `rx' expression RX.  Where ARGS is supplied, NAME is
+defined as an `rx' form with ARGS as argument list.  The
+parameters are bound from the values in the (NAME ...) form and
+are substituted in RX.  ARGS can contain `&rest' parameters,
+whose values are spliced into RX where the parameter name occurs.
+
+Any previous definitions with the same names are shadowed during
+the expansion of BODY only.
+For extensions when using the `rx' macro, use `rx-let'.
+To make global rx extensions, use `rx-define'.
+For more details, see Info node `(elisp) Extending Rx'.
+
+\(fn BINDINGS BODY...)" nil t)
+
+(function-put 'rx-let-eval 'lisp-indent-function '1)
+
+(autoload 'rx-let "rx" "\
+Evaluate BODY with local BINDINGS for `rx'.
+BINDINGS is an unevaluated list of bindings each on the form
+\(NAME [(ARGS...)] RX).
+They are bound lexically and are available in `rx' expressions in
+BODY only.
+
+For bindings without an ARGS list, NAME is defined as an alias
+for the `rx' expression RX.  Where ARGS is supplied, NAME is
+defined as an `rx' form with ARGS as argument list.  The
+parameters are bound from the values in the (NAME ...) form and
+are substituted in RX.  ARGS can contain `&rest' parameters,
+whose values are spliced into RX where the parameter name occurs.
+
+Any previous definitions with the same names are shadowed during
+the expansion of BODY only.
+For local extensions to `rx-to-string', use `rx-let-eval'.
+To make global rx extensions, use `rx-define'.
+For more details, see Info node `(elisp) Extending Rx'.
+
+\(fn BINDINGS BODY...)" nil t)
+
+(function-put 'rx-let 'lisp-indent-function '1)
+
+(autoload 'rx-define "rx" "\
+Define NAME as a global `rx' definition.
+If the ARGS list is omitted, define NAME as an alias for the `rx'
+expression RX.
+
+If the ARGS list is supplied, define NAME as an `rx' form with
+ARGS as argument list.  The parameters are bound from the values
+in the (NAME ...) form and are substituted in RX.
+ARGS can contain `&rest' parameters, whose values are spliced
+into RX where the parameter name occurs.
+
+Any previous global definition of NAME is overwritten with the new one.
+To make local rx extensions, use `rx-let' for `rx',
+`rx-let-eval' for `rx-to-string'.
+For more details, see Info node `(elisp) Extending Rx'.
+
+\(fn NAME [(ARGS...)] RX)" nil t)
+
+(function-put 'rx-define 'lisp-indent-function '1)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "rx" '("rx-")))
 
@@ -29117,7 +29240,7 @@ instead of no action.")
 
 (custom-autoload 'mail-citation-hook "sendmail" t)
 
-(defvar mail-citation-prefix-regexp (purecopy "\\([ \11]*\\(\\w\\|[_.]\\)+>+\\|[ \11]*[]>|]\\)+") "\
+(defvar mail-citation-prefix-regexp (purecopy "\\([ \11]*\\(\\w\\|[_.]\\)+>+\\|[ \11]*[>|]\\)+") "\
 Regular expression to match a citation prefix plus whitespace.
 It should match whatever sort of citation prefixes you want to handle,
 with whitespace before and after; it should also match just whitespace.
@@ -29694,7 +29817,7 @@ DOM should be a parse tree as generated by
 
 \(fn DOM)" nil nil)
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "shr" '("shr-")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "shr" '("shr-" "svg--wrap-svg")))
 
 ;;;***
 
@@ -30512,9 +30635,9 @@ symbol `ask', query before flushing the queue file.
 \(fn &optional FILE KEEP)" t nil)
 
 (autoload 'spam-report-url-ping-mm-url "spam-report" "\
-Ping a host through HTTP, addressing a specific GET resource. Use
-the external program specified in `mm-url-program' to connect to
-server.
+Ping a host through HTTP, addressing a specific GET resource.
+Use the external program specified in `mm-url-program' to connect
+to server.
 
 \(fn HOST REPORT)" nil nil)
 
@@ -31414,7 +31537,18 @@ Studlify-case the current buffer." t nil)
 ;;;### (autoloads nil "subr-x" "emacs-lisp/subr-x.el" (0 0 0 0))
 ;;; Generated autoloads from emacs-lisp/subr-x.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("and-let*" "hash-table-" "if-let" "internal--" "replace-region-contents" "string-" "thread-" "when-let")))
+(autoload 'when-let "subr-x" "\
+Bind variables according to SPEC and conditionally evaluate BODY.
+Evaluate each binding in turn, stopping if a binding value is nil.
+If all are non-nil, return the value of the last form in BODY.
+
+The variable list SPEC is the same as in `if-let'.
+
+\(fn SPEC &rest BODY)" nil t)
+
+(function-put 'when-let 'lisp-indent-function '1)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "subr-x" '("and-let*" "hash-table-" "if-let" "internal--" "replace-region-contents" "string-" "thread-" "when-let*")))
 
 ;;;***
 
@@ -32358,7 +32492,7 @@ commands to use in that buffer.
 (autoload 'ansi-term "term" "\
 Start a terminal-emulator in a new buffer.
 This is almost the same as `term' apart from always creating a new buffer,
-and `C-x' being marked as a `term-escape-char'. 
+and `C-x' being marked as a `term-escape-char'.
 
 \(fn PROGRAM &optional NEW-BUFFER-NAME)" t nil)
 
@@ -32957,7 +33091,9 @@ Return the sexp at point, or nil if none is found." nil nil)
 Return the symbol at point, or nil if none is found." nil nil)
 
 (autoload 'number-at-point "thingatpt" "\
-Return the number at point, or nil if none is found." nil nil)
+Return the number at point, or nil if none is found.
+Decimal numbers like \"14\" or \"-14.5\", as well as hex numbers
+like \"0xBEEF09\" or \"#xBEEF09\", are regognized." nil nil)
 
 (autoload 'list-at-point "thingatpt" "\
 Return the Lisp list at point, or nil if none is found.
@@ -33032,7 +33168,7 @@ In dired, call the setroot program on the image at point." t nil)
 
 (autoload 'tibetan-char-p "tibet-util" "\
 Check if char CH is Tibetan character.
-Returns non-nil if CH is Tibetan. Otherwise, returns nil.
+Returns non-nil if CH is Tibetan.  Otherwise, returns nil.
 
 \(fn CH)" nil nil)
 
@@ -35897,7 +36033,7 @@ Key bindings:
 ;;;### (autoloads nil "verilog-mode" "progmodes/verilog-mode.el"
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from progmodes/verilog-mode.el
-(push (purecopy '(verilog-mode 2019 6 21 103209889)) package--builtin-versions)
+(push (purecopy '(verilog-mode 2019 9 23 4801067)) package--builtin-versions)
 
 (autoload 'verilog-mode "verilog-mode" "\
 Major mode for editing Verilog code.
@@ -35969,7 +36105,7 @@ Variables controlling indentation/edit style:
 
 Variables controlling other actions:
 
- `verilog-linter'                   (default `surelint')
+ `verilog-linter'                   (default `none')
    Unix program to call to run the lint checker.  This is the default
    command for \\[compile-command] and \\[verilog-auto-save-compile].
 
@@ -36567,7 +36703,7 @@ releases.  You are kindly invited to participate in beta testing.  Subscribe
 to above mailing lists by sending an email to <reto@gnu.org>.
 
 VHDL Mode is officially distributed at
-http://www.iis.ee.ethz.ch/~zimmi/emacs/vhdl-mode.html
+https://guest.iis.ee.ethz.ch/~zimmi/emacs/vhdl-mode.html
 where the latest version can be found.
 
 
