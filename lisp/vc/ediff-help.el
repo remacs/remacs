@@ -163,7 +163,7 @@ the value of this variable and the variables `ediff-help-message-*' in
   (goto-char (point-min))
   (let (overl beg end cmd)
     (while (re-search-forward " *\\([^ \t\n|]+\\||\\) +-[^|\n]+" nil 'noerror)
-      (setq beg (match-beginning 0)
+      (setq beg (match-beginning 1)
 	    end (match-end 0)
 	    cmd (buffer-substring (match-beginning 1) (match-end 1)))
       (setq overl (ediff-make-overlay beg end))
