@@ -1045,8 +1045,26 @@ message buffer `default-directory'."
   :type '(repeat (choice (const :tag "Default" nil)
 			 (string :tag "Directory"))))
 
+(defvar emacs-lisp-compilation-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map compilation-minor-mode-map)
+    (define-key map "g" 'emacs-lisp-compilation-recompile)
+    map))
+
+(defvar emacs-lisp-compilation--current-file nil)
+
 (define-compilation-mode emacs-lisp-compilation-mode "elisp-compile"
-  "The variant of `compilation-mode' used for emacs-lisp compilation buffers.")
+  "The variant of `compilation-mode' used for emacs-lisp compilation buffers."
+  (setq-local emacs-lisp-compilation--current-file nil))
+
+(defun emacs-lisp-compilation-recompile ()
+  "Recompile the previously byte-compiled file."
+  (interactive)
+  (unless emacs-lisp-compilation--current-file
+    (error "No previously compiled file"))
+  (unless (stringp emacs-lisp-compilation--current-file)
+    (error "Only files can be recompiled"))
+  (byte-compile-file emacs-lisp-compilation--current-file))
 
 (defvar byte-compile-current-form nil)
 (defvar byte-compile-dest-file nil)
@@ -1236,6 +1254,7 @@ message buffer `default-directory'."
 	   ;; Do this after setting default-directory.
 	   (unless (derived-mode-p 'compilation-mode)
              (emacs-lisp-compilation-mode))
+           (setq emacs-lisp-compilation--current-file byte-compile-current-file)
 	   (compilation-forget-errors)
 	   pt))))
 

@@ -582,6 +582,11 @@ This is because on the one hand it suffers from various misbehaviors in corner
 cases that have plagued it for years, and on the other experiments indicated
 that it doesn't bring any measurable benefit.
 
+---
+*** The 'g' keystroke in *Compile-Log* buffers has been bound to a new
+command that will recompile the file previously compiled with 'M-x
+byte-compile-file' and the like.
+
 ** compile.el
 ---
 *** In 'compilation-error-regexp-alist', 'line' (and 'end-line') can
