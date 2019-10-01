@@ -418,6 +418,7 @@ on if the hook has explicitly disabled it.
 
     `(progn
        (progn
+         (put ',global-mode 'globalized-minor-mode t)
          :autoload-end
          (defvar ,MODE-major-mode nil)
          (make-variable-buffer-local ',MODE-major-mode))

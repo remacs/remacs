@@ -556,6 +556,13 @@ suitable file is found, return nil."
                     (t "."))
               "\n"))))
 
+(add-hook 'help-fns-describe-function-functions
+          #'help-fns--globalized-minor-mode)
+(defun help-fns--globalized-minor-mode (function)
+  (when (get function 'globalized-minor-mode)
+    (help-fns--customize-variable function " the global mode variable.")
+    (terpri)))
+
 ;; We could use `symbol-file' but this is a wee bit more efficient.
 (defun help-fns--autoloaded-p (function file)
   "Return non-nil if FUNCTION has previously been autoloaded.
@@ -1092,27 +1099,28 @@ it is displayed along with the global value."
 	      (with-current-buffer standard-output
 		(insert (or doc "Not documented as a variable."))))
 
-	    ;; Make a link to customize if this variable can be customized.
-	    (when (custom-variable-p variable)
-	      (let ((customize-label "customize"))
-		(terpri)
-		(terpri)
-		(princ (concat "You can " customize-label " this variable."))
-		(with-current-buffer standard-output
-		  (save-excursion
-		    (re-search-backward
-		     (concat "\\(" customize-label "\\)") nil t)
-		    (help-xref-button 1 'help-customize-variable variable))))
-	      ;; Note variable's version or package version.
-	      (let ((output (describe-variable-custom-version-info variable)))
-		(when output
-		  (terpri)
-		  (terpri)
-		  (princ output))))
-
 	    (with-current-buffer standard-output
 	      ;; Return the text we displayed.
 	      (buffer-string))))))))
+
+(add-hook 'help-fns-describe-variable-functions #'help-fns--customize-variable)
+(defun help-fns--customize-variable (variable &optional text)
+  ;; Make a link to customize if this variable can be customized.
+  (when (custom-variable-p variable)
+    (let ((customize-label "customize"))
+      (princ (concat "  You can " customize-label (or text " this variable.")))
+      (with-current-buffer standard-output
+	(save-excursion
+	  (re-search-backward
+	   (concat "\\(" customize-label "\\)") nil t)
+	  (help-xref-button 1 'help-customize-variable variable)))
+      (terpri))
+    ;; Note variable's version or package version.
+    (let ((output (describe-variable-custom-version-info variable)))
+      (when output
+	(terpri)
+	(terpri)
+	(princ output)))))
 
 (add-hook 'help-fns-describe-variable-functions #'help-fns--var-safe-local)
 (defun help-fns--var-safe-local (variable)
