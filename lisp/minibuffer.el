@@ -2233,6 +2233,7 @@ The completion method is determined by `completion-at-point-functions'."
 
 (let ((map minibuffer-local-map))
   (define-key map "\C-g" 'abort-recursive-edit)
+  (define-key map "\M-<" 'minibuffer-beginning-of-buffer)
   (define-key map "\r" 'exit-minibuffer)
   (define-key map "\n" 'exit-minibuffer))
 
@@ -2527,6 +2528,14 @@ the minibuffer empty.
 For some commands, exiting with an empty minibuffer has a special meaning,
 such as making the current buffer visit no file in the case of
 `set-visited-file-name'."
+  :type 'boolean)
+
+(defcustom minibuffer-beginning-of-buffer-movement nil
+  "Control how the `M-<' command in the minibuffer behaves.
+If non-nil, the command will go to the end of the prompt (if
+point is after the end of the prompt).  If nil, it will behave
+like the `beginning-of-buffer' command."
+  :version "27.1"
   :type 'boolean)
 
 ;; Not always defined, but only called if next-read-file-uses-dialog-p says so.
@@ -3588,6 +3597,33 @@ See `completing-read' for the meaning of the arguments."
 	   (run-hook-with-args-until-success 'file-name-at-point-functions))))
     (when file-name-at-point
       (insert file-name-at-point))))
+
+(defun minibuffer-beginning-of-buffer (&optional arg)
+  "Move to the logical beginning of the minibuffer.
+This command behaves like `beginning-of-buffer', but if point is
+after the end of the prompt, move to the end of the prompt.
+Otherwise move to the start of the buffer."
+  (declare (interactive-only "use `(goto-char (point-min))' instead."))
+  (interactive "^P")
+  (when (or (consp arg)
+            (region-active-p))
+    (push-mark))
+  (goto-char (cond
+              ;; We want to go N/10th of the way from the beginning.
+              ((and arg (not (consp arg)))
+	       (+ (point-min) 1
+		  (/ (* (- (point-max) (point-min))
+                        (prefix-numeric-value arg))
+                     10)))
+              ;; Go to the start of the buffer.
+              ((or (null minibuffer-beginning-of-buffer-movement)
+                   (<= (point) (minibuffer-prompt-end)))
+	       (point-min))
+              ;; Go to the end of the minibuffer.
+              (t
+               (minibuffer-prompt-end))))
+  (when (and arg (not (consp arg)))
+    (forward-line 1)))
 
 (provide 'minibuffer)
 

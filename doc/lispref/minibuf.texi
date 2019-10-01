@@ -333,6 +333,9 @@ default, it makes the following bindings:
 @item @key{RET}
 @code{exit-minibuffer}
 
+@item @key{M-<}
+@code{minibuffer-beginning-of-buffer}
+
 @item @kbd{C-g}
 @code{abort-recursive-edit}
 
@@ -1246,6 +1249,14 @@ This is a sparse keymap that simply unbinds @key{SPC}; because
 filenames can contain spaces.  The function @code{read-file-name}
 combines this keymap with either @code{minibuffer-local-completion-map}
 or @code{minibuffer-local-must-match-map}.
+@end defvar
+
+@defvar minibuffer-beginning-of-buffer-movement
+If non-@code{nil}, the @kbd{M-<} command will move to the end of the
+prompt if point is after the end of the prompt.  If point is at or
+before the end of the prompt, move to the start of the buffer.  If
+this variable is @code{nil}, the command behaves like
+@code{beginning-of-buffer}.
 @end defvar
 
 

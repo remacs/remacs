@@ -617,6 +617,12 @@ list the contents of such directories when completing file names.
 
 ** Minibuffer
 
++++
+*** A new variable, 'minibuffer-beginning-of-buffer-movement', has
+been introduced to allow controlling how the 'M-<' command works in
+the minibuffer.  If non-nil, point will move to the end of the prompt
+(if point is after the end of the prompt).
+
 ---
 *** Minibuffer now uses 'minibuffer-message' to display error messages
 at the end of the active minibuffer.
