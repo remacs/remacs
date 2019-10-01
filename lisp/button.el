@@ -1,9 +1,9 @@
-;;; button.el --- clickable buttons
+;;; button.el --- clickable buttons -*- lexical-binding: t -*-
 ;;
 ;; Copyright (C) 2001-2019 Free Software Foundation, Inc.
 ;;
 ;; Author: Miles Bader <miles@gnu.org>
-;; Keywords: extensions
+;; Keywords: extensions, hypermedia
 ;; Package: emacs
 ;;
 ;; This file is part of GNU Emacs.
@@ -49,11 +49,8 @@
 ;;; Code:
 
 
-;; Globals
+;;; Globals
 
-;; Use color for the MS-DOS port because it doesn't support underline.
-;; FIXME if MS-DOS correctly answers the (supports) question, it need
-;; no longer be a special case.
 (defface button '((t :inherit link))
   "Default face used for buttons."
   :group 'basic-faces)
@@ -81,25 +78,25 @@
   "Keymap useful for buffers containing buttons.
 Mode-specific keymaps may want to use this as their parent keymap.")
 
-;; Default properties for buttons
+;; Default properties for buttons.
 (put 'default-button 'face 'button)
 (put 'default-button 'mouse-face 'highlight)
 (put 'default-button 'keymap button-map)
 (put 'default-button 'type 'button)
-;; action may be either a function to call, or a marker to go to
-(put 'default-button 'action 'ignore)
+;; `action' may be either a function to call, or a marker to go to.
+(put 'default-button 'action #'ignore)
 (put 'default-button 'help-echo (purecopy "mouse-2, RET: Push this button"))
 ;; Make overlay buttons go away if their underlying text is deleted.
 (put 'default-button 'evaporate t)
-;; Prevent insertions adjacent to the text-property buttons from
-;; inheriting its properties.
+;; Prevent insertions adjacent to text-property buttons from
+;; inheriting their properties.
 (put 'default-button 'rear-nonsticky t)
 
-;; A `category-symbol' property for the default button type
+;; A `category-symbol' property for the default button type.
 (put 'button 'button-category-symbol 'default-button)
 
 
-;; Button types (which can be used to hold default properties for buttons)
+;;; Button types (which can be used to hold default properties for buttons)
 
 ;; Because button-type properties are inherited by buttons using the
 ;; special `category' property (implemented by both overlays and
@@ -118,7 +115,7 @@ Buttons inherit them by setting their `category' property to that symbol."
 
 (defun define-button-type (name &rest properties)
   "Define a `button type' called NAME (a symbol).
-The remaining arguments form a sequence of PROPERTY VALUE pairs,
+The remaining arguments form a plist of PROPERTY VALUE pairs,
 specifying properties to use as defaults for buttons with this type
 \(a button's type may be set by giving it a `type' property when
 creating the button, using the :type keyword argument).
@@ -148,7 +145,7 @@ changes to a supertype are not reflected in its subtypes)."
 	(when (eq prop :supertype)
 	  (setq prop 'supertype))
 	(put catsym prop (pop properties))))
-    ;; Make sure there's a `supertype' property
+    ;; Make sure there's a `supertype' property.
     (unless (get catsym 'supertype)
       (put catsym 'supertype 'button))
     name))
@@ -162,14 +159,14 @@ changes to a supertype are not reflected in its subtypes)."
   (get (button-category-symbol type) prop))
 
 (defun button-type-subtype-p (type supertype)
-  "Return t if button-type TYPE is a subtype of SUPERTYPE."
+  "Return non-nil if button-type TYPE is a subtype of SUPERTYPE."
   (or (eq type supertype)
       (and type
 	   (button-type-subtype-p (button-type-get type 'supertype)
 				  supertype))))
 
 
-;; Button properties and other attributes
+;;; Button properties and other attributes
 
 (defun button-start (button)
   "Return the position at which BUTTON starts."
@@ -203,9 +200,9 @@ changes to a supertype are not reflected in its subtypes)."
   "Set BUTTON's PROP property to VAL."
   ;; Treat some properties specially.
   (cond ((memq prop '(type :type))
-	 ;; We translate a `type' property a `category' property, since
-	 ;; that's what's actually used by overlays/text-properties for
-	 ;; inheriting properties.
+         ;; We translate a `type' property to a `category' property,
+         ;; since that's what's actually used by overlay and
+         ;; text-property buttons for inheriting properties.
 	 (setq prop 'category)
 	 (setq val (button-category-symbol val)))
 	((eq prop 'category)
@@ -261,7 +258,7 @@ value instad of BUTTON."
   (button-get button 'type))
 
 (defun button-has-type-p (button type)
-  "Return t if BUTTON has button-type TYPE, or one of TYPE's subtypes."
+  "Return non-nil if BUTTON has button-type TYPE, or one of its subtypes."
   (button-type-subtype-p (button-get button 'type) type))
 
 (defun button--area-button-p (b)
@@ -272,11 +269,11 @@ Such area buttons are used for buttons in the mode-line and header-line."
 (defalias 'button--area-button-string #'car
   "Return area button BUTTON's button-string.")
 
-;; Creating overlay buttons
+;;; Creating overlay buttons
 
 (defun make-button (beg end &rest properties)
   "Make a button from BEG to END in the current buffer.
-The remaining arguments form a sequence of PROPERTY VALUE pairs,
+The remaining arguments form a plist of PROPERTY VALUE pairs,
 specifying properties to add to the button.
 In addition, the keyword argument :type may be used to specify a
 button-type from which to inherit other properties; see
@@ -292,12 +289,12 @@ Also see `make-text-button', `insert-button'."
     ;; If the user didn't specify a type, use the default.
     (unless (overlay-get overlay 'category)
       (overlay-put overlay 'category 'default-button))
-    ;; OVERLAY is the button, so return it
+    ;; OVERLAY is the button, so return it.
     overlay))
 
 (defun insert-button (label &rest properties)
   "Insert a button with the label LABEL.
-The remaining arguments form a sequence of PROPERTY VALUE pairs,
+The remaining arguments form a plist of PROPERTY VALUE pairs,
 specifying properties to add to the button.
 In addition, the keyword argument :type may be used to specify a
 button-type from which to inherit other properties; see
@@ -310,11 +307,11 @@ Also see `insert-text-button', `make-button'."
 	 properties))
 
 
-;; Creating text-property buttons
+;;; Creating text-property buttons
 
 (defun make-text-button (beg end &rest properties)
   "Make a button from BEG to END in the current buffer.
-The remaining arguments form a sequence of PROPERTY VALUE pairs,
+The remaining arguments form a plist of PROPERTY VALUE pairs,
 specifying properties to add to the button.
 In addition, the keyword argument :type may be used to specify a
 button-type from which to inherit other properties; see
@@ -352,8 +349,8 @@ Also see `insert-text-button'."
       ;; text-properties for inheritance.
       (setcar type-entry 'category)
       (setcar (cdr type-entry)
-	      (button-category-symbol (car (cdr type-entry)))))
-    ;; Now add all the text properties at once
+              (button-category-symbol (cadr type-entry))))
+    ;; Now add all the text properties at once.
     (add-text-properties beg end
                          ;; Each button should have a non-eq `button'
                          ;; property so that next-single-property-change can
@@ -365,7 +362,7 @@ Also see `insert-text-button'."
 
 (defun insert-text-button (label &rest properties)
   "Insert a button with the label LABEL.
-The remaining arguments form a sequence of PROPERTY VALUE pairs,
+The remaining arguments form a plist of PROPERTY VALUE pairs,
 specifying properties to add to the button.
 In addition, the keyword argument :type may be used to specify a
 button-type from which to inherit other properties; see
@@ -383,7 +380,7 @@ Also see `make-text-button'."
 	 properties))
 
 
-;; Finding buttons in a buffer
+;;; Finding buttons in a buffer
 
 (defun button-at (pos)
   "Return the button at position POS in the current buffer, or nil.
@@ -436,7 +433,7 @@ instead of starting at the next button."
 	       (button-at (1- pos)))))))
 
 
-;; User commands
+;;; User commands
 
 (defun push-button (&optional pos use-mouse-action)
   "Perform the action specified by a button at location POS.
@@ -534,7 +531,6 @@ instead of erroring out.
 Returns the button found."
   (interactive "p\nd\nd")
   (forward-button (- n) wrap display-message no-error))
-
 
 (provide 'button)
 
