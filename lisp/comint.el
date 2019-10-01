@@ -971,7 +971,11 @@ See also `comint-input-ignoredups' and `comint-write-input-ring'."
 		;; to huge numbers.  Don't allocate a huge ring right
 		;; away; there might not be that much history.
 		(ring-size (min 1500 comint-input-ring-size))
-		(ring (make-ring ring-size)))
+		(ring (make-ring ring-size))
+                ;; Use possibly buffer-local values of these variables.
+                (ring-separator comint-input-ring-separator)
+                (history-ignore comint-input-history-ignore)
+                (ignoredups comint-input-ignoredups))
 	   (with-temp-buffer
              (insert-file-contents file)
              ;; Save restriction in case file is already visited...
@@ -979,19 +983,16 @@ See also `comint-input-ignoredups' and `comint-write-input-ring'."
              (goto-char (point-max))
              (let (start end history)
                (while (and (< count comint-input-ring-size)
-                           (re-search-backward comint-input-ring-separator
-                                               nil t)
+                           (re-search-backward ring-separator nil t)
                            (setq end (match-beginning 0)))
                  (setq start
-                       (if (re-search-backward comint-input-ring-separator
-                                               nil t)
+                       (if (re-search-backward ring-separator nil t)
                            (match-end 0)
                          (point-min)))
                  (setq history (buffer-substring start end))
                  (goto-char start)
-                 (when (and (not (string-match comint-input-history-ignore
-					       history))
-			    (or (null comint-input-ignoredups)
+                 (when (and (not (string-match history-ignore history))
+			    (or (null ignoredups)
 				(ring-empty-p ring)
 				(not (string-equal (ring-ref ring 0)
 						   history))))
