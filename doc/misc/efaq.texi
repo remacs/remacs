@@ -1990,19 +1990,6 @@ or by invoking @code{server-start} from @file{.emacs}:
 (if (@var{some conditions are met}) (server-start))
 @end lisp
 
-When this is done, Emacs by default creates a Unix domain socket named
-@file{server} in a well-known directory, typically
-@file{$XDG_RUNTIME_DIR/emacs} if Emacs is running under an X Window System
-desktop and @file{$TMPDIR/emacs@var{userid}} otherwise.  See the variable
-@code{server-socket-dir}.  Traditionally, Emacs used
-@file{$TMPDIR/emacs@var{userid}} even when running under an X desktop;
-if you prefer this traditional (and less-secure) behavior, you
-can set the environment variable @env{EMACS_SOCKET_NAME} to
-@samp{$TMPDIR/emacs@var{userid}/server} before invoking Emacs and
-@samp{emacsclient}, although it will be your responsibility to create
-the directory @samp{$TMPDIR/emacs@var{userid}} with appropriate
-ownership and permissions.
-
 To get your news reader, mail reader, etc., to invoke
 @samp{emacsclient}, try setting the environment variable @code{EDITOR}
 (or sometimes @code{VISUAL}) to the value @samp{emacsclient}.  You may
@@ -2044,6 +2031,8 @@ The most recent @samp{gnuserv} package is available at
 @uref{http://meltin.net/hacks/emacs/}
 
 @end itemize
+
+For more information, @xref{Emacs Server,,, emacs, The GNU Emacs Manual}.
 
 @node Compiler error messages
 @section How do I make Emacs recognize my compiler's funny error messages?
