@@ -596,7 +596,8 @@ resize_event (WINDOW_BUFFER_SIZE_RECORD *event)
   struct frame *f = get_frame ();
 
   change_frame_size (f, event->dwSize.X, event->dwSize.Y
-		     - FRAME_MENU_BAR_LINES (f), 0, 1, 0, 0);
+		     - FRAME_MENU_BAR_LINES (f)
+		     - FRAME_TAB_BAR_LINES (f), 0, 1, 0, 0);
   SET_FRAME_GARBAGED (f);
 }
 
@@ -613,7 +614,8 @@ maybe_generate_resize_event (void)
   change_frame_size (f,
 		     1 + info.srWindow.Right - info.srWindow.Left,
 		     1 + info.srWindow.Bottom - info.srWindow.Top
-		     - FRAME_MENU_BAR_LINES (f), 0, 1, 0, 0);
+		     - FRAME_MENU_BAR_LINES (f)
+		     - FRAME_TAB_BAR_LINES (f), 0, 1, 0, 0);
 }
 
 #if HAVE_W32NOTIFY
