@@ -1146,14 +1146,13 @@ width/height instead."
 
 ;; url-cache-extract autoloads url-cache.
 (declare-function url-cache-create-filename "url-cache" (url))
-(autoload 'mm-disable-multibyte "mm-util")
 (autoload 'browse-url-mail "browse-url")
 
 (defun shr-get-image-data (url)
   "Get image data for URL.
 Return a string with image data."
   (with-temp-buffer
-    (mm-disable-multibyte)
+    (set-buffer-multibyte nil)
     (when (ignore-errors
 	    (url-cache-extract (url-cache-create-filename (shr-encode-url url)))
 	    t)
@@ -1183,7 +1182,7 @@ Return a string with image data."
             ;; Note that libxml2 doesn't parse everything perfectly,
             ;; so glitches may occur during this transformation.
 	    (shr-dom-to-xml
-	     (libxml-parse-xml-region (point) (point-max)))))
+	     (libxml-parse-xml-region (point) (point-max)) 'utf-8)))
     ;; SVG images often do not have a specified foreground/background
     ;; color, so wrap them in styles.
     (when (eq content-type 'image/svg+xml)
@@ -1199,9 +1198,7 @@ Return a string with image data."
         "<svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:xi=\"http://www.w3.org/2001/XInclude\" style=\"color: %s;\" viewBox=\"0 0 %d %d\"> <xi:include href=\"data:image/svg+xml;base64,%s\"></xi:include></svg>"
         (face-foreground 'default)
         (car size) (cdr size)
-        (base64-encode-string (encode-coding-string
-                               data (car (detect-coding-string data)))
-                              t)))
+        (base64-encode-string data t)))
       (buffer-string))))
 
 (defun shr-image-displayer (content-function)
@@ -1341,9 +1338,11 @@ ones, in case fg and bg are nil."
 (defun shr-tag-comment (_dom)
   )
 
-(defun shr-dom-to-xml (dom)
+(defun shr-dom-to-xml (dom &optional charset)
   (with-temp-buffer
     (shr-dom-print dom)
+    (when charset
+      (encode-coding-region (point-min) (point-max) charset))
     (buffer-string)))
 
 (defun shr-dom-print (dom)
@@ -1376,7 +1375,8 @@ ones, in case fg and bg are nil."
 	     (not shr-inhibit-images)
              (dom-attr dom 'width)
              (dom-attr dom 'height))
-    (funcall shr-put-image-function (list (shr-dom-to-xml dom) 'image/svg+xml)
+    (funcall shr-put-image-function (list (shr-dom-to-xml dom 'utf-8)
+                                          'image/svg+xml)
 	     "SVG Image")))
 
 (defun shr-tag-sup (dom)
