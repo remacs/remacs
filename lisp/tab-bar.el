@@ -96,9 +96,9 @@
                     (assq-delete-all 'tab-bar-lines
                                      default-frame-alist)))))
   (when tab-bar-mode
-    (global-set-key [(control shift iso-lefttab)] 'tab-bar-switch-to-prev-tab)
-    (global-set-key [(control shift tab)]         'tab-bar-switch-to-prev-tab)
-    (global-set-key [(control tab)]               'tab-bar-switch-to-next-tab)))
+    (global-set-key [(control shift iso-lefttab)] 'tab-previous)
+    (global-set-key [(control shift tab)]         'tab-previous)
+    (global-set-key [(control tab)]               'tab-next)))
 
 (defun tab-bar-handle-mouse (event)
   "Text-mode emulation of switching tabs on the tab bar.
@@ -152,6 +152,28 @@ Its main job is to show tabs in the tab bar."
           (puthash key tab-bar-map tab-bar-keymap-cache)))))
 
 
+(defcustom tab-bar-show t
+  "Defines when to show the tab bar.
+If t, enable `tab-bar-mode' automatically on using the commands that
+create new window configurations (e.g. `tab-new').
+If the value is `1', then hide the tab bar when it has only one tab,
+and show it again once more tabs are created.
+If nil, always keep the tab bar hidden.  In this case it's still
+possible to use persistent named window configurations by relying on
+keyboard commands `tab-list', `tab-new', `tab-close', `tab-next', etc."
+  :type '(choice (const :tag "Always" t)
+                 (const :tag "When more than one tab" 1)
+                 (const :tag "Never" nil))
+  :initialize 'custom-initialize-default
+  :set (lambda (sym val)
+         (set-default sym val)
+         (tab-bar-mode
+          (if (or (eq val t)
+                  (and (natnump val) (> (length (tab-bar-tabs)) val)))
+              1 -1)))
+  :group 'tab-bar
+  :version "27.1")
+
 (defcustom tab-bar-new-tab-choice t
   "Defines what to show in a new tab.
 If t, start a new tab with the current buffer, i.e. the buffer
@@ -192,8 +214,9 @@ If nil, don't show it at all."
                  (const :tag "On selected tab" selected)
                  (const :tag "On non-selected tabs" non-selected)
                  (const :tag "None" nil))
+  :initialize 'custom-initialize-default
   :set (lambda (sym val)
-         (set sym val)
+         (set-default sym val)
          (force-mode-line-update))
   :group 'tab-bar
   :version "27.1")
@@ -354,7 +377,8 @@ Return its existing value or a new value."
          ((eq (car (car tabs)) 'current-tab)
           (setcar tabs new-tab)))
         (setq tabs (cdr tabs)))
-      (force-mode-line-update))))
+      (when tab-bar-mode
+        (force-mode-line-update)))))
 
 (defun tab-bar-switch-to-prev-tab (&optional _arg)
   "Switch to ARGth previous tab."
@@ -389,11 +413,14 @@ If `rightmost', create as the last tab."
 (defun tab-bar-new-tab ()
   "Clone the current tab to the position specified by `tab-bar-new-tab-to'."
   (interactive)
-  (unless tab-bar-mode
-    (tab-bar-mode 1))
   (let* ((tabs (tab-bar-tabs))
          ;; (i-tab (- (length tabs) (length (memq tab tabs))))
          (new-tab (tab-bar-tab-default)))
+    (when (and (not tab-bar-mode)
+               (or (eq tab-bar-show t)
+                   (and (natnump tab-bar-show)
+                        (>= (length tabs) tab-bar-show))))
+      (tab-bar-mode 1))
     (cond
      ((eq tab-bar-new-tab-to 'leftmost)
       (setq tabs (cons new-tab tabs)))
@@ -415,6 +442,9 @@ If `rightmost', create as the last tab."
     (tab-bar-select-tab new-tab)
     (when tab-bar-new-tab-choice
       (delete-other-windows)
+      ;; Create a new window to get rid of old window parameters
+      ;; (e.g. prev/next buffers) of old window.
+      (split-window) (delete-window)
       (let ((buffer
              (if (functionp tab-bar-new-tab-choice)
                  (funcall tab-bar-new-tab-choice)
@@ -463,6 +493,10 @@ if its value is provided."
         (setq tabs (delq tab tabs)
               i-select (max 0 (min (1- (length tabs)) i-select))
               select-tab (nth i-select tabs))))
+    (when (and tab-bar-mode
+               (and (natnump tab-bar-show)
+                    (<= (length tabs) tab-bar-show)))
+      (tab-bar-mode -1))
     (set-frame-parameter nil 'tabs tabs)
     (tab-bar-select-tab select-tab)))
 
@@ -474,9 +508,15 @@ specified by `tab-bar-close-tab-select'."
   (when tab
     (if (eq (car tab) 'current-tab)
         (tab-bar-close-current-tab tab)
-      ;; Close non-current tab, no need to switch to another tab
-      (set-frame-parameter nil 'tabs (delq tab (tab-bar-tabs)))
-      (force-mode-line-update))))
+      (let ((tabs (tab-bar-tabs)))
+        ;; Close non-current tab, no need to switch to another tab
+        (when (and tab-bar-mode
+                   (and (natnump tab-bar-show)
+                        (<= (length tabs) tab-bar-show)))
+          (tab-bar-mode -1))
+        (set-frame-parameter nil 'tabs (delq tab tabs))
+        (when tab-bar-mode
+          (force-mode-line-update))))))
 
 
 ;;; Non-graphical access to frame-local tabs (named window configurations)
@@ -733,7 +773,8 @@ in the selected frame."
 Like \\[switch-to-buffer-other-frame] (which see), but creates a new tab."
   (interactive
    (list (read-buffer-to-switch "Switch to buffer in other tab: ")))
-  (tab-bar-new-tab)
+  (let ((tab-bar-new-tab-choice t))
+    (tab-bar-new-tab))
   (delete-other-windows)
   (switch-to-buffer buffer-or-name norecord))
 
@@ -752,8 +793,8 @@ Like \\[find-file-other-frame] (which see), but creates a new tab."
           value)
       (switch-to-buffer-other-tab value))))
 
-(define-key ctl-x-6-map "2" 'tab-bar-new-tab)
-(define-key ctl-x-6-map "0" 'tab-bar-close-current-tab)
+(define-key ctl-x-6-map "2" 'tab-new)
+(define-key ctl-x-6-map "0" 'tab-close)
 (define-key ctl-x-6-map "b" 'switch-to-buffer-other-tab)
 (define-key ctl-x-6-map "f" 'find-file-other-tab)
 (define-key ctl-x-6-map "\C-f" 'find-file-other-tab)

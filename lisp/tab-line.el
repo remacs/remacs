@@ -147,8 +147,9 @@ If nil, don't show it at all."
                  (const :tag "On selected tab" selected)
                  (const :tag "On non-selected tabs" non-selected)
                  (const :tag "None" nil))
+  :initialize 'custom-initialize-default
   :set (lambda (sym val)
-         (set sym val)
+         (set-default sym val)
          (force-mode-line-update))
   :group 'tab-line
   :version "27.1")

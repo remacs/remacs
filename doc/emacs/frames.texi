@@ -1242,6 +1242,19 @@ command applies to all frames, including frames yet to be created.  To
 control the use of tab bars at startup, customize the variable
 @code{tab-bar-mode}.
 
+@vindex tab-bar-show
+@cindex Tab Bar show
+  This variable is intended to toggle the tab bar automatically.
+When the value is @code{t}, then @code{tab-bar-mode} is enabled when
+using the commands that create new window configurations.  The value
+@code{1} hides the tab bar when it has only one tab, and shows it
+again once more tabs are created.  If @code{nil}, always keep the tab
+bar hidden.  In this case it's still possible to use persistent named
+window configurations without using the tab bar by relying on keyboard
+commands that create a new window configuration (@kbd{M-x tab-new}),
+that switch windows configurations (@kbd{M-x tab-next}, @kbd{M-x
+tab-list}), or delete the existing ones (@kbd{M-x tab-close}).
+
 @vindex tab-bar-new-tab-choice
 @cindex Tab Bar new tab
   By default, Emacs follows the same behavior as when creating frames,
