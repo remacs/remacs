@@ -58,6 +58,7 @@ SPC		minibuffer-complete-word
 
 M-v		switch-to-completions
 
+M-<		minibuffer-beginning-of-buffer
 M-n		next-history-element
 M-p		previous-history-element
 M-r		previous-matching-history-element
