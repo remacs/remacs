@@ -955,8 +955,8 @@ should be shown to the user."
 	(url-mark-buffer-as-dead buffer)
       ;; Narrow the buffer for url-handle-content-transfer-encoding to
       ;; find only the headers relevant to this transaction.
-      (and (not (buffer-narrowed-p)
-                (mail-narrow-to-head)))
+      (and (not (buffer-narrowed-p))
+                (mail-narrow-to-head))
       (url-handle-content-transfer-encoding))
     (url-http-debug "Finished parsing HTTP headers: %S" success)
     (widen)
