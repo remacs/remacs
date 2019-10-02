@@ -23,7 +23,7 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 
-;; Marck 13 2001
+;; March 13 2001
 ;; Fixes for CJK support by Yong Lu <lyongu@yahoo.com>.
 
 ;; Dir/Hostname tracking and ANSI colorization by
@@ -102,9 +102,8 @@
 ;;
 ;;             ----------------------------------------
 ;;
-;;  With the term-buffer-maximum-size you can finally decide how many
-;; scrollback lines to keep: its default is 2048 but you can change it as
-;; usual.
+;;  With the variable term-buffer-maximum-size you can decide how many
+;; scrollback lines to keep: its default is 8192.
 ;;
 ;;             ----------------------------------------
 ;;
@@ -800,14 +799,15 @@ Buffer local variable.")
   "Face used to render white color code."
   :group 'term)
 
-;; Inspiration came from comint.el -mm
-(defcustom term-buffer-maximum-size 2048
+(defcustom term-buffer-maximum-size 8192
   "The maximum size in lines for term buffers.
 Term buffers are truncated from the top to be no greater than this number.
 Notice that a setting of 0 means \"don't truncate anything\".  This variable
 is buffer-local."
   :group 'term
-  :type 'integer)
+  :type 'integer
+  :version "27.1")
+
 
 ;; Set up term-raw-map, etc.
 
