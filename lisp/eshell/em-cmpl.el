@@ -409,7 +409,7 @@ to writing a completion function."
   (let ((filename (pcomplete-arg)) glob-name)
     (if (file-name-directory filename)
         (if eshell-force-execution
-            (pcomplete-dirs-or-entries nil 'file-readable-p)
+            (pcomplete-dirs-or-entries nil #'file-readable-p)
           (pcomplete-executables))
       (if (and (> (length filename) 0)
 	       (eq (aref filename 0) eshell-explicit-command-char))

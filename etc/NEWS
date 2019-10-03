@@ -1532,6 +1532,11 @@ available for output of asynchronous shell commands.
 
 ** Pcomplete
 
+*** The 'pcomplete' command is now obsolete
+The Pcomplete functionality can be obtained via completion-at-point
+instead, by adding pcomplete-completions-at-point to
+completion-at-point-functions.
+
 *** The function 'pcomplete-uniquify-list' has been renamed from
 'pcomplete-uniqify-list'.
 
