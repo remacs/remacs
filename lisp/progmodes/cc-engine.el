@@ -9714,12 +9714,12 @@ This function might do hidden buffer changes."
 
 	(c-forward-syntactic-ws))
 
-      (when (or (and new-style-auto
-		     (looking-at c-auto-ops-re))
-		(and (or maybe-typeless backup-maybe-typeless)
-		     (not got-identifier)
-		     (not got-prefix)
-		     at-type))
+      (when (and (not got-identifier)
+		 (or (and new-style-auto
+			  (looking-at c-auto-ops-re))
+		     (and (or maybe-typeless backup-maybe-typeless)
+			  (not got-prefix)
+			  at-type)))
 	;; Have found no identifier but `c-typeless-decl-kwds' has
 	;; matched so we know we're inside a declaration.  The
 	;; preceding type must be the identifier instead.
