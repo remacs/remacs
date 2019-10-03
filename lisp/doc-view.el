@@ -1505,7 +1505,8 @@ For now these keys are useful:
   (interactive)
   (if doc-view--current-converter-processes
       (message "DocView: please wait till conversion finished.")
-    (let ((txt (expand-file-name "doc.txt" (doc-view--current-cache-dir))))
+    (let ((txt (expand-file-name "doc.txt" (doc-view--current-cache-dir)))
+          (page (doc-view-current-page)))
       (if (file-readable-p txt)
 	  (let ((inhibit-read-only t)
 		(buffer-undo-list t)
@@ -1521,6 +1522,10 @@ For now these keys are useful:
 	    (setq-local doc-view--buffer-file-name dv-bfn)
 	    (set-buffer-modified-p nil)
 	    (doc-view-minor-mode)
+            (goto-char (point-min))
+            ;; Put point at the start of the page the user what
+            ;; reading.  Pages are separated by Control-L characters.
+            (re-search-forward page-delimiter nil t (1- page))
 	    (add-hook 'write-file-functions
 		      (lambda ()
                         ;; FIXME: If the user changes major mode and then
