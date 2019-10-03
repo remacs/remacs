@@ -241,7 +241,7 @@ to writing a completion function."
 (defun eshell-complete-lisp-symbol ()
   "Try to complete the text around point as a Lisp symbol."
   (interactive)
-  (let ((completion-at-point-functions '(lisp-completion-at-point)))
+  (let ((completion-at-point-functions '(elisp-completion-at-point)))
     (completion-at-point)))
 
 (defvar eshell-cmpl-mode-map
