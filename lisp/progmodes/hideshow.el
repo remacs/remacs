@@ -551,11 +551,13 @@ Original match data is restored upon return."
 (defun hs-hide-comment-region (beg end &optional repos-end)
   "Hide a region from BEG to END, marking it as a comment.
 Optional arg REPOS-END means reposition at end."
-  (let ((beg-eol (progn (goto-char beg) (line-end-position)))
+  (let ((goal-col (current-column))
+        (beg-bol (progn (goto-char beg) (line-beginning-position)))
+        (beg-eol (line-end-position))
         (end-eol (progn (goto-char end) (line-end-position))))
     (hs-discard-overlays beg-eol end-eol)
-    (hs-make-overlay beg-eol end-eol 'comment beg end))
-  (goto-char (if repos-end end beg)))
+    (hs-make-overlay beg-eol end-eol 'comment beg end)
+    (goto-char (if repos-end end (min end (+ beg-bol goal-col))))))
 
 (defun hs-hide-block-at-point (&optional end comment-reg)
   "Hide block if on block beginning.
