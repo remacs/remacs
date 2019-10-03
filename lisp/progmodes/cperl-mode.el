@@ -89,9 +89,6 @@
 	(error nil))
       (defvar msb-menu-cond)
       (defvar gud-perldb-history)
-      (defvar font-lock-background-mode) ; not in Emacs
-      (defvar font-lock-display-type)	; ditto
-      (defvar paren-backwards-message)	; Not in newer XEmacs?
       (defmacro cperl-is-face (arg)	; Takes quoted arg
 	(cond ((fboundp 'find-face)
 	       `(find-face ,arg))
@@ -704,7 +701,7 @@ to detect it and bulk out).
 
 See documentation of a variable `cperl-problems-old-emaxen' for the
 problems which disappear if you upgrade Emacs to a reasonably new
-version (20.3 for Emacs, and those of 2004 for XEmacs).")
+version (20.3 for Emacs).")
 
 (defvar cperl-problems-old-emaxen 'please-ignore-this-line
   "Description of problems in CPerl mode specific for older Emacs versions.
@@ -712,8 +709,7 @@ version (20.3 for Emacs, and those of 2004 for XEmacs).")
 Emacs had a _very_ restricted syntax parsing engine until version
 20.1.  Most problems below are corrected starting from this version of
 Emacs, and all of them should be fixed in version 20.3.  (Or apply
-patches to Emacs 19.33/34 - see tips.)  XEmacs was very backward in
-this respect (until 2003).
+patches to Emacs 19.33/34 - see tips.)
 
 Note that even with newer Emacsen in some very rare cases the details
 of interaction of `font-lock' and syntaxification may be not cleaned
@@ -5897,8 +5893,6 @@ indentation and initial hashes.  Behaves usually outside of comment."
 		      t
 		      nil))))
 	  ;; Do it the dull way, without choose-color
-	  (defvar cperl-guessed-background nil
-	    "Display characteristics as guessed by cperl.")
 	  (cperl-force-face font-lock-constant-face
 			    "Face for constant and label names")
 	  (cperl-force-face font-lock-variable-name-face
@@ -5927,19 +5921,6 @@ indentation and initial hashes.  Behaves usually outside of comment."
 	  ;;    (defconst cperl-nonoverridable-face
 	  ;;	'cperl-nonoverridable-face
 	  ;;	"Face to use for data types from another group."))
-	  ;;(if (not (featurep 'xemacs)) nil
-	  ;;  (or (boundp 'font-lock-comment-face)
-	  ;;	(defconst font-lock-comment-face
-	  ;;	  'font-lock-comment-face
-	  ;;	  "Face to use for comments."))
-	  ;;  (or (boundp 'font-lock-keyword-face)
-	  ;;	(defconst font-lock-keyword-face
-	  ;;	  'font-lock-keyword-face
-	  ;;	  "Face to use for keywords."))
-	  ;;  (or (boundp 'font-lock-function-name-face)
-	  ;;	(defconst font-lock-function-name-face
-	  ;;	  'font-lock-function-name-face
-	  ;;	  "Face to use for function names.")))
 	  (if (and
 	       (not (cperl-is-face 'cperl-array-face))
 	       (cperl-is-face 'font-lock-emphasized-face))
@@ -5960,17 +5941,7 @@ indentation and initial hashes.  Behaves usually outside of comment."
 	  ;;    (defconst cperl-array-face
 	  ;;	'cperl-array-face
 	  ;;	"Face to use for arrays."))
-	  ;; Here we try to guess background
-	  (let ((background
-		 (if (boundp 'font-lock-background-mode)
-		     font-lock-background-mode
-		   'light)))
-	    (defvar cperl-guessed-background
-	      (if (and (boundp 'font-lock-display-type)
-		       (eq font-lock-display-type 'grayscale))
-		  'gray
-		background)
-	      "Background as guessed by CPerl mode")
+	  (let ((background 'light))
 	    (and (not (cperl-is-face 'font-lock-constant-face))
 		 (cperl-is-face 'font-lock-reference-face)
 		 (copy-face 'font-lock-reference-face 'font-lock-constant-face))
@@ -6400,8 +6371,6 @@ side-effect of memorizing only.  Examples in `cperl-style-examples'."
 	  (funcall (or (and (boundp 'find-tag-default-function)
 			    find-tag-default-function)
 		       (get major-mode 'find-tag-default-function)
-		       ;; XEmacs 19.12 has `find-tag-default-hook'; it is
-		       ;; automatically used within `find-tag-default':
 		       'find-tag-default))))))
 
 (defun cperl-info-on-command (command)
