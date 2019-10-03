@@ -9544,6 +9544,9 @@ This function might do hidden buffer changes."
 	  ;; True if there's a prefix match outside the outermost
 	  ;; paren pair that surrounds the declarator.
 	  got-prefix-before-parens
+	  ;; True if there's a prefix, such as "*" which might precede the
+	  ;; identifier in a function declaration.
+	  got-function-name-prefix
 	  ;; True if there's a suffix match outside the outermost
 	  ;; paren pair that surrounds the declarator.  The value is
 	  ;; the position of the first suffix match.
@@ -9605,6 +9608,9 @@ This function might do hidden buffer changes."
 	    (unless got-prefix-before-parens
 	      (setq got-prefix-before-parens (= paren-depth 0)))
 	    (setq got-prefix t)
+	    (when (save-match-data
+		    (looking-at c-type-decl-operator-prefix-key))
+	      (setq got-function-name-prefix t))
 	    (goto-char (match-end 1)))
 	  (c-forward-syntactic-ws)))
 
@@ -9773,7 +9779,7 @@ This function might do hidden buffer changes."
 		 (throw 'at-decl-or-cast t))
 
 	       (when (and got-parens
-			  (not got-prefix)
+			  (not got-function-name-prefix)
 			  ;; (not got-suffix-after-parens)
 			  (or backup-at-type
 			      maybe-typeless

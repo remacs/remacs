@@ -3423,7 +3423,7 @@ Identifier syntax is in effect when this is matched \(see
   'dont-doc)
 
 (c-lang-defconst c-type-decl-operator-prefix-key
-  "Regexp matching any declarator operator which isn't a keyword
+  "Regexp matching any declarator operator which isn't a keyword,
 that might precede the identifier in a declaration, e.g. the
 \"*\" in \"char *argv\".  The end of the first submatch is taken
 as the end of the operator.  Identifier syntax is in effect when
