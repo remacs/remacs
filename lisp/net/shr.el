@@ -1180,7 +1180,9 @@ Return a string with image data."
                (eq content-type 'image/svg+xml))
       (setq data
             ;; Note that libxml2 doesn't parse everything perfectly,
-            ;; so glitches may occur during this transformation.
+            ;; so glitches may occur during this transformation.  And
+            ;; encode as utf-8: There may be text (and other elements)
+            ;; that are non-ASCII.
 	    (shr-dom-to-xml
 	     (libxml-parse-xml-region (point) (point-max)) 'utf-8)))
     ;; SVG images often do not have a specified foreground/background
@@ -1342,7 +1344,10 @@ ones, in case fg and bg are nil."
   (with-temp-buffer
     (shr-dom-print dom)
     (when charset
-      (encode-coding-region (point-min) (point-max) charset))
+      (encode-coding-region (point-min) (point-max) charset)
+      (goto-char (point-min))
+      (insert (format "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+                      charset)))
     (buffer-string)))
 
 (defun shr-dom-print (dom)
