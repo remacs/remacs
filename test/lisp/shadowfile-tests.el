@@ -63,7 +63,7 @@
         (setq shadow-homedir invocation-directory)
         (add-to-list
          'tramp-connection-properties
-         `(,(file-remote-p "/mock::%s") "~" ,invocation-directory)))
+         `(,(file-remote-p "/mock::") "~" ,invocation-directory)))
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
 
