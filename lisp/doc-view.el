@@ -1523,7 +1523,7 @@ For now these keys are useful:
 	    (set-buffer-modified-p nil)
 	    (doc-view-minor-mode)
             (goto-char (point-min))
-            ;; Put point at the start of the page the user what
+            ;; Put point at the start of the page the user was
             ;; reading.  Pages are separated by Control-L characters.
             (re-search-forward page-delimiter nil t (1- page))
 	    (add-hook 'write-file-functions
