@@ -56,15 +56,16 @@
        'tramp-default-host-alist
        `("\\`mock\\'" nil ,(system-name)))
       ;; Emacs' Makefile sets $HOME to a nonexistent value.  Needed in
-      ;; batch mode only, therefore.  It cannot be
+      ;; batch mode only, therefore.  `shadow-homedir' cannot be
       ;; `temporary-directory', because the tests with "~" would fail.
       (unless (and (null noninteractive) (file-directory-p "~/"))
-        (setenv "HOME" invocation-directory))
+        (setenv "HOME" (file-name-unquote temporary-file-directory))
+        (setq shadow-homedir invocation-directory)
+        (add-to-list
+         'tramp-connection-properties
+         `(,(file-remote-p "/mock::%s") "~" ,invocation-directory)))
       (format "/mock::%s" temporary-file-directory)))
   "Temporary directory for Tramp tests.")
-
-(message
- "%s %s" temporary-file-directory shadow-test-remote-temporary-file-directory)
 
 (setq password-cache-expiry nil
       shadow-debug (getenv "EMACS_HYDRA_CI")
@@ -75,11 +76,6 @@
       shadow-test-remote-temporary-file-directory
       (ignore-errors
         (file-truename shadow-test-remote-temporary-file-directory)))
-
-(when shadow-debug
-  (message
-   "%s %s"
-   temporary-file-directory shadow-test-remote-temporary-file-directory))
 
 ;; This should happen on hydra only.
 (when (getenv "EMACS_HYDRA_CI")
@@ -95,6 +91,9 @@
 
 (defun shadow--tests-cleanup ()
   "Reset all `shadowfile' internals."
+  ;; Cleanup Tramp.
+  (tramp-cleanup-connection
+   (tramp-dissect-file-name shadow-test-remote-temporary-file-directory) t t)
   ;; Delete auto-saved files.
   (with-current-buffer (find-file-noselect shadow-info-file 'nowarn)
     (ignore-errors (delete-file (make-auto-save-file-name)))
@@ -740,6 +739,12 @@ guaranteed by the originator of a cluster definition."
           ;; Cleanup & initialize.
           (shadow--tests-cleanup)
           (shadow-initialize)
+          (when shadow-debug
+            (message
+             "%s %s %s %s %s"
+             temporary-file-directory
+             shadow-test-remote-temporary-file-directory
+             shadow-homedir shadow-info-file shadow-todo-file))
 
           ;; Define clusters.
 	  (setq cluster1 "cluster1"
