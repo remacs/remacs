@@ -124,7 +124,7 @@
 (require 'backquote)
 (require 'macroexp)
 (require 'cconv)
-(require 'compile)
+(eval-when-compile (require 'compile))
 ;; Refrain from using cl-lib at run-time here, since it otherwise prevents
 ;; us from emitting warnings when compiling files which use cl-lib without
 ;; requiring it! (bug#30635)
@@ -1047,7 +1047,6 @@ message buffer `default-directory'."
 
 (defvar emacs-lisp-compilation-mode-map
   (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map compilation-minor-mode-map)
     (define-key map "g" 'emacs-lisp-compilation-recompile)
     map))
 
