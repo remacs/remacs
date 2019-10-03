@@ -277,6 +277,66 @@ backend implementation of `project-external-roots'.")
      (funcall project-vc-external-roots-function)))
    (project-roots project)))
 
+(cl-defmethod project-files ((project (head vc)) &optional dirs)
+  (cl-mapcan
+   (lambda (dir)
+     (let (backend)
+       (if (and (file-equal-p dir (cdr project))
+                (setq backend (vc-responsible-backend dir))
+                (cond
+                 ((eq backend 'Hg))
+                 ((and (eq backend 'Git)
+                       (or
+                        (not project-vc-ignores)
+                        (version<= "1.9" (vc-git--program-version)))))))
+           (project--vc-list-files dir backend project-vc-ignores)
+         (project--files-in-directory
+          dir
+          (project--dir-ignores project dir)))))
+   (or dirs (project-roots project))))
+
+(defun project--vc-list-files (dir backend extra-ignores)
+  (pcase backend
+    (`Git
+     (let ((default-directory dir)
+           (args '("-z")))
+       ;; Include unregistered.
+       (setq args (append args '("-c" "-o" "--exclude-standard")))
+       (when extra-ignores
+         (setq args (append args
+                            (cons "--"
+                                  (mapcar
+                                   (lambda (i)
+                                     (if (string-match "\\./" i)
+                                         (format ":!/:%s" (substring i 2))
+                                       (format ":!:%s" i)))
+                                   extra-ignores)))))
+       (mapcar
+        (lambda (file) (concat dir file))
+        (split-string
+         (apply #'vc-git--run-command-string nil "ls-files" args)
+         "\0" t))))
+    (`Hg
+     (let ((default-directory dir)
+           args
+           files)
+       ;; Include unregistered.
+       (setq args (nconc args '("--all")))
+       (when extra-ignores
+         (setq args (nconc args
+                           (mapcan
+                            (lambda (i)
+                              (list "--exclude" i))
+                            (copy-list extra-ignores)))))
+       (with-temp-buffer
+         (apply #'vc-hg-command t 0 "."
+                "status" args)
+         (goto-char (point-min))
+         (while (re-search-forward "^[?C]\s+\\(.*\\)$" nil t)
+           (setq files (cons (concat dir (match-string 1))
+                             files))))
+       (nreverse files)))))
+
 (cl-defmethod project-ignores ((project (head vc)) dir)
   (let* ((root (cdr project))
           backend)
@@ -391,7 +451,8 @@ pattern to search for."
        (status nil)
        (hits nil)
        (xrefs nil)
-       (command (format "xargs -0 grep %s -nHE -e %s"
+       ;; 'git ls-files' can output broken symlinks.
+       (command (format "xargs -0 grep %s -snHE -e %s"
                         (if (and case-fold-search
                                  (isearch-no-upper-case-p regexp t))
                             "-i"
