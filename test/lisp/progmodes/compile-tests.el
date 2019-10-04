@@ -204,6 +204,8 @@
      1 nil 54 "G:/cygwin/dev/build-myproj.xml")
     ("{standard input}:27041: Warning: end of file not at end of a line; newline inserted"
      1 nil 27041 "{standard input}")
+    ("boost/container/detail/flat_tree.hpp:589:25:   [ skipping 5 instantiation contexts, use -ftemplate-backtrace-limit=0 to disable ]"
+     1 25 589 "boost/container/detail/flat_tree.hpp" 0)
     ;; Guile
     ("In foo.scm:\n" 1 nil nil "foo.scm")
     ("  63:4 [call-with-prompt prompt0 ...]" 1 4 63 nil)
@@ -407,7 +409,7 @@ The test data is in `compile-tests--test-regexps-data'."
       (mapc #'compile--test-error-line compile-tests--test-regexps-data)
       (should (eq compilation-num-errors-found 87))
       (should (eq compilation-num-warnings-found 32))
-      (should (eq compilation-num-infos-found 20)))))
+      (should (eq compilation-num-infos-found 21)))))
 
 (ert-deftest compile-test-grep-regexps ()
   "Test the `grep-regexp-alist' regexps.

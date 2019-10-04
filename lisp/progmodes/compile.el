@@ -327,7 +327,7 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2 nil (1))
           (: (* " ")
              (group-n 7 (| (regexp "[Ii]nfo\\(?:\\>\\|rmationa?l?\\)")
                            "I:"
-                           (: "[ skipping " (+ ".") " ]")
+                           (: "[ skipping " (+ nonl) " ]")
                            "instantiated from"
                            "required from"
                            (regexp "[Nn]ote"))))
