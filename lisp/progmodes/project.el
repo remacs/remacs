@@ -322,10 +322,9 @@ backend implementation of `project-external-roots'.")
          "\0" t))))
     (`Hg
      (let ((default-directory (file-name-as-directory dir))
-           args
-           files)
+           args)
        ;; Include unregistered.
-       (setq args (nconc args '("--all")))
+       (setq args (nconc args '("-mcardu" "--no-status" "-0")))
        (when extra-ignores
          (setq args (nconc args
                            (mapcan
@@ -333,13 +332,10 @@ backend implementation of `project-external-roots'.")
                               (list "--exclude" i))
                             extra-ignores))))
        (with-temp-buffer
-         (apply #'vc-hg-command t 0 "."
-                "status" args)
-         (goto-char (point-min))
-         (while (re-search-forward "^[?C]\s+\\(.*\\)$" nil t)
-           (setq files (cons (concat dir (match-string 1))
-                             files))))
-       (nreverse files)))))
+         (apply #'vc-hg-command t 0 "." "status" args)
+         (mapcar
+          (lambda (s) (concat dir s))
+          (split-string (buffer-string) "\0" t)))))))
 
 (cl-defmethod project-ignores ((project (head vc)) dir)
   (let* ((root (cdr project))
