@@ -95,10 +95,18 @@ if ARG is `toggle'; disable the mode otherwise.")
 \\{%s}" mode-pretty-name keymap-sym))))
     (if (string-match-p "\\bARG\\b" doc)
         doc
-      (let ((argdoc (format easy-mmode--arg-docstring
-                            mode-pretty-name)))
+      (let* ((fill-prefix nil)
+             (docs-fc (bound-and-true-p emacs-lisp-docstring-fill-column))
+             (fill-column (if (integerp docs-fc) docs-fc 65))
+             (argdoc (format easy-mmode--arg-docstring mode-pretty-name))
+             (filled (if (fboundp 'fill-region)
+                         (with-temp-buffer
+                           (insert argdoc)
+                           (fill-region (point-min) (point-max) 'left t)
+                           (buffer-string))
+                       argdoc)))
         (replace-regexp-in-string "\\(\n\n\\|\\'\\)\\(.\\|\n\\)*\\'"
-                                  (concat argdoc "\\1")
+                                  (concat filled "\\1")
                                   doc nil nil 1)))))
 
 ;;;###autoload
