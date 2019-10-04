@@ -154,8 +154,7 @@ Useful commands (type ? to hide them and free up screen):
     (define-key map "\C-?" 'previous-line)
     (define-key map "p" 'previous-line)
     (define-key map "C" 'ediff-dir-diff-copy-file)
-    (define-key map (if (featurep 'emacs) [mouse-2] [button2])
-      'ediff-dir-diff-copy-file)
+    (define-key map  [mouse-2] 'ediff-dir-diff-copy-file)
     (define-key map [delete] 'previous-line)
     (define-key map [backspace] 'previous-line)
     map)
@@ -433,9 +432,7 @@ Toggled by ediff-toggle-verbose-help-meta-buffer" )
 
   (if ediff-no-emacs-help-in-control-buffer
       (define-key ediff-meta-buffer-map  "\C-h"  'ediff-previous-meta-item))
-  (if (featurep 'emacs)
-      (define-key ediff-meta-buffer-map [mouse-2] ediff-meta-action-function)
-    (define-key ediff-meta-buffer-map [button2] ediff-meta-action-function))
+  (define-key ediff-meta-buffer-map [mouse-2] ediff-meta-action-function)
 
   (use-local-map ediff-meta-buffer-map)
   ;; modify ediff-meta-buffer-map here
@@ -1542,9 +1539,7 @@ Useful commands:
 (defun ediff-set-meta-overlay (b e prop &optional session-number hidden)
   (let (overl)
     (setq overl (ediff-make-overlay b e))
-    (if (featurep 'emacs)
-	(ediff-overlay-put overl 'mouse-face 'highlight)
-      (ediff-overlay-put overl 'highlight t))
+    (ediff-overlay-put overl 'mouse-face 'highlight)
     (ediff-overlay-put overl 'ediff-meta-info prop)
     (ediff-overlay-put overl 'invisible hidden)
     (ediff-overlay-put overl 'follow-link t)

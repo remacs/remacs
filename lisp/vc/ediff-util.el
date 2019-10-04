@@ -126,8 +126,7 @@ to invocation.")
   (setq ediff-mode-map (make-sparse-keymap))
   (suppress-keymap ediff-mode-map)
 
-  (define-key ediff-mode-map
-    (if (featurep 'emacs) [mouse-2] [button2]) 'ediff-help-for-quick-help)
+  (define-key ediff-mode-map [mouse-2] 'ediff-help-for-quick-help)
   (define-key ediff-mode-map "\C-m"  'ediff-help-for-quick-help)
 
   (define-key ediff-mode-map "p" 'ediff-previous-difference)
@@ -1267,8 +1266,7 @@ This is especially useful when comparing buffers side-by-side."
   (interactive)
   (ediff-barf-if-not-control-buffer)
   (or (ediff-window-display-p)
-      (user-error "%sEmacs is not running as a window application"
-	     (if (featurep 'emacs) "" "X")))
+      (user-error "Emacs is not running as a window application"))
   (ediff-recenter 'no-rehighlight) ; make sure buffs are displayed in windows
   (let ((ctl-buf ediff-control-buffer))
     (setq ediff-wide-display-p (not ediff-wide-display-p))
@@ -1297,8 +1295,7 @@ which see."
   (interactive)
   (let (window-setup-func)
     (or (ediff-window-display-p)
-	(user-error "%sEmacs is not running as a window application"
-	       (if (featurep 'emacs) "" "X")))
+	(user-error "Emacs is not running as a window application"))
 
   (cond ((eq ediff-window-setup-function #'ediff-setup-windows-multiframe)
 	 (setq ediff-multiframe nil)
@@ -1344,8 +1341,7 @@ To change the default, set the variable `ediff-use-toolbar-p', which see."
   (if (featurep 'ediff-tbar)
       (progn
 	(or (ediff-window-display-p)
-	    (user-error "%sEmacs is not running as a window application"
-		   (if (featurep 'emacs) "" "X")))
+	    (user-error "Emacs is not running as a window application"))
 	(if (ediff-use-toolbar-p)
 	    (ediff-kill-bottom-toolbar))
 	;; do this only after killing the toolbar
@@ -2562,10 +2558,7 @@ temporarily reverses the meaning of this variable."
 	(cond ((ediff-good-frame-under-mouse))
 	      (t warp-frame)))
   (if (and (ediff-window-display-p) (frame-live-p warp-frame) ediff-grab-mouse)
-      (set-mouse-position (if (featurep 'emacs)
-			      warp-frame
-			    (frame-selected-window warp-frame))
-			  2 1))
+      (set-mouse-position warp-frame 2 1))
 
   (mapc #'funcall after-quit-hook-internal)
   ))
@@ -2576,14 +2569,11 @@ temporarily reverses the meaning of this variable."
   (let ((frame-or-win (car (mouse-position)))
 	(buf-name "")
 	frame obj-ok)
-    (setq obj-ok
-	  (if (featurep 'emacs)
-	      (frame-live-p frame-or-win)
-	    (window-live-p frame-or-win)))
+    (setq obj-ok (frame-live-p frame-or-win))
     (if obj-ok
-	(setq frame (if (featurep 'emacs) frame-or-win (window-frame frame-or-win))
+	(setq frame frame-or-win
 	      buf-name
-	      (buffer-name (window-buffer (frame-selected-window frame)))))
+              (buffer-name (window-buffer (frame-selected-window frame)))))
     (if (string-match "Minibuf" buf-name)
 	nil
       frame)))
@@ -3830,8 +3820,7 @@ Ediff Control Panel to restore highlighting."
 		  (make-overlay beg end buff nil 'rear-advance)))
 
 	  ;; never detach
-	  (ediff-overlay-put
-	   overl (if (featurep 'emacs) 'evaporate 'detachable) nil)
+	  (ediff-overlay-put overl 'evaporate nil)
 	  ;; make overlay open-ended
 	  ;; In emacs, it is made open ended at creation time
 	  (when (featurep 'xemacs)

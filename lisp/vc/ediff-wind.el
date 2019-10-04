@@ -959,7 +959,7 @@ create a new splittable frame if none is found."
 	    ediff-control-frame ctl-frame)
       ;; protect against undefined face-attribute
       (condition-case nil
-	  (if (and (featurep 'emacs) (face-attribute 'mode-line :box))
+	  (if (face-attribute 'mode-line :box)
 	      (set-face-attribute 'mode-line ctl-frame :box nil))
 	(error)))
 
@@ -1257,18 +1257,11 @@ It assumes that it is called from within the control buffer."
 
 
 (defun ediff-refresh-control-frame ()
-  (if (featurep 'emacs)
-      ;; set frame/icon titles for Emacs
-      (modify-frame-parameters
-       ediff-control-frame
-       (list (cons 'title (ediff-make-base-title))
-	     (cons 'icon-name (ediff-make-narrow-control-buffer-id))
-	     ))
-    ;; set frame/icon titles for XEmacs
-    (setq frame-title-format (ediff-make-base-title)
-	  frame-icon-title-format (ediff-make-narrow-control-buffer-id))
-    ;; force an update of the frame title
-    (modify-frame-parameters ediff-control-frame '(()))))
+  ;; Set frame/icon titles.
+  (modify-frame-parameters
+   ediff-control-frame
+   (list (cons 'title (ediff-make-base-title))
+	 (cons 'icon-name (ediff-make-narrow-control-buffer-id)))))
 
 
 (defun ediff-make-narrow-control-buffer-id (&optional skip-name)

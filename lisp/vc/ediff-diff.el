@@ -1326,7 +1326,7 @@ arguments to `skip-chars-forward'."
 	(syntax-tbl ediff-syntax-table))
     (ediff-with-current-buffer buf
       (skip-chars-forward ediff-whitespace)
-      (ediff-with-syntax-table syntax-tbl
+      (with-syntax-table syntax-tbl
 	(while (> n 1)
 	  (funcall fwd-word-fun)
 	  (skip-chars-forward ediff-whitespace)
