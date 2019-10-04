@@ -304,7 +304,6 @@ Return the expanded expression."
           semantic-flex-keywords-obarray %s\n\
           semantic-lex-types-obarray %s)\n\
     ;; Collect unmatched syntax lexical tokens\n\
-    (semantic-make-local-hook 'wisent-discarding-token-functions)\n\
     (add-hook 'wisent-discarding-token-functions\n\
               'wisent-collect-unmatched-syntax nil t)"
    (semantic-grammar-parsetable)

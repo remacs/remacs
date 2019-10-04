@@ -1348,11 +1348,9 @@ the change bounds to encompass the whole nonterminal tag."
        '(nonterminal))
   ;; Before each change, clear the cached regexp used to highlight
   ;; macros local in this grammar.
-  (semantic-make-local-hook 'before-change-functions)
   (add-hook 'before-change-functions
             'semantic--grammar-clear-macros-regexp-2 nil t)
   ;; Handle safe re-parse of grammar rules.
-  (semantic-make-local-hook 'semantic-edits-new-change-functions)
   (add-hook 'semantic-edits-new-change-functions
             'semantic-grammar-edits-new-change-hook-fcn
             nil t))

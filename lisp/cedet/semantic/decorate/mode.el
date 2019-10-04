@@ -213,7 +213,6 @@ Applies only to the current BUFFER.
 The setting of FCN will be removed after it is run."
   (save-excursion
     (when buffer (set-buffer buffer))
-    (semantic-make-local-hook 'semantic-decorate-flush-pending-decorations)
     (add-hook 'semantic-decorate-pending-decoration-hook fcn nil t)))
 
 (defun semantic-decorate-flush-pending-decorations (&optional buffer)
@@ -267,10 +266,8 @@ non-nil if the minor mode is enabled."
             (error "Buffer %s was not set up for parsing"
                    (buffer-name)))
         ;; Add hooks
-        (semantic-make-local-hook 'semantic-after-partial-cache-change-hook)
         (add-hook 'semantic-after-partial-cache-change-hook
                   'semantic-decorate-tags-after-partial-reparse nil t)
-        (semantic-make-local-hook 'semantic-after-toplevel-cache-change-hook)
         (add-hook 'semantic-after-toplevel-cache-change-hook
                   'semantic-decorate-tags-after-full-reparse nil t)
         ;; Add decorations to available tags.  The above hooks ensure

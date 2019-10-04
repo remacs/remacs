@@ -220,7 +220,6 @@ non-nil if the minor mode is enabled."
 	    (setq semantic-highlight-edits-mode nil)
 	    (error "Buffer %s was not set up for parsing"
 		   (buffer-name)))
-	(semantic-make-local-hook 'semantic-edits-new-change-functions)
 	(add-hook 'semantic-edits-new-change-functions
 		  'semantic-highlight-edits-new-change-hook-fcn nil t))
     ;; Remove hooks
@@ -372,10 +371,8 @@ non-nil if the minor mode is enabled.
             (error "Buffer %s was not set up for parsing"
                    (buffer-name)))
         ;; Add hooks
-        (semantic-make-local-hook 'semantic-unmatched-syntax-hook)
         (add-hook 'semantic-unmatched-syntax-hook
                   'semantic-show-unmatched-syntax nil t)
-	(semantic-make-local-hook 'semantic-pre-clean-token-hooks)
 	(add-hook 'semantic-pre-clean-token-hooks
 		  'semantic-clean-token-of-unmatched-syntax nil t)
         ;; Show unmatched syntax elements
@@ -456,31 +453,23 @@ non-nil if the minor mode is enabled."
 		(append mode-line-modified
 			'(semantic-show-parser-state-string))))
 	;; Add hooks
-        (semantic-make-local-hook 'semantic-edits-new-change-functions)
         (add-hook 'semantic-edits-new-change-functions
                   'semantic-show-parser-state-marker nil t)
-	(semantic-make-local-hook 'semantic-edits-incremental-reparse-failed-hook)
 	(add-hook 'semantic-edits-incremental-reparse-failed-hook
 		  'semantic-show-parser-state-marker nil t)
-	(semantic-make-local-hook 'semantic-after-partial-cache-change-hook)
 	(add-hook 'semantic-after-partial-cache-change-hook
 		  'semantic-show-parser-state-marker nil t)
-	(semantic-make-local-hook 'semantic-after-toplevel-cache-change-hook)
 	(add-hook 'semantic-after-toplevel-cache-change-hook
 		  'semantic-show-parser-state-marker nil t)
 	(semantic-show-parser-state-marker)
 
-	(semantic-make-local-hook 'semantic-before-auto-parse-hooks)
 	(add-hook 'semantic-before-auto-parse-hooks
 		  'semantic-show-parser-state-auto-marker nil t)
-	(semantic-make-local-hook 'semantic-after-auto-parse-hooks)
 	(add-hook 'semantic-after-auto-parse-hooks
 		  'semantic-show-parser-state-marker nil t)
 
-	(semantic-make-local-hook 'semantic-before-idle-scheduler-reparse-hook)
 	(add-hook 'semantic-before-idle-scheduler-reparse-hook
 		  'semantic-show-parser-state-auto-marker nil t)
-	(semantic-make-local-hook 'semantic-after-idle-scheduler-reparse-hook)
 	(add-hook 'semantic-after-idle-scheduler-reparse-hook
 		  'semantic-show-parser-state-marker nil t))
     ;; Remove parts of mode line

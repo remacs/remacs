@@ -428,7 +428,6 @@
 	semantic-flex-keywords-obarray semantic-grammar-wy--keyword-table
 	semantic-lex-types-obarray semantic-grammar-wy--token-table)
   ;; Collect unmatched syntax lexical tokens
-  (semantic-make-local-hook 'wisent-discarding-token-functions)
   (add-hook 'wisent-discarding-token-functions
 	    'wisent-collect-unmatched-syntax nil t))
 

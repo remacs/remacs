@@ -240,10 +240,8 @@ Optional argument STREAM is an optional stream of tags used to create menus."
 	   (or stream (semantic-fetch-tags-fast)))
         (semantic-create-imenu-index-1
 	 (or stream (semantic-fetch-tags-fast)) nil))
-    (semantic-make-local-hook 'semantic-after-toplevel-cache-change-hook)
     (add-hook 'semantic-after-toplevel-cache-change-hook
               'semantic-imenu-flush-fcn nil t)
-    (semantic-make-local-hook 'semantic-after-partial-cache-change-hook)
     (add-hook 'semantic-after-partial-cache-change-hook
               'semantic-imenu-flush-fcn nil t)))
 

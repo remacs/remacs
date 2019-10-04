@@ -535,7 +535,6 @@ is requested."
   (set (make-local-variable 'semantic-bovinate-nonterminal-check-obarray)
        nil)
   (semantic-parse-tree-set-up-to-date)
-  (semantic-make-local-hook 'after-change-functions)
   (add-hook 'after-change-functions 'semantic-change-function nil t)
   (run-hook-with-args 'semantic-after-toplevel-cache-change-hook
 		      semantic--buffer-cache)

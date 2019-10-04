@@ -62,9 +62,7 @@
   "Extract the window from EVENT."
   (car (car (cdr event))))
 
-(defalias 'semantic-make-local-hook
-  (if (featurep 'emacs)
-      #'identity  #'make-local-hook))
+(define-obsolete-function-alias 'semantic-make-local-hook #'identity "27.1")
 
 (defalias 'semantic-mode-line-update #'force-mode-line-update)
 
