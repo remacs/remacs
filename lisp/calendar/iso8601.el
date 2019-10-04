@@ -62,17 +62,17 @@
              regexps "\\|"))
 
 (defconst iso8601--year-match
-  "\\([-+]\\)?\\([0-9][0-9][0-9][0-9]\\)")
+  "\\([+-]\\)?\\([0-9][0-9][0-9][0-9]\\)")
 (defconst iso8601--full-date-match
-  "\\([-+]\\)?\\([0-9][0-9][0-9][0-9]\\)-?\\([0-9][0-9]\\)-?\\([0-9][0-9]\\)")
+  "\\([+-]\\)?\\([0-9][0-9][0-9][0-9]\\)-?\\([0-9][0-9]\\)-?\\([0-9][0-9]\\)")
 (defconst iso8601--without-day-match
-  "\\([-+]\\)?\\([0-9][0-9][0-9][0-9]\\)-\\([0-9][0-9]\\)")
+  "\\([+-]\\)?\\([0-9][0-9][0-9][0-9]\\)-\\([0-9][0-9]\\)")
 (defconst iso8601--outdated-date-match
   "--\\([0-9][0-9]\\)-?\\([0-9][0-9]\\)")
 (defconst iso8601--week-date-match
-  "\\([-+]\\)?\\([0-9][0-9][0-9][0-9]\\)-?W\\([0-9][0-9]\\)-?\\([0-9]\\)?")
+  "\\([+-]\\)?\\([0-9][0-9][0-9][0-9]\\)-?W\\([0-9][0-9]\\)-?\\([0-9]\\)?")
 (defconst iso8601--ordinal-date-match
-  "\\([-+]\\)?\\([0-9][0-9][0-9][0-9]\\)-?\\([0-9][0-9][0-9]\\)")
+  "\\([+-]\\)?\\([0-9][0-9][0-9][0-9]\\)-?\\([0-9][0-9][0-9]\\)")
 (defconst iso8601--date-match
   (iso8601--concat-regexps
    (list iso8601--year-match
@@ -83,10 +83,10 @@
          iso8601--ordinal-date-match)))
 
 (defconst iso8601--time-match
-  "\\([0-9][0-9]\\):?\\([0-9][0-9]\\)?:?\\([0-9][0-9]\\)?[.,]?\\([0-9]+\\)?")
+  "\\([0-9][0-9]\\):?\\([0-9][0-9]\\)?:?\\([0-9][0-9]\\)?[.,]?\\([0-9]*\\)")
 
 (defconst iso8601--zone-match
-  "\\(Z\\|\\([-+]\\)\\([0-9][0-9]\\):?\\([0-9][0-9]\\)?\\)")
+  "\\(Z\\|\\([+-]\\)\\([0-9][0-9]\\):?\\([0-9][0-9]\\)?\\)")
 
 (defconst iso8601--full-time-match
   (concat "\\(" (replace-regexp-in-string "(" "(?:" iso8601--time-match) "\\)"
@@ -142,7 +142,7 @@ See `decode-time' for the meaning of FORM."
 (defun iso8601-parse-date (string)
   "Parse STRING (in ISO 8601 format) and return a `decode-time' value."
   (cond
-   ;; Just a year: [-+]YYYY.
+   ;; Just a year: [+-]YYYY.
    ((iso8601--match iso8601--year-match string)
     (iso8601--decoded-time
      :year (iso8601--adjust-year (match-string 1 string)
@@ -236,7 +236,7 @@ See `decode-time' for the meaning of FORM."
                            (string-to-number (match-string 2 time))))
               (second (and (match-string 3 time)
                            (string-to-number (match-string 3 time))))
-              (fraction (and (match-string 4 time)
+	      (fraction (and (not (zerop (length (match-string 4 time))))
                              (string-to-number (match-string 4 time)))))
           (when (and fraction
                      (eq form t))

@@ -549,19 +549,16 @@
     ("à½¦à¾¨" . "ö†°")))
 
 (defconst tibetan-regexp
-  (let ((l (list tibetan-precomposed-transcription-alist
-		 tibetan-consonant-transcription-alist
-		 tibetan-vowel-transcription-alist
-		 tibetan-modifier-transcription-alist
-		 tibetan-subjoined-transcription-alist))
-	(separator "\\|")
-	tail pattern)
-    (while l
-      (setq tail (car l) l (cdr l))
-      (while tail
-	(setq pattern (cons separator (cons (car (car tail)) pattern))
-	      tail (cdr tail))))
-    (apply 'concat (nreverse (cdr pattern))))
+  (let (pattern)
+    (dolist (alist (list tibetan-precomposed-transcription-alist
+			 tibetan-consonant-transcription-alist
+			 tibetan-vowel-transcription-alist
+			 tibetan-modifier-transcription-alist
+			 tibetan-subjoined-transcription-alist)
+		   (apply #'concat (nreverse (cdr pattern))))
+      (dolist (key-val alist)
+	(setq pattern (cons "\\|" (cons (regexp-quote (car key-val))
+					pattern))))))
   "Regexp matching a Tibetan transcription of a composable Tibetan sequence.
 The result of matching is to be used for indexing alists at conversion
 from a roman transcription to the corresponding Tibetan character.")

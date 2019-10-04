@@ -388,8 +388,8 @@ in parentheses follows the development revision and the time stamp.")
 				        ; item tag.
 
     ;; Inline markup (`ilm')
-    (ilm-pfx (:alt "^" hws-prt "[-'\"([{<‘“«’/:]"))
-    (ilm-sfx (:alt "$" hws-prt "[]-'\")}>’”»/:.,;!?\\]"))
+    (ilm-pfx (:alt "^" hws-prt "['\"([{<‘“«’/:-]"))
+    (ilm-sfx (:alt "$" hws-prt "[]'\")}>’”»/:.,;!?\\-]"))
 
     ;; Inline markup content (`ilc')
     (ilcsgl-tag "\\S ") ; A single non-white character.
@@ -431,7 +431,7 @@ in parentheses follows the development revision and the time stamp.")
     (fld-tag ":" fldnam-tag ":") ; A field marker.
 
     ;; Options (`opt')
-    (optsta-tag (:alt "[-+/]" "--")) ; Start of an option.
+    (optsta-tag (:alt "[+/-]" "--")) ; Start of an option.
     (optnam-tag "\\sw" (:alt "-" "\\sw") "*") ; Name of an option.
     (optarg-tag (:shy "[ =]\\S +")) ; Option argument.
     (optsep-tag (:shy "," hws-prt)) ; Separator between options.
@@ -457,7 +457,7 @@ in parentheses follows the development revision and the time stamp.")
 				       ; tag.
 
     ;; Symbol (`sym')
-    (sym-prt "[-+.:_]") ; Non-word part of a symbol.
+    (sym-prt "[+.:_-]") ; Non-word part of a symbol.
     (sym-tag (:shy "\\sw+" (:shy sym-prt "\\sw+") "*"))
 
     ;; URIs (`uri')
