@@ -214,10 +214,8 @@ is ignored."
        ) ; if
      ;; XEmacs doesn't have set-text-properties, but there buffer-substring
      ;; doesn't return properties together with the string, so it's not needed.
-     (if (featurep 'emacs)
-	 (set-text-properties 0 (length result) nil result))
-     result
-     ))
+     (set-text-properties 0 (length result) nil result)
+     result))
 
 
 (defun viper-mouse-click-get-word (click count click-count)
@@ -493,49 +491,27 @@ bindings in the Viper manual."
 	()
       (setq button-spec
 	    (cond ((memq 1 key)
-		   (if (featurep 'emacs)
-		       (if (eq 'up event-type)
-			   "mouse-1" "down-mouse-1")
-		     (if (eq 'up event-type)
-			 'button1up 'button1)))
+		   (if (eq 'up event-type)
+		       "mouse-1" "down-mouse-1"))
 		  ((memq 2 key)
-		   (if (featurep 'emacs)
-		       (if (eq 'up event-type)
-			   "mouse-2" "down-mouse-2")
-		     (if (eq 'up event-type)
-			 'button2up 'button2)))
+		   (if (eq 'up event-type)
+		       "mouse-2" "down-mouse-2"))
 		  ((memq 3 key)
-		   (if (featurep 'emacs)
-		       (if (eq 'up event-type)
-			   "mouse-3" "down-mouse-3")
-		     (if (eq 'up event-type)
-			 'button3up 'button3)))
+		   (if (eq 'up event-type)
+		       "mouse-3" "down-mouse-3"))
 		  (t (error
 		      "%S: invalid button number, %S" key-var key)))
 	    meta-spec
-	    (if (memq 'meta key)
-		(if (featurep 'emacs) "M-" 'meta)
-	      (if (featurep 'emacs) "" nil))
+	    (if (memq 'meta key) "M-" "")
 	    shift-spec
-	    (if (memq 'shift key)
-		(if (featurep 'emacs) "S-" 'shift)
-	      (if (featurep 'emacs) "" nil))
+	    (if (memq 'shift key) "S-" "")
 	    control-spec
-	    (if (memq 'control key)
-		(if (featurep 'emacs) "C-" 'control)
-	      (if (featurep 'emacs) "" nil)))
+	    (if (memq 'control key) "C-" ""))
 
-      (setq key-spec (if (featurep 'emacs)
-			 (vector
-			  (intern
-			   (concat
-			    control-spec meta-spec shift-spec button-spec)))
-		       (vector
-			(delq
-			 nil
-			 (list
-			  control-spec meta-spec shift-spec button-spec)))))
-      )))
+      (setq key-spec
+	    (vector
+	     (intern (concat control-spec meta-spec
+                             shift-spec button-spec)))))))
 
 (defun viper-unbind-mouse-search-key ()
   (if viper-mouse-up-search-key-parsed
