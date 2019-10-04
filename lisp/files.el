@@ -1934,11 +1934,6 @@ this function prepends a \"|\" to the final result if necessary."
 			     (concat "|" lastname)
 			   lastname))))
 
-(defun generate-new-buffer (name)
-  "Create and return a buffer with a name based on NAME.
-Choose the buffer's name using `generate-new-buffer-name'."
-  (get-buffer-create (generate-new-buffer-name name)))
-
 (defcustom automount-dir-prefix (purecopy "^/tmp_mnt/")
   "Regexp to match the automounter prefix in a directory name."
   :group 'files

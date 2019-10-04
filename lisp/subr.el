@@ -3415,6 +3415,11 @@ also `with-temp-buffer'."
   (when (window-live-p (nth 1 state))
     (select-window (nth 1 state) 'norecord)))
 
+(defun generate-new-buffer (name)
+  "Create and return a buffer with a name based on NAME.
+Choose the buffer's name using `generate-new-buffer-name'."
+  (get-buffer-create (generate-new-buffer-name name)))
+
 (defmacro with-selected-window (window &rest body)
   "Execute the forms in BODY with WINDOW as the selected window.
 The value returned is the value of the last form in BODY.
@@ -3580,8 +3585,7 @@ See also `with-temp-buffer'."
   (let ((temp-file (make-symbol "temp-file"))
 	(temp-buffer (make-symbol "temp-buffer")))
     `(let ((,temp-file ,file)
-	   (,temp-buffer
-	    (get-buffer-create (generate-new-buffer-name " *temp file*"))))
+	   (,temp-buffer (generate-new-buffer " *temp file*")))
        (unwind-protect
 	   (prog1
 	       (with-current-buffer ,temp-buffer
@@ -3620,7 +3624,7 @@ See also `with-temp-file' and `with-output-to-string'."
   (declare (indent 0) (debug t))
   (let ((temp-buffer (make-symbol "temp-buffer")))
     `(let ((,temp-buffer (generate-new-buffer " *temp*")))
-       ;; FIXME: kill-buffer can change current-buffer in some odd cases.
+       ;; `kill-buffer' can change current-buffer in some odd cases.
        (with-current-buffer ,temp-buffer
          (unwind-protect
 	     (progn ,@body)
@@ -3654,8 +3658,7 @@ of that nature."
 (defmacro with-output-to-string (&rest body)
   "Execute BODY, return the text it sent to `standard-output', as a string."
   (declare (indent 0) (debug t))
-  `(let ((standard-output
-	  (get-buffer-create (generate-new-buffer-name " *string-output*"))))
+  `(let ((standard-output (generate-new-buffer " *string-output*")))
      (unwind-protect
 	 (progn
 	   (let ((standard-output standard-output))
