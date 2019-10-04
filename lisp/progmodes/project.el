@@ -295,6 +295,10 @@ backend implementation of `project-external-roots'.")
           (project--dir-ignores project dir)))))
    (or dirs (project-roots project))))
 
+(declare-function vc-git--program-version "vc-git")
+(declare-function vc-git--run-command-string "vc-git")
+(declare-function vc-hg-command "vc-hg")
+
 (defun project--vc-list-files (dir backend extra-ignores)
   (pcase backend
     (`Git
@@ -327,7 +331,7 @@ backend implementation of `project-external-roots'.")
                            (mapcan
                             (lambda (i)
                               (list "--exclude" i))
-                            (copy-list extra-ignores)))))
+                            extra-ignores))))
        (with-temp-buffer
          (apply #'vc-hg-command t 0 "."
                 "status" args)
