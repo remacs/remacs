@@ -1120,7 +1120,7 @@ DEFUN ("window-mode-line-height", Fwindow_mode_line_height,
 WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
-  return (make_fixnum (WINDOW_MODE_LINE_HEIGHT (decode_live_window (window))));
+  return make_fixnum (WINDOW_MODE_LINE_HEIGHT (decode_live_window (window)));
 }
 
 DEFUN ("window-header-line-height", Fwindow_header_line_height,
@@ -1129,7 +1129,7 @@ DEFUN ("window-header-line-height", Fwindow_header_line_height,
 WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
-  return (make_fixnum (WINDOW_HEADER_LINE_HEIGHT (decode_live_window (window))));
+  return make_fixnum (WINDOW_HEADER_LINE_HEIGHT (decode_live_window (window)));
 }
 
 DEFUN ("window-tab-line-height", Fwindow_tab_line_height,
@@ -1138,7 +1138,7 @@ DEFUN ("window-tab-line-height", Fwindow_tab_line_height,
 WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
-  return (make_fixnum (WINDOW_TAB_LINE_HEIGHT (decode_live_window (window))));
+  return make_fixnum (WINDOW_TAB_LINE_HEIGHT (decode_live_window (window)));
 }
 
 DEFUN ("window-right-divider-width", Fwindow_right_divider_width,
@@ -1147,7 +1147,7 @@ DEFUN ("window-right-divider-width", Fwindow_right_divider_width,
 WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
-  return (make_fixnum (WINDOW_RIGHT_DIVIDER_WIDTH (decode_live_window (window))));
+  return make_fixnum (WINDOW_RIGHT_DIVIDER_WIDTH (decode_live_window (window)));
 }
 
 DEFUN ("window-bottom-divider-width", Fwindow_bottom_divider_width,
@@ -1156,7 +1156,7 @@ DEFUN ("window-bottom-divider-width", Fwindow_bottom_divider_width,
 WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
-  return (make_fixnum (WINDOW_BOTTOM_DIVIDER_WIDTH (decode_live_window (window))));
+  return make_fixnum (WINDOW_BOTTOM_DIVIDER_WIDTH (decode_live_window (window)));
 }
 
 DEFUN ("window-scroll-bar-width", Fwindow_scroll_bar_width,
@@ -1165,7 +1165,7 @@ DEFUN ("window-scroll-bar-width", Fwindow_scroll_bar_width,
 WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
-  return (make_fixnum (WINDOW_SCROLL_BAR_AREA_WIDTH (decode_live_window (window))));
+  return make_fixnum (WINDOW_SCROLL_BAR_AREA_WIDTH (decode_live_window (window)));
 }
 
 DEFUN ("window-scroll-bar-height", Fwindow_scroll_bar_height,
@@ -1174,7 +1174,7 @@ DEFUN ("window-scroll-bar-height", Fwindow_scroll_bar_height,
 WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
-  return (make_fixnum (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window))));
+  return make_fixnum (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window)));
 }
 
 DEFUN ("window-hscroll", Fwindow_hscroll, Swindow_hscroll, 0, 1, 0,
@@ -4470,8 +4470,8 @@ window_resize_check (struct window *w, bool horflag)
        hardcodes the values of `window-safe-min-width' (2) and
        `window-safe-min-height' (1) which are defined in window.el.  */
     return (XFIXNUM (w->new_pixel) >= (horflag
-				    ? (2 * FRAME_COLUMN_WIDTH (f))
-				    : FRAME_LINE_HEIGHT (f)));
+				       ? 2 * FRAME_COLUMN_WIDTH (f)
+				       : FRAME_LINE_HEIGHT (f)));
 }
 
 
@@ -5350,15 +5350,13 @@ window_wants_mode_line (struct window *w)
   Lisp_Object window_mode_line_format =
     window_parameter (w, Qmode_line_format);
 
-  return ((WINDOW_LEAF_P (w)
-	   && !MINI_WINDOW_P (w)
-	   && !WINDOW_PSEUDO_P (w)
-	   && !EQ (window_mode_line_format, Qnone)
-	   && (!NILP (window_mode_line_format)
-	       || !NILP (BVAR (XBUFFER (WINDOW_BUFFER (w)), mode_line_format)))
-	   && WINDOW_PIXEL_HEIGHT (w) > WINDOW_FRAME_LINE_HEIGHT (w))
-	  ? 1
-	  : 0);
+  return (WINDOW_LEAF_P (w)
+	  && !MINI_WINDOW_P (w)
+	  && !WINDOW_PSEUDO_P (w)
+	  && !EQ (window_mode_line_format, Qnone)
+	  && (!NILP (window_mode_line_format)
+	      || !NILP (BVAR (XBUFFER (WINDOW_BUFFER (w)), mode_line_format)))
+	  && WINDOW_PIXEL_HEIGHT (w) > WINDOW_FRAME_LINE_HEIGHT (w));
 }
 
 
@@ -5381,18 +5379,16 @@ window_wants_header_line (struct window *w)
   Lisp_Object window_header_line_format =
     window_parameter (w, Qheader_line_format);
 
-  return ((WINDOW_LEAF_P (w)
-	   && !MINI_WINDOW_P (w)
-	   && !WINDOW_PSEUDO_P (w)
-	   && !EQ (window_header_line_format, Qnone)
-	   && (!NILP (window_header_line_format)
-	       || !NILP (BVAR (XBUFFER (WINDOW_BUFFER (w)), header_line_format)))
-	   && (WINDOW_PIXEL_HEIGHT (w)
-	       > (window_wants_mode_line (w)
-		  ? 2 * WINDOW_FRAME_LINE_HEIGHT (w)
-		  : WINDOW_FRAME_LINE_HEIGHT (w))))
-	  ? 1
-	  : 0);
+  return (WINDOW_LEAF_P (w)
+	  && !MINI_WINDOW_P (w)
+	  && !WINDOW_PSEUDO_P (w)
+	  && !EQ (window_header_line_format, Qnone)
+	  && (!NILP (window_header_line_format)
+	      || !NILP (BVAR (XBUFFER (WINDOW_BUFFER (w)), header_line_format)))
+	  && (WINDOW_PIXEL_HEIGHT (w)
+	      > (window_wants_mode_line (w)
+		 ? 2 * WINDOW_FRAME_LINE_HEIGHT (w)
+		 : WINDOW_FRAME_LINE_HEIGHT (w))));
 }
 
 
@@ -5410,24 +5406,23 @@ window_wants_header_line (struct window *w)
  * to accommodate a mode line and a header line too if necessary (the
  * mode line and a header line prevail).
  */
+
 bool
 window_wants_tab_line (struct window *w)
 {
   Lisp_Object window_tab_line_format =
     window_parameter (w, Qtab_line_format);
 
-  return ((WINDOW_LEAF_P (w)
-	   && !MINI_WINDOW_P (w)
-	   && !WINDOW_PSEUDO_P (w)
-	   && !EQ (window_tab_line_format, Qnone)
-	   && (!NILP (window_tab_line_format)
-	       || !NILP (BVAR (XBUFFER (WINDOW_BUFFER (w)), tab_line_format)))
-	   && (WINDOW_PIXEL_HEIGHT (w)
-	       > (((window_wants_mode_line (w) ? 1 : 0)
-                   + (window_wants_header_line (w) ? 1 : 0)
-                   + 1) * WINDOW_FRAME_LINE_HEIGHT (w))))
-	  ? 1
-	  : 0);
+  return (WINDOW_LEAF_P (w)
+	  && !MINI_WINDOW_P (w)
+	  && !WINDOW_PSEUDO_P (w)
+	  && !EQ (window_tab_line_format, Qnone)
+	  && (!NILP (window_tab_line_format)
+	      || !NILP (BVAR (XBUFFER (WINDOW_BUFFER (w)), tab_line_format)))
+	  && (WINDOW_PIXEL_HEIGHT (w)
+	      > (((window_wants_mode_line (w) ? 1 : 0)
+		  + (window_wants_header_line (w) ? 1 : 0)
+		  + 1) * WINDOW_FRAME_LINE_HEIGHT (w))));
 }
 
 /* Return number of lines of text in window W, not counting the mode
@@ -7192,7 +7187,7 @@ the return value is nil.  Otherwise the value is t.  */)
   minibuf_selected_window = data->minibuf_selected_window;
 
   SAFE_FREE ();
-  return (FRAME_LIVE_P (f) ? Qt : Qnil);
+  return FRAME_LIVE_P (f) ? Qt : Qnil;
 }
 
 
@@ -7481,7 +7476,7 @@ saved by this function.  */)
     ASET (tem, i, make_nil_vector (VECSIZE (struct saved_window)));
   save_window_save (FRAME_ROOT_WINDOW (f), XVECTOR (tem), 0);
   XSETWINDOW_CONFIGURATION (tem, data);
-  return (tem);
+  return tem;
 }
 
 /* Called after W's margins, fringes or scroll bars was adjusted.  */

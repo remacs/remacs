@@ -13176,7 +13176,8 @@ redisplay_tab_bar (struct frame *f)
    GLYPH doesn't display a tab-bar item.  */
 
 static bool
-tab_bar_item_info (struct frame *f, struct glyph *glyph, int *prop_idx, bool *close_p)
+tab_bar_item_info (struct frame *f, struct glyph *glyph,
+		   int *prop_idx, bool *close_p)
 {
   Lisp_Object prop;
   int charpos;

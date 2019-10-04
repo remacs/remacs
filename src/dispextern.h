@@ -1178,7 +1178,7 @@ struct glyph_row *matrix_row (struct glyph_matrix *, int);
   ((ROW)->height != (ROW)->visible_height)
 
 #define MR_PARTIALLY_VISIBLE_AT_TOP(W, ROW)  \
-  ((ROW)->y < (WINDOW_TAB_LINE_HEIGHT ((W)) + WINDOW_HEADER_LINE_HEIGHT ((W))))
+  ((ROW)->y < WINDOW_TAB_LINE_HEIGHT (W) + WINDOW_HEADER_LINE_HEIGHT (W))
 
 #define MR_PARTIALLY_VISIBLE_AT_BOTTOM(W, ROW)  \
   (((ROW)->y + (ROW)->height - (ROW)->extra_line_spacing) \
@@ -1489,39 +1489,39 @@ struct glyph_string
    a default based on the height of the font of the face `mode-line'.  */
 
 #define CURRENT_MODE_LINE_HEIGHT(W)					\
-  (W->mode_line_height >= 0						\
-   ? W->mode_line_height						\
-   : (W->mode_line_height						\
-      = (MATRIX_MODE_LINE_HEIGHT (W->current_matrix)			\
-	 ? MATRIX_MODE_LINE_HEIGHT (W->current_matrix)			\
+  ((W)->mode_line_height >= 0						\
+   ? (W)->mode_line_height						\
+   : ((W)->mode_line_height						\
+      = (MATRIX_MODE_LINE_HEIGHT ((W)->current_matrix)			\
+	 ? MATRIX_MODE_LINE_HEIGHT ((W)->current_matrix)		\
 	 : estimate_mode_line_height					\
-	     (XFRAME (W->frame), CURRENT_MODE_LINE_FACE_ID (W)))))
+	     (XFRAME ((W)->frame), CURRENT_MODE_LINE_FACE_ID (W)))))
 
 /* Return the current height of the header line of window W.  If not known
    from W->header_line_height, look at W's current glyph matrix, or return
    an estimation based on the height of the font of the face `header-line'.  */
 
 #define CURRENT_HEADER_LINE_HEIGHT(W)				\
-  (W->header_line_height >= 0					\
-   ? W->header_line_height					\
-   : (W->header_line_height					\
-      = (MATRIX_HEADER_LINE_HEIGHT (W->current_matrix)		\
-	 ? MATRIX_HEADER_LINE_HEIGHT (W->current_matrix)	\
+  ((W)->header_line_height >= 0					\
+   ? (W)->header_line_height					\
+   : ((W)->header_line_height					\
+      = (MATRIX_HEADER_LINE_HEIGHT ((W)->current_matrix)	\
+	 ? MATRIX_HEADER_LINE_HEIGHT ((W)->current_matrix)	\
 	 : estimate_mode_line_height				\
-	     (XFRAME (W->frame), HEADER_LINE_FACE_ID))))
+	     (XFRAME ((W)->frame), HEADER_LINE_FACE_ID))))
 
 /* Return the current height of the tab line of window W.  If not known
    from W->tab_line_height, look at W's current glyph matrix, or return
    an estimation based on the height of the font of the face `tab-line'.  */
 
 #define CURRENT_TAB_LINE_HEIGHT(W)				\
-  (W->tab_line_height >= 0					\
-   ? W->tab_line_height						\
-   : (W->tab_line_height					\
-      = (MATRIX_TAB_LINE_HEIGHT (W->current_matrix)		\
-	 ? MATRIX_TAB_LINE_HEIGHT (W->current_matrix)		\
+  ((W)->tab_line_height >= 0					\
+   ? (W)->tab_line_height					\
+   : ((W)->tab_line_height					\
+      = (MATRIX_TAB_LINE_HEIGHT ((W)->current_matrix)		\
+	 ? MATRIX_TAB_LINE_HEIGHT ((W)->current_matrix)		\
 	 : estimate_mode_line_height				\
-	     (XFRAME (W->frame), TAB_LINE_FACE_ID))))
+	     (XFRAME ((W)->frame), TAB_LINE_FACE_ID))))
 
 /* Return the height of the desired mode line of window W.  */
 
