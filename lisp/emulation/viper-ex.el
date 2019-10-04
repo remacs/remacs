@@ -1101,10 +1101,7 @@ reversed."
 	  (copy-keymap minibuffer-local-completion-map))
 	 beg end cont val)
 
-    (viper-add-keymap ex-read-filename-map
-		    (if (featurep 'emacs)
-			minibuffer-local-completion-map
-		      read-file-name-map))
+    (viper-add-keymap ex-read-filename-map minibuffer-local-completion-map)
 
     (setq cont (setq viper-keep-reading-filename t))
     (while cont

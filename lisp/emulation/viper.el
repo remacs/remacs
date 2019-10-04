@@ -689,11 +689,10 @@ It also can't undo some Viper settings."
                 (viper-standard-value 'major-mode
                                       viper-saved-non-viper-variables))
 
-  (if (featurep 'emacs)
-      (setq-default
-       mark-even-if-inactive
-       (viper-standard-value
-	'mark-even-if-inactive viper-saved-non-viper-variables)))
+  (setq-default
+   mark-even-if-inactive
+   (viper-standard-value
+    'mark-even-if-inactive viper-saved-non-viper-variables))
 
   ;; Ideally, we would like to be able to de-localize local variables
   (unless
@@ -1018,7 +1017,7 @@ Two differences:
      (lambda (orig-fun &rest args)
        "Adjust input-method toggling in vi-state."
        (if (and viper-special-input-method (eq viper-current-state 'vi-state))
-           (viper-deactivate-input-method)
+           (deactivate-input-method)
          (apply orig-fun args))))
 
   ) ; viper-set-hooks
@@ -1035,8 +1034,7 @@ Two differences:
 	require-final-newline t)
 
   ;; don't bark when mark is inactive
-  (if (featurep 'emacs)
-      (setq mark-even-if-inactive t))
+  (setq mark-even-if-inactive t)
 
   (setq scroll-step 1)
 
@@ -1134,9 +1132,7 @@ These two lines must come in the order given."))
 	   (cons 'mode-line-buffer-identification
 		 (list (default-value 'mode-line-buffer-identification)))
 	   (cons 'global-mode-string (list global-mode-string))
-	   (if (featurep 'emacs)
-	       (cons 'mark-even-if-inactive (list mark-even-if-inactive)))
-	   )))
+	   (cons 'mark-even-if-inactive (list mark-even-if-inactive)))))
 
 
 ;; Set some useful macros, advices
