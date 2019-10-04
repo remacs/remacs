@@ -298,7 +298,7 @@ backend implementation of `project-external-roots'.")
 (defun project--vc-list-files (dir backend extra-ignores)
   (pcase backend
     (`Git
-     (let ((default-directory dir)
+     (let ((default-directory (file-name-as-directory dir))
            (args '("-z")))
        ;; Include unregistered.
        (setq args (append args '("-c" "-o" "--exclude-standard")))
@@ -317,7 +317,7 @@ backend implementation of `project-external-roots'.")
          (apply #'vc-git--run-command-string nil "ls-files" args)
          "\0" t))))
     (`Hg
-     (let ((default-directory dir)
+     (let ((default-directory (file-name-as-directory dir))
            args
            files)
        ;; Include unregistered.
