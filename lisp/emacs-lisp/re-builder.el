@@ -103,10 +103,6 @@
 
 ;;; Code:
 
-;; On XEmacs, load the overlay compatibility library
-(unless (fboundp 'make-overlay)
-  (require 'overlay))
-
 ;; User customizable variables
 (defgroup re-builder nil
   "Options for the RE Builder."
@@ -319,12 +315,7 @@ Except for Lisp syntax this is the same as `reb-regexp'.")
 
 (defun reb-color-display-p ()
   "Return t if display is capable of displaying colors."
-  (eq 'color
-      ;; emacs/xemacs compatibility
-      (if (fboundp 'frame-parameter)
-	  (frame-parameter nil 'display-type)
-	(if (fboundp 'frame-property)
-	    (frame-property (selected-frame) 'display-type)))))
+  (eq 'color (frame-parameter nil 'display-type)))
 
 (defsubst reb-lisp-syntax-p ()
   "Return non-nil if RE Builder uses a Lisp syntax."
