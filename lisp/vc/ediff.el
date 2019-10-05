@@ -1541,9 +1541,7 @@ arguments after setting up the Ediff buffers."
   "Return string describing the version of Ediff.
 When called interactively, displays the version."
   (interactive)
-  (if (if (featurep 'xemacs)
-          (interactive-p)
-        (called-interactively-p 'interactive))
+  (if (called-interactively-p 'interactive)
       (message "%s" (ediff-version))
     (format "Ediff %s" ediff-version)))
 
@@ -1562,7 +1560,7 @@ With optional NODE, goes to that node."
     (condition-case nil
 	(progn
 	  (pop-to-buffer (get-buffer-create "*info*"))
-	  (info (if (featurep 'xemacs) "ediff.info" "ediff"))
+	  (info "ediff")
 	  (if node
 	      (Info-goto-node node)
 	    (message "Type `i' to search for a specific topic"))

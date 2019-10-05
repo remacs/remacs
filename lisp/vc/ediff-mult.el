@@ -471,7 +471,7 @@ Moves in circular fashion.  With numeric prefix arg, skip this many items."
       (ediff-next-meta-item1)
       (setq overl (ediff-get-meta-overlay-at-pos (point)))
       ;; skip invisible ones
-      (while (and overl (ediff-overlay-get overl 'invisible))
+      (while (and overl (overlay-get overl 'invisible))
 	(ediff-next-meta-item1)
 	(setq overl (ediff-get-meta-overlay-at-pos (point)))))))
 
@@ -499,7 +499,7 @@ Moves in circular fashion.  With numeric prefix arg, skip this many items."
       (ediff-previous-meta-item1)
       (setq overl (ediff-get-meta-overlay-at-pos (point)))
       ;; skip invisible ones
-      (while (and overl (ediff-overlay-get overl 'invisible))
+      (while (and overl (overlay-get overl 'invisible))
 	(ediff-previous-meta-item1)
 	(setq overl (ediff-get-meta-overlay-at-pos (point)))))))
 
@@ -929,7 +929,7 @@ behavior."
 ;; in the meta buffer.  If nil, use SPC
 (defun ediff-replace-session-activity-marker-in-meta-buffer (point new-marker)
   (let* ((overl (ediff-get-meta-overlay-at-pos point))
-	 (session-info (ediff-overlay-get overl 'ediff-meta-info))
+	 (session-info (overlay-get overl 'ediff-meta-info))
 	 (activity-marker (ediff-get-session-activity-marker session-info))
 	 buffer-read-only)
     (or new-marker activity-marker (setq new-marker ?\s))
@@ -944,7 +944,7 @@ behavior."
 ;; the meta buffer.  If nil, use SPC
 (defun ediff-replace-session-status-in-meta-buffer (point new-status)
   (let* ((overl (ediff-get-meta-overlay-at-pos point))
-	 (session-info (ediff-overlay-get overl 'ediff-meta-info))
+	 (session-info (overlay-get overl 'ediff-meta-info))
 	 (status (ediff-get-session-status session-info))
 	 buffer-read-only)
     (setq new-status (or new-status status ?\s))
@@ -988,9 +988,7 @@ behavior."
       (erase-buffer)
       ;; delete phony overlays that used to represent sessions before the buff
       ;; was redrawn
-      (if (featurep 'xemacs)
-	  (map-extents 'delete-extent)
-	(mapc #'delete-overlay (overlays-in 1 1)))
+      (mapc #'delete-overlay (overlays-in 1 1))
 
       (setq regexp (ediff-get-group-regexp meta-list)
 	    merge-autostore-dir
@@ -1077,7 +1075,7 @@ behavior."
 		     ;; Do hiding
 		     (if overl (ediff-overlay-put overl 'invisible t)))
 		    ((and (eq (ediff-get-session-status session-info) ?H)
-			  overl (ediff-overlay-get overl 'invisible))
+			  overl (overlay-get overl 'invisible))
 		     ;; Do unhiding
 		     (ediff-overlay-put overl 'invisible nil))
 		    (t (ediff-replace-session-activity-marker-in-meta-buffer
@@ -1094,36 +1092,26 @@ behavior."
 
 (defun ediff-update-session-marker-in-dir-meta-buffer (session-num)
   (let (buffer-meta-overlays session-info overl buffer-read-only)
-    (setq overl
-	  (if (featurep 'xemacs)
-	      (map-extents
-	       (lambda (ext _maparg)
-		 (if (and
-		      (ediff-overlay-get ext 'ediff-meta-info)
-		      (eq (ediff-overlay-get ext 'ediff-meta-session-number)
-			  session-num))
-		     ext)))
-	    ;; Emacs doesn't have map-extents, so try harder
-	    ;; Splice overlay lists to get all buffer overlays
-	    (setq buffer-meta-overlays (overlay-lists)
-		  buffer-meta-overlays (append (car buffer-meta-overlays)
-						(cdr buffer-meta-overlays)))
-	    (car
-	     (delq nil
-		   (mapcar
-		    (lambda (overl)
-		      (if (and
-			   (ediff-overlay-get overl 'ediff-meta-info)
-			   (eq (ediff-overlay-get
-				overl 'ediff-meta-session-number)
-			       session-num))
-			  overl))
-		    buffer-meta-overlays)))))
+    ;; Splice overlay lists to get all buffer overlays
+    (setq buffer-meta-overlays (overlay-lists)
+	  buffer-meta-overlays (append (car buffer-meta-overlays)
+				       (cdr buffer-meta-overlays)))
+    (setq overl (car
+	         (delq nil
+		       (mapcar
+		        (lambda (overl)
+		          (if (and
+			       (overlay-get overl 'ediff-meta-info)
+			       (eq (overlay-get
+                                    overl 'ediff-meta-session-number)
+			           session-num))
+			      overl))
+		        buffer-meta-overlays))))
     (or overl
 	(error
 	 "Bug in ediff-update-session-marker-in-dir-meta-buffer: no overlay with given number %S"
 	 session-num))
-    (setq session-info (ediff-overlay-get overl 'ediff-meta-info))
+    (setq session-info (overlay-get overl 'ediff-meta-info))
     (goto-char (ediff-overlay-start overl))
     (ediff-replace-session-activity-marker-in-meta-buffer
      (point)
@@ -1434,9 +1422,7 @@ Useful commands:
       (erase-buffer)
       ;; delete phony overlays that used to represent sessions before the buff
       ;; was redrawn
-      (if (featurep 'xemacs)
-	  (map-extents 'delete-extent)
-       (mapc #'delete-overlay (overlays-in 1 1)))
+      (mapc #'delete-overlay (overlays-in 1 1))
 
       (insert (substitute-command-keys "\
 This is a registry of all active Ediff sessions.
@@ -1538,7 +1524,7 @@ Useful commands:
 ;;                 (SESSION-CTL-BUFFER STATUS OBJA OBJB OBJC)
 (defun ediff-set-meta-overlay (b e prop &optional session-number hidden)
   (let (overl)
-    (setq overl (ediff-make-overlay b e))
+    (setq overl (make-overlay b e))
     (ediff-overlay-put overl 'mouse-face 'highlight)
     (ediff-overlay-put overl 'ediff-meta-info prop)
     (ediff-overlay-put overl 'invisible hidden)
@@ -2167,7 +2153,7 @@ all marked sessions must be active."
 		 (ediff-update-markers-in-dir-meta-buffer ediff-meta-list)))
 	  (setq overl (ediff-get-meta-overlay-at-pos (point)))
 	  ;; skip the invisible sessions
-	  (while (and overl (ediff-overlay-get overl 'invisible))
+	  (while (and overl (overlay-get overl 'invisible))
 	    (ediff-next-meta-item1)
 	    (setq overl (ediff-get-meta-overlay-at-pos (point))))
 	  ))))
@@ -2259,21 +2245,17 @@ If this is a session registry buffer then just bury it."
 ;; If optional NOERROR arg is given, don't report error and return nil if no
 ;; meta info is found on line.
 (defun ediff-get-meta-info (buf point &optional noerror)
-  (let (result olist tmp)
+  (let (result olist)
     (if (and point (ediff-buffer-live-p buf))
 	(ediff-with-current-buffer buf
-	  (if (featurep 'xemacs)
-	      (setq result
-		    (if (setq tmp (extent-at point buf 'ediff-meta-info))
-			(ediff-overlay-get tmp 'ediff-meta-info)))
-	    (setq olist
-		  (mapcar (lambda (elt)
-			    (unless (overlay-get elt 'invisible)
-			      (overlay-get elt 'ediff-meta-info)))
-			  (overlays-at point)))
-	    (while (and olist (null (car olist)))
-	      (setq olist (cdr olist)))
-	    (setq result (car olist)))))
+	  (setq olist
+		(mapcar (lambda (elt)
+			  (unless (overlay-get elt 'invisible)
+			    (overlay-get elt 'ediff-meta-info)))
+			(overlays-at point)))
+	  (while (and olist (null (car olist)))
+	    (setq olist (cdr olist)))
+	  (setq result (car olist))))
     (or result
 	(unless noerror
 	  (ediff-update-registry)
@@ -2281,21 +2263,19 @@ If this is a session registry buffer then just bury it."
 
 
 (defun ediff-get-meta-overlay-at-pos (point)
-  (if (featurep 'xemacs)
-      (extent-at point (current-buffer) 'ediff-meta-info)
-    (let* ((overl-list (overlays-at point))
-	   (overl (car overl-list)))
-      (while (and overl (null (overlay-get overl 'ediff-meta-info)))
-	(setq overl-list (cdr overl-list)
-	      overl (car overl-list)))
-      overl)))
+  (let* ((overl-list (overlays-at point))
+	 (overl (car overl-list)))
+    (while (and overl (null (overlay-get overl 'ediff-meta-info)))
+      (setq overl-list (cdr overl-list)
+	    overl (car overl-list)))
+    overl))
 
 (defun ediff-get-session-number-at-pos (point &optional meta-buffer)
   (setq meta-buffer (if (ediff-buffer-live-p meta-buffer)
 			meta-buffer
 		      (current-buffer)))
   (ediff-with-current-buffer meta-buffer
-    (ediff-overlay-get
+    (overlay-get
      (ediff-get-meta-overlay-at-pos point) 'ediff-meta-session-number)))
 
 
@@ -2304,46 +2284,29 @@ If this is a session registry buffer then just bury it."
   (if (eobp)
       (goto-char (point-min))
     (let ((overl (ediff-get-meta-overlay-at-pos point)))
-      (if (featurep 'xemacs)
-	  (progn ; xemacs
-	    (if overl
-		(setq overl (next-extent overl))
-	      (setq overl (next-extent (current-buffer))))
-	    (if overl
-		(extent-start-position overl)
-	      (point-max)))
-	;; emacs
-	(if overl
-	    ;; note: end of current overlay is the beginning of the next one
-	    (overlay-end overl)
-	  (next-overlay-change point))))))
+      (if overl
+	  ;; note: end of current overlay is the beginning of the next one
+	  (overlay-end overl)
+	(next-overlay-change point)))))
 
 
 (defun ediff-previous-meta-overlay-start (point)
   (if (bobp)
       (goto-char (point-max))
     (let ((overl (ediff-get-meta-overlay-at-pos point)))
-      (if (featurep 'xemacs)
-	  (progn
-	    (if overl
-		(setq overl (previous-extent overl))
-	      (setq overl (previous-extent (current-buffer))))
-	    (if overl
-		(extent-start-position overl)
-	      (point-min)))
-	(if overl (setq point (overlay-start overl)))
-	;; to get to the beginning of prev overlay
-	(if (not (bobp))
-	    ;; trick to overcome an emacs bug--doesn't always find previous
-	    ;; overlay change correctly
-	    (setq point (1- point)))
-	(setq point (previous-overlay-change point))
-	;; If we are not over an overlay after subtracting 1, it means we are
-	;; in the description area preceding session records.  In this case,
-	;; goto the top of the registry buffer.
-	(or (car (overlays-at point))
-	    (setq point (point-min)))
-	point))))
+      (if overl (setq point (overlay-start overl)))
+      ;; to get to the beginning of prev overlay
+      (if (not (bobp))
+	  ;; trick to overcome an emacs bug--doesn't always find previous
+	  ;; overlay change correctly
+	  (setq point (1- point)))
+      (setq point (previous-overlay-change point))
+      ;; If we are not over an overlay after subtracting 1, it means we are
+      ;; in the description area preceding session records.  In this case,
+      ;; goto the top of the registry buffer.
+      (or (car (overlays-at point))
+	  (setq point (point-min)))
+      point)))
 
 (autoload 'ediff-patch-file-internal "ediff-ptch")
 
@@ -2403,10 +2366,10 @@ If this is a session registry buffer then just bury it."
 This is used only for sessions that involve 2 or 3 files at the same time.
 ACTION is an optional argument that can be ?h, ?m, ?=, to mark for hiding, mark
 for operation, or simply indicate which are equal files.  If it is nil, then
-`(ediff-last-command-char)' is used to decide which action to take."
+`last-command-event' is used to decide which action to take."
   (interactive)
   (if (null action)
-      (setq action (ediff-last-command-char)))
+      (setq action last-command-event))
   (let ((list (cdr ediff-meta-list))
 	marked1 marked2 marked3
 	fileinfo1 fileinfo2 fileinfo3 elt)

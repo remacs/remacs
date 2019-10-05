@@ -1231,8 +1231,7 @@ Used for splitting difference regions into individual words.")
 These characters are ignored when differing regions are split into words.")
 (make-variable-buffer-local 'ediff-whitespace)
 
-(defvar ediff-word-1
-  (if (featurep 'xemacs) "a-zA-Z---_" "-[:word:]_")
+(defvar ediff-word-1 "-[:word:]_"
   "Characters that constitute words of type 1.
 More precisely, [ediff-word-1] is a regexp that matches type 1 words.
 See `ediff-forward-word' for more details.")

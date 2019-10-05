@@ -45,30 +45,29 @@ that Ediff doesn't know about.")
 
 ;; Are we running as a window application or on a TTY?
 (defsubst ediff-device-type ()
-  (if (featurep 'xemacs)
-      (device-type (selected-device))
-    window-system))
+  (declare (obsolete nil "27.1"))
+  window-system)
 
 ;; in XEmacs: device-type is tty on tty and stream in batch.
 (defun ediff-window-display-p ()
-  (and (ediff-device-type) (not (memq (ediff-device-type) '(tty pc stream)))))
+  (and window-system
+       (not (memq window-system '(tty pc stream)))))
 
 ;; test if supports faces
 (defun ediff-has-face-support-p ()
   (cond ((ediff-window-display-p))
 	(ediff-force-faces)
-	((ediff-color-display-p))
-	(t (memq (ediff-device-type) '(pc)))))
+	((display-color-p))
+	(t (memq window-system '(pc)))))
 
 ;; toolbar support for emacs hasn't been implemented in ediff
 (defun ediff-has-toolbar-support-p ()
-  (if (featurep 'xemacs)
-      (if (featurep 'toolbar) (console-on-window-system-p))))
+  nil)
 
 
 (defun ediff-has-gutter-support-p ()
-  (if (featurep 'xemacs)
-      (if (featurep 'gutter) (console-on-window-system-p))))
+  (declare (obsolete nil "27.1"))
+  nil)
 
 (defun ediff-use-toolbar-p ()
   (and (ediff-has-toolbar-support-p)	;Can it do it ?
@@ -493,10 +492,9 @@ set local variables that determine how the display looks like."
   "%S: Bad diff region number, %d.  Valid numbers are 1 to %d")
 (defconst ediff-BAD-INFO (format "
 *** The Info file for Ediff, a part of the standard distribution
-*** of %sEmacs, does not seem to be properly installed.
+*** of Emacs, does not seem to be properly installed.
 ***
-*** Please contact your system administrator. "
-				 (if (featurep 'xemacs) "X" "")))
+*** Please contact your system administrator. "))
 
 ;; Selective browsing
 
@@ -553,24 +551,24 @@ See the documentation string of `ediff-focus-on-regexp-matches' for details.")
 
 
 ;; Highlighting
-(defcustom ediff-before-flag-bol (if (featurep 'xemacs) (make-glyph "->>") "->>")
+(defcustom ediff-before-flag-bol "->>"
   "Flag placed before a highlighted block of differences, if block starts at beginning of a line."
   :type 'string
   :tag  "Region before-flag at beginning of line"
   :group 'ediff)
 
-(defcustom ediff-after-flag-eol  (if (featurep 'xemacs) (make-glyph "<<-") "<<-")
+(defcustom ediff-after-flag-eol "<<-"
   "Flag placed after a highlighted block of differences, if block ends at end of a line."
   :type 'string
   :tag  "Region after-flag at end of line"
   :group 'ediff)
 
-(defcustom ediff-before-flag-mol (if (featurep 'xemacs) (make-glyph "->>") "->>")
+(defcustom ediff-before-flag-mol "->>"
   "Flag placed before a highlighted block of differences, if block starts in mid-line."
   :type 'string
   :tag  "Region before-flag in the middle of line"
   :group 'ediff)
-(defcustom ediff-after-flag-mol  (if (featurep 'xemacs) (make-glyph "<<-") "<<-")
+(defcustom ediff-after-flag-mol "<<-"
   "Flag placed after a highlighted block of differences, if block ends in mid-line."
   :type 'string
   :tag  "Region after-flag in the middle of line"
@@ -717,33 +715,22 @@ work."
   :type 'symbol
   :group 'ediff)
 
-(defcustom ediff-coding-system-for-write (if (featurep 'xemacs)
-					     'escape-quoted
-					   'emacs-internal)
+(defcustom ediff-coding-system-for-write 'emacs-internal
   "The coding system for write to use when writing out difference regions
 to temp files in buffer jobs and when Ediff needs to find fine differences."
   :type 'symbol
   :group 'ediff)
 
 
-(defalias 'ediff-read-event
-  (if (featurep 'xemacs) 'next-command-event 'read-event))
+(define-obsolete-function-alias 'ediff-read-event #'read-event "27.1")
 
-(defalias 'ediff-overlayp
-  (if (featurep 'xemacs) 'extentp 'overlayp))
+(define-obsolete-function-alias 'ediff-overlayp #'overlayp "27.1")
 
-(defalias 'ediff-make-overlay
-  (if (featurep 'xemacs) 'make-extent 'make-overlay))
+(define-obsolete-function-alias 'ediff-make-overlay #'make-overlay "27.1")
 
-(defalias 'ediff-delete-overlay
-  (if (featurep 'xemacs) 'delete-extent 'delete-overlay))
+(define-obsolete-function-alias 'ediff-delete-overlay #'delete-overlay "27.1")
 
-(defun ediff-color-display-p ()
-  (condition-case nil
-      (if (featurep 'xemacs)
-	  (eq (device-class (selected-device)) 'color) ; xemacs form
-	(display-color-p)) ; emacs form
-    (error nil)))
+(define-obsolete-function-alias 'ediff-color-display-p #'display-color-p "27.1")
 
 
 ;; A var local to each control panel buffer.  Indicates highlighting style
@@ -754,12 +741,10 @@ to temp files in buffer jobs and when Ediff needs to find fine differences."
   "")
 
 
-(if (featurep 'xemacs)
-    (progn
-      (defalias 'ediff-display-pixel-width 'device-pixel-width)
-      (defalias 'ediff-display-pixel-height 'device-pixel-height))
-  (defalias 'ediff-display-pixel-width 'display-pixel-width)
-  (defalias 'ediff-display-pixel-height 'display-pixel-height))
+(define-obsolete-function-alias 'ediff-display-pixel-width
+  #'display-pixel-width "27.1")
+(define-obsolete-function-alias 'ediff-display-pixel-height
+  #'display-pixel-height "27.1")
 
 ;; A-list of current-diff-overlay symbols associated with buf types
 (defconst ediff-current-diff-overlay-alist
@@ -783,9 +768,9 @@ to temp files in buffer jobs and when Ediff needs to find fine differences."
 (defun ediff-region-help-echo (extent-or-window &optional overlay _point)
   (unless overlay
     (setq overlay extent-or-window))
-  (let ((is-current (ediff-overlay-get overlay 'ediff))
-	(face (ediff-overlay-get overlay 'face))
-	(diff-num (ediff-overlay-get overlay 'ediff-diff-num))
+  (let ((is-current (overlay-get overlay 'ediff))
+	(face (overlay-get overlay 'face))
+	(diff-num (overlay-get overlay 'ediff-diff-num))
 	face-help)
 
     ;; This happens only for refinement overlays
@@ -804,7 +789,7 @@ to temp files in buffer jobs and when Ediff needs to find fine differences."
 
 (defun ediff-set-face-pixmap (face pixmap)
   "Set face pixmap on a monochrome display."
-  (if (and (ediff-window-display-p) (not (ediff-color-display-p)))
+  (if (and (ediff-window-display-p) (not (display-color-p)))
       (condition-case nil
 	  (set-face-background-pixmap face pixmap)
 	(error
@@ -839,14 +824,6 @@ DO NOT CHANGE this variable.  Instead, use the customization
 widget to customize the actual face object `ediff-current-diff-A'
 this variable represents.")
 (ediff-hide-face ediff-current-diff-face-A)
-;; Until custom.el for XEmacs starts supporting :inverse-video we do this.
-;; This means that some user customization may be trashed.
-(and (featurep 'xemacs)
-     (ediff-has-face-support-p)
-     (not (ediff-color-display-p))
-     (copy-face 'modeline ediff-current-diff-face-A))
-
-
 
 (defface ediff-current-diff-B
   '((((class color) (min-colors 88) (background light))
@@ -869,13 +846,6 @@ this variable represents.")
 widget to customize the actual face `ediff-current-diff-B'
 this variable represents.")
 (ediff-hide-face ediff-current-diff-face-B)
-;; Until custom.el for XEmacs starts supporting :inverse-video we do this.
-;; This means that some user customization may be trashed.
-(and (featurep 'xemacs)
-     (ediff-has-face-support-p)
-     (not (ediff-color-display-p))
-     (copy-face 'modeline ediff-current-diff-face-B))
-
 
 (defface ediff-current-diff-C
   '((((class color) (min-colors 88) (background light))
@@ -897,13 +867,6 @@ DO NOT CHANGE this variable.  Instead, use the customization
 widget to customize the actual face object `ediff-current-diff-C'
 this variable represents.")
 (ediff-hide-face ediff-current-diff-face-C)
-;; Until custom.el for XEmacs starts supporting :inverse-video we do this.
-;; This means that some user customization may be trashed.
-(and (featurep 'xemacs)
-     (ediff-has-face-support-p)
-     (not (ediff-color-display-p))
-     (copy-face 'modeline ediff-current-diff-face-C))
-
 
 (defface ediff-current-diff-Ancestor
   '((((class color) (min-colors 88) (background light))
@@ -927,13 +890,6 @@ DO NOT CHANGE this variable.  Instead, use the customization
 widget to customize the actual face object `ediff-current-diff-Ancestor'
 this variable represents.")
 (ediff-hide-face ediff-current-diff-face-Ancestor)
-;; Until custom.el for XEmacs starts supporting :inverse-video we do this.
-;; This means that some user customization may be trashed.
-(and (featurep 'xemacs)
-     (ediff-has-face-support-p)
-     (not (ediff-color-display-p))
-     (copy-face 'modeline ediff-current-diff-face-Ancestor))
-
 
 (defface ediff-fine-diff-A
   '((((class color) (min-colors 88) (background light))
@@ -1383,8 +1339,8 @@ This default should work without changes."
 	overl diff-num)
     (mapcar (lambda (rec)
 	      (setq overl (ediff-get-diff-overlay-from-diff-record rec)
-		    diff-num (ediff-overlay-get overl 'ediff-diff-num))
-	      (if (ediff-overlay-buffer overl)
+		    diff-num (overlay-get overl 'ediff-diff-num))
+	      (if (overlay-buffer overl)
 		  ;; only if overlay is alive
 		  (ediff-set-overlay-face
 		   overl
@@ -1410,8 +1366,8 @@ This default should work without changes."
 ;; this record is itself a vector
 (defsubst ediff-clear-fine-diff-vector (diff-record)
   (if diff-record
-      (mapc #'ediff-delete-overlay
-	    (ediff-get-fine-diff-vector-from-diff-record diff-record))))
+      (mapc #'delete-overlay
+            (ediff-get-fine-diff-vector-from-diff-record diff-record))))
 
 (defsubst ediff-clear-fine-differences-in-one-buffer (n buf-type)
   (ediff-clear-fine-diff-vector (ediff-get-difference n buf-type))
@@ -1425,49 +1381,37 @@ This default should work without changes."
 
 
 (defsubst ediff-mouse-event-p (event)
-  (if (featurep 'xemacs)
-      (button-event-p event)
-    (string-match "mouse" (format "%S" (event-basic-type event)))))
+  (string-match "mouse" (format "%S" (event-basic-type event))))
 
 
 (defsubst ediff-key-press-event-p (event)
-  (if (featurep 'xemacs)
-      (key-press-event-p event)
-    (or (char-or-string-p event) (symbolp event))))
+  (or (char-or-string-p event) (symbolp event)))
 
 (defun ediff-event-point (event)
   (cond ((ediff-mouse-event-p event)
-	 (if (featurep 'xemacs)
-	     (event-point event)
-	   (posn-point (event-start event))))
+	 (posn-point (event-start event)))
 	((ediff-key-press-event-p event)
 	 (point))
 	(t (error "Error"))))
 
 (defun ediff-event-buffer (event)
   (cond ((ediff-mouse-event-p event)
-	 (if (featurep 'xemacs)
-	     (event-buffer event)
-	   (window-buffer (posn-window (event-start event)))))
+	 (window-buffer (posn-window (event-start event))))
 	((ediff-key-press-event-p event)
 	 (current-buffer))
 	(t (error "Error"))))
 
-(defun ediff-event-key (event-or-key)
-  (if (featurep 'xemacs)
-      ;;(if (eventp event-or-key) (event-key event-or-key) event-or-key)
-      (if (eventp event-or-key) (event-to-character event-or-key t t) event-or-key)
-    event-or-key))
+(define-obsolete-function-alias 'ediff-event-key #'identity "27.1")
 
 (defun ediff-last-command-char ()
-  (ediff-event-key last-command-event))
+  (declare (obsolete nil "27.1"))
+  last-command-event)
 
 
 (defsubst ediff-frame-iconified-p (frame)
-  (and (ediff-window-display-p) (frame-live-p frame)
-       (if (featurep 'xemacs)
-	   (frame-iconified-p frame)
-	 (eq (frame-visible-p frame) 'icon))))
+  (and (ediff-window-display-p)
+       (frame-live-p frame)
+       (eq (frame-visible-p frame) 'icon)))
 
 (defsubst ediff-window-visible-p (wind)
   ;; under TTY, window-live-p also means window is visible
@@ -1476,17 +1420,13 @@ This default should work without changes."
 	   (frame-visible-p (window-frame wind)))))
 
 
-(defsubst ediff-frame-char-width (frame)
-  (if (featurep 'xemacs)
-      (/ (frame-pixel-width frame) (frame-width frame))
-    (frame-char-width frame)))
+(define-obsolete-function-alias 'ediff-frame-char-width
+  #'frame-char-width "27.1")
 
 (defun ediff-reset-mouse (&optional frame do-not-grab-mouse)
   (or frame (setq frame (selected-frame)))
   (if (ediff-window-display-p)
       (let ((frame-or-wind frame))
-	(if (featurep 'xemacs)
-	    (setq frame-or-wind (frame-selected-window frame)))
 	(or do-not-grab-mouse
 	    ;; don't set mouse if the user said to never do this
 	    (not ediff-grab-mouse)
@@ -1523,65 +1463,42 @@ This default should work without changes."
 			  ediff-mouse-pixel-threshold))))
 	    (t nil))))
 
-(defsubst ediff-frame-char-height (frame)
-  (if (featurep 'xemacs)
-      (glyph-height ediff-H-glyph (frame-selected-window frame))
-    (frame-char-height frame)))
+(define-obsolete-function-alias 'ediff-frame-char-height
+  #'frame-char-height "27.1")
 
 ;; Some overlay functions
 
 (defsubst ediff-overlay-start (overl)
-  (if (ediff-overlayp overl)
-      (if (featurep 'xemacs)
-	  (extent-start-position overl)
-	(overlay-start overl))))
+  (if (overlayp overl)
+      (overlay-start overl)))
 
 (defsubst ediff-overlay-end  (overl)
-  (if (ediff-overlayp overl)
-      (if (featurep 'xemacs)
-	  (extent-end-position overl)
-	(overlay-end overl))))
+  (if (overlayp overl)
+      (overlay-end overl)))
 
 (defsubst ediff-empty-overlay-p (overl)
   (= (ediff-overlay-start overl) (ediff-overlay-end overl)))
 
-;; like overlay-buffer in Emacs.  In XEmacs, returns nil if the extent is
-;; dead.  Otherwise, works like extent-buffer
-(defun ediff-overlay-buffer (overl)
-  (if (featurep 'xemacs)
-      (and (extent-live-p overl) (extent-object overl))
-    (overlay-buffer overl)))
+(define-obsolete-function-alias 'ediff-overlay-buffer
+  #'overlay-buffer "27.1")
 
-;; like overlay-get in Emacs.  In XEmacs, returns nil if the extent is
-;; dead.  Otherwise, like extent-property
-(defun ediff-overlay-get (overl property)
-  (if (featurep 'xemacs)
-      (and (extent-live-p overl) (extent-property overl property))
-    (overlay-get overl property)))
+(define-obsolete-function-alias 'ediff-overlay-get #'overlay-get "27.1")
 
 
-;; These two functions are here because XEmacs refuses to
-;; handle overlays whose buffers were deleted.
 (defun ediff-move-overlay (overlay beg end &optional buffer)
-  "Calls `move-overlay' in Emacs and `set-extent-endpoints' in Lemacs.
-Checks if overlay's buffer exists before actually doing the move."
-  (let ((buf (and overlay (ediff-overlay-buffer overlay))))
+  "If OVERLAY's buffer exists, call `move-overlay'."
+  (let ((buf (and overlay (overlay-buffer overlay))))
     (if (ediff-buffer-live-p buf)
-	(if (featurep 'xemacs)
-	    (set-extent-endpoints overlay beg end)
-	  (move-overlay overlay beg end buffer))
+	(move-overlay overlay beg end buffer)
       ;; buffer's dead
       (if overlay
-	  (ediff-delete-overlay overlay)))))
+	  (delete-overlay overlay)))))
 
 (defun ediff-overlay-put (overlay prop value)
-  "Calls `overlay-put' or `set-extent-property' depending on Emacs version.
-Checks if overlay's buffer exists."
-  (if (ediff-buffer-live-p (ediff-overlay-buffer overlay))
-      (if (featurep 'xemacs)
-	  (set-extent-property overlay prop value)
-	(overlay-put overlay prop value))
-    (ediff-delete-overlay overlay)))
+  "Calls `overlay-put', but checks if overlay's buffer exists."
+  (if (ediff-buffer-live-p (overlay-buffer overlay))
+      (overlay-put overlay prop value)
+    (delete-overlay overlay)))
 
 ;; temporarily uses DIR to abbreviate file name
 ;; if DIR is nil, use default-directory
@@ -1590,10 +1507,7 @@ Checks if overlay's buffer exists."
 	 (let ((directory-abbrev-alist (list (cons dir ""))))
 	   (abbreviate-file-name file)))
 	(t
-	 (if (featurep 'xemacs)
-	     ;; XEmacs requires addl argument
-	     (abbreviate-file-name file t)
-	   (abbreviate-file-name file)))))
+	 (abbreviate-file-name file))))
 
 ;; Takes a directory and returns the parent directory.
 ;; does nothing to `/'.  If the ARG is a regular file,
