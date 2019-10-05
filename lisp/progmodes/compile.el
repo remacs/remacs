@@ -274,6 +274,12 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2 nil (1))
     (ruby-Test::Unit
      "^[\t ]*\\[\\([^(].*\\):\\([1-9][0-9]*\\)\\(\\]\\)?:in " 1 2)
 
+    (gmake
+     ;; Set GNU make error messages as INFO level.
+     ;; It starts with the name of the make program which is variable,
+     ;; so don't try to match it.
+     ": \\*\\*\\* \\[\\(\\(.+?\\):\\([0-9]+\\): .+\\)\\]" 2 3 nil 0 1)
+
     (gnu
      ;; The first line matches the program name for
 

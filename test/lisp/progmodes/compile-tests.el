@@ -180,6 +180,12 @@
      1 0 31 "/usr/include/c++/3.3/backward/iostream.h")
     ("                 from test_clt.cc:1:"
      1 nil 1 "test_clt.cc")
+    ;; gmake
+    ("make: *** [Makefile:20: all] Error 2" 12 nil 20 "Makefile" 0)
+    ("make[4]: *** [sub/make.mk:19: all] Error 127" 15 nil 19 "sub/make.mk" 0)
+    ("gmake[4]: *** [sub/make.mk:19: all] Error 2" 16 nil 19 "sub/make.mk" 0)
+    ("gmake-4.3[4]: *** [make.mk:1119: all] Error 2" 20 nil 1119 "make.mk" 0)
+    ("Make-4.3: *** [make.INC:1119: dir/all] Error 2" 16 nil 1119 "make.INC" 0)
     ;; gnu
     ("foo.c:8: message" 1 nil 8 "foo.c")
     ("../foo.c:8: W: message" 1 nil 8 "../foo.c")
@@ -409,7 +415,7 @@ The test data is in `compile-tests--test-regexps-data'."
       (mapc #'compile--test-error-line compile-tests--test-regexps-data)
       (should (eq compilation-num-errors-found 87))
       (should (eq compilation-num-warnings-found 32))
-      (should (eq compilation-num-infos-found 21)))))
+      (should (eq compilation-num-infos-found 26)))))
 
 (ert-deftest compile-test-grep-regexps ()
   "Test the `grep-regexp-alist' regexps.
