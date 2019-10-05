@@ -199,7 +199,7 @@ South Indian language Malayalam is supported in this language environment."))
 	   ("A" . "\u0A03")		; SIGN VISARGA
 	   ("V" . "[\u0A05-\u0A14]")	; independent vowel
 	   ("C" . "[\u0A15-\u0A39\u0A59-\u0A5E]")	; consonant
-	   ("Y" . "[\u0A2F-\u0A30\u0A35\u0A39]") ; YA, RA, VA, HA
+	   ("Y" . "[\u0A2F\u0A30\u0A35\u0A39]") ; YA, RA, VA, HA
 	   ("n" . "\u0A3C")		; NUKTA
 	   ("v" . "[\u0A3E-\u0A4C]")	; vowel sign
 	   ("H" . "\u0A4D")		; VIRAMA
