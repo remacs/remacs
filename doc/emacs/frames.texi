@@ -1152,7 +1152,7 @@ cursor during dragging.  To suppress such behavior, set the options
 
 @node Menu Bars
 @section Menu Bars
-@cindex Menu Bar mode
+@cindex menu bar mode
 @cindex mode, Menu Bar
 @findex menu-bar-mode
 @vindex menu-bar-mode
@@ -1177,7 +1177,7 @@ menus' visual appearance.
 
 @node Tool Bars
 @section Tool Bars
-@cindex Tool Bar mode
+@cindex tool bar mode
 @cindex mode, Tool Bar
 @cindex icons, toolbar
 
@@ -1217,50 +1217,48 @@ displayed by moving the mouse pointer to the top of the screen.
 
 @node Tab Bars
 @section Tab Bars
-@cindex Tab Bar mode
+@cindex tab bar mode
 @cindex mode, Tab Bar
 @cindex tabs, tabbar
 
-  On graphical displays and on text terminals, Emacs puts a @dfn{tab bar}
-at the top of each frame, just below the menu bar.  This is a row of
-tabs which you can click on with the mouse to switch window configurations.
+  On graphical displays and on text terminals, Emacs can optionally
+display a @dfn{Tab Bar} at the top of each frame, just below the menu
+bar.  The Tab Bar is a row of @dfn{tabs}---buttons that you can click
+to switch between window configurations on that frame.
 
-  Each tab on the tab bar represents a named persistent window
-configuration.  Its name is composed from the names of buffers
-visible in windows of the window configuration.  Clicking on the
-tab name switches the current window configuration to the previously
-used configuration of windows and buffers.
+  Each tab on the Tab Bar represents a named persistent window
+configuration.  Its name is composed from the list of names of buffers
+visible in windows of that window configuration.  Clicking on the tab
+switches to the window configuration recorded by the tab; it is a
+configuration of windows and buffers which was previously used in the
+frame when that tab was the current tab.
 
   If you are using the desktop library to save and restore your
-sessions, the tabs from the tab bar are recorded in the desktop file,
-together with their associated window configurations.
+sessions (@pxref{Saving Emacs Sesions}), the tabs from the Tab Bar are
+recorded in the desktop file, together with their associated window
+configurations, and will be available after restoring the session.
 
 @findex tab-bar-mode
-@vindex tab-bar-mode
   To toggle the use of tab bars, type @kbd{M-x tab-bar-mode}.  This
 command applies to all frames, including frames yet to be created.  To
 control the use of tab bars at startup, customize the variable
 @code{tab-bar-mode}.
 
 @vindex tab-bar-show
-@cindex Tab Bar show
-  This variable is intended to toggle the tab bar automatically.
-When the value is @code{t}, then @code{tab-bar-mode} is enabled when
-using the commands that create new window configurations.  The value
-@code{1} hides the tab bar when it has only one tab, and shows it
-again once more tabs are created.  If @code{nil}, always keep the tab
-bar hidden.  In this case it's still possible to use persistent named
-window configurations without using the tab bar by relying on keyboard
-commands that create a new window configuration (@kbd{M-x tab-new}),
-that switch windows configurations (@kbd{M-x tab-next}, @kbd{M-x
-tab-list}), or delete the existing ones (@kbd{M-x tab-close}).
+  The variable @code{tab-bar-show} controls whether the Tab Bar mode
+is turned on automatically.  If the value is @code{t}, then
+@code{tab-bar-mode} is enabled when using the commands that create new
+tabs.  The value @code{1} hides the tab bar when it has only one tab,
+and shows it again when more tabs are created.  The value @code{nil}
+always keeps the tab bar hidden; in this case it's still possible to
+use persistent named window configurations without using the tab bar
+by typing the related commands: @kbd{M-x tab-new}, @kbd{M-x tab-next},
+@kbd{M-x tab-list}, @kbd{M-x tab-close}, etc.
 
 @vindex tab-bar-new-tab-choice
-@cindex Tab Bar new tab
-  By default, Emacs follows the same behavior as when creating frames,
-to start a new tab with the current buffer, i.e. the buffer
-that was current before calling the command that adds a new tab.
-To start a new tab with other buffers, customize the variable
+  By default, a new tab starts with the current buffer that was
+current before calling the command that adds a new tab.  To start a
+new tab with other buffers, customize the variable
 @code{tab-bar-new-tab-choice}.
 
 @node Dialog Boxes
