@@ -302,7 +302,7 @@ backend implementation of `project-external-roots'.")
 (defun project--vc-list-files (dir backend extra-ignores)
   (pcase backend
     (`Git
-     (let ((default-directory (file-name-as-directory dir))
+     (let ((default-directory (expand-file-name (file-name-as-directory dir)))
            (args '("-z")))
        ;; Include unregistered.
        (setq args (append args '("-c" "-o" "--exclude-standard")))
@@ -316,12 +316,12 @@ backend implementation of `project-external-roots'.")
                                        (format ":!:%s" i)))
                                    extra-ignores)))))
        (mapcar
-        (lambda (file) (concat dir file))
+        (lambda (file) (concat default-directory file))
         (split-string
          (apply #'vc-git--run-command-string nil "ls-files" args)
          "\0" t))))
     (`Hg
-     (let ((default-directory (file-name-as-directory dir))
+     (let ((default-directory (expand-file-name (file-name-as-directory dir)))
            args)
        ;; Include unregistered.
        (setq args (nconc args '("-mcardu" "--no-status" "-0")))
@@ -334,7 +334,7 @@ backend implementation of `project-external-roots'.")
        (with-temp-buffer
          (apply #'vc-hg-command t 0 "." "status" args)
          (mapcar
-          (lambda (s) (concat dir s))
+          (lambda (s) (concat default-directory s))
           (split-string (buffer-string) "\0" t)))))))
 
 (cl-defmethod project-ignores ((project (head vc)) dir)
