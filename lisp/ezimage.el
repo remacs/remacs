@@ -37,11 +37,8 @@
   (error nil))
 
 ;;; Code:
-(defcustom ezimage-use-images (if (featurep 'xemacs)
-				  (and (fboundp 'make-image-specifier)
-				       window-system)
-				(and (display-images-p)
-				     (image-type-available-p 'xpm)))
+(defcustom ezimage-use-images (and (display-images-p)
+                                   (image-type-available-p 'xpm))
   "Non-nil means ezimage should display icons."
   :group 'ezimage
   :version "21.1"
@@ -216,13 +213,8 @@ Assumes the image is part of a GUI and can be clicked on.
 Optional argument STRING is a string upon which to add text properties."
   (when ezimage-use-images
     (add-text-properties start end
-			 (if (featurep 'xemacs)
-			     (list 'end-glyph image
-				   'rear-nonsticky (list 'display)
-				   'invisible t
-				   'detachable t)
-			   (list 'display image
-				 'rear-nonsticky (list 'display)))
+			 (list 'display image
+			       'rear-nonsticky (list 'display))
 			 string))
   string)
 
