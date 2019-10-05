@@ -511,19 +511,6 @@ list."
       (eshell-read-hosts eshell-hosts-file 'eshell-host-names
 			 'eshell-host-timestamp)))
 
-(and (featurep 'xemacs)
-     (not (fboundp 'subst-char-in-string))
-     (defun subst-char-in-string (fromchar tochar string &optional inplace)
-       "Replace FROMCHAR with TOCHAR in STRING each time it occurs.
-Unless optional argument INPLACE is non-nil, return a new string."
-       (let ((i (length string))
-	     (newstr (if inplace string (copy-sequence string))))
-	 (while (> i 0)
-	   (setq i (1- i))
-	   (if (eq (aref newstr i) fromchar)
-	       (aset newstr i tochar)))
-	 newstr)))
-
 (defsubst eshell-copy-environment ()
   "Return an unrelated copy of `process-environment'."
   (mapcar 'concat process-environment))
@@ -558,27 +545,6 @@ Unless optional argument INPLACE is non-nil, return a new string."
       (if (> (length string) sublen)
 	  (substring string 0 sublen)
 	string)))
-
-(defvar ange-cache)
-
-;; Partial reimplementation of Emacs's builtin directory-files-and-attributes.
-;; id-format not implemented.
-(and (featurep 'xemacs)
-     (not (fboundp 'directory-files-and-attributes))
-     (defun directory-files-and-attributes (directory &optional full match nosort _id-format)
-    "Return a list of names of files and their attributes in DIRECTORY.
-There are three optional arguments:
-If FULL is non-nil, return absolute file names.  Otherwise return names
- that are relative to the specified directory.
-If MATCH is non-nil, mention only file names that match the regexp MATCH.
-If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
- NOSORT is useful if you plan to sort the result yourself."
-    (let ((directory (expand-file-name directory)) ange-cache)
-      (mapcar
-       (function
-	(lambda (file)
-	  (cons file (eshell-file-attributes (expand-file-name file directory)))))
-       (directory-files directory full match nosort)))))
 
 (defun eshell-directory-files-and-attributes (dir &optional full match nosort id-format)
   "Make sure to use the handler for `directory-file-and-attributes'."

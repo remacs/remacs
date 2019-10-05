@@ -101,8 +101,7 @@
 ;;; Code:
 
 (require 'esh-util)
-(unless (featurep 'xemacs)
-  (require 'eldoc))
+(require 'eldoc)
 (require 'esh-arg)
 (require 'esh-proc)
 (require 'esh-module)
