@@ -677,5 +677,13 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
 	<string>YES</string>
         <key>NSAppleEventsUsageDescription</key>
         <string>Emacs requires permission to send AppleEvents to other applications.</string>
+        <key>NSDesktopFolderUsageDescription</key>
+        <string>Emacs requires permission to access the Desktop folder.</string>
+        <key>NSDocumentsFolderUsageDescription</key>
+        <string>Emacs requires permission to access the Documents folder.</string>
+        <key>NSDownloadsFolderUsageDescription</key>
+        <string>Emacs requires permission to access the Downloads folder.</string>
+        <key>NSRemovableVolumesUsageDescription</key>
+        <string>Emacs requires permission to access files on Removable Volumes.</string>
 </dict>
 </plist>
