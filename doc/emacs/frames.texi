@@ -1234,7 +1234,7 @@ configuration of windows and buffers which was previously used in the
 frame when that tab was the current tab.
 
   If you are using the desktop library to save and restore your
-sessions (@pxref{Saving Emacs Sesions}), the tabs from the Tab Bar are
+sessions (@pxref{Saving Emacs Sessions}), the tabs from the Tab Bar are
 recorded in the desktop file, together with their associated window
 configurations, and will be available after restoring the session.
 
