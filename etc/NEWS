@@ -2058,6 +2058,9 @@ tabs with a mouse.
 Tab-related commands are available even when the Tab-Bar mode is
 disabled: by default, they enable Tab-Bar mode in that case.
 
+Read the new Info node "(emacs) Tab Bars" for full description
+of all related features.
+
 *** Tab-Line mode
 The new command 'global-tab-line-mode' enables the tab-line above each
 window, which you can use to switch buffers in the window.  Selecting

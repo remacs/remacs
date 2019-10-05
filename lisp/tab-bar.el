@@ -793,11 +793,6 @@ in the selected frame."
   (tab-bar-list-select))
 
 
-(defvar ctl-x-6-map (make-sparse-keymap)
-  "Keymap for tab commands.")
-(defalias 'ctl-x-6-prefix ctl-x-6-map)
-(define-key ctl-x-map "6" 'ctl-x-6-prefix)
-
 (defun switch-to-buffer-other-tab (buffer-or-name &optional norecord)
   "Switch to buffer BUFFER-OR-NAME in another tab.
 Like \\[switch-to-buffer-other-frame] (which see), but creates a new tab."
@@ -825,6 +820,7 @@ Like \\[find-file-other-frame] (which see), but creates a new tab."
 
 (define-key ctl-x-6-map "2" 'tab-new)
 (define-key ctl-x-6-map "0" 'tab-close)
+(define-key ctl-x-6-map "o" 'tab-next)
 (define-key ctl-x-6-map "b" 'switch-to-buffer-other-tab)
 (define-key ctl-x-6-map "f" 'find-file-other-tab)
 (define-key ctl-x-6-map "\C-f" 'find-file-other-tab)
