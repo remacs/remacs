@@ -121,7 +121,7 @@ otherwise it defaults to t, used for times when the buffer is not displayed."
 
 (defun image-set-window-vscroll (vscroll)
   (setf (image-mode-window-get 'vscroll) vscroll)
-  (set-window-vscroll (selected-window) vscroll))
+  (set-window-vscroll (selected-window) vscroll t))
 
 (defun image-set-window-hscroll (ncol)
   (setf (image-mode-window-get 'hscroll) ncol)
@@ -139,7 +139,7 @@ otherwise it defaults to t, used for times when the buffer is not displayed."
            (vscroll (image-mode-window-get 'vscroll winprops)))
       (when (image-get-display-property) ;Only do it if we display an image!
 	(if hscroll (set-window-hscroll (selected-window) hscroll))
-	(if vscroll (set-window-vscroll (selected-window) vscroll))))))
+	(if vscroll (set-window-vscroll (selected-window) vscroll t))))))
 
 (defun image-mode-setup-winprops ()
   ;; Record current scroll settings.
@@ -215,16 +215,18 @@ Stop if the left edge of the image is reached."
   "Scroll image in current window upward by N lines.
 Stop if the bottom edge of the image is reached."
   (interactive "p")
+  ;; Convert N to pixels.
+  (setq n (* n (frame-char-height)))
   (cond ((= n 0) nil)
 	((< n 0)
-	 (image-set-window-vscroll (max 0 (+ (window-vscroll) n))))
+	 (image-set-window-vscroll (max 0 (+ (window-vscroll nil t) n))))
 	(t
 	 (let* ((image (image-get-display-property))
-		(edges (window-inside-edges))
+		(edges (window-edges nil t t))
 		(win-height (- (nth 3 edges) (nth 1 edges)))
-		(img-height (ceiling (cdr (image-display-size image)))))
+		(img-height (ceiling (cdr (image-display-size image t)))))
 	   (image-set-window-vscroll (min (max 0 (- img-height win-height))
-					  (+ n (window-vscroll))))))))
+					  (+ n (window-vscroll nil t))))))))
 
 (defun image-previous-line (&optional n)
   "Scroll image in current window downward by N lines.
@@ -351,10 +353,11 @@ stopping if the top or bottom edge of the image is reached."
   (interactive)
   (let* ((image (image-get-display-property))
 	 (edges (window-inside-edges))
+	 (pixel-edges (window-edges nil t t))
 	 (win-width (- (nth 2 edges) (nth 0 edges)))
 	 (img-width (ceiling (car (image-display-size image))))
-	 (win-height (- (nth 3 edges) (nth 1 edges)))
-	 (img-height (ceiling (cdr (image-display-size image)))))
+	 (win-height (- (nth 3 pixel-edges) (nth 1 pixel-edges)))
+	 (img-height (ceiling (cdr (image-display-size image t)))))
     (image-set-window-hscroll (max 0 (- img-width win-width)))
     (image-set-window-vscroll (max 0 (- img-height win-height)))))
 
