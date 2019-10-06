@@ -220,10 +220,8 @@ struct frame
   /* Cache of realized faces.  */
   struct face_cache *face_cache;
 
-#if defined (HAVE_WINDOW_SYSTEM)
   /* Tab-bar item index of the item on which a mouse button was pressed.  */
   int last_tab_bar_item;
-#endif
 
 #if defined (HAVE_WINDOW_SYSTEM) && ! defined (HAVE_EXT_TOOL_BAR)
   /* Tool-bar item index of the item on which a mouse button was pressed.  */
