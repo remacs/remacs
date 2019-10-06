@@ -1186,6 +1186,10 @@ Invoking the command with a prefix argument will cause it to create a
 new EWW buffer for the URL instead of reusing the default one.
 
 +++
+*** Clicking with the Ctrl key or 'C-u RET' on a link opens a new tab
+when tab-bar-mode is enabled.
+
++++
 *** The 'd' ('eww-download') command now falls back to current page's URL.
 If this command is invoked with no URL at point, it now downloads the
 current page instead of signaling an error.

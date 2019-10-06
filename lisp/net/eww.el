@@ -369,6 +369,9 @@ engine used."
   (interactive)
   (let ((url (eww-suggested-uris)))
     (if (null url) (user-error "No link at point")
+      (when tab-bar-mode
+        (let ((tab-bar-new-tab-choice t))
+          (tab-new)))
       ;; clone useful to keep history, but
       ;; should not clone from non-eww buffer
       (with-current-buffer
@@ -878,7 +881,22 @@ the like."
 
 ;;;###autoload
 (defun eww-browse-url (url &optional new-window)
+  "Ask the EWW browser to load URL.
+
+Interactively, if the variable `browse-url-new-window-flag' is non-nil,
+loads the document in a new buffer tab on the window tab-line.  A non-nil
+prefix argument reverses the effect of `browse-url-new-window-flag'.
+
+If `tab-bar-mode' is enabled, then whenever a document would
+otherwise be loaded in a new buffer, it is loaded in a new tab
+in the tab-bar on an existing frame.
+
+Non-interactively, this uses the optional second argument NEW-WINDOW
+instead of `browse-url-new-window-flag'."
   (when new-window
+    (when tab-bar-mode
+      (let ((tab-bar-new-tab-choice t))
+        (tab-new)))
     (pop-to-buffer-same-window
      (generate-new-buffer
       (format "*eww-%s*" (url-host (url-generic-parse-url

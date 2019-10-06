@@ -201,6 +201,7 @@ and other things:
     (define-key map [?\M-\t] 'shr-previous-link)
     (define-key map [follow-link] 'mouse-face)
     (define-key map [mouse-2] 'shr-browse-url)
+    (define-key map [C-down-mouse-1] 'shr-mouse-browse-url-new-window)
     (define-key map "I" 'shr-insert-image)
     (define-key map "w" 'shr-maybe-probe-and-copy-url)
     (define-key map "u" 'shr-maybe-probe-and-copy-url)
@@ -967,7 +968,13 @@ size, and full-buffer size."
   (mouse-set-point ev)
   (shr-browse-url))
 
-(defun shr-browse-url (&optional external mouse-event)
+(defun shr-mouse-browse-url-new-window (ev)
+  "Browse the URL under the mouse cursor in a new window."
+  (interactive "e")
+  (mouse-set-point ev)
+  (shr-browse-url nil nil t))
+
+(defun shr-browse-url (&optional external mouse-event new-window)
   "Browse the URL at point using `browse-url'.
 If EXTERNAL is non-nil (interactively, the prefix argument), browse
 the URL using `browse-url-secondary-browser-function'.
@@ -987,7 +994,9 @@ the mouse click event."
           (progn
 	    (funcall browse-url-secondary-browser-function url)
             (shr--blink-link))
-	(browse-url url))))))
+	(browse-url url (if new-window
+			    (not browse-url-new-window-flag)
+			  browse-url-new-window-flag)))))))
 
 (defun shr-save-contents (directory)
   "Save the contents from URL in a file."
