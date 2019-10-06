@@ -26,7 +26,7 @@
   (should (equal (iso8601-parse-date "1985")
                  '(nil nil nil nil nil 1985 nil nil nil)))
   (should (equal (iso8601-parse-date "-0003")
-                 '(nil nil nil nil nil -4 nil nil nil)))
+                 '(nil nil nil nil nil -3 nil nil nil)))
   (should (equal (iso8601-parse-date "+1985")
                  '(nil nil nil nil nil 1985 nil nil nil))))
 
