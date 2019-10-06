@@ -1307,6 +1307,11 @@ Switch to another tab.  If you repeat this command, it cycles through
 all the tabs on the selected frame.  With a positive numeric argument
 N, it switches to the next Nth tab; with a negative argument −N, it
 switches back to the previous Nth tab.
+
+@item C-x 6 1
+@kindex C-x 6 1
+@findex tab-close-other
+Close all tabs on the selected frame, except the selected one.
 @end table
 
 @node Dialog Boxes

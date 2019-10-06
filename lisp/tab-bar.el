@@ -560,6 +560,17 @@ TO-INDEX counts from 1."
                                               (tab-bar-tabs)))))
   (tab-bar-close-tab (1+ (tab-bar--tab-index-by-name name))))
 
+(defun tab-close-other ()
+  "Close all tabs on the selected frame, except the selected one."
+  (interactive)
+  (let* ((tabs (tab-bar-tabs))
+         (current-index (tab-bar--current-tab-index tabs)))
+    (when current-index
+      (set-frame-parameter nil 'tabs (list (nth current-index tabs)))
+      (if tab-bar-mode
+          (force-mode-line-update)
+        (message "Deleted all other tabs")))))
+
 
 ;;; Short aliases
 
@@ -819,6 +830,7 @@ Like \\[find-file-other-frame] (which see), but creates a new tab."
       (switch-to-buffer-other-tab value))))
 
 (define-key ctl-x-6-map "2" 'tab-new)
+(define-key ctl-x-6-map "1" 'tab-close-other)
 (define-key ctl-x-6-map "0" 'tab-close)
 (define-key ctl-x-6-map "o" 'tab-next)
 (define-key ctl-x-6-map "b" 'switch-to-buffer-other-tab)
