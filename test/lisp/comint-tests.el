@@ -34,6 +34,7 @@
     "Enter passphrase: " ; ssh-add
     "Enter passphrase (empty for no passphrase): " ; ssh-keygen
     "Enter same passphrase again: "     ; ssh-keygen
+    "Enter your password: "             ; python3 -m twine ... Bug#37636
     "Passphrase for key root@GNU.ORG: " ; plink
     "[sudo] password for user:" ; Ubuntu sudo
     "[sudo] user 的密码：" ; localized
