@@ -45,7 +45,8 @@
   :group 'auth-source
   :version "27.1")
 
-(defcustom auth-source-pass-filename "~/.password-store"
+(defcustom auth-source-pass-filename
+  (or (getenv "PASSWORD_STORE_DIR") "~/.password-store")
   "Filename of the password-store folder."
   :type 'directory
   :version "27.1")
