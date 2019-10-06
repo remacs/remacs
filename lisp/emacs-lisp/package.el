@@ -1844,21 +1844,17 @@ if it is still empty."
     (package--save-selected-packages (package--find-non-dependencies)))
   (memq pkg package-selected-packages))
 
-(defun package--get-deps (pkg &optional only)
-  (let* ((pkg-desc (cadr (assq pkg package-alist)))
-         (direct-deps (cl-loop for p in (package-desc-reqs pkg-desc)
-                               for name = (car p)
-                               when (assq name package-alist)
-                               collect name))
-         (indirect-deps (unless (eq only 'direct)
-                          (delete-dups
-                           (cl-loop for p in direct-deps
-                                    append (package--get-deps p))))))
-    (cl-case only
-      (direct   direct-deps)
-      (separate (list direct-deps indirect-deps))
-      (indirect indirect-deps)
-      (t        (delete-dups (append direct-deps indirect-deps))))))
+(defun package--get-deps (pkgs)
+  (let ((seen '()))
+    (while pkgs
+      (let ((pkg (pop pkgs)))
+        (if (memq pkg seen)
+            nil ;; Done already!
+          (let ((pkg-desc (cadr (assq pkg package-alist))))
+            (when pkg-desc
+              (push pkg seen)
+              (setq pkgs (append (package-desc-reqs pkg-desc) pkgs)))))))
+    seen))
 
 (defun package--user-installed-p (package)
   "Return non-nil if PACKAGE is a user-installed package.
@@ -1873,10 +1869,7 @@ control over."
   "Return a list of names of packages no longer needed.
 These are packages which are neither contained in
 `package-selected-packages' nor a dependency of one that is."
-  (let ((needed (cl-loop for p in package-selected-packages
-                         if (assq p package-alist)
-                         ;; `p' and its dependencies are needed.
-                         append (cons p (package--get-deps p)))))
+  (let ((needed (package--get-deps package-selected-packages)))
     (cl-loop for p in (mapcar #'car package-alist)
              unless (or (memq p needed)
                         ;; Do not auto-remove external packages.
