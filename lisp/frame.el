@@ -2724,6 +2724,8 @@ See also `toggle-frame-maximized'."
         display-line-numbers-width
         display-line-numbers-current-absolute
         display-line-numbers-widen
+        display-line-numbers-major-tick
+        display-line-numbers-minor-tick
         display-fill-column-indicator
         display-fill-column-indicator-column
         display-fill-column-indicator-character

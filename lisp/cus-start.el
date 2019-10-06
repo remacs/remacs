@@ -655,6 +655,20 @@ since it could result in memory overflow and make Emacs crash."
                (const :tag "Count lines from beginning of narrowed region"
                       :value nil))
               "26.1")
+             (display-line-numbers-major-tick
+              display-line-numbers
+              (choice
+               (const :tag "No line" 0)
+               (integer :tag "Multiples of"
+                        :value 10))
+              "27.1")
+             (display-line-numbers-minor-tick
+              display-line-numbers
+              (choice
+               (const :tag "No line" 0)
+               (integer :tag "Multiples of"
+                        :value 5))
+              "27.1")
 
              (display-fill-column-indicator
               display-fill-column-indicator

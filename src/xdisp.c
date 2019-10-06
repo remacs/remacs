@@ -22664,6 +22664,14 @@ maybe_produce_line_number (struct it *it)
 	     empty lines beyond EOB.  */
 	  && it->what != IT_EOB)
 	tem_it.face_id = current_lnum_face_id;
+      else if (display_line_numbers_major_tick > 0
+	       && (lnum_to_display % display_line_numbers_major_tick == 0))
+	tem_it.face_id = merge_faces (it->w, Qline_number_major_tick,
+				      0, DEFAULT_FACE_ID);
+      else if (display_line_numbers_minor_tick > 0
+	       && (lnum_to_display % display_line_numbers_minor_tick == 0))
+	tem_it.face_id = merge_faces (it->w, Qline_number_minor_tick,
+				      0, DEFAULT_FACE_ID);
       else
 	tem_it.face_id = lnum_face_id;
       if (beyond_zv
@@ -34125,6 +34133,8 @@ be let-bound around code that needs to disable messages temporarily. */);
   /* Names of the faces used to display line numbers.  */
   DEFSYM (Qline_number, "line-number");
   DEFSYM (Qline_number_current_line, "line-number-current-line");
+  DEFSYM (Qline_number_major_tick, "line-number-major-tick");
+  DEFSYM (Qline_number_minor_tick, "line-number-minor-tick");
   /* Name of a text property which disables line-number display.  */
   DEFSYM (Qdisplay_line_numbers_disable, "display-line-numbers-disable");
 
@@ -34759,6 +34769,20 @@ if the font in fill-column-indicator face does not support Unicode characters.  
   Vdisplay_fill_column_indicator_character = Qnil;
   DEFSYM (Qdisplay_fill_column_indicator_character, "display-fill-column-indicator-character");
   Fmake_variable_buffer_local (Qdisplay_fill_column_indicator_character);
+
+  DEFVAR_INT ("display-line-numbers-major-tick", display_line_numbers_major_tick,
+    doc: /* If an integer N > 0, highlight line number of every Nth line.
+The line number is shown with the `line-number-major-tick' face.
+Otherwise, no special highlighting is done every Nth line.
+Note that major ticks take precedence over minor ticks.  */);
+  display_line_numbers_major_tick = 0;
+
+  DEFVAR_INT ("display-line-numbers-minor-tick", display_line_numbers_minor_tick,
+    doc: /* If an integer N > 0, highlight line number of every Nth line.
+The line number is shown with the `line-number-minor-tick' face.
+Otherwise, no special highlighting is done every Nth line.
+Note that major ticks take precedence over minor ticks.  */);
+  display_line_numbers_minor_tick = 0;
 
   DEFVAR_BOOL ("inhibit-eval-during-redisplay", inhibit_eval_during_redisplay,
     doc: /* Non-nil means don't eval Lisp during redisplay.  */);
