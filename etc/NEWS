@@ -2107,6 +2107,11 @@ immediately.  Type 'M-x so-long-commentary' for full documentation.
 * Incompatible Lisp Changes in Emacs 27.1
 
 ---
+** Two-column mode provides its C-x 6 prefix map only after loading
+two-column.el.  Its prefix key F2 is still available globally
+along with C-x 6 used by the tab commands globally.
+
+---
 ** Incomplete destructive splicing support has been removed.
 Support for Common Lisp style destructive splicing (",.") was
 incomplete and broken for a long time.  It has now been removed.
