@@ -425,10 +425,11 @@ If EXTRA, include that in the string returned to represent the symbol."
   'object-class-name 'eieio-object-class-name "24.4")
 
 (defun eieio-class-parents (class)
+  ;; FIXME: What does "(overload of variable)" mean here?
   "Return parent classes to CLASS.  (overload of variable).
 
 The CLOS function `class-direct-superclasses' is aliased to this function."
-  (eieio--class-parents (eieio--class-object class)))
+  (eieio--class-parents (eieio--full-class-object class)))
 
 (define-obsolete-function-alias 'class-parents #'eieio-class-parents "24.4")
 
@@ -468,7 +469,7 @@ The CLOS function `class-direct-subclasses' is aliased to this function."
 
 (defun child-of-class-p (child class)
   "Return non-nil if CHILD class is a subclass of CLASS."
-  (setq child (eieio--class-object child))
+  (setq child (eieio--full-class-object child))
   (cl-check-type child eieio--class)
   ;; `eieio-default-superclass' is never mentioned in eieio--class-parents,
   ;; so we have to special case it here.
