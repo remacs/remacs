@@ -381,7 +381,7 @@
 ;;; These versions are rewritten to use arbitrary-size integers.
 
 ;;; A numerical date is the number of days since midnight on
-;;; the morning of December 31, 1 B.C. (Gregorian) or January 2, 1 A.D. (Julian).
+;;; the morning of December 31, 1 BC (Gregorian) or January 2, 1 AD (Julian).
 ;;; Emacs's calendar refers to such a date as an absolute date, some Calc function
 ;;; names also use that terminology.  If the date is a non-integer, it represents
 ;;; a specific date and time.

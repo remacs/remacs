@@ -197,8 +197,9 @@ TIME should be either a time value or a date-time string."
 
 ;;;###autoload
 (defun date-to-day (date)
-  "Return the number of days between year 1 and DATE.
-DATE should be a date-time string."
+  "Return the absolute date of DATE, a date-time string.
+The absolute date is the number of days elapsed since the imaginary
+Gregorian date Sunday, December 31, 1 BC."
   (time-to-days (date-to-time date)))
 
 ;;;###autoload
@@ -233,9 +234,9 @@ DATE1 and DATE2 should be date-time strings."
 
 ;;;###autoload
 (defun time-to-days (time)
-  "The number of days between the Gregorian date 0001-12-31bce and TIME.
-TIME should be a time value.
-The Gregorian date Sunday, December 31, 1bce is imaginary."
+  "The absolute date corresponding to TIME, a time value.
+The absolute date is the number of days elapsed since the imaginary
+Gregorian date Sunday, December 31, 1 BC."
   (let* ((tim (decode-time time))
 	 (year (decoded-time-year tim)))
     (+ (time-date--day-in-year tim)	;	Days this year

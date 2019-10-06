@@ -1603,8 +1603,8 @@ An integer or floating point count of seconds.  For instance:
 @code{905595714.0}, @code{905595714}.
 
 @item days
-An integer number representing the number of days since 00000101.  For
-instance: @code{729644}.
+An integer number representing the number of days since Sunday,
+December 31, 1 BC (Gregorian).  For instance: @code{729644}.
 
 @item decoded time
 A list of decoded time.  For instance: @code{(54 21 12 12 9 1998 6 nil

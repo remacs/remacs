@@ -1435,9 +1435,9 @@ the past or future.
 
   Calendrical conversion functions always use the Gregorian calendar, even
 for dates before the Gregorian calendar was introduced.  Year numbers
-count the number of years since the year 1 B.C., and do not skip zero
+count the number of years since the year 1 BC, and do not skip zero
 as traditional Gregorian years do; for example, the year number
-@minus{}37 represents the Gregorian year 38 B.C@.
+@minus{}37 represents the Gregorian year 38 BC@.
 
 @defun time-convert time &optional form
 This function converts a time value into a Lisp timestamp.

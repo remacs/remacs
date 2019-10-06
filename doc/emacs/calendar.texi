@@ -706,7 +706,7 @@ century.
 @cindex Julian day numbers
 @cindex astronomical day numbers
   Astronomers use a simple counting of days elapsed since noon, Monday,
-January 1, 4713 B.C. on the Julian calendar.  The number of days elapsed
+January 1, 4713 BC on the Julian calendar.  The number of days elapsed
 is called the @dfn{Julian day number} or the @dfn{Astronomical day number}.
 
 @cindex Hebrew calendar
