@@ -12746,12 +12746,12 @@ display_tab_bar (struct window *w)
 
   /* Display all items of the tab bar.  */
   items = it.f->tab_bar_items;
-  for (i = 0; i < it.f->n_tab_bar_items; ++i)
+  int j;
+  for (i = 0, j = 0; i < it.f->n_tab_bar_items; ++i, j += TAB_BAR_ITEM_NSLOTS)
     {
-      Lisp_Object string;
+      Lisp_Object string = AREF (items, j + TAB_BAR_ITEM_CAPTION);
 
       /* Stop at nil string.  */
-      string = AREF (items, i * TAB_BAR_ITEM_NSLOTS + TAB_BAR_ITEM_CAPTION);
       if (NILP (string))
 	break;
 
@@ -13180,7 +13180,7 @@ tab_bar_item_info (struct frame *f, struct glyph *glyph,
 		   int *prop_idx, bool *close_p)
 {
   Lisp_Object prop;
-  int charpos;
+  ptrdiff_t charpos;
 
   /* This function can be called asynchronously, which means we must
      exclude any possibility that Fget_text_property signals an
@@ -13256,7 +13256,7 @@ get_tab_bar_item (struct frame *f, int x, int y, struct glyph **glyph,
 
 void
 handle_tab_bar_click (struct frame *f, int x, int y, bool down_p,
-		       int modifiers)
+		      int modifiers)
 {
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
   struct window *w = XWINDOW (f->tab_bar_window);
@@ -13419,6 +13419,96 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
 }
 
 #endif /* HAVE_WINDOW_SYSTEM */
+
+/* Find the tab-bar item at X coordinate and return its information.  */
+static Lisp_Object
+tty_get_tab_bar_item (struct frame *f, int x, int *idx, ptrdiff_t *end)
+{
+  ptrdiff_t clen = 0;
+  Lisp_Object caption;
+
+  int i, j;
+  for (i = 0, j = 0; i < f->n_tab_bar_items; i++, j += TAB_BAR_ITEM_NSLOTS)
+    {
+      caption = AREF (f->tab_bar_items, j + TAB_BAR_ITEM_CAPTION);
+      if (NILP (caption))
+	return Qnil;
+      clen += SCHARS (caption);
+      if (x < clen)
+	break;
+    }
+  if (i < f->n_tab_bar_items)
+    {
+      *idx = i;
+      *end = clen;
+      return caption;
+    }
+  else
+    return Qnil;
+}
+
+/* Handle a mouse click at X/Y on the tab bar of TTY frame F.  If the
+   click was on the tab bar and was handled, populate the EVENT
+   structure, store it in keyboard queue, and return true; otherwise
+   return false.  MODIFIERS are event modifiers for generating the tab
+   release event.  */
+bool
+tty_handle_tab_bar_click (struct frame *f, int x, int y, bool down_p,
+			  struct input_event *event)
+{
+  /* Did they click on the tab bar?  */
+  if (y < FRAME_MENU_BAR_LINES (f)
+      || y >= FRAME_MENU_BAR_LINES (f) + FRAME_TAB_BAR_LINES (f))
+    return false;
+
+  /* Find the tab-bar item where the X,Y coordinates belong.  */
+  int prop_idx;
+  ptrdiff_t clen;
+  Lisp_Object caption = tty_get_tab_bar_item (f, x, &prop_idx, &clen);
+
+  if (NILP (caption))
+    return false;
+
+  if (NILP (AREF (f->tab_bar_items,
+		  prop_idx * TAB_BAR_ITEM_NSLOTS + TAB_BAR_ITEM_ENABLED_P)))
+    return false;
+
+  if (down_p)
+    f->last_tab_bar_item = prop_idx;
+  else
+    {
+      /* Generate a TAB_BAR_EVENT event.  */
+      Lisp_Object frame;
+      Lisp_Object key = AREF (f->tab_bar_items,
+			      prop_idx * TAB_BAR_ITEM_NSLOTS
+			      + TAB_BAR_ITEM_KEY);
+      /* Kludge alert: we assume the last two characters of a tab
+	 label are " x", and treat clicks on those 2 characters as a
+	 Close Tab command.  */
+      eassert (STRINGP (caption));
+      int lastc = SSDATA (caption)[SCHARS (caption) - 1];
+      bool close_p = false;
+      if ((x == clen - 1 || (clen > 1 && x == clen - 2)) && lastc == 'x')
+	close_p = true;
+
+      event->code = 0;
+      XSETFRAME (frame, f);
+      event->kind = TAB_BAR_EVENT;
+      event->frame_or_window = frame;
+      event->arg = frame;
+      kbd_buffer_store_event (event);
+
+      event->kind = TAB_BAR_EVENT;
+      event->frame_or_window = frame;
+      event->arg = key;
+      if (close_p)
+	event->modifiers |= ctrl_modifier;
+      kbd_buffer_store_event (event);
+      f->last_tab_bar_item = -1;
+    }
+
+  return true;
+}
 
 
 
@@ -14065,7 +14155,7 @@ static bool
 tool_bar_item_info (struct frame *f, struct glyph *glyph, int *prop_idx)
 {
   Lisp_Object prop;
-  int charpos;
+  ptrdiff_t charpos;
 
   /* This function can be called asynchronously, which means we must
      exclude any possibility that Fget_text_property signals an
@@ -32711,8 +32801,29 @@ note_mouse_highlight (struct frame *f, int x, int y)
 	  && part != ON_TAB_LINE))
     clear_mouse_face (hlinfo);
 
-  /* Reset help_echo_string. It will get recomputed below.  */
+  /* Reset help_echo_string.  It will get recomputed below.  */
   help_echo_string = Qnil;
+
+  /* Handle tab-bar highlight on mouse-capable TTY frames.  */
+  if (!FRAME_WINDOW_P (f)
+      && (y >= FRAME_MENU_BAR_LINES (f)
+	  && y < FRAME_MENU_BAR_LINES (f) + FRAME_TAB_BAR_LINES (f)))
+    {
+      int prop_idx;
+      ptrdiff_t ignore;
+      Lisp_Object caption = tty_get_tab_bar_item (f, x, &prop_idx, &ignore);
+
+      if (!NILP (caption))
+	{
+	  help_echo_object = help_echo_window = Qnil;
+	  help_echo_pos = -1;
+	  help_echo_string = AREF (f->tab_bar_items,
+				   prop_idx * TAB_BAR_ITEM_NSLOTS
+				   + TAB_BAR_ITEM_HELP);
+	  if (NILP (help_echo_string))
+	    help_echo_string = caption;
+	}
+    }
 
 #ifdef HAVE_WINDOW_SYSTEM
   /* If the cursor is on the internal border of FRAME and FRAME's

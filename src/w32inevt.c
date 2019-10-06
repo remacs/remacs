@@ -559,8 +559,6 @@ do_mouse_event (MOUSE_EVENT_RECORD *event,
       if (event->dwButtonState == button_state)
 	return 0;
 
-      emacs_ev->kind = MOUSE_CLICK_EVENT;
-
       /* Find out what button has changed state since the last button
 	 event.  */
       but_change = button_state ^ event->dwButtonState;
@@ -576,15 +574,24 @@ do_mouse_event (MOUSE_EVENT_RECORD *event,
 	  }
 
       button_state = event->dwButtonState;
-      emacs_ev->modifiers =
-	w32_kbd_mods_to_emacs (event->dwControlKeyState, 0)
-	| ((event->dwButtonState & mask) ? down_modifier : up_modifier);
-
-      XSETFASTINT (emacs_ev->x, event->dwMousePosition.X);
-      XSETFASTINT (emacs_ev->y, event->dwMousePosition.Y);
-      XSETFRAME (emacs_ev->frame_or_window, get_frame ());
-      emacs_ev->arg = Qnil;
+      emacs_ev->modifiers = w32_kbd_mods_to_emacs (event->dwControlKeyState, 0);
       emacs_ev->timestamp = GetTickCount ();
+
+      int x = event->dwMousePosition.X;
+      int y = event->dwMousePosition.Y;
+      struct frame *f = get_frame ();
+      if (tty_handle_tab_bar_click (f, x, y, (button_state & mask) != 0,
+				    emacs_ev))
+	return 0;	/* tty_handle_tab_bar_click adds the event to queue */
+
+      emacs_ev->modifiers |= ((button_state & mask)
+			      ? down_modifier : up_modifier);
+
+      emacs_ev->kind = MOUSE_CLICK_EVENT;
+      XSETFASTINT (emacs_ev->x, x);
+      XSETFASTINT (emacs_ev->y, y);
+      XSETFRAME (emacs_ev->frame_or_window, f);
+      emacs_ev->arg = Qnil;
 
       return 1;
     }
