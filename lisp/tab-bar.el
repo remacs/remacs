@@ -249,13 +249,29 @@ This helps to select the tab by its number using `tab-bar-select-tab'."
 (defvar tab-bar-separator nil)
 
 
-(defvar tab-bar-tab-name-function #'tab-bar-tab-name
+(defcustom tab-bar-tab-name-function #'tab-bar-tab-name-selected-window
   "Function to get a tab name.
 Function gets no arguments.
-By default, use function `tab-bar-tab-name'.")
+The choice is between displaying only the name of the current buffer
+in the tab name (default), or displaying the names of all buffers
+from all windows in the window configuration."
+  :type '(choice (const :tag "Selected window buffer" tab-bar-tab-name-selected-window)
+                 (const :tag "All window buffers" tab-bar-tab-name-all-windows)
+                 (function  :tag "Function"))
+  :initialize 'custom-initialize-default
+  :set (lambda (sym val)
+         (set-default sym val)
+         (force-mode-line-update))
+  :group 'tab-bar
+  :version "27.1")
 
-(defun tab-bar-tab-name ()
-  "Generate tab name in the context of the selected frame."
+(defun tab-bar-tab-name-selected-window ()
+  "Generate tab name from the buffer of the selected window.
+Also add the number of windows in the window configuration."
+  (format "%s (%d)" (buffer-name) (length (window-list-1 nil 'nomini))))
+
+(defun tab-bar-tab-name-all-windows ()
+  "Generate tab name from buffers of all windows."
   (mapconcat #'buffer-name
              (delete-dups (mapcar #'window-buffer
                                   (window-list-1 (frame-first-window)
