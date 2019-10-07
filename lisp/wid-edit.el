@@ -58,6 +58,10 @@
 (require 'cl-lib)
 (eval-when-compile (require 'subr-x)) 	; when-let
 
+;; The `string' widget completion uses this.
+(declare-function ispell-get-word "ispell"
+                  (following &optional extra-otherchars))
+
 ;;; Compatibility.
 
 (defun widget-event-point (event)
@@ -3074,7 +3078,12 @@ as the value."
   "A string."
   :tag "String"
   :format "%{%t%}: %v"
-  :complete-function 'ispell-complete-word
+  :complete (lambda (widget)
+              (require 'ispell)
+              (let ((start (save-excursion (nth 1 (ispell-get-word nil)))))
+                (if (< start (widget-field-start widget))
+                    (message "No word to complete inside field")
+                  (ispell-complete-word))))
   :prompt-history 'widget-string-prompt-value-history)
 
 (define-widget 'regexp 'string
