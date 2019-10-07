@@ -1843,13 +1843,18 @@ For non-interactive use, superceded by `fileloop-initialize-replace'."
    delimited)
   (fileloop-continue))
 
-(defun tags-complete-tags-table-file (string predicate what) ; Doc string?
+(defun tags-complete-tags-table-file (string predicate what)
+  "Complete STRING from file names in the current tags table.
+The meaning of the arguments are the same as the function form of
+COLLECTION as explained in Info node `(elisp) Programmed
+Completion', except that if WHAT does not equal t, it is treated
+as if it were nil."
   (save-excursion
     ;; If we need to ask for the tag table, allow that.
     (let ((enable-recursive-minibuffers t))
       (visit-tags-table-buffer))
     (if (eq what t)
-	(all-completions string (tags-table-files) predicate)
+        (all-completions string (tags-table-files) predicate)
       (try-completion string (tags-table-files) predicate))))
 
 (defun tags--get-current-buffer-name-in-tags-file ()
