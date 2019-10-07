@@ -4141,6 +4141,9 @@ Record command in `command-history' if optional RECORD is non-nil."
      ((eq method 'display)
       (display-buffer buffer))
 
+     ((eq method 'display-even-when-displayed)
+      (display-buffer buffer t))
+
      ((eq method 'other-frame)
       (switch-to-buffer-other-frame buffer)
       (select-frame-set-input-focus (selected-frame)))
@@ -4225,12 +4228,20 @@ For details of keybindings, see `ido-switch-buffer'."
   (ido-buffer-internal 'other-window 'switch-to-buffer-other-window))
 
 ;;;###autoload
-(defun ido-display-buffer ()
+(defun ido-display-buffer (&optional action)
   "Display a buffer in another window but don't select it.
+
+If ACTION (the prefix argument interactively), display the buffer
+in another windown even if it's already displayed in the current
+window.
+
 The buffer name is selected interactively by typing a substring.
 For details of keybindings, see `ido-switch-buffer'."
-  (interactive)
-  (ido-buffer-internal 'display 'display-buffer nil nil nil 'ignore))
+  (interactive "P")
+  (ido-buffer-internal (if action
+                           'display-even-when-displayed
+                         'display)
+                       'display-buffer nil nil nil 'ignore))
 
 ;;;###autoload
 (defun ido-display-buffer-other-frame ()
