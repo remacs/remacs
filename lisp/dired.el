@@ -2582,7 +2582,13 @@ See options: `dired-hide-details-hide-symlink-targets' and
 ;; Returns position (point) or nil if no filename on this line."
 (defun dired-move-to-filename (&optional raise-error eol)
   "Move to the beginning of the filename on the current line.
-Return the position of the beginning of the filename, or nil if none found."
+Return the position of the beginning of the filename, or nil if none found.
+
+If RAISE-ERROR, signal an error if we can't find the filename on
+the current line.
+
+If EOL, it should be an position to use instead of
+`line-end-position' as the end of the line."
   ;; This is the UNIX version.
   (or eol (setq eol (line-end-position)))
   (beginning-of-line)
