@@ -544,7 +544,7 @@ Return the column number after insertion."
     (when (and not-last-col
                (> label-width available-space)
                (setq label (truncate-string-to-width
-                            label available-space nil nil t)
+                            label available-space nil nil t t)
                      label-width available-space)))
     (setq label (bidi-string-mark-left-to-right label))
     (when (and right-align (> width label-width))

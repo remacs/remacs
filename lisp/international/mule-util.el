@@ -50,7 +50,8 @@ Serves as default value of ELLIPSIS argument to `truncate-string-to-width'.")
 
 ;;;###autoload
 (defun truncate-string-to-width (str end-column
-				     &optional start-column padding ellipsis)
+				     &optional start-column padding ellipsis
+                                     ellipsis-text-property)
   "Truncate string STR to end at column END-COLUMN.
 The optional 3rd arg START-COLUMN, if non-nil, specifies the starting
 column; that means to return the characters occupying columns
@@ -72,7 +73,11 @@ If ELLIPSIS is non-nil, it should be a string which will replace the
 end of STR (including any padding) if it extends beyond END-COLUMN,
 unless the display width of STR is equal to or less than the display
 width of ELLIPSIS.  If it is non-nil and not a string, then ELLIPSIS
-defaults to `truncate-string-ellipsis'."
+defaults to `truncate-string-ellipsis'.
+
+If ELLIPSIS-TEXT-PROPERTY in non-nil, a too-long string will not
+be truncated, but instead the elided parts will be covered by a
+`display' text property showing the ellipsis."
   (or start-column
       (setq start-column 0))
   (when (and ellipsis (not (stringp ellipsis)))
@@ -113,8 +118,16 @@ defaults to `truncate-string-ellipsis'."
 		idx last-idx))
 	(when (and padding (< column end-column))
 	  (setq tail-padding (make-string (- end-column column) padding))))
-      (concat head-padding (substring str from-idx idx)
-	      tail-padding ellipsis))))
+      (if (and ellipsis-text-property
+               (not (equal ellipsis ""))
+               idx)
+          ;; Use text properties for the ellipsis.
+          (concat head-padding
+                  (substring str from-idx idx)
+	          (propertize (substring str idx) 'display (or ellipsis "")))
+        ;; (Possibly) chop off bits of the string.
+        (concat head-padding (substring str from-idx idx)
+	        tail-padding ellipsis)))))
 
 
 ;;; Nested alist handler.
