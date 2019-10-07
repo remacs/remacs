@@ -825,6 +825,7 @@ Function is called with PROCESS, COMMAND, SENDER, ARGS and LINE.")
     (process-send-string process string)))
 
 (defun rcirc-send-privmsg (process target string)
+  (cl-check-type target string)
   (rcirc-send-string process (format "PRIVMSG %s :%s" target string)))
 
 (defun rcirc-send-ctcp (process target request &optional args)
@@ -2337,8 +2338,8 @@ With a prefix arg, prompt for new topic."
   (let ((timestamp (format-time-string "%s")))
     (rcirc-send-ctcp process target "PING" timestamp)))
 
-(defun rcirc-cmd-me (args &optional process target)
-  (rcirc-send-ctcp process target "ACTION" args))
+(defun rcirc-cmd-me (args process target)
+  (when target (rcirc-send-ctcp process target "ACTION" args)))
 
 (defun rcirc-add-or-remove (set &rest elements)
   (dolist (elt elements)
