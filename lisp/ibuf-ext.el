@@ -563,10 +563,7 @@ format.  See `ibuffer-update-saved-filters-format' and
 Does not display the buffer during evaluation.
 See `ibuffer-do-view-and-eval' for that."
   (:interactive
-   (list
-    (read-from-minibuffer
-     "Eval in buffers (form): "
-     nil read-expression-map t 'read-expression-history))
+   (list (read--expression "Eval in buffers (form): "))
    :opstring "evaluated in"
    :modifier-p :maybe)
   (eval form))
