@@ -6303,17 +6303,19 @@ x_create_horizontal_toolkit_scroll_bar (struct frame *f, struct scroll_bar *bar)
   XtSetArg (av[ac], XmNincrement, 1); ++ac;
   XtSetArg (av[ac], XmNpageIncrement, 1); ++ac;
 
+  /* Note: "background" is the thumb color, and "trough" is the color behind
+     everything. */
   pixel = f->output_data.x->scroll_bar_foreground_pixel;
   if (pixel != -1)
     {
-      XtSetArg (av[ac], XmNforeground, pixel);
+      XtSetArg (av[ac], XmNbackground, pixel);
       ++ac;
     }
 
   pixel = f->output_data.x->scroll_bar_background_pixel;
   if (pixel != -1)
     {
-      XtSetArg (av[ac], XmNbackground, pixel);
+      XtSetArg (av[ac], XmNtroughColor, pixel);
       ++ac;
     }
 
