@@ -133,6 +133,11 @@ If :INITIAL-VALUE is specified, it is added to the front of SEQ.
 If SEQ is empty, return :INITIAL-VALUE and FUNCTION is not
 called.
 
+If SEQ is empty and no :INITIAL-VALUE is given, then the function
+is called with zero arguments, and reduce returns whatever
+function does. This is the only case where the function is called
+with other than two arguments.
+
 \n(fn FUNCTION SEQ [KEYWORD VALUE]...)"
   (cl--parsing-keywords (:from-end (:start 0) :end :initial-value :key) ()
     (or (listp cl-seq) (setq cl-seq (append cl-seq nil)))
