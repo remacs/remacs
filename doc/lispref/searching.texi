@@ -1083,6 +1083,11 @@ Corresponding string regexp: @samp{@var{A}@var{B}@dots{}}
 Match exactly one of the @var{rx}s, trying from left to right.
 Without arguments, the expression will not match anything at all.@*
 Corresponding string regexp: @samp{@var{A}\|@var{B}\|@dots{}}.
+
+@item @code{unmatchable}
+@cindex @code{unmatchable} in rx
+Refuse any match.  Equivalent to @code{(or)}.
+@xref{regexp-unmatchable}.
 @end table
 
 @subsubheading Repetition
@@ -1806,6 +1811,7 @@ list of characters @var{chars}.
 
 @c Internal functions: regexp-opt-group
 
+@anchor{regexp-unmatchable}
 @defvar regexp-unmatchable
 This variable contains a regexp that is guaranteed not to match any
 string at all.  It is particularly useful as default value for

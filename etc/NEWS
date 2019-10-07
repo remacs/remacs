@@ -1844,6 +1844,7 @@ the 128...255 range, as expected.
 matches the empty string, each being an identity for the operation.
 This also works for their aliases: '|' for 'or'; ':', 'and' and
 'sequence' for 'seq'.
+The symbol 'unmatchable' can be used as an alternative to (or).
 
 ---
 *** 'regexp' and new 'literal' accept arbitrary lisp as arguments.

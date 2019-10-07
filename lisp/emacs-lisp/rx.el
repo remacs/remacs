@@ -126,7 +126,6 @@ Each entry is:
       (get name 'rx-definition)))
 
 ;; TODO: Additions to consider:
-;; - A name for (or), maybe `unmatchable'.
 ;; - A construct like `or' but without the match order guarantee,
 ;;   maybe `unordered-or'.  Useful for composition or generation of
 ;;   alternatives; permits more effective use of regexp-opt.
@@ -138,6 +137,7 @@ Each entry is:
     ;; since the return value may be mutated.
     ((or 'nonl 'not-newline 'any) (cons (list ".") t))
     ((or 'anychar 'anything)      (rx--translate-form '(or nonl "\n")))
+    ('unmatchable                 (rx--empty))
     ((or 'bol 'line-start)        (cons (list "^") 'lseq))
     ((or 'eol 'line-end)          (cons (list "$") 'rseq))
     ((or 'bos 'string-start 'bot 'buffer-start) (cons (list "\\`") t))
@@ -912,7 +912,7 @@ can expand to any number of values."
   "List of built-in rx function-like symbols.")
 
 (defconst rx--builtin-symbols
-  (append '(nonl not-newline any anychar anything
+  (append '(nonl not-newline any anychar anything unmatchable
             bol eol line-start line-end
             bos eos string-start string-end
             bow eow word-start word-end
@@ -1016,6 +1016,7 @@ CHAR           Match a literal character.
                 or a character class.
 not-newline     Match any character except a newline.  Alias: nonl.
 anychar         Match any character.  Alias: anything.
+unmatchable     Never match anything at all.
 
 CHARCLASS       Match a character from a character class.  One of:
  alpha, alphabetic, letter   Alphabetic characters (defined by Unicode).
