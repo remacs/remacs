@@ -1282,6 +1282,10 @@ runs @code{find-file-other-tab}.  @xref{Visiting}.
 @item C-x 6 d @var{directory} @key{RET}
 Select a Dired buffer for directory @var{directory} in another tab.
 This runs @code{dired-other-tab}.  @xref{Dired}.
+@item C-x 6 r @var{tabname} @key{RET}
+Renames the current tab to @var{tabname}.  You can control the
+programmatic name given to a tab by default by customizing the
+variable @code{tab-bar-tab-name-function}.
 @end table
 
 @vindex tab-bar-new-tab-choice

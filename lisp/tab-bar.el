@@ -359,9 +359,13 @@ Return its existing value or a new value."
   (let* ((separator (or tab-bar-separator (if window-system " " "|")))
          (i 0)
          (tabs (funcall tab-bar-tabs-function))
-         (current-tab-name (assq 'name (assq 'current-tab tabs))))
-    (when current-tab-name
-      (setf (cdr current-tab-name) (funcall tab-bar-tab-name-function)))
+         (current-tab-name (assq 'name (assq 'current-tab tabs)))
+         (current-tab-explicit-name (assq 'explicit-name (assq 'current-tab tabs))))
+    (when (and current-tab-name
+               current-tab-explicit-name
+               (not (cdr current-tab-explicit-name)))
+      (setf (cdr current-tab-name)
+            (funcall tab-bar-tab-name-function)))
     (append
      '(keymap (mouse-1 . tab-bar-handle-mouse))
      (mapcan
@@ -413,16 +417,29 @@ Return its existing value or a new value."
 
 
 (defun tab-bar--tab ()
-  `(tab
-    (name . ,(funcall tab-bar-tab-name-function))
-    (time . ,(time-convert nil 'integer))
-    (wc . ,(current-window-configuration))
-    (ws . ,(window-state-get
-            (frame-root-window (selected-frame)) 'writable))))
+  (let* ((tab (assq 'current-tab (frame-parameter nil 'tabs)))
+         (tab-explicit-name (cdr (assq 'explicit-name tab))))
+    `(tab
+      (name . ,(if tab-explicit-name
+                   (cdr (assq 'name tab))
+                 (funcall tab-bar-tab-name-function)))
+      (explicit-name . ,tab-explicit-name)
+      (time . ,(time-convert nil 'integer))
+      (wc . ,(current-window-configuration))
+      (ws . ,(window-state-get
+              (frame-root-window (selected-frame)) 'writable)))))
 
-(defun tab-bar--current-tab ()
-  `(current-tab
-    (name . ,(funcall tab-bar-tab-name-function))))
+(defun tab-bar--current-tab (&optional tab)
+  ;; `tab` here is an argument meaning 'use tab as template'. This is
+  ;; necessary when switching tabs, otherwise the destination tab
+  ;; inherit the current tab's `explicit-name` parameter.
+  (let* ((tab (or tab (assq 'current-tab (frame-parameter nil 'tabs))))
+         (tab-explicit-name (cdr (assq 'explicit-name tab))))
+    `(current-tab
+      (name . ,(if tab-explicit-name
+                   (cdr (assq 'name tab))
+                 (funcall tab-bar-tab-name-function)))
+      (explicit-name . ,tab-explicit-name))))
 
 (defun tab-bar--current-tab-index (&optional tabs)
   ;; FIXME: could be replaced with 1-liner using seq-position
@@ -491,7 +508,7 @@ to the numeric argument.  ARG counts from 1."
 
         (when from-index
           (setf (nth from-index tabs) from-tab))
-        (setf (nth to-index tabs) (tab-bar--current-tab)))
+        (setf (nth to-index tabs) (tab-bar--current-tab (nth to-index tabs))))
 
       (when tab-bar-mode
         (force-mode-line-update)))))
@@ -649,16 +666,51 @@ TO-INDEX counts from 1."
           (force-mode-line-update)
         (message "Deleted all other tabs")))))
 
+(defun tab-bar-rename-tab (name &optional arg)
+  "Rename the tab specified by its absolute position ARG.
+If no ARG is specified, then rename the current tab.
+ARG counts from 1.
+If NAME is the empty string, then use the automatic name
+function `tab-bar-tab-name-function'."
+  (interactive "sNew name for tab (leave blank for automatic naming): \nP")
+  (let* ((tabs (tab-bar-tabs))
+         (tab-index (if arg
+                        (1- (max 0 (min arg (length tabs))))
+                      (tab-bar--current-tab-index tabs)))
+         (tab-to-rename (nth tab-index tabs))
+         (tab-explicit-name (> (length name) 0))
+         (tab-new-name (if tab-explicit-name
+                           name
+                         (funcall tab-bar-tab-name-function))))
+    (setf (cdr (assq 'name tab-to-rename)) tab-new-name
+          (cdr (assq 'explicit-name tab-to-rename)) tab-explicit-name
+          (frame-parameter nil 'tabs) tabs)
+    (if (tab-bar-mode)
+        (force-mode-line-update)
+      (message "Renamed tab to '%s'" tab-new-name))))
+
+(defun tab-bar-rename-tab-by-name (tab-name new-name)
+  "Rename the tab named TAB-NAME.
+If NEW-NAME is the empty string, then use the automatic name
+function `tab-bar-tab-name-function'."
+  (interactive (list (completing-read "Rename tab by name: "
+                                      (mapcar (lambda (tab)
+                                                (cdr (assq 'name tab)))
+                                              (tab-bar-tabs)))
+                     (read-from-minibuffer "New name for tab (leave blank for automatic naming): ")))
+  (tab-bar-rename-tab new-name (tab-bar--tab-index-by-name tab-name)))
+
 
 ;;; Short aliases
 
-(defalias 'tab-new         'tab-bar-new-tab)
-(defalias 'tab-close       'tab-bar-close-tab)
+(defalias 'tab-new      'tab-bar-new-tab)
+(defalias 'tab-close    'tab-bar-close-tab)
 (defalias 'tab-close-other 'tab-bar-close-other-tabs)
-(defalias 'tab-select      'tab-bar-select-tab)
-(defalias 'tab-next        'tab-bar-switch-to-next-tab)
-(defalias 'tab-previous    'tab-bar-switch-to-prev-tab)
-(defalias 'tab-list        'tab-bar-list)
+(defalias 'tab-select   'tab-bar-select-tab)
+(defalias 'tab-next     'tab-bar-switch-to-next-tab)
+(defalias 'tab-previous 'tab-bar-switch-to-prev-tab)
+(defalias 'tab-rename   'tab-bar-rename-tab)
+(defalias 'tab-list     'tab-bar-list)
 
 
 ;;; Non-graphical access to frame-local tabs (named window configurations)
@@ -915,6 +967,7 @@ Like \\[find-file-other-frame] (which see), but creates a new tab."
 (define-key ctl-x-6-map "b" 'switch-to-buffer-other-tab)
 (define-key ctl-x-6-map "f" 'find-file-other-tab)
 (define-key ctl-x-6-map "\C-f" 'find-file-other-tab)
+(define-key ctl-x-6-map "r" 'tab-rename)
 
 
 (provide 'tab-bar)
