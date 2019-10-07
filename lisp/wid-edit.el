@@ -1166,7 +1166,7 @@ When not inside a field, signal an error."
                               (plist-get completion-extra-properties
                                          :predicate))))
      (t
-      (error "Not in an editable field")))))
+      (error "No completions available for this field")))))
 ;; We may want to use widget completion in buffers where the major mode
 ;; hasn't added widget-completions-at-point to completion-at-point-functions,
 ;; so it's not really obsolete (yet).
@@ -1174,8 +1174,9 @@ When not inside a field, signal an error."
 
 (defun widget-completions-at-point ()
   (let ((field (widget-field-find (point))))
-    (when field
-      (widget-apply field :completions-function))))
+    (if field
+        (widget-apply field :completions-function)
+      (error "Not in an editable field"))))
 
 ;;; Setting up the buffer.
 
