@@ -334,6 +334,7 @@ If so, return the first non-nil value returned by PRED."
           (throw 'seq--break result))))
     nil))
 
+;;;###autoload
 (cl-defgeneric seq-find (pred sequence &optional default)
   "Return the first element for which (PRED element) is non-nil in SEQUENCE.
 If no element is found, return DEFAULT.
