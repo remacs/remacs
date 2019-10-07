@@ -2124,7 +2124,9 @@ the selected tags table, and displays a list of tags defined in that
 file.  Do not include a directory as part of the file name unless the
 file name recorded in the tags table includes a directory.  This
 command works only with the etags backend, and requires a tags table
-for the project to be available.  @xref{Tags Tables}.
+for the project to be available.  @xref{Tags Tables}.  If used
+interactively, the default tag is file name of the current buffer if
+used interactively.
 
 @c Sadly, the new-and-improved Xref feature doesn't provide anything
 @c close to the described below features of the now-obsoleted
