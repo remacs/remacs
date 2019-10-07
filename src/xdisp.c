@@ -15683,7 +15683,11 @@ redisplay_internal (void)
 		     garbaged flag, in which case we need to
 		     redisplay the frame.  */
                   if (FRAME_GARBAGED_P (f))
-		    goto retry_frame;
+		    {
+		      fset_redisplay (f);
+		      f->garbaged = false;
+		      goto retry_frame;
+		    }
 		  f->cursor_type_changed = false;
 		  f->updated_p = true;
 		  f->inhibit_clear_image_cache = false;
