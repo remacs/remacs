@@ -3248,7 +3248,7 @@ Return nil if file does not exist.  */)
   acl_t acl = acl_get_file (SSDATA (ENCODE_FILE (absname)), ACL_TYPE_EXTENDED);
   if (acl == NULL)
     {
-      if (errno == ENOENT || errno == ENOTDIR || acl_errno_valid (errno))
+      if (errno == ENOENT || errno == ENOTDIR || !acl_errno_valid (errno))
 	return Qnil;
       report_file_error ("Getting ACLs", absname);
     }
