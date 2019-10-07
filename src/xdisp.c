@@ -15680,9 +15680,11 @@ redisplay_internal (void)
 		  /* On some platforms (at least MS-Windows), the
 		     scroll_run_hook called from scrolling_window
 		     called from update_frame could set the frame's
-		     garbaged flag, in which case we need to
-		     redisplay the frame.  */
-                  if (FRAME_GARBAGED_P (f))
+		     garbaged flag, in which case we need to redisplay
+		     the frame.  Don't do that on TTY frames, since we
+		     need to keep the garbaged flag in that case when
+		     the frame has been resized.  */
+                  if (FRAME_WINDOW_P (f) && FRAME_GARBAGED_P (f))
 		    {
 		      fset_redisplay (f);
 		      f->garbaged = false;
