@@ -184,8 +184,8 @@
                  "ab")))
 
 (ert-deftest rx-atoms ()
-  (should (equal (rx anything)
-                 ".\\|\n"))
+  (should (equal (rx anychar anything)
+                 "\\(?:.\\|\n\\)\\(?:.\\|\n\\)"))
   (should (equal (rx line-start not-newline nonl any line-end)
                  "^...$"))
   (should (equal (rx bol string-start string-end buffer-start buffer-end

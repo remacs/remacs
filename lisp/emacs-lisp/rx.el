@@ -126,7 +126,6 @@ Each entry is:
       (get name 'rx-definition)))
 
 ;; TODO: Additions to consider:
-;; - A better name for `anything', like `any-char' or `anychar'.
 ;; - A name for (or), maybe `unmatchable'.
 ;; - A construct like `or' but without the match order guarantee,
 ;;   maybe `unordered-or'.  Useful for composition or generation of
@@ -138,7 +137,7 @@ Each entry is:
     ;; Use `list' instead of a quoted list to wrap the strings here,
     ;; since the return value may be mutated.
     ((or 'nonl 'not-newline 'any) (cons (list ".") t))
-    ('anything                    (rx--translate-form '(or nonl "\n")))
+    ((or 'anychar 'anything)      (rx--translate-form '(or nonl "\n")))
     ((or 'bol 'line-start)        (cons (list "^") 'lseq))
     ((or 'eol 'line-end)          (cons (list "$") 'rseq))
     ((or 'bos 'string-start 'bot 'buffer-start) (cons (list "\\`") t))
@@ -913,7 +912,7 @@ can expand to any number of values."
   "List of built-in rx function-like symbols.")
 
 (defconst rx--builtin-symbols
-  (append '(nonl not-newline any anything
+  (append '(nonl not-newline any anychar anything
             bol eol line-start line-end
             bos eos string-start string-end
             bow eow word-start word-end
@@ -1016,7 +1015,7 @@ CHAR           Match a literal character.
                 can be (any ...), (syntax ...), (category ...),
                 or a character class.
 not-newline     Match any character except a newline.  Alias: nonl.
-anything        Match any character.
+anychar         Match any character.  Alias: anything.
 
 CHARCLASS       Match a character from a character class.  One of:
  alpha, alphabetic, letter   Alphabetic characters (defined by Unicode).

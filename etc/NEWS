@@ -1854,6 +1854,10 @@ at run time, instead of a constant string.
 *** New rx extension mechanism: 'rx-define', 'rx-let', 'rx-let-eval'.
 These macros add new forms to the rx notation.
 
++++
+*** 'anychar' is now an alias for 'anything'
+Both match any single character; 'anychar' is more descriptive.
+
 ** Frames
 
 +++

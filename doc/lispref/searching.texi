@@ -1220,7 +1220,8 @@ Corresponding string regexp: @samp{[^@dots{}]}, @samp{\S@var{code}},
 Match any character except a newline.@*
 Corresponding string regexp: @samp{.} (dot)
 
-@item @code{anything}
+@item @code{anychar}, @code{anything}
+@cindex @code{anychar} in rx
 @cindex @code{anything} in rx
 Match any character.@*
 Corresponding string regexp: @samp{.\|\n} (for example)
