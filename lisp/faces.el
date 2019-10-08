@@ -2391,7 +2391,11 @@ unwanted effects."
   :group 'display-line-numbers)
 
 (defface line-number-major-tick
-  '((t :inherit line-number))
+  '((((class color grayscale) (background light))
+     :foreground "grey55" :bold t)
+    (((class color grayscale) (background dark))
+     :foreground "grey75" :bold t)
+    (t :inherit line-number))
   "Face for highlighting \"major ticks\" (as in a ruler).
 When `display-line-numbers-major-tick' is positive, highlight
 the line numbers of lines which are a multiple of its value.
@@ -2408,7 +2412,11 @@ unwanted effects."
   :group 'display-line-numbers)
 
 (defface line-number-minor-tick
-  '((t :inherit line-number))
+  '((((class color grayscale) (background light))
+     :foreground "grey65" :bold t)
+    (((class color grayscale) (background dark))
+     :foreground "grey55" :bold t)
+    (t :inherit line-number))
   "Face for highlighting \"minor ticks\" (as in a ruler).
 When `display-line-numbers-minor-tick' is positive, highlight
 the line numbers of lines which are a multiple of its value.
