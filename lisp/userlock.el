@@ -34,6 +34,9 @@
 
 (eval-when-compile (require 'cl-lib))
 
+;;;###autoload
+(put 'create-lockfiles 'safe-local-variable 'booleanp)
+
 (define-error 'file-locked "File is locked" 'file-error)
 
 ;;;###autoload

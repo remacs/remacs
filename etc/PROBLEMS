@@ -1183,6 +1183,23 @@ always) doesn't insert the whitespace of the killed and yanked line.
 
 The solution is to set the GPaste "trim items" option to OFF.
 
+*** Gnome: Navigation from Nautilus to remote files.
+
+If you navigate to a file, which belongs to a remote server, in
+Nautilus via "Open With Emacs" you might not be able to save this file
+once you have modified it in Emacs.  The reasons for the failure can
+vary, and for some connection methods saving the file might even succeed.
+
+If the remote connection in Nautilus uses ssh or sftp, you could
+mitigate the problem by the following lines in your .emacs file:
+
+(dir-locals-set-class-variables 'gvfs '((nil . ((create-lockfiles . nil)))))
+(dir-locals-set-directory-class (format "/run/user/%d/gvfs" (user-uid)) 'gvfs)
+
+A better approach might be to avoid navigation from Nautilus to Emacs
+for such files, and instead to open the file in Emacs using Tramp
+remote file name syntax.
+
 *** KDE: When running on KDE, colors or fonts are not as specified for Emacs,
 or messed up.
 
