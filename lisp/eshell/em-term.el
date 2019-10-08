@@ -53,22 +53,21 @@ which commands are considered visual in nature."
 (defcustom eshell-term-load-hook nil
   "A list of functions to call when loading `eshell-term'."
   :version "24.1"			; removed eshell-term-initialize
-  :type 'hook
-  :group 'eshell-term)
+  :type 'hook)
 
 (defcustom eshell-visual-commands
   '("vi"                                ; what is going on??
-    "screen" "top"                      ; ok, a valid program...
+    "screen" "tmux" "top" "htop"        ; ok, a valid program...
     "less" "more"                       ; M-x view-file
-    "lynx" "ncftp"                      ; w3.el, ange-ftp
-    "pine" "tin" "trn" "elm")           ; GNUS!!
+    "lynx" "links" "ncftp"              ; eww, ange-ftp
+    "mutt" "pine" "tin" "trn" "elm")    ; GNUS!!
   "A list of commands that present their output in a visual fashion.
 
 Commands listed here are run in a term buffer.
 
 See also `eshell-visual-subcommands' and `eshell-visual-options'."
   :type '(repeat string)
-  :group 'eshell-term)
+  :version "27.1")
 
 (defcustom eshell-visual-subcommands
   nil
@@ -89,8 +88,7 @@ because git shows logs and diffs using a pager by default.
 See also `eshell-visual-commands' and `eshell-visual-options'."
   :type '(repeat (cons (string :tag "Command")
 		       (repeat (string :tag "Subcommand"))))
-  :version "24.4"
-  :group 'eshell-term)
+  :version "24.4")
 
 (defcustom eshell-visual-options
   nil
@@ -111,8 +109,7 @@ always uses a pager for output.
 See also `eshell-visual-commands' and `eshell-visual-subcommands'."
   :type '(repeat (cons (string :tag "Command")
 		       (repeat (string :tag "Option"))))
-  :version "24.4"
-  :group 'eshell-term)
+  :version "24.4")
 
 ;; If you change this from term-term-name, you need to ensure that the
 ;; value you choose exists in the system's terminfo database.  (Bug#12485)
@@ -121,8 +118,7 @@ See also `eshell-visual-commands' and `eshell-visual-subcommands'."
 See `term-term-name' in term.el for more information on how this is
 used."
   :version "24.3"	       ; eterm -> term-term-name = eterm-color
-  :type 'string
-  :group 'eshell-term)
+  :type 'string)
 
 (defcustom eshell-escape-control-x t
   "If non-nil, allow <C-x> to be handled by Emacs key in visual buffers.
@@ -130,16 +126,14 @@ See the variables `eshell-visual-commands',
 `eshell-visual-subcommands', and `eshell-visual-options'.  If
 this variable is set to nil, <C-x> will send that control
 character to the invoked process."
-  :type 'boolean
-  :group 'eshell-term)
+  :type 'boolean)
 
 (defcustom eshell-destroy-buffer-when-process-dies nil
   "If non-nil, term buffers are destroyed after their processes die.
 WARNING: Setting this to non-nil may result in unexpected
 behavior for short-lived processes, see bug#18108."
   :version "25.1"
-  :type 'boolean
-  :group 'eshell-term)
+  :type 'boolean)
 
 ;;; Internal Variables:
 
