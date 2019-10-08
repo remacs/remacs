@@ -103,7 +103,7 @@
 @end direntry
 
 @copying
-This is an @cite{Introduction to Programming in Emacs Lisp}, for
+This is @cite{An Introduction to Programming in Emacs Lisp}, for
 people who are not programmers.
 @sp 1
 @iftex
@@ -892,8 +892,8 @@ to read them.  But I have tried to keep down the number of such
 paragraphs.  This book is intended as an approachable hill, rather than
 as a daunting mountain.
 
-This introduction to @cite{Programming in Emacs Lisp} has a companion
-document,
+This book, @cite{An Introduction to Programming in Emacs Lisp}, has a
+companion document,
 @iftex
 @cite{The GNU Emacs Lisp Reference Manual}.
 @end iftex
