@@ -1853,7 +1853,8 @@ if it is still empty."
           (let ((pkg-desc (cadr (assq pkg package-alist))))
             (when pkg-desc
               (push pkg seen)
-              (setq pkgs (append (package-desc-reqs pkg-desc) pkgs)))))))
+              (setq pkgs (append (mapcar #'car (package-desc-reqs pkg-desc))
+                                 pkgs)))))))
     seen))
 
 (defun package--user-installed-p (package)

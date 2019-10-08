@@ -654,25 +654,16 @@ Must called from within a `tar-mode' buffer."
                  multi-file-desc
                  new-pkg-desc
                  simple-depend-desc-1
-                 simple-depend-desc-2))))
+                 simple-depend-desc-2)))
+        (pkg-cmp #'string-lessp))
     (should
-     (equal (package--get-deps 'simple-depend)
-            '(simple-single)))
+     (equal (sort (package--get-deps '(simple-depend)) pkg-cmp)
+            (sort (list 'simple-depend 'simple-single) pkg-cmp)))
     (should
-     (equal (package--get-deps 'simple-depend 'indirect)
-            nil))
-    (should
-     (equal (package--get-deps 'simple-depend 'direct)
-            '(simple-single)))
-    (should
-     (equal (package--get-deps 'simple-depend-2)
-            '(simple-depend-1 multi-file simple-depend simple-single)))
-    (should
-     (equal (package--get-deps 'simple-depend-2 'indirect)
-            '(simple-depend multi-file simple-single)))
-    (should
-     (equal (package--get-deps 'simple-depend-2 'direct)
-            '(simple-depend-1 multi-file)))))
+     (equal (sort (package--get-deps '(simple-depend-2)) pkg-cmp)
+            (sort (list 'simple-depend-2 'simple-depend-1 'multi-file
+                        'simple-depend 'simple-single)
+                  pkg-cmp)))))
 
 (ert-deftest package-test-sort-by-dependence ()
   "Test `package--sort-by-dependence' with complex structures."
