@@ -2666,11 +2666,12 @@ etags --language=none \
 @subsection Selecting a Tags Table
 
 @findex visit-tags-table
-  Emacs has at any time at most one @dfn{selected} tags table.  All the
-commands for working with tags tables use the selected one.  To select
-a tags table, type @kbd{M-x visit-tags-table}, which reads the tags
-table file name as an argument, with @file{TAGS} in the default
-directory as the default.
+  Emacs has at any time at most one @dfn{selected} tags table.  All
+the commands for working with tags tables use the selected one.  To
+select a tags table, type @kbd{M-x visit-tags-table}, which reads the
+tags table file name as an argument, with @file{TAGS} defaulting to
+the first directory that contains a file named @file{TAGS} encountered
+when recursively searching upward from the default directory.
 
 @vindex tags-file-name
   Emacs does not actually read in the tags table contents until you

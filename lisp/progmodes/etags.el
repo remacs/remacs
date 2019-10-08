@@ -274,6 +274,19 @@ buffer-local and set them to nil."
   (setq buffer-undo-list t)
   (initialize-new-tags-table))
 
+(defun tags--find-default-tags-dir-recursively (current-dir)
+  "Find the directory in which the default TAGS file lives.
+It is the first directory that contains a file named TAGS
+encountered when recursively searching upward from CURRENT-DIR."
+  (let ((tag-filename (expand-file-name "TAGS" current-dir)))
+    (if (file-exists-p tag-filename)
+        current-dir
+      (let ((parent-dir
+             (file-name-directory (directory-file-name current-dir))))
+        (if (string= parent-dir current-dir)  ;; root dir is reached
+            nil
+          (tags--find-default-tags-dir-recursively parent-dir))))))
+
 ;;;###autoload
 (defun visit-tags-table (file &optional local)
   "Tell tags commands to use tags table file FILE.
@@ -286,12 +299,18 @@ from Lisp, if the optional arg LOCAL is non-nil, set the local value.
 When you find a tag with \\[find-tag], the buffer it finds the tag
 in is given a local value of this variable which is the name of the tags
 file the tag was in."
-  (interactive (list (read-file-name "Visit tags table (default TAGS): "
-				     default-directory
-				     (expand-file-name "TAGS"
-						       default-directory)
-				     t)
-		     current-prefix-arg))
+  (interactive
+   (let ((default-tag-dir
+           (or (tags--find-default-tags-dir-recursively default-directory)
+               default-directory)))
+     (list (read-file-name
+            "Visit tags table (default TAGS): "
+            ;; default to TAGS from default-directory up to root.
+            default-tag-dir
+            (expand-file-name "TAGS" default-tag-dir)
+            t)
+           current-prefix-arg)))
+
   (or (stringp file) (signal 'wrong-type-argument (list 'stringp file)))
   ;; Bind tags-file-name so we can control below whether the local or
   ;; global value gets set.
