@@ -3314,6 +3314,10 @@ font_open_for_lface (struct frame *f, Lisp_Object entity, Lisp_Object *attrs, Li
 	    pt = XFIXNUM (attrs[LFACE_HEIGHT_INDEX]);
 	  else
 	    {
+	      /* We need the default face to be valid below.  */
+	      if (FRAME_FACE_CACHE (f)->used == 0)
+		recompute_basic_faces (f);
+
 	      struct face *def = FACE_FROM_ID (f, DEFAULT_FACE_ID);
 	      Lisp_Object height = def->lface[LFACE_HEIGHT_INDEX];
 	      eassert (FIXNUMP (height));
