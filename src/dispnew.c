@@ -2051,7 +2051,19 @@ adjust_frame_glyphs_for_frame_redisplay (struct frame *f)
 	 to the frame width (from CHANGE_FRAME_SIZE_1).  */
       if (matrix_dim.width != FRAME_TOTAL_COLS (f)
 	  || matrix_dim.height != FRAME_TOTAL_LINES (f))
-	return;
+	{
+	  /* We have reallocated the frame's glyph pools, but didn't
+	     update the glyph pointers in the frame's glyph matrices
+	     to use the reallocated pools (that happens below, in the
+	     call to adjust_glyph_matrix).  Set the frame's garbaged
+	     flag, so that when we are called again from
+	     redisplay_internal, we don't erroneously call
+	     save_current_matrix, because it will use the wrong glyph
+	     pointers, and will most probably crash.  */
+	  if (!FRAME_WINDOW_P (f) && pool_changed_p)
+	    SET_FRAME_GARBAGED (f);
+	  return;
+	}
 
       eassert (matrix_dim.width == FRAME_TOTAL_COLS (f)
 	       && matrix_dim.height == FRAME_TOTAL_LINES (f));

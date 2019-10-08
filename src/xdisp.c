@@ -15684,7 +15684,7 @@ redisplay_internal (void)
 		     the frame.  Don't do that on TTY frames, since we
 		     need to keep the garbaged flag in that case when
 		     the frame has been resized.  */
-                  if (FRAME_WINDOW_P (f) && FRAME_GARBAGED_P (f))
+                  if (FRAME_GARBAGED_P (f))
 		    {
 		      fset_redisplay (f);
 		      f->garbaged = false;
