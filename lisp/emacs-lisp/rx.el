@@ -136,7 +136,7 @@ Each entry is:
     ;; Use `list' instead of a quoted list to wrap the strings here,
     ;; since the return value may be mutated.
     ((or 'nonl 'not-newline 'any) (cons (list ".") t))
-    ((or 'anychar 'anything)      (rx--translate-form '(or nonl "\n")))
+    ((or 'anychar 'anything)      (cons (list "[^z-a]") t))
     ('unmatchable                 (rx--empty))
     ((or 'bol 'line-start)        (cons (list "^") 'lseq))
     ((or 'eol 'line-end)          (cons (list "$") 'rseq))

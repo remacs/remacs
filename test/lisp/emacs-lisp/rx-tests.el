@@ -126,9 +126,9 @@
   (should (equal (rx (not (any "!a" "0-8" digit nonascii)))
                  "[^!0-8a[:digit:][:nonascii:]]"))
   (should (equal (rx (any) (not (any)))
-                 "\\`a\\`\\(?:.\\|\n\\)"))
+                 "\\`a\\`[^z-a]"))
   (should (equal (rx (any "") (not (any "")))
-                 "\\`a\\`\\(?:.\\|\n\\)")))
+                 "\\`a\\`[^z-a]")))
 
 (ert-deftest rx-pcase ()
   (should (equal (pcase "a 1 2 3 1 1 b"
@@ -185,7 +185,7 @@
 
 (ert-deftest rx-atoms ()
   (should (equal (rx anychar anything)
-                 "\\(?:.\\|\n\\)\\(?:.\\|\n\\)"))
+                 "[^z-a][^z-a]"))
   (should (equal (rx unmatchable)
                  "\\`a\\`"))
   (should (equal (rx line-start not-newline nonl any line-end)
