@@ -176,7 +176,7 @@ See `replace-regexp' and `query-replace-regexp-eval'.")
 
 (defun query-replace-read-from (prompt regexp-flag)
   "Query and return the `from' argument of a query-replace operation.
-Prompt with PROMT.  REGEXP-FLAG non-nil means the response should be a regexp.
+Prompt with PROMPT.  REGEXP-FLAG non-nil means the response should be a regexp.
 The return value can also be a pair (FROM . TO) indicating that the user
 wants to replace FROM with TO."
   (if query-replace-interactive
