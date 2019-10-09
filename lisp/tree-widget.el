@@ -131,20 +131,15 @@
 
 (defvar tree-widget-themes-load-path
   '(load-path
-    (let ((dir (if (fboundp 'locate-data-directory)
-                   (locate-data-directory "tree-widget") ;; XEmacs
-                 data-directory)))
-      (and dir (list dir (expand-file-name "images" dir))))
-    )
+    (let ((dir data-directory))
+      (and dir (list dir (expand-file-name "images" dir)))))
   "List of locations in which to search for the themes sub-directory.
 Each element is an expression that will be recursively evaluated until
 it returns a single directory or a list of directories.
 The default is to search in the `load-path' first, then in the
 \"images\" sub directory in the data directory, then in the data
 directory.
-The data directory is the value of the variable `data-directory' on
-Emacs, and what `(locate-data-directory \"tree-widget\")' returns on
-XEmacs.")
+The data directory is the value of the variable `data-directory'.")
 
 (defcustom tree-widget-themes-directory "tree-widget"
   "Name of the directory in which to look for an image theme.
@@ -215,49 +210,26 @@ See Info node `(elisp)Specified Space'."
 
 ;;; Image support
 ;;
-(eval-and-compile ;; Emacs/XEmacs compatibility stuff
-  (cond
-   ;; XEmacs
-   ((featurep 'xemacs)
-    (defsubst tree-widget-use-image-p ()
-      "Return non-nil if image support is currently enabled."
-      (and tree-widget-image-enable
-           widget-glyph-enable
-           (console-on-window-system-p)))
-    (defsubst tree-widget-create-image (type file &optional props)
-      "Create an image of type TYPE from FILE, and return it.
+(defsubst tree-widget-use-image-p ()
+  "Return non-nil if image support is currently enabled."
+  (and tree-widget-image-enable
+       widget-image-enable
+       (display-images-p)))
+
+(defsubst tree-widget-create-image (type file &optional props)
+  "Create an image of type TYPE from FILE, and return it.
 Give the image the specified properties PROPS."
-      (apply 'make-glyph `([,type :file ,file ,@props])))
-    (defsubst tree-widget-image-formats ()
-      "Return the alist of image formats/file name extensions.
-See also the option `widget-image-file-name-suffixes'."
-      (delq nil
-            (mapcar
-             #'(lambda (fmt)
-                 (and (valid-image-instantiator-format-p (car fmt)) fmt))
-             widget-image-file-name-suffixes)))
-    )
-   ;; Emacs
-   (t
-    (defsubst tree-widget-use-image-p ()
-      "Return non-nil if image support is currently enabled."
-      (and tree-widget-image-enable
-           widget-image-enable
-           (display-images-p)))
-    (defsubst tree-widget-create-image (type file &optional props)
-      "Create an image of type TYPE from FILE, and return it.
-Give the image the specified properties PROPS."
-      (apply 'create-image `(,file ,type nil ,@props)))
-    (defsubst tree-widget-image-formats ()
-      "Return the alist of image formats/file name extensions.
+  (declare (obsolete create-image "27.1"))
+  (apply 'create-image `(,file ,type nil ,@props)))
+
+(defsubst tree-widget-image-formats ()
+  "Return the alist of image formats/file name extensions.
 See also the option `widget-image-conversion'."
-      (delq nil
-            (mapcar
-             #'(lambda (fmt)
-                 (and (image-type-available-p (car fmt)) fmt))
-             widget-image-conversion)))
-    ))
-  )
+  (delq nil
+        (mapcar
+         #'(lambda (fmt)
+             (and (image-type-available-p (car fmt)) fmt))
+         widget-image-conversion)))
 
 ;; Buffer local cache of theme data.
 (defvar tree-widget--theme nil)
@@ -391,9 +363,7 @@ XEmacs in the variables `tree-widget-image-properties-emacs', and
   (cons :pointer
         (cons (or (cdr (assoc name tree-widget--cursors)) 'hand)
               (tree-widget-set-image-properties
-               (if (featurep 'xemacs)
-                   tree-widget-image-properties-xemacs
-                 tree-widget-image-properties-emacs)))))
+               tree-widget-image-properties-emacs))))
 
 (defun tree-widget-lookup-image (name)
   "Look up in current theme for an image with NAME.
@@ -411,9 +381,9 @@ found."
               (and (file-readable-p file)
                    (file-regular-p file)
                    (throw 'found
-                          (tree-widget-create-image
-                           (car fmt) file
-                           (tree-widget-image-properties name))))))))
+                          (apply #'create-image
+                                 (car fmt) file nil
+                                 (tree-widget-image-properties name))))))))
       nil)))
 
 (defun tree-widget-find-image (name)
