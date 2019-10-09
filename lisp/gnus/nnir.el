@@ -204,7 +204,7 @@
     ("from" . "FROM")
     ("body" . "BODY")
     ("imap" . ""))
-  "Mapping from user readable keys to IMAP search items for use in nnir")
+  "Mapping from user readable keys to IMAP search items for use in nnir.")
 
 (defvar nnir-imap-search-other "HEADER %S"
   "The IMAP search item to use for anything other than
@@ -212,7 +212,7 @@
 email header field.")
 
 (defvar nnir-imap-search-argument-history ()
-  "The history for querying search options in nnir")
+  "The history for querying search options in nnir.")
 
 ;;; Helper macros
 
@@ -256,12 +256,12 @@ email header field.")
   (cons article (nnir-article-number article)))
 
 (defmacro nnir-categorize (sequence keyfunc &optional valuefunc)
-  "Sort a sequence into categories and returns a list of the form
+  "Sort a SEQUENCE into categories and returns a list of the form
 `((key1 (element11 element12)) (key2 (element21 element22))'.
 The category key for a member of the sequence is obtained
-as `(keyfunc member)' and the corresponding element is just
-`member'.  If `valuefunc' is non-nil, the element of the list
-is `(valuefunc member)'."
+as `(KEYFUNC member)' and the corresponding element is just
+`member'.  If VALUEFUNC is non-nil, the element of the list
+is `(VALUEFUNC member)'."
   `(unless (null ,sequence)
      (let (value)
        (mapc
@@ -294,7 +294,7 @@ is `(valuefunc member)'."
 
 (defcustom nnir-ignored-newsgroups ""
   "A regexp to match newsgroups in the active file that should
-  be skipped when searching."
+be skipped when searching."
   :version "24.1"
   :type '(regexp)
   :group 'nnir)
@@ -320,16 +320,16 @@ and populates the `nntp-server-buffer' with the retrieved
 headers.  Must return either 'nov or 'headers indicating the
 retrieved header format.
 
-If this variable is nil, or if the provided function returns nil for a search
-result, `gnus-retrieve-headers' will be called instead."
+If this variable is nil, or if the provided function returns nil for
+a search result, `gnus-retrieve-headers' will be called instead."
   :version "24.1"
   :type '(choice (const :tag "gnus-retrieve-headers" nil) function)
   :group 'nnir)
 
 (defcustom nnir-imap-default-search-key "whole message"
   "The default IMAP search key for an nnir search.  Must be one of
-  the keys in `nnir-imap-search-arguments'.  To use raw imap queries
-  by default set this to \"imap\"."
+the keys in `nnir-imap-search-arguments'.  To use raw imap queries
+by default set this to \"imap\"."
   :version "24.1"
   :type `(choice ,@(mapcar (lambda (elem) (list 'const (car elem)))
 			   nnir-imap-search-arguments))
@@ -467,8 +467,8 @@ arrive at the correct group name, \"mail.misc\"."
 
 (defcustom nnir-namazu-additional-switches '()
   "A list of strings, to be given as additional arguments to namazu.
-The switches `-q', `-a', and `-s' are always used, very few other switches
-make any sense in this context.
+The switches `-q', `-a', and `-s' are always used, very few other
+switches make any sense in this context.
 
 Note that this should be a list.  I.e., do NOT use the following:
     (setq nnir-namazu-additional-switches \"-i -w\") ; wrong
@@ -597,15 +597,15 @@ Add an entry here when adding a new search engine.")
 		  (topic &optional level all lowest recursive))
 
 (defun gnus-group-make-nnir-group (nnir-extra-parms &optional specs)
-  "Create an nnir group.  Prompt for a search query and determine
-the groups to search as follows: if called from the *Server*
-buffer search all groups belonging to the server on the current
-line; if called from the *Group* buffer search any marked groups,
-or the group on the current line, or all the groups under the
-current topic.  Calling with a prefix-arg prompts for additional
-search-engine specific constraints.  A non-nil `specs' arg must be
-an alist with `nnir-query-spec' and `nnir-group-spec' keys, and
-skips all prompting."
+  "Create an nnir group.
+Prompt for a search query and determine the groups to search as
+follows: if called from the *Server* buffer search all groups
+belonging to the server on the current line; if called from the
+*Group* buffer search any marked groups, or the group on the current
+line, or all the groups under the current topic.  Calling with a
+prefix-arg prompts for additional search-engine specific constraints.
+A non-nil `specs' arg must be an alist with `nnir-query-spec' and
+`nnir-group-spec' keys, and skips all prompting."
   (interactive "P")
   (let* ((group-spec
 	  (or (cdr (assq 'nnir-group-spec specs))
@@ -929,7 +929,7 @@ skips all prompting."
 
 (defmacro nnir-add-result (dirnam artno score prefix server artlist)
   "Ask `nnir-compose-result' to construct a result vector,
-and if it is non-nil, add it to artlist."
+and if it is non-nil, add it to ARTLIST."
   `(let ((result (nnir-compose-result ,dirnam ,artno ,score ,prefix ,server)))
      (when (not (null result))
        (push result ,artlist))))
@@ -939,7 +939,7 @@ and if it is non-nil, add it to artlist."
 ;; Helper function currently used by the Swish++ and Namazu backends;
 ;; perhaps useful for other backends as well
 (defun nnir-compose-result (dirnam article score prefix server)
-  "Extract the group from dirnam, and create a result vector
+  "Extract the group from DIRNAM, and create a result vector
 ready to be added to the list of search results."
 
   ;; remove nnir-*-remove-prefix from beginning of dirnam filename
@@ -977,8 +977,8 @@ ready to be added to the list of search results."
 ;; imap interface
 (defun nnir-run-imap (query srv &optional groups)
   "Run a search against an IMAP back-end server.
-This uses a custom query language parser; see `nnir-imap-make-query' for
-details on the language and supported extensions."
+This uses a custom query language parser; see `nnir-imap-make-query'
+for details on the language and supported extensions."
   (save-excursion
     (let ((qstring (cdr (assq 'query query)))
           (server (cadr (gnus-server-to-method srv)))
@@ -1027,28 +1027,30 @@ details on the language and supported extensions."
   "Parse the query string and criteria into an appropriate IMAP search
 expression, returning the string query to make.
 
-This implements a little language designed to return the expected results
-to an arbitrary query string to the end user.
+This implements a little language designed to return the expected
+results to an arbitrary query string to the end user.
 
-The search is always case-insensitive, as defined by RFC2060, and supports
-the following features (inspired by the Google search input language):
+The search is always case-insensitive, as defined by RFC2060, and
+supports the following features (inspired by the Google search input
+language):
 
 Automatic \"and\" queries
-    If you specify multiple words then they will be treated as an \"and\"
-    expression intended to match all components.
+    If you specify multiple words then they will be treated as an
+    \"and\" expression intended to match all components.
 
 Phrase searches
-    If you wrap your query in double-quotes then it will be treated as a
-    literal string.
+    If you wrap your query in double-quotes then it will be treated
+    as a literal string.
 
 Negative terms
     If you precede a term with \"-\" then it will negate that.
 
 \"OR\" queries
-    If you include an upper-case \"OR\" in your search it will cause the
-    term before it and the term after it to be treated as alternatives.
+    If you include an upper-case \"OR\" in your search it will cause
+    the term before it and the term after it to be treated as
+    alternatives.
 
-In future the following will be added to the language:
+In the future the following will be added to the language:
  * support for date matches
  * support for location of text matching within the query
  * from/to/etc headers
@@ -1060,7 +1062,7 @@ In future the following will be added to the language:
 
 
 (defun nnir-imap-query-to-imap (criteria query)
-  "Turn a s-expression format query into IMAP."
+  "Turn an s-expression format QUERY into IMAP."
   (mapconcat
    ;; Turn the expressions into IMAP text
    (lambda (item)
@@ -1072,7 +1074,7 @@ In future the following will be added to the language:
 
 
 (defun nnir-imap-expr-to-imap (criteria expr)
-  "Convert EXPR into an IMAP search expression on CRITERIA"
+  "Convert EXPR into an IMAP search expression on CRITERIA."
   ;; What sort of expression is this, eh?
   (cond
    ;; Simple string term
@@ -1126,7 +1128,7 @@ that the search language can then understand and use."
 
 
 (defun nnir-imap-next-term (&optional count)
-  "Return the next TERM from the current buffer."
+  "Return the next term from the current buffer."
   (let ((term (nnir-imap-next-symbol count)))
     ;; What sort of term is this?
     (cond
@@ -1294,7 +1296,7 @@ Windows NT 4.0."
 
 ;; Swish-E interface.
 (defun nnir-run-swish-e (query server &optional _group)
-  "Run given query against swish-e.
+  "Run given QUERY against swish-e.
 Returns a vector of (group name, file name) pairs (also vectors,
 actually).
 
@@ -1460,7 +1462,7 @@ Tested with swish-e-2.0.1 on Windows NT 4.0."
 
 ;; Namazu interface
 (defun nnir-run-namazu (query server &optional _group)
-  "Run given query against Namazu.
+  "Run given QUERY against Namazu.
 Returns a vector of (group name, file name) pairs (also vectors,
 actually).
 
@@ -1713,7 +1715,7 @@ construct path: search terms (see the variable
 
 (defun nnir-read-parm (parmspec)
   "Read a single search parameter.
-`parmspec' is a cons cell, the car is a symbol, the cdr is a prompt."
+PARMSPEC is a cons cell, the car is a symbol, the cdr is a prompt."
   (let ((sym (car parmspec))
         (prompt (cdr parmspec)))
     (if (listp prompt)
@@ -1742,9 +1744,9 @@ construct path: search terms (see the variable
 		  nnir-method-default-engines))))
 
 (defun nnir-read-server-parm (key server &optional not-global)
-  "Return the parameter value corresponding to `key' for `server'.
+  "Return the parameter value corresponding to KEY for SERVER.
 If no server-specific value is found consult the global
-environment unless `not-global' is non-nil."
+environment unless NOT-GLOBAL is non-nil."
   (let ((method (gnus-server-to-method server)))
     (cond ((and method (assq key (cddr method)))
            (nth 1 (assq key (cddr method))))
@@ -1767,10 +1769,10 @@ environment unless `not-global' is non-nil."
 (declare-function gnus-registry-get-id-key "gnus-registry" (id key))
 
 (defun nnir-search-thread (header)
-  "Make an nnir group based on the thread containing the article
-header.  The current server will be searched. If the registry is
-installed, the server that the registry reports the current
-article came from is also searched."
+  "Make an nnir group based on the thread containing the article HEADER.
+The current server will be searched.  If the registry is installed,
+the server that the registry reports the current article came from
+is also searched."
   (let* ((query
 	  (list (cons 'query (nnimap-make-thread-query header))
 		(cons 'criteria "")))
