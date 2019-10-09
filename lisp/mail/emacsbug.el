@@ -477,7 +477,11 @@ and send the mail again%s."
 	       (not (yes-or-no-p
 		     (format-message "Is `%s' really your email address? "
                                      from)))
-	       (error "Please edit the From address and try again"))))))
+	       (error "Please edit the From address and try again"))))
+    ;; Bury the help buffer (if it's shown).
+    (when-let ((help (get-buffer "*Bug Help*")))
+      (when (get-buffer-window help)
+        (quit-window nil (get-buffer-window help))))))
 
 
 (provide 'emacsbug)
