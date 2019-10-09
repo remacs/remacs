@@ -559,7 +559,8 @@ suitable file is found, return nil."
 (add-hook 'help-fns-describe-function-functions
           #'help-fns--globalized-minor-mode)
 (defun help-fns--globalized-minor-mode (function)
-  (when (get function 'globalized-minor-mode)
+  (when (and (symbolp function)
+             (get function 'globalized-minor-mode))
     (help-fns--customize-variable function " the global mode variable.")
     (terpri)))
 
