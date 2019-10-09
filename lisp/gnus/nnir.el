@@ -535,7 +535,7 @@ like so:
    (lambda (g) (replace-regexp-in-string \"\\\\.\" \"/\" g)))"
   :version "27.1"
   :type '(choice function
-		 nil))
+		 (const :tag "No" nil)))
 
 ;;; Developer Extension Variable:
 
