@@ -58,6 +58,16 @@ If nil, use Emacs default."
   :type '(choice (const :tag "Default" nil)
 		 integer))
 
+(defcustom compilation-transform-file-match-alist
+  '(("/bin/[a-z]*sh\\'" nil)
+    ("\\*+ \\[\\(Makefile\\)" "\\1"))
+  "Alist of regexp/replacements to alter file names in compilation errors.
+If the replacement is nil, the file will not be considered an
+error after all.  If not nil, it should be a regexp replacement
+string."
+  :type '(repeat (list regexp string))
+  :version "27.1")
+
 (defvar compilation-filter-hook nil
   "Hook run after `compilation-filter' has inserted a string into the buffer.
 It is called with the variable `compilation-filter-start' bound
@@ -608,7 +618,12 @@ SUBMATCH is the number of a submatch and FACE is an expression
 which evaluates to a face name (a symbol or string).
 Alternatively, FACE can evaluate to a property list of the
 form (face FACE PROP1 VAL1 PROP2 VAL2 ...), in which case all the
-listed text properties PROP# are given values VAL# as well."
+listed text properties PROP# are given values VAL# as well.
+
+After identifying errors and warnings determined by this
+variable, the `compilation-transform-file-match-alist' variable
+is then consulted.  It allows further transformations of the
+matched file names, and weeding out false positives."
   :type '(repeat (choice (symbol :tag "Predefined symbol")
 			 (sexp :tag "Error specification")))
   :link `(file-link :tag "example file"
@@ -1111,7 +1126,7 @@ POS and RES.")
                (setq file (if (functionp file) (funcall file)
                             (match-string-no-properties file))))
 	  (let ((dir
-	    (unless (file-name-absolute-p file)
+	         (unless (file-name-absolute-p file)
                    (let ((pos (compilation--previous-directory
                                (match-beginning 0))))
                      (when pos
@@ -1161,19 +1176,36 @@ POS and RES.")
                      (setq end-col (match-string-no-properties end-col))
                      (- (string-to-number end-col) -1)))
               (and end-line -1)))
-    (if (consp type)			; not a static type, check what it is.
+    (if (consp type)            ; not a static type, check what it is.
 	(setq type (or (and (car type) (match-end (car type)) 1)
 		       (and (cdr type) (match-end (cdr type)) 0)
 		       2)))
+    ;; Remove matches like /bin/sh and do other file name transforms.
+    (save-match-data
+      (let ((transformed nil))
+        (dolist (f file)
+          (let ((match
+                 (cl-loop for (regexp replacement)
+                          in compilation-transform-file-match-alist
+                          when (string-match regexp f)
+                          return (or replacement t))))
+            (cond ((not match)
+                   (push f transformed))
+                  ((stringp match)
+                   (push (replace-match match nil nil f) transformed)))))
+        (setq file (nreverse transformed))))
+    (if (not file)
+        ;; If we ignored all the files with errors on this line, then
+        ;; return nil.
+        nil
+      (when (and compilation-auto-jump-to-next
+                 (>= type compilation-skip-threshold))
+        (kill-local-variable 'compilation-auto-jump-to-next)
+        (run-with-timer 0 nil 'compilation-auto-jump
+                        (current-buffer) (match-beginning 0)))
 
-    (when (and compilation-auto-jump-to-next
-               (>= type compilation-skip-threshold))
-      (kill-local-variable 'compilation-auto-jump-to-next)
-      (run-with-timer 0 nil 'compilation-auto-jump
-                      (current-buffer) (match-beginning 0)))
-
-    (compilation-internal-error-properties
-     file line end-line col end-col type fmt)))
+      (compilation-internal-error-properties
+       file line end-line col end-col type fmt))))
 
 (defun compilation-beginning-of-line (&optional n)
   "Like `beginning-of-line', but accounts for lines hidden by `selective-display'."

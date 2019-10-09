@@ -612,6 +612,10 @@ be functions.
 nil, but instead of scrolling the current line to the top of the
 screen when there is no left fringe, it inserts a visible arrow before
 column zero.
+---
+*** The new 'compilation-transform-file-match-alist' variable can be used
+to transform file name matches compilation output, and remove known
+false positives being recognised as warnings/errors.
 
 ** cl-lib.el
 +++
