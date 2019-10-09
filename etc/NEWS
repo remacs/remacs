@@ -560,10 +560,14 @@ now prompts the user for the directory containing the desktop file.
 
 +++
 ** display-line-numbers-mode
+
 *** New faces 'line-number-major-tick' and 'line-number-minor-tick',
 and customizable variables 'display-line-numbers-major-tick' and
 'display-line-numbers-minor-tick' can be used to highlight the line
 numbers of lines multiple of certain numbers.
+
+*** New variable `display-line-numbers-offset', when non-zero, adds
+an offset to absolute line numbers.
 
 +++
 ** winner
