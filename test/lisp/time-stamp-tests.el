@@ -248,6 +248,32 @@ In use before 2019 changes; will be used again after those changes settle."
     (should (equal (time-stamp-string "%S" ref-time) "05"))
     (should (equal (time-stamp-string "%S" ref-time2) "15"))))
 
+(ert-deftest time-stamp-test-year-2digit ()
+  "Test time-stamp formats for %y."
+  (with-time-stamp-test-env
+    ;; implemented and documented since 1995
+    (should (equal (time-stamp-string "%02y" ref-time) "06"))
+    (should (equal (time-stamp-string "%02y" ref-time2) "16"))
+    ;; documented 1997-2019
+    (should (equal (time-stamp-string "%:y" ref-time) "2006"))
+    (should (equal (time-stamp-string "%:y" ref-time2) "2016"))
+    ;; warned 1997-2019, changed in 2019
+    ;; (We don't expect the %-y or %_y form to be useful,
+    ;; but we test both so that we can confidently state that
+    ;; `-' and `_' affect all 2-digit conversions identically.)
+    (should (equal (time-stamp-string "%-y" ref-time) "6"))
+    (should (equal (time-stamp-string "%-y" ref-time2) "16"))
+    (should (equal (time-stamp-string "%_y" ref-time) " 6"))
+    (should (equal (time-stamp-string "%_y" ref-time2) "16"))
+    (should (equal (time-stamp-string "%y" ref-time) "06"))
+    (should (equal (time-stamp-string "%y" ref-time2) "16"))))
+
+(ert-deftest time-stamp-test-year-4digit ()
+  "Test time-stamp format %Y."
+  (with-time-stamp-test-env
+    ;; implemented since 1997, documented since 2019
+    (should (equal (time-stamp-string "%Y" ref-time) "2006"))))
+
 (ert-deftest time-stamp-test-am-pm ()
   "Test time-stamp formats for AM and PM strings."
   (with-time-stamp-test-env
@@ -266,18 +292,6 @@ In use before 2019 changes; will be used again after those changes settle."
     (should (equal (time-stamp-string "%w" ref-time) "1"))
     (should (equal (time-stamp-string "%w" ref-time2) "5"))
     (should (equal (time-stamp-string "%w" ref-time3) "0"))))
-
-(ert-deftest time-stamp-test-year ()
-  "Test time-stamp formats for year."
-  (with-time-stamp-test-env
-    ;; implemented and documented since 1995
-    (should (equal (time-stamp-string "%02y" ref-time) "06"))
-    ;; documented 1997-2019
-    (should (equal (time-stamp-string "%:y" ref-time) "2006"))
-    ;; implemented since 1997, documented since 2019
-    (should (equal (time-stamp-string "%Y" ref-time) "2006"))
-    ;; warned 1997-2019, changed in 2019
-    (should (equal (time-stamp-string "%y" ref-time) "06"))))
 
 (ert-deftest time-stamp-test-time-zone ()
   "Test time-stamp formats for time zone."
