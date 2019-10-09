@@ -6211,6 +6211,8 @@ an auto-save file."
 	   (after-find-file nil nil t))
 	  (t (user-error "Recover-file canceled")))))
 
+(defvar dired-mode-hook)
+
 (defun recover-session ()
   "Recover auto save files from a previous Emacs session.
 This command first displays a Dired buffer showing you the
@@ -6230,7 +6232,12 @@ Then you'll be asked about a number of files to recover."
                                (concat "\\`" (regexp-quote nd)))
 			     t)
       (error "No previous sessions to recover")))
-  (let ((ls-lisp-support-shell-wildcards t))
+  (require 'dired)
+  (let ((ls-lisp-support-shell-wildcards t)
+        ;; Ensure that we don't omit the session files as the user may
+        ;; have (as suggested by the manual) `dired-omit-mode' in the
+        ;; hook.
+        (dired-mode-hook (delete 'dired-omit-mode dired-mode-hook)))
     (dired (concat auto-save-list-file-prefix "*")
 	   (concat dired-listing-switches " -t")))
   (use-local-map (nconc (make-sparse-keymap) (current-local-map)))
