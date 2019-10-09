@@ -442,7 +442,7 @@ fill_column_indicator_column (struct it *it, int char_width)
 			 ? BVAR (current_buffer, fill_column)
 			 : Vdisplay_fill_column_indicator_column);
 
-      /* The stretch width needs to considet the latter
+      /* The stretch width needs to consider the latter
 	 added glyph in append_space_for_newline.  */
       if (RANGED_FIXNUMP (0, col, INT_MAX))
 	{
@@ -21691,6 +21691,9 @@ extend_face_to_end_of_line (struct it *it)
 	      && indicator_column < it->last_visible_x)
             {
 
+	      /* Here we substract char_width because we want the
+		 column indicator in the column INDICATOR_COLUMN, not
+		 after it.  */
 	      const int stretch_width =
 		indicator_column - it->current_x - char_width;
 
@@ -21851,6 +21854,11 @@ extend_face_to_end_of_line (struct it *it)
                      default_face->id : face->id);
 
       /* Display fill-column indicator if needed.  */
+      /* We need to subtract 1 to the indicator_column here because we
+	 will add the indicator IN the column indicator number, not
+	 after it.  We compare the variable it->current_x before
+	 producing the glyph.  When FRAME_WINDOW_P we substract
+	 CHAR_WIDTH calculating STRETCH_WIDTH for the same reason.  */
       const int indicator_column =
 	fill_column_indicator_column (it, 1) - 1;
       do

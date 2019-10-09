@@ -2284,7 +2284,7 @@ filter_face_ref (Lisp_Object face_ref,
 
    ATTR_FILTER is the index of a parameter that conditions the merging
    for named faces (case 1) to only the face_ref where
-   lface[merge_face_ref] is non-nil. To merge unconditionally set this
+   lface[merge_face_ref] is non-nil.  To merge unconditionally set this
    value to 0.
 
    FACE_REF may be a single face specification or a list of such
