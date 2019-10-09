@@ -331,7 +331,7 @@ Thus, this does not include the shell's current directory.")
   "Command used by `shell-resync-dirs' to query the shell.")
 
 (defvar shell-mode-map
-  (let ((map (nconc (make-sparse-keymap) comint-mode-map)))
+  (let ((map (make-sparse-keymap)))
     (define-key map "\C-c\C-f" 'shell-forward-command)
     (define-key map "\C-c\C-b" 'shell-backward-command)
     (define-key map "\t" 'completion-at-point)
