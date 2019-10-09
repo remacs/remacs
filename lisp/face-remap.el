@@ -474,7 +474,7 @@ may be more appropriate."
 An interface to `buffer-face-mode' which uses the `variable-pitch' face.
 Besides the choice of face, it is the same as `buffer-face-mode'."
   (interactive (list (or current-prefix-arg 'toggle)))
-  (buffer-face-mode-invoke 'variable-pitch arg
+  (buffer-face-mode-invoke 'variable-pitch (or arg t)
 			   (called-interactively-p 'interactive)))
 
 
