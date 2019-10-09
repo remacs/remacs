@@ -2020,8 +2020,8 @@ information.
 
 @item markers
 The markers that refer to this buffer.  This is actually a single
-marker, and successive elements in its marker @code{chain} are the other
-markers referring to this buffer text.
+marker, and successive elements in its marker @dfn{chain} (a linked
+list) are the other markers referring to this buffer text.
 
 @item intervals
 The interval tree which records the text properties of this buffer.
