@@ -1419,7 +1419,8 @@ in all cases, since that is the standard symbol for byte."
                                (if (string= prefix "") "" "i")
                                (or unit "B"))
                             (concat prefix unit))))
-      (format (if (> (mod file-size 1.0) 0.05)
+      (format (if (and (>= (mod file-size 1.0) 0.05)
+                       (< (mod file-size 1.0) 0.95))
 		  "%.1f%s%s"
 	        "%.0f%s%s")
 	      file-size
