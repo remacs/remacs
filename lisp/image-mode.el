@@ -982,7 +982,19 @@ replacing the current Image mode buffer."
 	    (throw 'image-visit-next-file (1+ idx)))
 	(setq idx (1+ idx))))
     (setq idx (mod (+ idx (or n 1)) (length images)))
-    (find-alternate-file (nth idx images))))
+    (let ((image (nth idx images))
+          (dir (file-name-directory buffer-file-name)))
+      (find-alternate-file image)
+      ;; If we have dired buffer(s) open to where this image is, then
+      ;; place point on it.
+      (dolist (buffer (buffer-list))
+	(with-current-buffer buffer
+	  (when (and (derived-mode-p 'dired-mode)
+	             (equal (file-truename dir)
+		            (file-truename default-directory)))
+            (save-window-excursion
+              (switch-to-buffer (current-buffer) t t)
+              (dired-goto-file (expand-file-name image dir)))))))))
 
 (defun image-previous-file (&optional n)
   "Visit the preceding image in the same directory as the current file.
