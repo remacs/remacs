@@ -5338,7 +5338,16 @@ completion alternatives to currently visited manuals."
 	  (setq found buffer
 		blist nil))))
     (if found
-	(switch-to-buffer found)
+        (let ((window (get-buffer-window found t)))
+          ;; If the buffer is already displayed in a window somewhere,
+          ;; then select that window (and pop its frame to the top).
+          (if window
+              (progn
+                (raise-frame (window-frame window))
+                (select-frame-set-input-focus (window-frame window))
+                (select-window window))
+	    (switch-to-buffer found)))
+      ;; The buffer doesn't exist; create it.
       (info-initialize)
       (info (Info-find-file manual)
 	    (generate-new-buffer-name "*info*")))))
