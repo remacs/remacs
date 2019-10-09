@@ -22657,29 +22657,33 @@ maybe_produce_line_number (struct it *it)
   int width_limit =
     tem_it.last_visible_x - tem_it.first_visible_x
     - 3 * FRAME_COLUMN_WIDTH (it->f);
-  /* Produce glyphs for the line number in a scratch glyph_row.  */
-  for (const char *p = lnum_buf; *p; p++)
+
+  tem_it.face_id = lnum_face_id;
+  /* Avoid displaying any face other than line-number on
+     empty lines beyond EOB.  */
+  if (lnum_face_id != current_lnum_face_id
+      && (EQ (Vdisplay_line_numbers, Qvisual)
+	  ? this_line == 0
+	  : this_line == it->pt_lnum)
+      && it->what != IT_EOB)
+    tem_it.face_id = current_lnum_face_id;
+  else if (!beyond_zv)
     {
-      /* For continuation lines and lines after ZV, instead of a line
-	 number, produce a blank prefix of the same width.  */
-      if (lnum_face_id != current_lnum_face_id
-	  && (EQ (Vdisplay_line_numbers, Qvisual)
-	      ? this_line == 0
-	      : this_line == it->pt_lnum)
-	  /* Avoid displaying the line-number-current-line face on
-	     empty lines beyond EOB.  */
-	  && it->what != IT_EOB)
-	tem_it.face_id = current_lnum_face_id;
-      else if (display_line_numbers_major_tick > 0
-	       && (lnum_to_display % display_line_numbers_major_tick == 0))
+      if (display_line_numbers_major_tick > 0
+	  && (lnum_to_display % display_line_numbers_major_tick == 0))
 	tem_it.face_id = merge_faces (it->w, Qline_number_major_tick,
 				      0, DEFAULT_FACE_ID);
       else if (display_line_numbers_minor_tick > 0
 	       && (lnum_to_display % display_line_numbers_minor_tick == 0))
 	tem_it.face_id = merge_faces (it->w, Qline_number_minor_tick,
 				      0, DEFAULT_FACE_ID);
-      else
-	tem_it.face_id = lnum_face_id;
+    }
+
+  /* Produce glyphs for the line number in a scratch glyph_row.  */
+  for (const char *p = lnum_buf; *p; p++)
+    {
+      /* For continuation lines and lines after ZV, instead of a line
+	 number, produce a blank prefix of the same width.  */
       if (beyond_zv
 	  /* Don't display the same line number more than once.  */
 	  || (!EQ (Vdisplay_line_numbers, Qvisual)
