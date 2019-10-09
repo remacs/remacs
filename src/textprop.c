@@ -358,12 +358,15 @@ set_properties (Lisp_Object properties, INTERVAL interval, Lisp_Object object)
 
    OBJECT should be the string or buffer the interval is in.
 
+   If DESTRUCTIVE, the function is allowed to reuse list values in the
+   properties.
+
    Return true if this changes I (i.e., if any members of PLIST
    are actually added to I's plist) */
 
 static bool
 add_properties (Lisp_Object plist, INTERVAL i, Lisp_Object object,
-		enum property_set_type set_type)
+		enum property_set_type set_type, bool destructive)
 {
   Lisp_Object tail1, tail2, sym1, val1;
   bool changed = false;
@@ -414,7 +417,15 @@ add_properties (Lisp_Object plist, INTERVAL i, Lisp_Object object,
 		if (set_type == TEXT_PROPERTY_PREPEND)
 		  Fsetcar (this_cdr, Fcons (val1, Fcar (this_cdr)));
 		else
-		  nconc2 (Fcar (this_cdr), list1 (val1));
+		  {
+		    /* Appending. */
+		    if (destructive)
+		      nconc2 (Fcar (this_cdr), list1 (val1));
+		    else
+		      Fsetcar (this_cdr, CALLN (Fappend,
+						Fcar (this_cdr),
+						list1 (val1)));
+		  }
 	      else {
 		/* The previous value is a single value, so make it
 		   into a list. */
@@ -1140,7 +1151,8 @@ back past position LIMIT; return LIMIT if nothing is found until LIMIT.  */)
 static Lisp_Object
 add_text_properties_1 (Lisp_Object start, Lisp_Object end,
 		       Lisp_Object properties, Lisp_Object object,
-		       enum property_set_type set_type) {
+		       enum property_set_type set_type,
+		       bool destructive) {
   /* Ensure we run the modification hooks for the right buffer,
      without switching buffers twice (bug 36190).  FIXME: Switching
      buffers is slow and often unnecessary.  */
@@ -1150,7 +1162,8 @@ add_text_properties_1 (Lisp_Object start, Lisp_Object end,
       record_unwind_current_buffer ();
       set_buffer_internal (XBUFFER (object));
       return unbind_to (count, add_text_properties_1 (start, end, properties,
-						      object, set_type));
+						      object, set_type,
+						      destructive));
     }
 
   INTERVAL i, unchanged;
@@ -1236,7 +1249,7 @@ add_text_properties_1 (Lisp_Object start, Lisp_Object end,
 
 	  if (LENGTH (i) == len)
 	    {
-	      add_properties (properties, i, object, set_type);
+	      add_properties (properties, i, object, set_type, destructive);
 	      if (BUFFERP (object))
 		signal_after_change (XFIXNUM (start), XFIXNUM (end) - XFIXNUM (start),
 				     XFIXNUM (end) - XFIXNUM (start));
@@ -1247,7 +1260,7 @@ add_text_properties_1 (Lisp_Object start, Lisp_Object end,
 	  unchanged = i;
 	  i = split_interval_left (unchanged, len);
 	  copy_properties (unchanged, i);
-	  add_properties (properties, i, object, set_type);
+	  add_properties (properties, i, object, set_type, destructive);
 	  if (BUFFERP (object))
 	    signal_after_change (XFIXNUM (start), XFIXNUM (end) - XFIXNUM (start),
 				 XFIXNUM (end) - XFIXNUM (start));
@@ -1255,7 +1268,7 @@ add_text_properties_1 (Lisp_Object start, Lisp_Object end,
 	}
 
       len -= LENGTH (i);
-      modified |= add_properties (properties, i, object, set_type);
+      modified |= add_properties (properties, i, object, set_type, destructive);
       i = next_interval (i);
     }
 }
@@ -1275,7 +1288,7 @@ Return t if any property value actually changed, nil otherwise.  */)
    Lisp_Object object)
 {
   return add_text_properties_1 (start, end, properties, object,
-				TEXT_PROPERTY_REPLACE);
+				TEXT_PROPERTY_REPLACE, true);
 }
 
 /* Callers note, this can GC when OBJECT is a buffer (or nil).  */
@@ -1337,7 +1350,8 @@ into it.  */)
   add_text_properties_1 (start, end, properties, object,
 			 (NILP (append)
 			  ? TEXT_PROPERTY_PREPEND
-			  : TEXT_PROPERTY_APPEND));
+			  : TEXT_PROPERTY_APPEND),
+			 !STRINGP (object));
   return Qnil;
 }
 
