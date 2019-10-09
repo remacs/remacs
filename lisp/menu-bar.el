@@ -1118,46 +1118,58 @@ The selected font will be the default on both the existing and future frames."
       (global-display-line-numbers-mode)
     (display-line-numbers-mode)))
 
+(defun menu-bar--display-line-numbers-mode-visual ()
+  "Turn on visual line number mode."
+  (interactive)
+  (menu-bar-display-line-numbers-mode 'visual)
+  (message "Visual line numbers enabled"))
+
+(defun menu-bar--display-line-numbers-mode-relative ()
+  "Turn on relative line number mode."
+  (interactive)
+  (menu-bar-display-line-numbers-mode 'relative)
+  (message "Relative line numbers enabled"))
+
+(defun menu-bar--display-line-numbers-mode-absolute ()
+  "Turn on absolute line number mode."
+  (interactive)
+  (menu-bar-display-line-numbers-mode t)
+  (setq display-line-numbers t)
+  (message "Absolute line numbers enabled"))
+
+(defun menu-bar--display-line-numbers-mode-none ()
+  "Disable line numbers."
+  (interactive)
+  (menu-bar-display-line-numbers-mode nil)
+  (message "Line numbers disabled"))
+
 (defvar menu-bar-showhide-line-numbers-menu
   (let ((menu (make-sparse-keymap "Line Numbers")))
 
     (bindings--define-key menu [visual]
-      `(menu-item "Visual Line Numbers"
-                  ,(lambda ()
-                     (interactive)
-                     (menu-bar-display-line-numbers-mode 'visual)
-                     (message "Visual line numbers enabled"))
+      '(menu-item "Visual Line Numbers"
+                  menu-bar--display-line-numbers-mode-visual
                   :help "Enable visual line numbers"
                   :button (:radio . (eq display-line-numbers 'visual))
                   :visible (menu-bar-menu-frame-live-and-visible-p)))
 
     (bindings--define-key menu [relative]
-      `(menu-item "Relative Line Numbers"
-                  ,(lambda ()
-                     (interactive)
-                     (menu-bar-display-line-numbers-mode 'relative)
-                     (message "Relative line numbers enabled"))
+      '(menu-item "Relative Line Numbers"
+                  menu-bar--display-line-numbers-mode-relative
                   :help "Enable relative line numbers"
                   :button (:radio . (eq display-line-numbers 'relative))
                   :visible (menu-bar-menu-frame-live-and-visible-p)))
 
     (bindings--define-key menu [absolute]
-      `(menu-item "Absolute Line Numbers"
-                  ,(lambda ()
-                     (interactive)
-                     (menu-bar-display-line-numbers-mode t)
-                     (setq display-line-numbers t)
-                     (message "Absolute line numbers enabled"))
+      '(menu-item "Absolute Line Numbers"
+                  menu-bar--display-line-numbers-mode-absolute
                   :help "Enable absolute line numbers"
                   :button (:radio . (eq display-line-numbers t))
                   :visible (menu-bar-menu-frame-live-and-visible-p)))
 
     (bindings--define-key menu [none]
-      `(menu-item "No Line Numbers"
-                  ,(lambda ()
-                     (interactive)
-                     (menu-bar-display-line-numbers-mode nil)
-                     (message "Line numbers disabled"))
+      '(menu-item "No Line Numbers"
+                  menu-bar--display-line-numbers-mode-none
                   :help "Disable line numbers"
                   :button (:radio . (null display-line-numbers))
                   :visible (menu-bar-menu-frame-live-and-visible-p)))
@@ -1266,16 +1278,33 @@ mail status in mode line"))
                                                  'tool-bar-lines))))))
     menu))
 
+(defun menu-bar--visual-line-mode-enable ()
+  "Enable visual line mode."
+  (interactive)
+  (unless visual-line-mode
+    (visual-line-mode 1))
+  (message "Visual-Line mode enabled"))
+
+(defun menu-bar--toggle-truncate-long-lines ()
+  "Toggle long lines mode."
+  (interactive)
+  (if visual-line-mode (visual-line-mode 0))
+  (setq word-wrap nil)
+  (toggle-truncate-lines 1))
+
+(defun menu-bar--wrap-long-lines-window-edge ()
+  "Wrap long lines at window edge."
+  (interactive)
+  (if visual-line-mode (visual-line-mode 0))
+  (setq word-wrap nil)
+  (if truncate-lines (toggle-truncate-lines -1)))
+
 (defvar menu-bar-line-wrapping-menu
   (let ((menu (make-sparse-keymap "Line Wrapping")))
 
     (bindings--define-key menu [word-wrap]
-      `(menu-item "Word Wrap (Visual Line mode)"
-                  ,(lambda ()
-                     (interactive)
-                     (unless visual-line-mode
-                       (visual-line-mode 1))
-                     (message "Visual-Line mode enabled"))
+      '(menu-item "Word Wrap (Visual Line mode)"
+                  menu-bar--visual-line-mode-enable
                   :help "Wrap long lines at word boundaries"
                   :button (:radio
                            . (and (null truncate-lines)
@@ -1284,12 +1313,8 @@ mail status in mode line"))
                   :visible (menu-bar-menu-frame-live-and-visible-p)))
 
     (bindings--define-key menu [truncate]
-      `(menu-item "Truncate Long Lines"
-                  ,(lambda ()
-                     (interactive)
-                     (if visual-line-mode (visual-line-mode 0))
-                     (setq word-wrap nil)
-                     (toggle-truncate-lines 1))
+      '(menu-item "Truncate Long Lines"
+                  menu-bar--toggle-truncate-long-lines
                   :help "Truncate long lines at window edge"
                   :button (:radio . (or truncate-lines
                                         (truncated-partial-width-window-p)))
@@ -1297,11 +1322,8 @@ mail status in mode line"))
                   :enable (not (truncated-partial-width-window-p))))
 
     (bindings--define-key menu [window-wrap]
-      `(menu-item "Wrap at Window Edge"
-                  ,(lambda () (interactive)
-                     (if visual-line-mode (visual-line-mode 0))
-                     (setq word-wrap nil)
-                     (if truncate-lines (toggle-truncate-lines -1)))
+      '(menu-item "Wrap at Window Edge"
+                  menu-bar--wrap-long-lines-window-edge
                   :help "Wrap long lines at window edge"
                   :button (:radio
                            . (and (null truncate-lines)
