@@ -273,7 +273,17 @@ before any of the local values are computed.  The values are then
 assigned to the locally bound variables.  This is only useful when
 lexical binding is in effect, and you want to create closures that
 refer to bindings that would otherwise not yet be in effect when using
-@code{let}.
+@code{let*}.
+
+For instance, here's a closure that removes itself from a hook after
+being run once:
+
+@lisp
+(letrec ((hookfun (lambda ()
+                    (message "Run once")
+                    (remove-hook 'post-command-hook hookfun))))
+  (add-hook 'post-command-hook hookfun))
+@end lisp
 @end defspec
 
   Here is a complete list of the other facilities that create local
