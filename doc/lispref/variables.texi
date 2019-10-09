@@ -267,6 +267,15 @@ Compare the following example with the example above for @code{let}.
 @end example
 @end defspec
 
+@defspec letrec (bindings@dots{}) forms@dots{}
+This special form is like @code{let}, but all the variables are bound
+before any of the local values are computed.  The values are then
+assigned to the locally bound variables.  This is only useful when
+lexical binding is in effect, and you want to create closures that
+refer to bindings that would otherwise not yet be in effect when using
+@code{let}.
+@end defspec
+
   Here is a complete list of the other facilities that create local
 bindings:
 
