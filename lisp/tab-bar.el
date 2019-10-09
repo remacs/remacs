@@ -268,7 +268,10 @@ from all windows in the window configuration."
 (defun tab-bar-tab-name-selected-window ()
   "Generate tab name from the buffer of the selected window.
 Also add the number of windows in the window configuration."
-  (format "%s (%d)" (buffer-name) (length (window-list-1 nil 'nomini))))
+  (let ((count (length (window-list-1 nil 'nomini))))
+    (if (> count 1)
+        (format "%s (%d)" (buffer-name) count)
+      (format "%s" (buffer-name)))))
 
 (defun tab-bar-tab-name-all-windows ()
   "Generate tab name from buffers of all windows."
@@ -576,13 +579,17 @@ TO-INDEX counts from 1."
                                               (tab-bar-tabs)))))
   (tab-bar-close-tab (1+ (tab-bar--tab-index-by-name name))))
 
-(defun tab-close-other ()
+(defun tab-bar-close-other-tabs ()
   "Close all tabs on the selected frame, except the selected one."
   (interactive)
   (let* ((tabs (tab-bar-tabs))
          (current-index (tab-bar--current-tab-index tabs)))
     (when current-index
       (set-frame-parameter nil 'tabs (list (nth current-index tabs)))
+      (when (and tab-bar-mode
+                 (and (natnump tab-bar-show)
+                      (<= 1 tab-bar-show)))
+        (tab-bar-mode -1))
       (if tab-bar-mode
           (force-mode-line-update)
         (message "Deleted all other tabs")))))
@@ -590,12 +597,13 @@ TO-INDEX counts from 1."
 
 ;;; Short aliases
 
-(defalias 'tab-new      'tab-bar-new-tab)
-(defalias 'tab-close    'tab-bar-close-tab)
-(defalias 'tab-select   'tab-bar-select-tab)
-(defalias 'tab-next     'tab-bar-switch-to-next-tab)
-(defalias 'tab-previous 'tab-bar-switch-to-prev-tab)
-(defalias 'tab-list     'tab-bar-list)
+(defalias 'tab-new         'tab-bar-new-tab)
+(defalias 'tab-close       'tab-bar-close-tab)
+(defalias 'tab-close-other 'tab-bar-close-other-tabs)
+(defalias 'tab-select      'tab-bar-select-tab)
+(defalias 'tab-next        'tab-bar-switch-to-next-tab)
+(defalias 'tab-previous    'tab-bar-switch-to-prev-tab)
+(defalias 'tab-list        'tab-bar-list)
 
 
 ;;; Non-graphical access to frame-local tabs (named window configurations)
