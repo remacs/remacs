@@ -545,7 +545,11 @@ and all `time-stamp-format' compatibility."
 	 ((eq cur-char ?y)		;year
           (if alt-form
               (string-to-number (time-stamp--format "%Y" time))
-            (string-to-number (time-stamp--format "%y" time))))
+            (if (or (string-equal field-width "")
+                    (<= (string-to-number field-width) 2))
+                (string-to-number (time-stamp--format "%y" time))
+              (time-stamp-conv-warn (format "%%%sy" field-width) "%Y")
+              (string-to-number (time-stamp--format "%Y" time)))))
 	 ((eq cur-char ?Y)		;4-digit year
 	  (string-to-number (time-stamp--format "%Y" time)))
 	 ((eq cur-char ?z)		;time zone lower case
@@ -630,8 +634,7 @@ The new forms being recommended now will continue to work then.")
 
 (defun time-stamp-conv-warn (old-form new-form)
   "Display a warning about a soon-to-be-obsolete format.
-Suggests replacing OLD-FORM with NEW-FORM.
-In use before 2019 changes; will be used again after those changes settle."
+Suggests replacing OLD-FORM with NEW-FORM."
   (cond
    (time-stamp-conversion-warn
     (with-current-buffer (get-buffer-create "*Time-stamp-compatibility*")
@@ -640,7 +643,7 @@ In use before 2019 changes; will be used again after those changes settle."
 	  (progn
 	    (insert
 	     "The formats recognized in time-stamp-format will change in a future release\n"
-	     "to be compatible with the new, expanded format-time-string function.\n\n"
+	     "to be more compatible with the format-time-string function.\n\n"
 	     "The following obsolescent time-stamp-format construct(s) were found:\n\n")))
       (insert "\"" old-form "\" -- use " new-form "\n"))
     (display-buffer "*Time-stamp-compatibility*"))))

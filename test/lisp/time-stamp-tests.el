@@ -46,8 +46,7 @@
 (put 'with-time-stamp-test-env 'lisp-indent-hook 'defun)
 
 (defmacro time-stamp-should-warn (form)
-  "Similar to `should' but verifies that a format warning is generated.
-In use before 2019 changes; will be used again after those changes settle."
+  "Similar to `should' but verifies that a format warning is generated."
   `(let ((warning-count 0))
      (cl-letf (((symbol-function 'time-stamp-conv-warn)
                 (lambda (_old _new)
@@ -266,7 +265,10 @@ In use before 2019 changes; will be used again after those changes settle."
     (should (equal (time-stamp-string "%_y" ref-time) " 6"))
     (should (equal (time-stamp-string "%_y" ref-time2) "16"))
     (should (equal (time-stamp-string "%y" ref-time) "06"))
-    (should (equal (time-stamp-string "%y" ref-time2) "16"))))
+    (should (equal (time-stamp-string "%y" ref-time2) "16"))
+    ;; implemented since 1995, warned since 2019, will change
+    (time-stamp-should-warn (equal (time-stamp-string "%04y" ref-time) "2006"))
+    (time-stamp-should-warn (equal (time-stamp-string "%4y" ref-time) "2006"))))
 
 (ert-deftest time-stamp-test-year-4digit ()
   "Test time-stamp format %Y."
