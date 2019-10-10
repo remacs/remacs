@@ -516,6 +516,11 @@ Returns nil if they are."
                      (cl-assert (equal a b) t)
                      nil))))))))
       ((pred arrayp)
+       ;; For mixed unibyte/multibyte string comparisons, make both multibyte.
+       (when (and (stringp a)
+                  (xor (multibyte-string-p a) (multibyte-string-p b)))
+         (setq a (string-to-multibyte a))
+         (setq b (string-to-multibyte b)))
        (if (/= (length a) (length b))
            `(arrays-of-different-length ,(length a) ,(length b)
                                         ,a ,b
