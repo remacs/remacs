@@ -332,9 +332,9 @@ PREFIX is a string, and defaults to \"g\"."
                (setq gensym-counter (1+ gensym-counter)))))
     (make-symbol (format "%s%d" (or prefix "g") num))))
 
-(defun ignore (&rest _ignore)
+(defun ignore (&rest _arguments)
   "Do nothing and return nil.
-This function accepts any number of arguments, but ignores them."
+This function accepts any number of ARGUMENTS, but ignores them."
   (interactive)
   nil)
 
