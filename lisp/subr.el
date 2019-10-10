@@ -1242,6 +1242,8 @@ The normal global definition of the character C-x indirects to this keymap.")
   "Keymap for tab commands.")
 (defalias 'ctl-x-6-prefix ctl-x-6-map)
 (define-key ctl-x-map "6" 'ctl-x-6-prefix)
+(defalias 'ctl-x-t-prefix ctl-x-6-map)
+(define-key ctl-x-map "t" 'ctl-x-t-prefix)
 
 
 ;;;; Event manipulation functions.
