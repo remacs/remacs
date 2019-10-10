@@ -298,12 +298,14 @@
 (ert-deftest time-stamp-test-time-zone ()
   "Test time-stamp formats for time zone."
   (with-time-stamp-test-env
-    ;; implemented and documented since 1995
-    (should (equal (time-stamp-string "%Z" ref-time) "GMT"))
-    ;; documented 1995-2019
-    (should (equal (time-stamp-string "%z" ref-time) "gmt"))
-    ;; implemented since 1997, documented since 2019
-    (should (equal (time-stamp-string "%#Z" ref-time) "gmt"))))
+    (let ((UTC-abbr (format-time-string "%Z" ref-time t))
+	  (utc-abbr (format-time-string "%#Z" ref-time t)))
+      ;; implemented and documented since 1995
+      (should (equal (time-stamp-string "%Z" ref-time) UTC-abbr))
+      ;; documented 1995-2019
+      (should (equal (time-stamp-string "%z" ref-time) utc-abbr))
+      ;; implemented since 1997, documented since 2019
+      (should (equal (time-stamp-string "%#Z" ref-time) utc-abbr)))))
 
 (ert-deftest time-stamp-test-non-date-conversions ()
   "Test time-stamp formats for non-date items."
