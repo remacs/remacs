@@ -21,8 +21,9 @@ use crate::{
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
     remacs_sys::{
-        apply_window_adjustment, estimate_mode_line_height, minibuf_level,
+        apply_window_adjustment, decode_live_frame, estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
+        run_window_configuration_change_hook as run_window_conf_change_hook,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
         update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
@@ -2034,3 +2035,15 @@ pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected)
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
+
+/// Run `window-configuration-change-hook' for FRAME.
+/// If FRAME is omitted or nil, it defaults to the selected frame.
+#[lisp_fn(min = "0")]
+pub fn run_window_configuration_change_hook(frame: Option<LispObject>) -> LispObject {
+    let f = frame.map_or(Qnil, |obj| obj);
+    unsafe { run_window_conf_change_hook(decode_live_frame(f)) };
+    Qnil
+}
+
+#[rustfmt::skip]
+def_lisp_sym!(Qwindow_configuration_change_hook, "window-configuration-change-hook");

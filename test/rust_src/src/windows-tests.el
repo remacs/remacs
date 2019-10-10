@@ -201,3 +201,14 @@
 ;; frames inside tests (see https://github.com/remacs/remacs/issues/1429).
 (ert-deftest window-pixel-height-before-size-change ()
   (window-pixel-height-before-size-change))
+
+(ert-deftest run-window-configuration-change-hook ()
+  (setq window-conf-change-hook-val 0)
+  (add-hook 'window-configuration-change-hook
+            (lambda () (setq window-conf-change-hook-val
+                        (+ window-conf-change-hook-val 1))))
+
+  (should (eq (run-window-configuration-change-hook) nil))
+  (should (eq window-conf-change-hook-val 1))
+  (should (eq (run-window-configuration-change-hook (selected-frame)) nil))
+  (should (eq window-conf-change-hook-val 2)))
