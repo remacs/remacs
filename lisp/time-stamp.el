@@ -49,26 +49,26 @@ on the locale setting recorded in `system-time-locale' and
 `locale-coding-system'.  The examples here are for the default
 \(`C') locale.
 
-%:A  weekday name: `Monday'		%#A gives uppercase: `MONDAY'
-%3a  abbreviated weekday: `Mon' 	%#a gives uppercase: `MON'
-%:B  month name: `January'		%#B gives uppercase: `JANUARY'
-%3b  abbreviated month: `Jan'		%#b gives uppercase: `JAN'
+%:A  weekday name: `Monday'             %#A gives uppercase: `MONDAY'
+%3a  abbreviated weekday: `Mon'         %#a gives uppercase: `MON'
+%:B  month name: `January'              %#B gives uppercase: `JANUARY'
+%3b  abbreviated month: `Jan'           %#b gives uppercase: `JAN'
 %02d day of month
 %02H 24-hour clock hour
 %02I 12-hour clock hour
 %02m month number
 %02M minute
-%#p  `am' or `pm'			%P  gives uppercase: `AM' or `PM'
+%#p  `am' or `pm'                       %P  gives uppercase: `AM' or `PM'
 %02S seconds
 %w   day number of week, Sunday is 0
-%02y 2-digit year: `03'			%Y  4-digit year: `2003'
-%#Z  lowercase time zone name: `est'	%Z  gives uppercase: `EST'
+%02y 2-digit year: `03'                 %Y  4-digit year: `2003'
+%#Z  lowercase time zone name: `est'    %Z  gives uppercase: `EST'
 
 Non-date items:
 %%   a literal percent character: `%'
-%f   file name without directory	%F  gives absolute pathname
-%l   login name 			%L  full name of logged-in user
-%q   unqualified host name		%Q  fully-qualified host name
+%f   file name without directory        %F  gives absolute pathname
+%l   login name                         %L  full name of logged-in user
+%q   unqualified host name              %Q  fully-qualified host name
 %h   mail host name
 
 Decimal digits between the % and the type character specify the
