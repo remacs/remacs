@@ -59,8 +59,7 @@ If nil, use Emacs default."
 		 integer))
 
 (defcustom compilation-transform-file-match-alist
-  '(("/bin/[a-z]*sh\\'" nil)
-    ("\\*+ \\[\\(Makefile\\)" "\\1"))
+  '(("/bin/[a-z]*sh\\'" nil))
   "Alist of regexp/replacements to alter file names in compilation errors.
 If the replacement is nil, the file will not be considered an
 error after all.  If not nil, it should be a regexp replacement
