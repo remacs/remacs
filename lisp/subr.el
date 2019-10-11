@@ -143,11 +143,22 @@ of previous VARs.
       (push `(set-default ',(pop args) ,(pop args)) exps))
     `(progn . ,(nreverse exps))))
 
-(defmacro setq-local (var val)
-  "Set variable VAR to value VAL in current buffer."
+(defmacro setq-local (&rest args)
+  "Set each SYM to the value of its VAL in the current buffer.
+
+\(fn [SYM VAL]...)"
   ;; Can't use backquote here, it's too early in the bootstrap.
   (declare (debug (symbolp form)))
-  (list 'set (list 'make-local-variable (list 'quote var)) val))
+  (let ((expr))
+    (while args
+      (setq expr
+            (cons
+             (list 'set
+                   (list 'make-local-variable (list 'quote (car args)))
+                   (car (cdr args)))
+             expr))
+      (setq args (cdr (cdr args))))
+    (cons 'progn (nreverse expr))))
 
 (defmacro defvar-local (var val &optional docstring)
   "Define VAR as a buffer-local variable with default value VAL.
