@@ -6922,7 +6922,15 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; FIXME!!!  This routine ignores the possibility of macros entirely.
   ;; 2010-01-29.
-  (when (and (> end beg)
+  (when (and (or (> end beg)
+		 (and (> c-<-pseudo-digraph-cont-len 0)
+		      (goto-char beg)
+		      (progn
+			(skip-chars-backward
+			 "^<" (max (- (point) c-<-pseudo-digraph-cont-len)
+				   (point-min)))
+			(eq (char-before) ?<))
+		      (looking-at c-<-pseudo-digraph-cont-regexp)))
 	     (or
 	      (progn
 		(goto-char beg)
@@ -7948,7 +7956,8 @@ comment at the start of cc-engine.el for more info."
 
       (forward-char) ; Forward over the opening '<'.
 
-      (unless (looking-at c-<-op-cont-regexp)
+      (unless (and (looking-at c-<-op-cont-regexp)
+		   (not (looking-at c-<-pseudo-digraph-cont-regexp)))
 	;; go forward one non-alphanumeric character (group) per iteration of
 	;; this loop.
 	(while (and
@@ -8026,7 +8035,8 @@ comment at the start of cc-engine.el for more info."
 		  (let (id-start id-end subres keyword-match)
 		    (cond
 		     ;; The '<' begins a multi-char operator.
-		     ((looking-at c-<-op-cont-regexp)
+		     ((and (looking-at c-<-op-cont-regexp)
+			   (not (looking-at c-<-pseudo-digraph-cont-regexp)))
 		      (goto-char (match-end 0)))
 		     ;; We're at a nested <.....>
 		     ((progn
@@ -12552,7 +12562,8 @@ comment at the start of cc-engine.el for more info."
 		  (/= (char-before placeholder) ?<)
 		  (progn
 		    (goto-char (1+ placeholder))
-		    (not (looking-at c-<-op-cont-regexp))))))
+		    (or (not (looking-at c-<-op-cont-regexp))
+			(looking-at c-<-pseudo-digraph-cont-regexp))))))
       (goto-char placeholder)
       (c-beginning-of-statement-1 containing-sexp t)
       (if (save-excursion

@@ -1406,6 +1406,23 @@ operators."
 		    (lambda (op) (substring op 1)))))
 (c-lang-defvar c-<-op-cont-regexp (c-lang-const c-<-op-cont-regexp))
 
+(c-lang-defconst c-<-pseudo-digraph-cont-regexp
+  "Regexp matching the continuation of a pseudo digraph starting \"<\".
+This is used only in C++ Mode, where \"<::\" is handled as a
+template opener followed by the \"::\" operator - usually."
+  t regexp-unmatchable
+  c++ "::\\([^:>]\\|$\\)")
+(c-lang-defvar c-<-pseudo-digraph-cont-regexp
+	       (c-lang-const c-<-pseudo-digraph-cont-regexp))
+
+(c-lang-defconst c-<-pseudo-digraph-cont-len
+  "The maximum length of the main bit of a `c-<pseudp-digraph-cont-regexp' match.
+This doesn't count the merely contextual bits of the regexp match."
+  t 0
+  c++ 2)
+(c-lang-defvar c-<-pseudo-digraph-cont-len
+	       (c-lang-const c-<-pseudo-digraph-cont-len))
+
 (c-lang-defconst c->-op-cont-tokens
   ;; A list of second and subsequent characters of all multicharacter tokens
   ;; that begin with ">".
