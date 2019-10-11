@@ -5925,7 +5925,7 @@ init_window (void)
   Vwindow_list = Qnil;
 }
 
-extern rust_syms_of_window(void);
+extern void rust_syms_of_window(void);
 
 void
 syms_of_window (void)
