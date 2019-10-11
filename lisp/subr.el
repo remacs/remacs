@@ -143,22 +143,35 @@ of previous VARs.
       (push `(set-default ',(pop args) ,(pop args)) exps))
     `(progn . ,(nreverse exps))))
 
-(defmacro setq-local (&rest args)
-  "Set each SYM to the value of its VAL in the current buffer.
+(defmacro setq-local (&rest pairs)
+  "Make variables in PAIRS buffer-local and assign them the corresponding values.
 
-\(fn [SYM VAL]...)"
-  ;; Can't use backquote here, it's too early in the bootstrap.
-  (declare (debug (symbolp form)))
-  (let ((expr))
-    (while args
+PAIRS is a list of variable/value pairs.  For each variable, make
+it buffer-local and assign it the corresponding value.  The
+variables are literal symbols and should not be quoted.
+
+The second VALUE is not computed until after the first VARIABLE
+is set, and so on; each VALUE can use the new value of variables
+set earlier in the ‘setq-local’.  The return value of the
+‘setq-local’ form is the value of the last VALUE.
+
+\(fn [VARIABLE VALUE]...)"
+  (declare (debug setq))
+  (unless (zerop (mod (length pairs) 2))
+    (error "PAIRS must have an even number of variable/value members"))
+  (let ((expr nil))
+    (while pairs
+      (unless (symbolp (car pairs))
+        (error "Attempting to set a non-symbol: %s" (car pairs)))
+      ;; Can't use backquote here, it's too early in the bootstrap.
       (setq expr
             (cons
              (list 'set
-                   (list 'make-local-variable (list 'quote (car args)))
-                   (car (cdr args)))
+                   (list 'make-local-variable (list 'quote (car pairs)))
+                   (car (cdr pairs)))
              expr))
-      (setq args (cdr (cdr args))))
-    (cons 'progn (nreverse expr))))
+      (setq pairs (cdr (cdr pairs))))
+    (macroexp-progn (nreverse expr))))
 
 (defmacro defvar-local (var val &optional docstring)
   "Define VAR as a buffer-local variable with default value VAL.

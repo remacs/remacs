@@ -2351,6 +2351,9 @@ scrolling.
 
 * Lisp Changes in Emacs 27.1
 
+** 'setq-local' can now set an arbitrary number of variables, which
+makes the syntax more like 'setq'.
+
 ** 'reveal-mode' can now also be used for more than to toggle between
 invisible and visible: It can also toggle 'display' properties in
 overlays.  This is only done on 'display' properties that have the
