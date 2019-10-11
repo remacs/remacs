@@ -4662,13 +4662,11 @@ Goes through the list `tramp-inline-compress-commands'."
 	     ;; Host.
 	     (string-match-p
 	      (or (eval (nth 0 item)) "")
-	      (or (tramp-file-name-host-port (car target-alist))
-		  ""))
+	      (or (tramp-file-name-host-port (car target-alist)) ""))
 	     ;; User.
 	     (string-match-p
 	      (or (eval (nth 1 item)) "")
-	      (or (tramp-file-name-user-domain (car target-alist))
-		  "")))
+	      (or (tramp-file-name-user-domain (car target-alist)) "")))
 	(if (null proxy)
 	    ;; No more hops needed.
 	    (setq choices nil)
