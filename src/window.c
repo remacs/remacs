@@ -5925,6 +5925,8 @@ init_window (void)
   Vwindow_list = Qnil;
 }
 
+extern rust_syms_of_window(void);
+
 void
 syms_of_window (void)
 {
@@ -6019,13 +6021,7 @@ on their symbols to be controlled by this variable.  */);
   Vwindow_point_insertion_type = Qnil;
   DEFSYM (Qwindow_point_insertion_type, "window_point_insertion_type");
 
-  DEFVAR_LISP ("window-configuration-change-hook",
-	       Vwindow_configuration_change_hook,
-	       doc: /* Functions to call when window configuration changes.
-The buffer-local value is run once per window, with the relevant window
-selected; while the global value is run only once for the modified frame,
-with the relevant frame selected.  */);
-  Vwindow_configuration_change_hook = Qnil;
+  rust_syms_of_window();
 
   DEFVAR_LISP ("window-size-change-functions", Vwindow_size_change_functions,
     doc: /* Functions called during redisplay, if window sizes have changed.

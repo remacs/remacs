@@ -21,7 +21,7 @@ use crate::{
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
     remacs_sys::{
-        apply_window_adjustment, decode_live_frame, estimate_mode_line_height, minibuf_level,
+        apply_window_adjustment, estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
         run_window_configuration_change_hook as run_window_conf_change_hook,
         save_excursion_restore, save_excursion_save, select_window,
@@ -2039,11 +2039,21 @@ include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
 /// Run `window-configuration-change-hook' for FRAME.
 /// If FRAME is omitted or nil, it defaults to the selected frame.
 #[lisp_fn(min = "0")]
-pub fn run_window_configuration_change_hook(frame: Option<LispObject>) -> LispObject {
-    let f = frame.map_or(Qnil, |obj| obj);
-    unsafe { run_window_conf_change_hook(decode_live_frame(f)) };
-    Qnil
+pub fn run_window_configuration_change_hook(frame: LispFrameLiveOrSelected) {
+    let mut frame_ref: LispFrameRef = frame.into();
+    unsafe { run_window_conf_change_hook(frame_ref.as_mut()) };
 }
 
 #[rustfmt::skip]
 def_lisp_sym!(Qwindow_configuration_change_hook, "window-configuration-change-hook");
+
+#[no_mangle]
+#[allow(unused_doc_comments)]
+extern "C" fn rust_syms_of_window() {
+    /// Functions to call when window configuration changes.
+    /// The buffer-local value is run once per window, with the relevant window
+    /// selected; while the global value is run only once for the modified frame,
+    /// with the relevant frame selected.
+    #[rustfmt::skip]
+    defvar_lisp!(Vwindow_configuration_change_hook, "window-configuration-change-hook", Qnil);
+}
