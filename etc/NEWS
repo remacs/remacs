@@ -2343,6 +2343,11 @@ To get the old behaviour back, customize the variable
 (customize-set-variable 'mouse-wheel-scroll-amount
                         '(5 ((shift) . 1) ((control) . nil)))
 
+By default, the font size will be changed in the window that the mouse
+pointer is over.  To change this behaviour, you can customize the
+option 'mouse-wheel-follow-mouse'.  Note that this will also affect
+scrolling.
+
 
 * Lisp Changes in Emacs 27.1
 
