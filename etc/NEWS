@@ -2076,6 +2076,9 @@ Emacs init file does not expose you to this change.  However,
 if you set 'time-stamp-format' or 'time-stamp-pattern' with a
 file-local variable, you may need to update the value.
 
+** mode-local
+*** define-overload is declared obsolete
+
 
 * New Modes and Packages in Emacs 27.1
 
