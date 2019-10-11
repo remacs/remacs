@@ -4422,7 +4422,9 @@ shall not be switched to in future invocations of this command.
 As a special case, if BURY-OR-KILL equals `append', this means to
 move the buffer to the end of WINDOW's previous buffers list so a
 future invocation of `switch-to-prev-buffer' less likely switches
-to it."
+to it.
+
+This function is called by `prev-buffer'."
   (interactive)
   (let* ((window (window-normalize-window window t))
 	 (frame (window-frame window))
@@ -4545,7 +4547,7 @@ to it."
   "In WINDOW switch to next buffer.
 WINDOW must be a live window and defaults to the selected one.
 Return the buffer switched to, nil if no suitable buffer could be
-found."
+found.  This function is called by `next-buffer'."
   (interactive)
   (let* ((window (window-normalize-window window t))
 	 (frame (window-frame window))
@@ -4746,24 +4748,28 @@ displayed there."
   (switch-to-buffer (last-buffer)))
 
 (defun next-buffer ()
-  "In selected window switch to next buffer."
+  "In selected window switch to next buffer.
+Call `switch-to-next-buffer' unless the selected window is the
+minibuffer window or is dedicated to its buffer."
   (interactive)
   (cond
    ((window-minibuffer-p)
-    (error "Cannot switch buffers in minibuffer window"))
+    (user-error "Cannot switch buffers in minibuffer window"))
    ((eq (window-dedicated-p) t)
-    (error "Window is strongly dedicated to its buffer"))
+    (user-error "Window is strongly dedicated to its buffer"))
    (t
     (switch-to-next-buffer))))
 
 (defun previous-buffer ()
-  "In selected window switch to previous buffer."
+  "In selected window switch to previous buffer.
+Call `switch-to-prev-buffer' unless the selected window is the
+minibuffer window or is dedicated to its buffer."
   (interactive)
   (cond
    ((window-minibuffer-p)
-    (error "Cannot switch buffers in minibuffer window"))
+    (user-error "Cannot switch buffers in minibuffer window"))
    ((eq (window-dedicated-p) t)
-    (error "Window is strongly dedicated to its buffer"))
+    (user-error "Window is strongly dedicated to its buffer"))
    (t
     (switch-to-prev-buffer))))
 
