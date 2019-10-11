@@ -288,8 +288,10 @@ on this first line as a comment delimiter.
 @opindex --no-build-details
 @cindex build details
 @cindex deterministic build
-Omit details like system name and build time from the Emacs executable,
-so that builds are more deterministic.
+Omit details like system name and build time from the Emacs
+executable, so that builds are more deterministic.  This switch is not
+meant for regular (or interactive) use, since it makes commands like
+@code{system-name} return @code{nil}.
 
 @item -q
 @opindex -q
