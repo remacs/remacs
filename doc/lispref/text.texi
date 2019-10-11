@@ -1399,6 +1399,7 @@ appropriate time.
 
 @defun undo-auto-amalgamate
 @cindex amalgamating commands, and undo
+@vindex amalgamating-undo-limit
 The editor command loop automatically calls @code{undo-boundary} just
 before executing each key sequence, so that each undo normally undoes
 the effects of one command.  A few exceptional commands are
@@ -1416,6 +1417,10 @@ will be called in each of the affected buffers.
 This function can be called before an amalgamating command.  It
 removes the previous @code{undo-boundary} if a series of such calls
 have been made.
+
+The maximum number of changes that can be amalgamated is controlled by
+the @code{amalgamating-undo-limit} variable.  If this variable is 1,
+no changes are amalgamated.
 @end defun
 
 @defvar undo-auto-current-boundary-timer

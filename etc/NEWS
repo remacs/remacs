@@ -453,6 +453,10 @@ Note that this key binding will not work on MS-Windows systems if
 
 * Editing Changes in Emacs 27.1
 
++++
+** The new 'amalgamating-undo-limit' variable can be used to control
+how many changes should be amalgamated when using the 'undo' command.
+
 ---
 ** The 'newline-and-indent' command (commonly bound to 'RET' in many
 modes) now takes an optional numeric argument to specify how many
