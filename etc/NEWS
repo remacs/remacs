@@ -1568,6 +1568,10 @@ variable for remote shells.  It still defaults to "/bin/sh".
 *** 'async-shell-command-width' defines the number of display columns
 available for output of asynchronous shell commands.
 
++++
+*** Prompt for shell commands can now show the current directory.
+Customize 'shell-command-prompt-show-cwd' to enable it.
+
 ** Pcomplete
 
 *** The 'pcomplete' command is now obsolete

@@ -3384,6 +3384,13 @@ command output."
   :group 'shell
   :version "27.1")
 
+(defcustom shell-command-prompt-show-cwd nil
+  "If non-nil, show current directory when prompting for a shell command.
+This affects `shell-command' and `async-shell-command'."
+  :type 'boolean
+  :group 'shell
+  :version "27.1")
+
 (defcustom shell-command-dont-erase-buffer nil
   "If non-nil, output buffer is not erased between shell commands.
 Also, a non-nil value sets the point in the output buffer
@@ -3473,7 +3480,12 @@ directly, since it offers more control and does not impose the use of
 a shell (with its need to quote arguments)."
   (interactive
    (list
-    (read-shell-command "Async shell command: " nil nil
+    (read-shell-command (if shell-command-prompt-show-cwd
+                            (format-message "Async shell command in `%s': "
+                                            (abbreviate-file-name
+                                             default-directory))
+                          "Async shell command: ")
+                        nil nil
 			(let ((filename
 			       (cond
 				(buffer-file-name)
@@ -3546,7 +3558,12 @@ impose the use of a shell (with its need to quote arguments)."
 
   (interactive
    (list
-    (read-shell-command "Shell command: " nil nil
+    (read-shell-command (if shell-command-prompt-show-cwd
+                            (format-message "Shell command in `%s': "
+                                            (abbreviate-file-name
+                                             default-directory))
+                          "Shell command: ")
+                        nil nil
 			(let ((filename
 			       (cond
 				(buffer-file-name)
