@@ -111,13 +111,6 @@
     (insert "(cl-defun foo (&key a &allow-other-keys) \"Return :A.\")")
     (checkdoc-defun)))
 
-(ert-deftest checkdoc-cl-defun-with-aux-ok ()
-  "Checkdoc should be happy with a cl-defun using &aux."
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    (insert "(cl-defun foo (a b &aux (c (+ a b))) \"Return A and B.\")")
-    (checkdoc-defun)))
-
 (ert-deftest checkdoc-cl-defun-with-default-optional-value-ok ()
   "Checkdoc should be happy with a cl-defun using default values for optional args."
   (with-temp-buffer
@@ -132,15 +125,6 @@
   (with-temp-buffer
     (emacs-lisp-mode)
     (insert "(cl-defun foo ((a b &optional c) d) \"Return A+B+C+D.\")")
-    (checkdoc-defun)))
-
-(ert-deftest checkdoc-cl-defmethod-with-context-ok ()
-  "Checkdoc should ignore context specializers in a cl-defmethod."
-  (with-temp-buffer
-    (emacs-lisp-mode)
-    ;; A context specializer is used to select the correct method but
-    ;; doesn't have to appear in the docstring:
-    (insert "(cl-defmethod foo (a &context (global-var (eql foo))) \"Return A.\")")
     (checkdoc-defun)))
 
 (ert-deftest checkdoc-tests--next-docstring ()
