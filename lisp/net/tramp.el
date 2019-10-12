@@ -2970,7 +2970,7 @@ User is always nil."
 
 (defun tramp-handle-access-file (filename string)
   "Like `access-file' for Tramp files."
-  (unless (file-readable-p filename)
+  (unless (file-readable-p (file-truename filename))
     (tramp-error
      (tramp-dissect-file-name filename) tramp-file-missing
      "%s: No such file or directory %s" string filename)))
