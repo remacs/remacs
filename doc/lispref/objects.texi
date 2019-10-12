@@ -144,9 +144,6 @@ starting list count:
 object, so when reading back the object, they will be the same object
 instead of copies (@pxref{Circular Objects}).
 
-@item @samp{#@@N}
-Skip the next @samp{N} characters (@pxref{Comments}).
-
 @item @samp{#xN}
 @samp{N} represented as a hexadecimal number (@samp{#x2a}).
 
@@ -167,6 +164,16 @@ A hash table (@pxref{Hash Table Type}).
 
 @item @samp{?C}
 A character (@pxref{Basic Char Syntax}).
+
+@item @samp{#$}
+The current file name in byte-compiled files (@pxref{Docs and
+Compilation}).  This is not meant to be used in Emacs Lisp source
+files.
+
+@item @samp{#@@N}
+Skip the next @samp{N} characters (@pxref{Comments}).  This is used in
+byte-compiled files, and is not meant to be used in Emacs Lisp source
+files.
 @end table
 
 
