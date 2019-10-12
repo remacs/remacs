@@ -21626,9 +21626,7 @@ extend_face_to_end_of_line (struct it *it)
      that the character will always be single byte in unibyte
      text.  */
   if (!ASCII_CHAR_P (it->c))
-    {
       it->face_id = FACE_FOR_CHAR (f, face, 0, -1, Qnil);
-    }
 
   /* The default face, possibly remapped. */
   struct face *default_face =
@@ -21679,79 +21677,86 @@ extend_face_to_end_of_line (struct it *it)
 	  /* Display fill column indicator if not in modeline or
 	     toolbar and display fill column indicator mode is
 	     active.  */
-	  int indicator_column = (it->w->pseudo_window_p == 0
+	  const int indicator_column = (it->w->pseudo_window_p == 0
 				  ? fill_column_indicator_column (it)
 				  : -1);
-	  if (indicator_column >= 0)
+
+	  struct font *font = (default_face->font
+	                       ? default_face->font
+	                       : FRAME_FONT (f));
+
+	  const int char_width = (font->average_width
+	                          ? font->average_width
+	                          : font->space_width);
+	  int column_x;
+
+	  const char saved_char = it->char_to_display;
+	  const struct text_pos saved_pos = it->position;
+	  const bool saved_avoid_cursor = it->avoid_cursor_p;
+	  const bool saved_box_start = it->start_of_box_run_p;
+	  Lisp_Object save_object = it->object;
+	  const int saved_face_id = it->face_id;
+
+	  it->face_id = it->extend_face_id;
+
+	  if (indicator_column >= 0
+	      && !INT_MULTIPLY_WRAPV (indicator_column, char_width, &column_x)
+	      && !INT_ADD_WRAPV (it->lnum_pixel_width, column_x, &column_x)
+	      && column_x >= it->current_x
+	      && column_x <= it->last_visible_x)
             {
-	      struct font *font = (default_face->font
-				   ? default_face->font
-				   : FRAME_FONT (f));
-	      const int char_width = (font->average_width
-				      ? font->average_width
-				      : font->space_width);
-	      int column_x;
 
-	      if (!INT_MULTIPLY_WRAPV (indicator_column, char_width, &column_x)
-		  && !INT_ADD_WRAPV (it->lnum_pixel_width, column_x, &column_x)
-		  && column_x >= it->current_x
-		  && column_x <= it->last_visible_x)
-	        {
-	          const char saved_char = it->char_to_display;
-	          const struct text_pos saved_pos = it->position;
-	          const bool saved_avoid_cursor = it->avoid_cursor_p;
-	          const int saved_face_id = it->face_id;
-	          const bool saved_box_start = it->start_of_box_run_p;
-	          Lisp_Object save_object = it->object;
+	      /* The stretch width needs to considet the latter
+		 added glyph.  */
+	      const int stretch_width
+		= column_x - it->current_x - char_width;
 
-	          /* The stretch width needs to considet the latter
-	             added glyph.  */
-	          const int stretch_width
-		    = column_x - it->current_x - char_width;
+	      memset (&it->position, 0, sizeof it->position);
+	      it->avoid_cursor_p = true;
+	      it->object = Qnil;
 
-	          memset (&it->position, 0, sizeof it->position);
-	          it->avoid_cursor_p = true;
-	          it->object = Qnil;
+	      /* Only generate a stretch glyph if there is distance
+		 between current_x and and the indicator position.  */
+	      if (stretch_width > 0)
+		{
+		  int stretch_ascent = (((it->ascent + it->descent)
+		                         * FONT_BASE (font)) / FONT_HEIGHT (font));
+		  append_stretch_glyph (it, Qnil, stretch_width,
+		                        it->ascent + it->descent,
+		                        stretch_ascent);
+		}
 
-	          /* Only generate a stretch glyph if there is distance
-	             between current_x and and the indicator position.  */
-	          if (stretch_width > 0)
-		    {
-		      int stretch_ascent = (((it->ascent + it->descent)
-		                             * FONT_BASE (font)) / FONT_HEIGHT (font));
-		      append_stretch_glyph (it, Qnil, stretch_width,
-		                            it->ascent + it->descent,
-		                            stretch_ascent);
-		    }
+	      /* Generate the glyph indicator only if
+		 append_space_for_newline didn't already.  */
+	      if (it->current_x < column_x)
+		{
+		  const int save_face_id = it->face_id;
+		  it->char_to_display
+		    = XFIXNAT (Vdisplay_fill_column_indicator_character);
+		  it->face_id
+		    = merge_faces (it->w, Qfill_column_indicator,
+		                   0, it->extend_face_id);
+		  PRODUCE_GLYPHS (it);
+		  it->face_id = save_face_id;
 
-	          /* Generate the glyph indicator only if
-	             append_space_for_newline didn't already.  */
-	          if (it->current_x < column_x)
-	            {
-		      it->char_to_display
-			= XFIXNAT (Vdisplay_fill_column_indicator_character);
-	              it->face_id
-			= merge_faces (it->w, Qfill_column_indicator,
-				       0, saved_face_id);
-	              PRODUCE_GLYPHS (it);
-	            }
-
-	          /* Restore the face after the indicator was generated.  */
-	          it->face_id = saved_face_id;
-
-	          /* If there is space after the indicator generate an
-	             extra empty glyph to restore the face.  Issue was
-	             observed in X systems.  */
-	          it->char_to_display = ' ';
-	          PRODUCE_GLYPHS (it);
-
-	          it->char_to_display = saved_char;
-	          it->position = saved_pos;
-	          it->avoid_cursor_p = saved_avoid_cursor;
-	          it->start_of_box_run_p = saved_box_start;
-	          it->object = save_object;
-	        }
+		}
             }
+
+	  /* Restore the face after the indicator was generated.  */
+
+	  /* If there is space after the indicator generate an
+	     extra empty glyph to restore the face.  Issue was
+	     observed in X systems.  */
+	  it->char_to_display = ' ';
+	  PRODUCE_GLYPHS (it);
+
+	  it->char_to_display = saved_char;
+	  it->position = saved_pos;
+	  it->avoid_cursor_p = saved_avoid_cursor;
+	  it->start_of_box_run_p = saved_box_start;
+	  it->object = save_object;
+	  it->face_id = saved_face_id;
+
 	}
       if (it->glyph_row->reversed_p)
 	{
@@ -21797,10 +21802,9 @@ extend_face_to_end_of_line (struct it *it)
 	      /* The last row's stretch glyph should get the default
 		 face, to avoid painting the rest of the window with
 		 the region face, if the region ends at ZV.  */
-	      if (it->glyph_row->ends_at_zv_p)
-		it->face_id = default_face->id;
-	      else
-		it->face_id = face->id;
+	      it->face_id = (it->glyph_row->ends_at_zv_p ?
+	                     default_face->id : face->id);
+
 	      it->start_of_box_run_p = false;
 	      append_stretch_glyph (it, Qnil, stretch_width,
 				    it->ascent + it->descent, stretch_ascent);
@@ -21822,13 +21826,10 @@ extend_face_to_end_of_line (struct it *it)
     {
       /* Save some values that must not be changed.  */
       int saved_x = it->current_x;
-      struct text_pos saved_pos;
-      Lisp_Object saved_object;
+      struct text_pos saved_pos = it->position;
+      Lisp_Object saved_object = it->object;;
       enum display_element_type saved_what = it->what;
       int saved_face_id = it->face_id;
-
-      saved_object = it->object;
-      saved_pos = it->position;
 
       it->what = IT_CHARACTER;
       memset (&it->position, 0, sizeof it->position);
@@ -21868,10 +21869,8 @@ extend_face_to_end_of_line (struct it *it)
       /* The last row's blank glyphs should get the default face, to
 	 avoid painting the rest of the window with the region face,
 	 if the region ends at ZV.  */
-      if (it->glyph_row->ends_at_zv_p)
-	it->face_id = default_face->id;
-      else
-	it->face_id = face->id;
+      it->face_id = (it->glyph_row->ends_at_zv_p ?
+                     default_face->id : face->id);
 
       /* Display fill-column indicator if needed.  */
       int indicator_column = fill_column_indicator_column (it);
@@ -21881,24 +21880,21 @@ extend_face_to_end_of_line (struct it *it)
 	indicator_column = -1;
       do
 	{
-	  int saved_face_id;
-	  bool indicate = it->current_x == indicator_column;
-	  if (indicate)
+	  if (it->current_x == indicator_column)
 	    {
-	      saved_face_id = it->face_id;
+	      int saved_face_id = it->face_id;
 	      it->face_id
-		= merge_faces (it->w, Qfill_column_indicator, 0, saved_face_id);
+		= merge_faces (it->w, Qfill_column_indicator, 0, it->extend_face_id);
 	      it->c = it->char_to_display
 		= XFIXNAT (Vdisplay_fill_column_indicator_character);
-	    }
 
-	  PRODUCE_GLYPHS (it);
+	      PRODUCE_GLYPHS (it);
 
-	  if (indicate)
-	    {
 	      it->face_id = saved_face_id;
 	      it->c = it->char_to_display = ' ';
 	    }
+	  else
+	    PRODUCE_GLYPHS (it);
 	}
       while (it->current_x <= it->last_visible_x);
 
