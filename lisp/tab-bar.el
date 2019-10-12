@@ -268,10 +268,11 @@ from all windows in the window configuration."
 (defun tab-bar-tab-name-selected-window ()
   "Generate tab name from the buffer of the selected window.
 Also add the number of windows in the window configuration."
-  (let ((count (length (window-list-1 nil 'nomini))))
+  (let ((count (length (window-list-1 nil 'nomini)))
+        (name (window-buffer (minibuffer-selected-window))))
     (if (> count 1)
-        (format "%s (%d)" (buffer-name) count)
-      (format "%s" (buffer-name)))))
+        (format "%s (%d)" name count)
+      (format "%s" name))))
 
 (defun tab-bar-tab-name-all-windows ()
   "Generate tab name from buffers of all windows."
