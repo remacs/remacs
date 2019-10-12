@@ -1181,18 +1181,19 @@ POS and RES.")
 		       2)))
     ;; Remove matches like /bin/sh and do other file name transforms.
     (save-match-data
-      (let ((transformed nil))
-        (dolist (f file)
-          (let ((match
-                 (cl-loop for (regexp replacement)
-                          in compilation-transform-file-match-alist
-                          when (string-match regexp f)
-                          return (or replacement t))))
-            (cond ((not match)
-                   (push f transformed))
-                  ((stringp match)
-                   (push (replace-match match nil nil f) transformed)))))
-        (setq file (nreverse transformed))))
+      (let ((file-name
+             (and (consp file)
+                  (not (bufferp (car file)))
+                  (if (cdr file)
+                      (expand-file-name (car file) (cdr file))
+                    (car file)))))
+        (cl-loop for (regexp replacement)
+                 in compilation-transform-file-match-alist
+                 when (string-match regexp file-name)
+                 return (if replacement
+                            (setq file (list (replace-match replacement nil nil
+                                                            file-name)))
+                          (setq file nil)))))
     (if (not file)
         ;; If we ignored all the files with errors on this line, then
         ;; return nil.
