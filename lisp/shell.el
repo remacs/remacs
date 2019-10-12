@@ -696,7 +696,7 @@ The buffer is put in Shell mode, giving commands for sending input
 and controlling the subjobs of the shell.  See `shell-mode'.
 See also the variable `shell-prompt-pattern'.
 
-To specify a coding system for converting non-ASCII characters
+\\<shell-mode-map>To specify a coding system for converting non-ASCII characters
 in the input and output to the shell, use \\[universal-coding-system-argument]
 before \\[shell].  You can also specify this with \\[set-buffer-process-coding-system]
 in the shell buffer, after you start the shell.
