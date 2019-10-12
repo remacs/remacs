@@ -4148,14 +4148,17 @@ handle_fontified_prop (struct it *it)
 				Faces
  ***********************************************************************/
 
-/* Set up iterator IT from face properties at its current position.
-   Called from handle_stop.  */
-
 static enum prop_handled
-handle_face_prop (struct it *it)
+handle_face_prop_general (struct it *it,
+                          enum lface_attribute_index attr_filter)
 {
-  int new_face_id;
+  int new_face_id, *face_id_ptr;
   ptrdiff_t next_stop;
+
+  if (attr_filter == LFACE_EXTEND_INDEX)
+    face_id_ptr = &(it->extend_face_id);
+  else
+    face_id_ptr = &(it->face_id);
 
   if (!STRINGP (it->string))
     {
@@ -4165,7 +4168,7 @@ handle_face_prop (struct it *it)
 				   &next_stop,
 				   (IT_CHARPOS (*it)
 				    + TEXT_PROP_DISTANCE_LIMIT),
-				   false, it->base_face_id);
+	                           false, it->base_face_id, attr_filter);
 
       /* Is this a start of a run of characters with box face?
 	 Caveat: this can be called for a freshly initialized
@@ -4173,13 +4176,13 @@ handle_face_prop (struct it *it)
 	 face will not change until limit, i.e. if the new face has a
 	 box, all characters up to limit will have one.  But, as
 	 usual, we don't know whether limit is really the end.  */
-      if (new_face_id != it->face_id)
+      if (new_face_id != *face_id_ptr)
 	{
 	  struct face *new_face = FACE_FROM_ID (it->f, new_face_id);
 	  /* If it->face_id is -1, old_face below will be NULL, see
 	     the definition of FACE_FROM_ID_OR_NULL.  This will happen
 	     if this is the initial call that gets the face.  */
-	  struct face *old_face = FACE_FROM_ID_OR_NULL (it->f, it->face_id);
+	  struct face *old_face = FACE_FROM_ID_OR_NULL (it->f, *face_id_ptr);
 
 	  /* If the value of face_id of the iterator is -1, we have to
 	     look in front of IT's position and see whether there is a
@@ -4285,10 +4288,10 @@ handle_face_prop (struct it *it)
 	 box, all characters up to that position will have a
 	 box.  But, as usual, we don't know whether that position
 	 is really the end.  */
-      if (new_face_id != it->face_id)
+      if (new_face_id != *face_id_ptr)
 	{
 	  struct face *new_face = FACE_FROM_ID (it->f, new_face_id);
-	  struct face *old_face = FACE_FROM_ID_OR_NULL (it->f, it->face_id);
+	  struct face *old_face = FACE_FROM_ID_OR_NULL (it->f, *face_id_ptr);
 
 	  /* If new face has a box but old face hasn't, this is the
 	     start of a run of characters with box, i.e. it has a
@@ -4299,8 +4302,18 @@ handle_face_prop (struct it *it)
 	}
     }
 
-  it->face_id = new_face_id;
+  *face_id_ptr = new_face_id;
   return HANDLED_NORMALLY;
+}
+
+
+/* Set up iterator IT from face properties at its current position.
+   Called from handle_stop.  */
+
+static enum prop_handled
+handle_face_prop (struct it *it)
+{
+  return handle_face_prop_general (it, 0);
 }
 
 
@@ -4527,7 +4540,7 @@ face_before_or_after_it_pos (struct it *it, bool before_p)
       face_id = face_at_buffer_position (it->w,
 					 CHARPOS (pos),
 					 &next_check_charpos,
-					 limit, false, -1);
+                                         limit, false, -1, 0);
 
       /* Correct the face for charsets different from ASCII.  Do it
 	 for the multibyte case only.  The face returned above is
@@ -7649,10 +7662,11 @@ get_next_display_element (struct it *it)
 		  else
 		    {
 		      next_face_id =
-			face_at_buffer_position (it->w, CHARPOS (pos), &ignore,
+			face_at_buffer_position (it->w, CHARPOS (pos),
+			                         &ignore,
 						 CHARPOS (pos)
 						 + TEXT_PROP_DISTANCE_LIMIT,
-						 false, -1);
+			                         false, -1, 0);
 		      it->end_of_box_run_p
 			= (FACE_FROM_ID (it->f, next_face_id)->box
 			   == FACE_NO_BOX);
@@ -32068,7 +32082,7 @@ mouse_face_from_buffer_pos (Lisp_Object window,
   hlinfo->mouse_face_face_id
     = face_at_buffer_position (w, mouse_charpos, &ignore,
 			       mouse_charpos + 1,
-			       !hlinfo->mouse_face_hidden, -1);
+                               !hlinfo->mouse_face_hidden, -1, 0);
   show_mouse_face (hlinfo, DRAW_MOUSE_FACE);
 }
 

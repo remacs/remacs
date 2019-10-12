@@ -3554,8 +3554,8 @@ int lookup_derived_face (struct window *, struct frame *,
 void init_frame_faces (struct frame *);
 void free_frame_faces (struct frame *);
 void recompute_basic_faces (struct frame *);
-int face_at_buffer_position (struct window *, ptrdiff_t, ptrdiff_t *, ptrdiff_t,
-                             bool, int);
+int face_at_buffer_position (struct window *, ptrdiff_t, ptrdiff_t *,
+                             ptrdiff_t, bool, int, enum lface_attribute_index);
 int face_for_overlay_string (struct window *, ptrdiff_t, ptrdiff_t *, ptrdiff_t,
                              bool, Lisp_Object);
 int face_at_string_position (struct window *, Lisp_Object, ptrdiff_t, ptrdiff_t,

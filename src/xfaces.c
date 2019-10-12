@@ -347,7 +347,8 @@ static struct face_cache *make_face_cache (struct frame *);
 static void free_face_cache (struct face_cache *);
 static bool merge_face_ref (struct window *w,
                             struct frame *, Lisp_Object, Lisp_Object *,
-			    bool, struct named_merge_point *);
+                            bool, struct named_merge_point *,
+                            enum lface_attribute_index);
 static int color_distance (Emacs_Color *x, Emacs_Color *y);
 
 #ifdef HAVE_WINDOW_SYSTEM
@@ -1910,7 +1911,8 @@ get_lface_attributes (struct window *w,
 	    attrs[i] = Qunspecified;
 
 	  return merge_face_ref (w, f, XCDR (face_remapping), attrs,
-				 signal_p, named_merge_points);
+	                         signal_p, named_merge_points,
+	                         0);
 	}
     }
 
@@ -2065,7 +2067,8 @@ merge_face_vectors (struct window *w,
   if (!UNSPECIFIEDP (from[LFACE_INHERIT_INDEX])
       && !NILP (from[LFACE_INHERIT_INDEX]))
     merge_face_ref (w, f, from[LFACE_INHERIT_INDEX],
-                    to, false, named_merge_points);
+                    to, false, named_merge_points,
+		    0);
 
   if (FONT_SPEC_P (from[LFACE_FONT_INDEX]))
     {
@@ -2131,7 +2134,8 @@ merge_face_vectors (struct window *w,
 static bool
 merge_named_face (struct window *w,
                   struct frame *f, Lisp_Object face_name, Lisp_Object *to,
-		  struct named_merge_point *named_merge_points)
+                  struct named_merge_point *named_merge_points,
+                  enum lface_attribute_index attr_filter)
 {
   struct named_merge_point named_merge_point;
 
@@ -2141,9 +2145,13 @@ merge_named_face (struct window *w,
     {
       Lisp_Object from[LFACE_VECTOR_SIZE];
       bool ok = get_lface_attributes (w, f, face_name, from, false,
-				      named_merge_points);
+                                      named_merge_points);
 
-      if (ok)
+      eassert (attr_filter <  LFACE_VECTOR_SIZE);
+
+      if (ok && (attr_filter == 0
+                 || (!NILP (from[attr_filter])
+		     && !UNSPECIFIEDP (from[attr_filter]))))
 	merge_face_vectors (w, f, from, to, named_merge_points);
 
       return ok;
@@ -2274,6 +2282,11 @@ filter_face_ref (Lisp_Object face_ref,
    of ERR_MSGS).  Use NAMED_MERGE_POINTS to detect loops in face
    inheritance or list structure; it may be 0 for most callers.
 
+   attr_filter is the index of a parameter that conditions the merging
+   for named faces (case 1) to only the face_ref where
+   lface[merge_face_ref] is non-nil. To merge unconditionally set this
+   value to 0.
+
    FACE_REF may be a single face specification or a list of such
    specifications.  Each face specification can be:
 
@@ -2302,7 +2315,8 @@ filter_face_ref (Lisp_Object face_ref,
 static bool
 merge_face_ref (struct window *w,
                 struct frame *f, Lisp_Object face_ref, Lisp_Object *to,
-		bool err_msgs, struct named_merge_point *named_merge_points)
+                bool err_msgs, struct named_merge_point *named_merge_points,
+                enum lface_attribute_index attr_filter)
 {
   bool ok = true;		/* Succeed without an error? */
   Lisp_Object filtered_face_ref;
@@ -2514,7 +2528,8 @@ merge_face_ref (struct window *w,
 		  /* This is not really very useful; it's just like a
 		     normal face reference.  */
 		  if (! merge_face_ref (w, f, value, to,
-					err_msgs, named_merge_points))
+		                        err_msgs, named_merge_points,
+		                        0))
 		    err = true;
 		}
 	      else if (EQ (keyword, QCextend))
@@ -2544,16 +2559,19 @@ merge_face_ref (struct window *w,
 	  Lisp_Object next = XCDR (face_ref);
 
 	  if (! NILP (next))
-	    ok = merge_face_ref (w, f, next, to, err_msgs, named_merge_points);
+	    ok = merge_face_ref (w, f, next, to, err_msgs,
+	                         named_merge_points, 0);
 
-	  if (! merge_face_ref (w, f, first, to, err_msgs, named_merge_points))
+	  if (! merge_face_ref (w, f, first, to, err_msgs,
+	                        named_merge_points, 0))
 	    ok = false;
 	}
     }
   else
     {
       /* FACE_REF ought to be a face name.  */
-      ok = merge_named_face (w, f, face_ref, to, named_merge_points);
+      ok = merge_named_face (w, f, face_ref, to, named_merge_points,
+                             attr_filter);
       if (!ok && err_msgs)
 	add_to_log ("Invalid face reference: %s", face_ref);
     }
@@ -4534,7 +4552,8 @@ lookup_face (struct frame *f, Lisp_Object *attr)
    suitable face is found, realize a new one.  */
 
 int
-face_for_font (struct frame *f, Lisp_Object font_object, struct face *base_face)
+face_for_font (struct frame *f, Lisp_Object font_object,
+               struct face *base_face)
 {
   struct face_cache *cache = FRAME_FACE_CACHE (f);
   unsigned hash;
@@ -4769,7 +4788,7 @@ DEFUN ("face-attributes-as-vector", Fface_attributes_as_vector,
   Lisp_Object lface = make_vector (LFACE_VECTOR_SIZE, Qunspecified);
   merge_face_ref (NULL, XFRAME (selected_frame),
                   plist, XVECTOR (lface)->contents,
-		  true, 0);
+                  true, NULL, 0);
   return lface;
 }
 
@@ -5126,7 +5145,7 @@ face for italic.  */)
 
   for (i = 0; i < LFACE_VECTOR_SIZE; i++)
     attrs[i] = Qunspecified;
-  merge_face_ref (NULL, f, attributes, attrs, true, 0);
+  merge_face_ref (NULL, f, attributes, attrs, true, NULL, 0);
 
   def_face = FACE_FROM_ID_OR_NULL (f, DEFAULT_FACE_ID);
   if (def_face == NULL)
@@ -6012,7 +6031,7 @@ compute_char_face (struct frame *f, int ch, Lisp_Object prop)
       Lisp_Object attrs[LFACE_VECTOR_SIZE];
       struct face *default_face = FACE_FROM_ID (f, DEFAULT_FACE_ID);
       memcpy (attrs, default_face->lface, sizeof attrs);
-      merge_face_ref (NULL, f, prop, attrs, true, 0);
+      merge_face_ref (NULL, f, prop, attrs, true, NULL, 0);
       face_id = lookup_face (f, attrs);
     }
 
@@ -6023,6 +6042,8 @@ compute_char_face (struct frame *f, int ch, Lisp_Object prop)
    displaying ASCII characters.  Return in *ENDPTR the position at
    which a different face is needed, as far as text properties and
    overlays are concerned.  W is a window displaying current_buffer.
+
+   attr_filter is passed merge_face_ref.
 
    REGION_BEG, REGION_END delimit the region, so it can be
    highlighted.
@@ -6043,7 +6064,8 @@ compute_char_face (struct frame *f, int ch, Lisp_Object prop)
 int
 face_at_buffer_position (struct window *w, ptrdiff_t pos,
 			 ptrdiff_t *endptr, ptrdiff_t limit,
-			 bool mouse, int base_face_id)
+                         bool mouse, int base_face_id,
+                         enum lface_attribute_index attr_filter)
 {
   struct frame *f = XFRAME (w->frame);
   Lisp_Object attrs[LFACE_VECTOR_SIZE];
@@ -6104,8 +6126,7 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
   }
 
   /* Optimize common cases where we can use the default face.  */
-  if (noverlays == 0
-      && NILP (prop))
+  if (noverlays == 0 && NILP (prop))
     {
       SAFE_FREE ();
       return default_face->id;
@@ -6116,7 +6137,7 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
 
   /* Merge in attributes specified via text properties.  */
   if (!NILP (prop))
-    merge_face_ref (w, f, prop, attrs, true, 0);
+    merge_face_ref (w, f, prop, attrs, true, NULL, 0);
 
   /* Now merge the overlay data.  */
   noverlays = sort_overlays (overlay_vec, noverlays, w);
@@ -6136,7 +6157,7 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
 		 so discard the mouse-face text property, if any, and
 		 use the overlay property instead.  */
 	      memcpy (attrs, default_face->lface, sizeof attrs);
-	      merge_face_ref (w, f, prop, attrs, true, 0);
+	      merge_face_ref (w, f, prop, attrs, true, NULL, attr_filter);
 	    }
 
 	  oend = OVERLAY_END (overlay_vec[i]);
@@ -6153,8 +6174,9 @@ face_at_buffer_position (struct window *w, ptrdiff_t pos,
 	  ptrdiff_t oendpos;
 
 	  prop = Foverlay_get (overlay_vec[i], propname);
+
 	  if (!NILP (prop))
-	    merge_face_ref (w, f, prop, attrs, true, 0);
+	    merge_face_ref (w, f, prop, attrs, true, NULL, attr_filter);
 
 	  oend = OVERLAY_END (overlay_vec[i]);
 	  oendpos = OVERLAY_POSITION (oend);
@@ -6220,7 +6242,7 @@ face_for_overlay_string (struct window *w, ptrdiff_t pos,
 
   /* Merge in attributes specified via text properties.  */
   if (!NILP (prop))
-    merge_face_ref (w, f, prop, attrs, true, 0);
+    merge_face_ref (w, f, prop, attrs, true, NULL, 0);
 
   *endptr = endpos;
 
@@ -6255,7 +6277,7 @@ int
 face_at_string_position (struct window *w, Lisp_Object string,
 			 ptrdiff_t pos, ptrdiff_t bufpos,
 			 ptrdiff_t *endptr, enum face_id base_face_id,
-			 bool mouse_p)
+                         bool mouse_p)
 {
   Lisp_Object prop, position, end, limit;
   struct frame *f = XFRAME (WINDOW_FRAME (w));
@@ -6299,7 +6321,7 @@ face_at_string_position (struct window *w, Lisp_Object string,
 
   /* Merge in attributes specified via text properties.  */
   if (!NILP (prop))
-    merge_face_ref (w, f, prop, attrs, true, 0);
+    merge_face_ref (w, f, prop, attrs, true, NULL, 0);
 
   /* Look up a realized face with the given face attributes,
      or realize a new one for ASCII characters.  */
@@ -6349,7 +6371,7 @@ merge_faces (struct window *w, Lisp_Object face_name, int face_id,
 
   if (!NILP (face_name))
     {
-      if (!merge_named_face (w, f, face_name, attrs, 0))
+      if (!merge_named_face (w, f, face_name, attrs, NULL, 0))
 	return base_face_id;
     }
   else
