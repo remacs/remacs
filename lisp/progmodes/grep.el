@@ -1072,7 +1072,7 @@ to go to the lines where grep found matches.
 
 This command shares argument histories with \\[rgrep] and \\[grep].
 
-If CONFIRM, the user will be given an opportunity to edit the
+If CONFIRM is non-nil, the user will be given an opportunity to edit the
 command before it's run."
   (interactive
    (progn
@@ -1160,7 +1160,7 @@ This command shares argument histories with \\[lgrep] and \\[grep-find].
 When called programmatically and FILES is nil, REGEXP is expected
 to specify a command to run.
 
-If CONFIRM, the user will be given an opportunity to edit the
+If CONFIRM is non-nil, the user will be given an opportunity to edit the
 command before it's run."
   (interactive
    (progn
@@ -1275,7 +1275,7 @@ command before it's run."
 Like `rgrep' but uses `zgrep' for `grep-program', sets the default
 file name to `*.gz', and sets `grep-highlight-matches' to `always'.
 
-If CONFIRM, the user will be given an opportunity to edit the
+If CONFIRM is non-nil, the user will be given an opportunity to edit the
 command before it's run."
   (interactive
    (progn
