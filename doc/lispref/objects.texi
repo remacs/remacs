@@ -168,12 +168,12 @@ A hash table (@pxref{Hash Table Type}).
 @item ?C
 A character (@pxref{Basic Char Syntax}).
 
-@item @samp{#$}
+@item #$
 The current file name in byte-compiled files (@pxref{Docs and
 Compilation}).  This is not meant to be used in Emacs Lisp source
 files.
 
-@item @samp{#@@N}
+@item #@@N
 Skip the next @samp{N} characters (@pxref{Comments}).  This is used in
 byte-compiled files, and is not meant to be used in Emacs Lisp source
 files.
