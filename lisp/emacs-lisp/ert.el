@@ -192,6 +192,10 @@ Tests that are expected to fail can be marked as such
 using :expected-result.  See `ert-test-result-type-p' for a
 description of valid values for RESULT-TYPE.
 
+Macros in BODY are expanded when the test is defined, not when it
+is run.  If a macro (possibly with side effects) is to be tested,
+it has to be wrapped in `(eval (quote ...))'.
+
 \(fn NAME () [DOCSTRING] [:expected-result RESULT-TYPE] \
 [:tags \\='(TAG...)] BODY...)"
   (declare (debug (&define :name test
