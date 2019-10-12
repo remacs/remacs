@@ -21598,12 +21598,14 @@ extend_face_to_end_of_line (struct it *it)
 	   || WINDOW_RIGHT_MARGIN_WIDTH (it->w) > 0))
     return;
 
-  /* Face extension extends the background and box of IT->face_id
+  handle_face_prop_general (it, LFACE_EXTEND_INDEX);
+
+  /* Face extension extends the background and box of IT->extend_face_id
      to the end of the line.  If the background equals the background
      of the frame, we don't have to do anything.  */
   face = FACE_FROM_ID (f, (it->face_before_selective_p
 			   ? it->saved_face_id
-			   : it->face_id));
+			   : it->extend_face_id));
 
   if (FRAME_WINDOW_P (f)
       && MATRIX_ROW_DISPLAYS_TEXT_P (it->glyph_row)
