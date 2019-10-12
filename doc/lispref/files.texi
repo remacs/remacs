@@ -2924,6 +2924,7 @@ that can be read.
 @end defun
 
 @defun directory-files-recursively directory regexp &optional include-directories predicate follow-symlinks
+@cindex recursing downwards in directories
 Return all files under @var{directory} whose names match @var{regexp}.
 This function searches the specified @var{directory} and its
 sub-directories, recursively, for files whose basenames (i.e., without
@@ -2947,6 +2948,19 @@ if the directory is to be descended into.
 
 Symbolic links to subdirectories are not followed by default, but if
 @var{follow-symlinks} is non-@code{nil}, they are followed.
+@end defun
+
+@defun locate-dominating-file file name
+@cindex recursing upwards in directories
+Starting at @var{file}, recurse up the directory hierarchy looking for
+the first directory where @var{name} exists, which is then the return
+value of this function.  @var{file} can be a file or a directory.  If
+it's a file, its directory will serve as the starting point for
+searching the hierarchy of directories.
+
+@code{name} can be either a string or a predicate.  The predicate
+takes one argument (the directory) and should return non-@code{nil} if
+we've found the directory we're looking for.
 @end defun
 
 @defun directory-files-and-attributes directory &optional full-name match-regexp nosort id-format
