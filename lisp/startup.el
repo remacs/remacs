@@ -1856,9 +1856,7 @@ a face or button specification."
 		  (customize-set-variable 'inhibit-startup-screen t)
 		  (customize-mark-to-save 'inhibit-startup-screen)
 		  (custom-save-all))
-		(let ((w (get-buffer-window "*GNU Emacs*")))
-		  (and w (not (one-window-p)) (delete-window w)))
-		(kill-buffer "*GNU Emacs*")))
+		(quit-windows-on "*GNU Emacs*" t)))
      "  ")
     (when (or user-init-file custom-file)
       (let ((checked (create-image "checked.xpm"
