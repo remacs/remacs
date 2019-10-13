@@ -13334,9 +13334,6 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
 {
   Lisp_Object window = f->tab_bar_window;
   struct window *w = XWINDOW (window);
-#ifndef HAVE_NS
-  Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
-#endif
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
   int hpos, vpos;
   struct glyph *glyph;
@@ -13346,9 +13343,6 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
   int prop_idx;
   bool close_p;
   enum draw_glyphs_face draw = DRAW_IMAGE_RAISED;
-#ifndef HAVE_NS
-  bool mouse_down_p;
-#endif
   int rc;
 
   /* Function note_mouse_highlight is called with negative X/Y
@@ -13372,18 +13366,17 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
 
   clear_mouse_face (hlinfo);
 
+  bool mouse_down_p = false;
 #ifndef HAVE_NS
   /* Mouse is down, but on different tab-bar item?  */
+  Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
   mouse_down_p = (gui_mouse_grabbed (dpyinfo)
 		  && f == dpyinfo->last_mouse_frame);
 
   if (mouse_down_p && f->last_tab_bar_item != prop_idx)
     return;
-
+#endif
   draw = mouse_down_p ? DRAW_IMAGE_SUNKEN : DRAW_IMAGE_RAISED;
-#else
-  draw = DRAW_IMAGE_RAISED;
-#endif /* HAVE_NS */
 
   /* If tab-bar item is not enabled, don't highlight it.  */
   enabled_p = AREF (f->tab_bar_items, prop_idx + TAB_BAR_ITEM_ENABLED_P);
