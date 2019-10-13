@@ -2002,12 +2002,15 @@ makes the search case-sensitive.
 See also `minibuffer-history-case-insensitive-variables'."
   (interactive
    (let* ((enable-recursive-minibuffers t)
-	  (regexp (read-from-minibuffer "Previous element matching (regexp): "
-					nil
-					minibuffer-local-map
-					nil
-					'minibuffer-history-search-history
-					(car minibuffer-history-search-history))))
+	  (regexp (read-from-minibuffer
+                   (format "Previous element matching regexp%s: "
+                           (if minibuffer-history-search-history
+                               (format " (default %s)"
+                                       (car minibuffer-history-search-history))
+                             ""))
+		   nil minibuffer-local-map nil
+		   'minibuffer-history-search-history
+		   (car minibuffer-history-search-history))))
      ;; Use the last regexp specified, by default, if input is empty.
      (list (if (string= regexp "")
 	       (if minibuffer-history-search-history
