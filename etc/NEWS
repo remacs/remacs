@@ -2115,9 +2115,10 @@ The new command 'global-tab-line-mode' enables the tab line above each
 window, which you can use to switch buffers in the window.  Selecting
 the previous window-local tab is the same as typing 'C-x <LEFT>'
 (previous-buffer), selecting the next tab is the same as 'C-x <RIGHT>'
-(next-buffer).  Clicking on the plus icon adds a new buffer to the
-window-local tab line of buffers.  Using the mouse wheel on the
-tab line scrolls tabs that display the window buffers.
+(next-buffer).  Both commands support a numeric prefix argument as
+a repeat count.  Clicking on the plus icon adds a new buffer to the
+window-local tab line of buffers.  Using the mouse wheel on the tab
+line scrolls tabs that display the window buffers.
 
 ** fileloop.el lets one setup multifile operations like search&replace.
 
