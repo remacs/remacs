@@ -21578,7 +21578,8 @@ extend_face_to_end_of_line (struct it *it)
 	   || WINDOW_RIGHT_MARGIN_WIDTH (it->w) > 0))
     return;
 
-  const int extend_face_id = (it->face_id == DEFAULT_FACE_ID)
+  const int extend_face_id = (it->face_id == DEFAULT_FACE_ID
+                              || it->s != NULL)
     ? DEFAULT_FACE_ID
     : face_at_pos (it, LFACE_EXTEND_INDEX);
 
