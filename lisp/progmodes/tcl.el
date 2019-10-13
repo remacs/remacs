@@ -815,9 +815,14 @@ Returns nil if line starts inside a string, t if in a comment."
 	   state
 	   containing-sexp
 	   found-next-line)
-      (if parse-start
-	  (goto-char parse-start)
-	(beginning-of-defun))
+      (cond
+       (parse-start
+	(goto-char parse-start))
+       ((not (beginning-of-defun))
+        ;; If we're not in a function, don't use
+        ;; `tcl-beginning-of-defun-function'.
+        (let ((beginning-of-defun-function nil))
+          (beginning-of-defun))))
       (while (< (point) indent-point)
 	(setq parse-start (point))
 	(setq state (parse-partial-sexp (point) indent-point 0))
