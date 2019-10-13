@@ -2670,10 +2670,11 @@ Actual value is never used, only the text property.")
 
 (defun compilation-tear-down-arrow-spec-in-margin ()
   "Restore compilation-arrow-overlay to not using the margin, which is removed."
-  (overlay-put compilation-arrow-overlay 'before-string nil)
-  (delete-overlay compilation-arrow-overlay)
-  (setq compilation-arrow-overlay nil)
-  (set-window-margins (selected-window) (- (car (window-margins)) 2)))
+  (when (overlayp compilation-arrow-overlay)
+    (overlay-put compilation-arrow-overlay 'before-string nil)
+    (delete-overlay compilation-arrow-overlay)
+    (setq compilation-arrow-overlay nil)
+    (set-window-margins (selected-window) (- (car (window-margins)) 2))))
 
 (defun compilation-set-overlay-arrow (w)
   "Set up, or switch off, the overlay-arrow for window W."
