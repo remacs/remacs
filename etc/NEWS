@@ -2089,8 +2089,8 @@ file-local variable, you may need to update the value.
 ** Tab Bars
 
 +++
-*** Tab-Bar mode
-The new command 'tab-bar-mode' enables the tab-bar at the top of each
+*** Tab Bar mode
+The new command 'tab-bar-mode' enables the tab bar at the top of each
 frame, where you can use tabs to switch between named persistent
 window configurations.
 
@@ -2101,20 +2101,23 @@ edit file in another tab; and 'C-TAB' and 'S-C-TAB' switch to the next
 or previous tab.  You can also switch between tabs and create/delete
 tabs with a mouse.
 
-Tab-related commands are available even when the Tab-Bar mode is
-disabled: by default, they enable Tab-Bar mode in that case.
+Tab-related commands are available even when the tab-bar-mode is
+disabled: by default, they enable tab-bar-mode in that case.
+
+The X resource "tabBar", class "TabBar" enables the tab bar
+when its value is "on", "yes" or "1".
 
 Read the new Info node "(emacs) Tab Bars" for full description
 of all related features.
 
-*** Tab-Line mode
-The new command 'global-tab-line-mode' enables the tab-line above each
+*** Tab Line mode
+The new command 'global-tab-line-mode' enables the tab line above each
 window, which you can use to switch buffers in the window.  Selecting
 the previous window-local tab is the same as typing 'C-x <LEFT>'
 (previous-buffer), selecting the next tab is the same as 'C-x <RIGHT>'
 (next-buffer).  Clicking on the plus icon adds a new buffer to the
-window-local tab-line of buffers.  Using the mouse wheel on the
-tab-line scrolls tabs that display the window buffers.
+window-local tab line of buffers.  Using the mouse wheel on the
+tab line scrolls tabs that display the window buffers.
 
 ** fileloop.el lets one setup multifile operations like search&replace.
 
