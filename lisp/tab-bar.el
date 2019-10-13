@@ -249,14 +249,18 @@ This helps to select the tab by its number using `tab-bar-select-tab'."
 (defvar tab-bar-separator nil)
 
 
-(defcustom tab-bar-tab-name-function #'tab-bar-tab-name-selected-window
+(defcustom tab-bar-tab-name-function #'tab-bar-tab-name-current
   "Function to get a tab name.
 Function gets no arguments.
 The choice is between displaying only the name of the current buffer
 in the tab name (default), or displaying the names of all buffers
 from all windows in the window configuration."
-  :type '(choice (const :tag "Selected window buffer" tab-bar-tab-name-selected-window)
-                 (const :tag "All window buffers" tab-bar-tab-name-all-windows)
+  :type '(choice (const :tag "Selected window buffer"
+                        tab-bar-tab-name-current)
+                 (const :tag "Selected window buffer with window count"
+                        tab-bar-tab-name-current-with-count)
+                 (const :tag "All window buffers"
+                        tab-bar-tab-name-all)
                  (function  :tag "Function"))
   :initialize 'custom-initialize-default
   :set (lambda (sym val)
@@ -265,7 +269,11 @@ from all windows in the window configuration."
   :group 'tab-bar
   :version "27.1")
 
-(defun tab-bar-tab-name-selected-window ()
+(defun tab-bar-tab-name-current ()
+  "Generate tab name from the buffer of the selected window."
+  (window-buffer (minibuffer-selected-window)))
+
+(defun tab-bar-tab-name-current-with-count ()
   "Generate tab name from the buffer of the selected window.
 Also add the number of windows in the window configuration."
   (let ((count (length (window-list-1 nil 'nomini)))
@@ -274,7 +282,7 @@ Also add the number of windows in the window configuration."
         (format "%s (%d)" name count)
       (format "%s" name))))
 
-(defun tab-bar-tab-name-all-windows ()
+(defun tab-bar-tab-name-all ()
   "Generate tab name from buffers of all windows."
   (mapconcat #'buffer-name
              (delete-dups (mapcar #'window-buffer
