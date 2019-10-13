@@ -2509,6 +2509,8 @@ This is the value of `next-error-function' in Compilation buffers."
 	 (loc (compilation--message->loc msg))
 	 (end-loc (compilation--message->end-loc msg))
 	 (marker (point-marker)))
+    (unless loc
+      (user-error "No next error"))
     (setq compilation-current-error (point-marker)
 	  overlay-arrow-position
 	    (if (bolp)
@@ -2822,7 +2824,8 @@ attempts to find a file whose name is produced by (format FMT FILENAME)."
                       (expand-file-name directory)
                     default-directory))
         buffer thisdir fmts name)
-    (if (file-name-absolute-p filename)
+    (if (and filename
+             (file-name-absolute-p filename))
         ;; The file name is absolute.  Use its explicit directory as
         ;; the first in the search path, and strip it from FILENAME.
         (setq filename (abbreviate-file-name (expand-file-name filename))
@@ -2850,8 +2853,11 @@ attempts to find a file whose name is produced by (format FMT FILENAME)."
 	    (and w (progn (compilation-set-window w marker)
                           (compilation-set-overlay-arrow w))))
           (let* ((name (read-file-name
-                        (format "Find this %s in (default %s): "
-                                compilation-error filename)
+                        (format "Find this %s in%s: "
+                                compilation-error
+                                (if filename
+                                    (format " (default %s)" filename)
+                                  ""))
                         spec-dir filename t nil
                         ;; The predicate below is fine when called from
                         ;; minibuffer-complete-and-exit, but it's too
