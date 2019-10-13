@@ -256,12 +256,14 @@ look like one of the following:
       Time-stamp: \" \"
 The time stamp is written between the brackets or quotes:
       Time-stamp: <2001-02-18 10:20:51 gildea>
-The time stamp is updated only if the variable `time-stamp-active' is non-nil.
-The format of the time stamp is set by the variable `time-stamp-pattern' or
-`time-stamp-format'.  The variables `time-stamp-pattern',
-`time-stamp-line-limit', `time-stamp-start', `time-stamp-end',
-`time-stamp-count', and `time-stamp-inserts-lines' control finding
-the template."
+
+The time stamp is updated only if the variable
+`time-stamp-active' is non-nil.
+The format of the time stamp is set by the variable
+`time-stamp-pattern' or `time-stamp-format'.
+The variables `time-stamp-pattern', `time-stamp-line-limit',
+`time-stamp-start', `time-stamp-end', `time-stamp-count', and
+`time-stamp-inserts-lines' control finding the template."
   (interactive)
   (let ((line-limit time-stamp-line-limit)
 	(ts-start time-stamp-start)

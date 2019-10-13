@@ -24,7 +24,7 @@
 (require 'time-stamp)
 
 (defmacro with-time-stamp-test-env (&rest body)
-  "Evaluates BODY with some standard time-stamp test variables bound."
+  "Evaluate BODY with some standard time-stamp test variables bound."
   `(let ((user-login-name "test-logname")
          (user-full-name "Time Stamp Tester")
          (buffer-file-name "/emacs/test/time-stamped-file")
