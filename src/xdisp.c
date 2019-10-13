@@ -13334,7 +13334,9 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
 {
   Lisp_Object window = f->tab_bar_window;
   struct window *w = XWINDOW (window);
+#ifndef HAVE_NS
   Display_Info *dpyinfo = FRAME_DISPLAY_INFO (f);
+#endif
   Mouse_HLInfo *hlinfo = MOUSE_HL_INFO (f);
   int hpos, vpos;
   struct glyph *glyph;
@@ -13344,7 +13346,9 @@ note_tab_bar_highlight (struct frame *f, int x, int y)
   int prop_idx;
   bool close_p;
   enum draw_glyphs_face draw = DRAW_IMAGE_RAISED;
+#ifndef HAVE_NS
   bool mouse_down_p;
+#endif
   int rc;
 
   /* Function note_mouse_highlight is called with negative X/Y
