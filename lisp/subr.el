@@ -5325,6 +5325,8 @@ Usually the separator is \".\", but it can be any other string.")
     ("^[-._+]$"                                           . -4)
     ;; treat "1.2.3-CVS" as snapshot release
     ("^[-._+ ]?\\(cvs\\|git\\|bzr\\|svn\\|hg\\|darcs\\)$" . -4)
+    ;; treat "-unknown" the same as snapshots.
+    ("^[-._+ ]?unknown$"                                  . -4)
     ("^[-._+ ]?alpha$"                                    . -3)
     ("^[-._+ ]?beta$"                                     . -2)
     ("^[-._+ ]?\\(pre\\|rc\\)$"                           . -1))
