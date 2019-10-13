@@ -2463,6 +2463,12 @@ some sort of escape sequence, the ambiguity is resolved via `read-key-delay'."
     map)
   "Keymap used while reading passwords.")
 
+(defun read-password--hide-password ()
+  (let ((beg (minibuffer-prompt-end)))
+    (dotimes (i (1+ (- (buffer-size) beg)))
+      (put-text-property (+ i beg) (+ 1 i beg)
+                         'display (string (or read-hide-char ?*))))))
+
 (defun read-passwd (prompt &optional confirm default)
   "Read a password, prompting with PROMPT, and return it.
 If optional CONFIRM is non-nil, read the password twice to make sure.
@@ -2487,15 +2493,7 @@ by doing (clear-string STRING)."
               (message "Password not repeated accurately; please start over")
               (sit-for 1))))
         success)
-    (let ((hide-chars-fun
-           (lambda (beg end _len)
-             (clear-this-command-keys)
-             (setq beg (min end (max (minibuffer-prompt-end)
-                                     beg)))
-             (dotimes (i (- end beg))
-               (put-text-property (+ i beg) (+ 1 i beg)
-                                  'display (string (or read-hide-char ?*))))))
-          minibuf)
+    (let (minibuf)
       (minibuffer-with-setup-hook
           (lambda ()
             (setq minibuf (current-buffer))
@@ -2506,7 +2504,7 @@ by doing (clear-string STRING)."
             (use-local-map read-passwd-map)
             (setq-local inhibit-modification-hooks nil) ;bug#15501.
 	    (setq-local show-paren-mode nil)		;bug#16091.
-            (add-hook 'after-change-functions hide-chars-fun nil 'local))
+            (add-hook 'post-command-hook 'read-password--hide-password nil t))
         (unwind-protect
             (let ((enable-recursive-minibuffers t)
 		  (read-hide-char (or read-hide-char ?*)))
@@ -2516,7 +2514,8 @@ by doing (clear-string STRING)."
               ;; Not sure why but it seems that there might be cases where the
               ;; minibuffer is not always properly reset later on, so undo
               ;; whatever we've done here (bug#11392).
-              (remove-hook 'after-change-functions hide-chars-fun 'local)
+              (remove-hook 'after-change-functions 'read-password--hide-password
+                           'local)
               (kill-local-variable 'post-self-insert-hook)
               ;; And of course, don't keep the sensitive data around.
               (erase-buffer))))))))
