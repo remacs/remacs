@@ -993,7 +993,7 @@ static int handle_display_spec (struct it *, Lisp_Object, Lisp_Object,
 static int handle_single_display_spec (struct it *, Lisp_Object, Lisp_Object,
 				       Lisp_Object, struct text_pos *,
 				       ptrdiff_t, int, bool, bool);
-static int underlying_face_id (struct it *);
+static int underlying_face_id (const struct it *);
 
 #define face_before_it_pos(IT) face_before_or_after_it_pos (IT, true)
 #define face_after_it_pos(IT)  face_before_or_after_it_pos (IT, false)
@@ -4158,23 +4158,20 @@ handle_fontified_prop (struct it *it)
  ***********************************************************************/
 
 static int
-face_at_pos (struct it *it, enum lface_attribute_index attr_filter)
+face_at_pos (const struct it *it, enum lface_attribute_index attr_filter)
 {
-  int new_face_id;
   ptrdiff_t next_stop;
-  const bool is_string = STRINGP (it->string);
 
-  if (!is_string)
+  if (!STRINGP (it->string))
     {
-      new_face_id
-	= face_at_buffer_position (it->w,
-				   IT_CHARPOS (*it),
-				   &next_stop,
-				   (IT_CHARPOS (*it)
-				    + TEXT_PROP_DISTANCE_LIMIT),
-	                           false, it->base_face_id,
-	                           attr_filter);
-     }
+      return face_at_buffer_position (it->w,
+                                      IT_CHARPOS (*it),
+                                      &next_stop,
+                                      (IT_CHARPOS (*it)
+				       + TEXT_PROP_DISTANCE_LIMIT),
+                                      false, it->base_face_id,
+                                      attr_filter);
+    }
   else
     {
       int base_face_id;
@@ -4183,7 +4180,7 @@ face_at_pos (struct it *it, enum lface_attribute_index attr_filter)
       Lisp_Object from_overlay
 	= (it->current.overlay_string_index >= 0
 	   ? it->string_overlays[it->current.overlay_string_index
-				 % OVERLAY_STRING_CHUNK_SIZE]
+	                         % OVERLAY_STRING_CHUNK_SIZE]
 	   : Qnil);
 
       /* See if we got to this string directly or indirectly from
@@ -4198,7 +4195,7 @@ face_at_pos (struct it *it, enum lface_attribute_index attr_filter)
 	    if (it->stack[i].current.overlay_string_index >= 0)
 	      from_overlay
 		= it->string_overlays[it->stack[i].current.overlay_string_index
-				      % OVERLAY_STRING_CHUNK_SIZE];
+		                      % OVERLAY_STRING_CHUNK_SIZE];
 	    else if (! NILP (it->stack[i].from_overlay))
 	      from_overlay = it->stack[i].from_overlay;
 
@@ -4213,11 +4210,11 @@ face_at_pos (struct it *it, enum lface_attribute_index attr_filter)
 	     only on text properties and ignores overlays.  */
 	  base_face_id
 	    = face_for_overlay_string (it->w,
-				       IT_CHARPOS (*it),
-				       &next_stop,
-				       (IT_CHARPOS (*it)
-					+ TEXT_PROP_DISTANCE_LIMIT),
-				       false,
+	                               IT_CHARPOS (*it),
+	                               &next_stop,
+	                               (IT_CHARPOS (*it)
+				        + TEXT_PROP_DISTANCE_LIMIT),
+	                               false,
 	                               from_overlay);
 	}
       else
@@ -4247,14 +4244,24 @@ face_at_pos (struct it *it, enum lface_attribute_index attr_filter)
 	    : underlying_face_id (it);
 	}
 
-      new_face_id = face_at_string_position (it->w,
-					     it->string,
-					     IT_STRING_CHARPOS (*it),
-					     bufpos,
-					     &next_stop,
-                                             base_face_id, false,
-					     attr_filter);
-    } /* !is_string.  */
+      return face_at_string_position (it->w,
+                                      it->string,
+                                      IT_STRING_CHARPOS (*it),
+                                      bufpos,
+                                      &next_stop,
+                                      base_face_id, false,
+                                      attr_filter);
+    } // !STRINGP (it->string))
+}
+
+
+/* Set up iterator IT from face properties at its current position.
+   Called from handle_stop.  */
+static enum prop_handled
+handle_face_prop (struct it *it)
+{
+  const int new_face_id = face_at_pos (it, 0);
+
 
   /* Is this a start of a run of characters with box face?
      Caveat: this can be called for a freshly initialized
@@ -4273,11 +4280,11 @@ face_at_pos (struct it *it, enum lface_attribute_index attr_filter)
       /* If the value of face_id of the iterator is -1, we have to
 	 look in front of IT's position and see whether there is a
 	 face there that's different from new_face_id.  */
-      if (!is_string
+      if (!STRINGP (it->string)
           && !old_face
           && IT_CHARPOS (*it) > BEG)
 	{
-	  int prev_face_id = face_before_it_pos (it);
+	  const int prev_face_id = face_before_it_pos (it);
 
 	  old_face = FACE_FROM_ID_OR_NULL (it->f, prev_face_id);
 	}
@@ -4285,21 +4292,12 @@ face_at_pos (struct it *it, enum lface_attribute_index attr_filter)
       /* If the new face has a box, but the old face does not,
 	 this is the start of a run of characters with box face,
 	 i.e. this character has a shadow on the left side.  */
+      it->face_id = new_face_id;
       it->start_of_box_run_p = (new_face->box != FACE_NO_BOX
                                 && (old_face == NULL || !old_face->box));
       it->face_box_p = new_face->box != FACE_NO_BOX;
     }
 
-  return new_face_id;
-}
-
-
-/* Set up iterator IT from face properties at its current position.
-   Called from handle_stop.  */
-static enum prop_handled
-handle_face_prop (struct it *it)
-{
-  it->face_id = face_at_pos (it, 0);
   return HANDLED_NORMALLY;
 }
 
@@ -4310,7 +4308,7 @@ handle_face_prop (struct it *it)
    Otherwise, use the iterator's base_face_id.  */
 
 static int
-underlying_face_id (struct it *it)
+underlying_face_id (const struct it *it)
 {
   int face_id = it->base_face_id, i;
 
