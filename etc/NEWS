@@ -454,6 +454,10 @@ Note that this key binding will not work on MS-Windows systems if
 * Editing Changes in Emacs 27.1
 
 +++
+** 'save-some-buffers' now has a new action in the prompt: 'C-f' will
+exit the command and switch to the buffer currently being asked about.
+
++++
 ** The new 'amalgamating-undo-limit' variable can be used to control
 how many changes should be amalgamated when using the 'undo' command.
 
