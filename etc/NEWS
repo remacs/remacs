@@ -131,6 +131,9 @@ builds respectively.
 
 ** New make target 'help' shows a summary of common make targets.
 
+** Emacs now builds with dynamic module support by default.  Pass
+'--without-modules' to 'configure' to disable dynamic module support.
+
 
 * Startup Changes in Emacs 27.1
 
