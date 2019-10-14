@@ -4401,14 +4401,22 @@ ns_check_menu_open (NSMenu *menu)
           NSEvent *theEvent = [NSApp currentEvent];
           struct frame *emacsframe = SELECTED_FRAME ();
 
-          [menu cancelTracking];
-          menu_will_open_state = MENU_PENDING;
-          emacs_event->kind = MENU_BAR_ACTIVATE_EVENT;
-          EV_TRAILER (theEvent);
+          /* On macOS, the following can cause an event loop when the
+             Spotlight for Help search field is populated.  Avoid this by
+             not postponing mouse drag and non-user-generated mouse down
+             events (Bug#31371).  */
+          if (([theEvent type] == NSEventTypeLeftMouseDown)
+              && [theEvent eventNumber])
+            {
+              [menu cancelTracking];
+              menu_will_open_state = MENU_PENDING;
+              emacs_event->kind = MENU_BAR_ACTIVATE_EVENT;
+              EV_TRAILER (theEvent);
 
-          CGEventRef ourEvent = CGEventCreate (NULL);
-          menu_mouse_point = CGEventGetLocation (ourEvent);
-          CFRelease (ourEvent);
+              CGEventRef ourEvent = CGEventCreate (NULL);
+              menu_mouse_point = CGEventGetLocation (ourEvent);
+              CFRelease (ourEvent);
+            }
         }
       else if (menu_will_open_state == MENU_OPENING)
         {
