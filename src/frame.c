@@ -6290,24 +6290,19 @@ width by the width of one scroll bar provided this option is nil and
 keep it unchanged if this option is either t or a list containing
 `vertical-scroll-bars'.
 
-In NS that use the external tool bar and no tab bar, the default value
-is nil which means that changing any of the parameters listed above
-may change the size of the frame.  In GTK+ that use the external tool
-bar, the default value is \\='(tab-bar-lines) which means that
-adding/removing a tab bar does not change the frame height.  On all
-other types of GUI frames, the default value is \\='(tab-bar-lines
-tool-bar-lines) which means that adding/removing a tool bar or tab bar
-does not change the frame height.  Otherwise it's t which means the
-frame size never changes implicitly when there's no window
-system support.
+In GTK+ and NS that use the external tool bar, the default value is
+\\='(tab-bar-lines) which means that adding/removing a tab bar does
+not change the frame height.  On all other types of GUI frames, the
+default value is \\='(tab-bar-lines tool-bar-lines) which means that
+adding/removing a tool bar or tab bar does not change the frame
+height.  Otherwise it's t which means the frame size never changes
+implicitly when there's no window system support.
 
 Note that when a frame is not large enough to accommodate a change of
 any of the parameters listed above, Emacs may try to enlarge the frame
 even if this option is non-nil.  */);
 #if defined (HAVE_WINDOW_SYSTEM)
-#if defined (HAVE_NS)
-  frame_inhibit_implied_resize = Qnil;
-#elif defined (USE_GTK)
+#if defined (USE_GTK) || defined (HAVE_NS)
   frame_inhibit_implied_resize = list1 (Qtab_bar_lines);
 #else
   frame_inhibit_implied_resize = list2 (Qtab_bar_lines, Qtool_bar_lines);
