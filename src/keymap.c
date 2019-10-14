@@ -975,10 +975,12 @@ copy_keymap_item (Lisp_Object elt, int depth)
 }
 
 static void
-copy_keymap_set_char_table (Lisp_Object chartable, Lisp_Object idx,
+copy_keymap_set_char_table (Lisp_Object chartable_and_depth, Lisp_Object idx,
 			    Lisp_Object elt)
 {
-  Fset_char_table_range (chartable, idx, copy_keymap_item (elt, 0));
+  Fset_char_table_range
+    (XCAR (chartable_and_depth), idx,
+     copy_keymap_item (elt, XFIXNUM (XCDR (chartable_and_depth))));
 }
 
 static Lisp_Object
@@ -999,7 +1001,8 @@ copy_keymap_1 (Lisp_Object keymap, int depth)
       if (CHAR_TABLE_P (elt))
 	{
 	  elt = Fcopy_sequence (elt);
-	  map_char_table (copy_keymap_set_char_table, Qnil, elt, elt);
+	  map_char_table (copy_keymap_set_char_table, Qnil, elt,
+			  Fcons (elt, make_fixnum (depth + 1)));
 	}
       else if (VECTORP (elt))
 	{
