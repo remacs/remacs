@@ -44,6 +44,7 @@
 (defface tab-line
   '((((type x w32 ns) (class color))
      :inherit variable-pitch
+     :height 0.9
      :background "grey85"
      :foreground "black")
     (((type x) (class mono))

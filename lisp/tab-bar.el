@@ -50,7 +50,6 @@
 
 (defface tab-bar
   '((((type x w32 ns) (class color))
-     :height 1.1
      :inherit variable-pitch
      :background "grey85"
      :foreground "black")
