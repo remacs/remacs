@@ -454,6 +454,12 @@ Note that this key binding will not work on MS-Windows systems if
 * Editing Changes in Emacs 27.1
 
 +++
+** 'zap-to-char' uses the new 'read-char-with-history' function to allow
+navigating through the history of characters that have been input.
+This is mostly useful for characters that have complex input methods
+where inputting the character again may involve many keystrokes.
+
++++
 ** 'save-some-buffers' now has a new action in the prompt: 'C-f' will
 exit the command and switch to the buffer currently being asked about.
 
@@ -2375,6 +2381,10 @@ scrolling.
 
 
 * Lisp Changes in Emacs 27.1
+
+** There is a new function 'read-char-with-history' that works like
+'read-char', but maintains a history that can be navigated via the
+'M-p'/'M-n' keystrokes.
 
 ** 'setq-local' can now set an arbitrary number of variables, which
 makes the syntax more like 'setq'.

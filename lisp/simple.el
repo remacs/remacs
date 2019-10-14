@@ -5159,12 +5159,80 @@ and KILLP is t if a prefix arg was specified."
     ;; Avoid warning about delete-backward-char
     (with-no-warnings (delete-backward-char n killp))))
 
+(defvar read-char-with-history--history nil
+  "The default history for `read-char-with-history'.")
+
+(defun read-char-with-history (prompt &optional inherit-input-method seconds
+                                      history)
+  "Like `read-char', but allows navigating in a history.
+HISTORY is like HIST in `read-from-minibuffer'.
+
+The navigation commands are `M-p' and `M-n', with `RET' to select
+a character from history."
+  (let* ((result nil)
+         (real-prompt prompt)
+         (hist-format
+          (lambda (char)
+            (if (string-match ": *\\'" real-prompt)
+                (format "%s (default %c): "
+                        (substring real-prompt 0 (match-beginning 0))
+                        char)
+              (format "%s (default %c) " real-prompt char))))
+         (index 0)
+         histvar)
+    ;; Use the same history interface as `read-from-minibuffer'.
+    (cond
+     ((null history)
+      (setq histvar 'read-char-with-history--history))
+     ((consp history)
+      (setq histvar (car history)
+            index (cdr history)))
+     ((symbolp history)
+      (setq histvar history))
+     (t
+      (error "Invalid history: %s" history)))
+    (while (not result)
+      (setq result (read-char prompt inherit-input-method seconds))
+      ;; Go back in history.
+      (cond
+       ((eq result ?\M-p)
+        (if (>= index (length (symbol-value histvar)))
+            (progn
+              (message "Beginning of history; no preceding item")
+              (ding)
+              (sit-for 2))
+          (setq index (1+ index)
+                prompt (funcall hist-format
+                                (elt (symbol-value histvar) (1- index)))))
+        (setq result nil))
+       ;; Go forward in history.
+       ((eq result ?\M-n)
+        (if (zerop index)
+            (progn
+              (message "End of history; no next item")
+              (ding)
+              (sit-for 2))
+          (setq index (1- index)
+                prompt (if (zerop index)
+                           real-prompt
+                         (funcall hist-format
+                                  (elt (symbol-value histvar) (1- index))))))
+        (setq result nil))
+       ;; The user hits RET to either select a history item or to
+       ;; return RET.
+       ((eq result ?\r)
+        (unless (zerop index)
+          (setq result (elt (symbol-value histvar) (1- index)))))))
+    ;; Record the chosen key.
+    (set histvar (cons result (symbol-value histvar)))
+    result))
+
 (defun zap-to-char (arg char)
   "Kill up to and including ARGth occurrence of CHAR.
 Case is ignored if `case-fold-search' is non-nil in the current buffer.
 Goes backward if ARG is negative; error if CHAR not found."
   (interactive (list (prefix-numeric-value current-prefix-arg)
-		     (read-char "Zap to char: " t)))
+		     (read-char-with-history "Zap to char: " t)))
   ;; Avoid "obsolete" warnings for translation-table-for-input.
   (with-no-warnings
     (if (char-table-p translation-table-for-input)
