@@ -2484,14 +2484,16 @@ attributes from faces earlier in the list override those from later
 faces.
 
 @item :extend
-Whether or not this face will be extended until the end of the window.
-The value should be @code{t} to extend until end of the window using
-this face or @code{nil} fill the space between the end of the line and
-the end of the window with the default face.  When a face is conformed
-by merging multiple other faces; only those with @code{:extend t} will
-be merged to conform a new face to extend until end of window.  By
-default only @code{region} and @code{hl-line} have this attribute set
-to @code{t}.
+Whether or not this face will be extended beyond end of line and will
+affect the display of the empty space between the end of line and the
+edge of the window.  The value should be @code{t} to display the empty
+space between end of line and edge of the window using this face, or
+@code{nil} to not use this face for the space between the end of the
+line and the edge of the window.  When Emacs merges several faces for
+displaying the empty space beyond end of line, only those faces with
+@code{:extend} non-@code{nil} will be merged.  By default, only
+@code{region} and @code{hl-line} faces have this attribute set to
+@code{t}.
 
 @end table
 
