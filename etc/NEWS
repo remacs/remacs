@@ -554,6 +554,11 @@ current and the previous or the next line, as before.
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
 ---
+** The 'C' command in 'tar-mode' will now preserve the timestamp of
+the extracted file if the new variable 'tar-copy-preserve-time' is
+non-nil.
+
+---
 ** 'autoconf-mode' is now used instead of 'm4-mode' for the
 acinclude.m4/aclocal.m4/acsite.m4 files.
 
