@@ -51,6 +51,7 @@
 (defface tab-bar
   '((((type x w32 ns) (class color))
      :height 1.1
+     :inherit variable-pitch
      :background "grey85"
      :foreground "black")
     (((type x) (class mono))
@@ -62,7 +63,9 @@
   :group 'tab-bar-faces)
 
 (defface tab-bar-tab
-  '((((class color) (min-colors 88))
+  '((default
+      :inherit tab-bar)
+    (((class color) (min-colors 88))
      :box (:line-width 1 :style released-button))
     (t
      :inverse-video nil))

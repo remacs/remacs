@@ -43,6 +43,7 @@
 
 (defface tab-line
   '((((type x w32 ns) (class color))
+     :inherit variable-pitch
      :background "grey85"
      :foreground "black")
     (((type x) (class mono))
@@ -54,9 +55,10 @@
   :group 'tab-line-faces)
 
 (defface tab-line-tab
-  '((((class color) (min-colors 88))
-     :box (:line-width 1 :style released-button)
-     :background "grey85")
+  '((default
+      :inherit tab-line)
+    (((class color) (min-colors 88))
+     :box (:line-width 1 :style released-button))
     (t
      :inverse-video nil))
   "Tab line face for selected tab."
