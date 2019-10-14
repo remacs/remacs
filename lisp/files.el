@@ -827,7 +827,7 @@ in the output directories whose names match REGEXP.
 PREDICATE can be either nil (which means that all subdirectories
 are descended into), t (which means that subdirectories that
 can't be read are ignored), or a function (which is called with
-name name of the subdirectory and should return non-nil if the
+the name of the subdirectory and should return non-nil if the
 subdirectory is to be descended into).
 
 If FOLLOW-SYMLINKS, symbolic links that point to directories are
