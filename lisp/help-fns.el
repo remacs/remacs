@@ -1228,6 +1228,30 @@ variable.\n")))
               "  This variable is an alias for `%s'.\n"
               alias)))))
 
+(add-hook 'help-fns-describe-variable-functions #'help-fns--var-aliases)
+(defun help-fns--var-aliases (variable)
+  ;; Mention if it has any aliases.
+  (let (aliases)
+    (mapatoms
+     (lambda (sym)
+       (when (and (boundp sym)
+		  (setq alias (indirect-variable sym))
+                  (eq alias variable)
+		  (not (eq alias sym)))
+	 (push sym aliases)))
+     obarray)
+    (when aliases
+      (princ
+       (if (= (length aliases) 1)
+           (format-message
+            "  This variable has an alias: `%s'.\n" (car aliases))
+         (format-message
+          "  This variable has the following aliases: %s.\n"
+          (mapconcat
+           (lambda (sym)
+             (format "`%s'" sym))
+           aliases ",\n    ")))))))
+
 (add-hook 'help-fns-describe-variable-functions #'help-fns--var-bufferlocal)
 (defun help-fns--var-bufferlocal (variable)
   (let ((permanent-local (get variable 'permanent-local))
