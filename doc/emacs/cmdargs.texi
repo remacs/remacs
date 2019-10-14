@@ -1238,7 +1238,7 @@ Disable the blinking cursor on graphical displays.
 @itemx --basic-display
 @opindex --basic-display
 Disable the menu-bar, the tool-bar, the scroll-bars, tool tips, and
-font-lock-mode, and turn off the blinking cursor.  This can be useful
+turn off font-lock-mode and the blinking cursor.  This can be useful
 for making a test case that simplifies debugging of display problems.
 @end table
 

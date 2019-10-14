@@ -454,7 +454,8 @@ Note that this key binding will not work on MS-Windows systems if
 * Editing Changes in Emacs 27.1
 
 +++
-** 'zap-to-char' uses the new 'read-char-with-history' function to allow
+** 'zap-to-char' now uses history of characters you used to zap to.
+'zap-to-char' uses the new 'read-char-with-history' function to allow
 navigating through the history of characters that have been input.
 This is mostly useful for characters that have complex input methods
 where inputting the character again may involve many keystrokes.
@@ -764,8 +765,8 @@ remapped to these, respectively.
 ** Dired
 
 ---
-*** On systems that support it, Dired now font-locks the permissions
-of suid/guid files specially with the 'dired-set-id' face.
+*** On systems that support suid/guid files, Dired now fontifies the
+permissions of such files with a special face 'dired-set-id'.
 
 +++
 *** New command 'dired-create-empty-file'.
@@ -2387,9 +2388,9 @@ scrolling.
 
 * Lisp Changes in Emacs 27.1
 
-** There is a new function 'read-char-with-history' that works like
-'read-char', but maintains a history that can be navigated via the
-'M-p'/'M-n' keystrokes.
+** New function 'read-char-with-history'.
+This function works like 'read-char', but maintains a history that can
+be navigated via the 'M-p'/'M-n' keystrokes.
 
 ** 'setq-local' can now set an arbitrary number of variables, which
 makes the syntax more like 'setq'.
