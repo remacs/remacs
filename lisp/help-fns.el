@@ -1231,7 +1231,7 @@ variable.\n")))
 (add-hook 'help-fns-describe-variable-functions #'help-fns--var-aliases)
 (defun help-fns--var-aliases (variable)
   ;; Mention if it has any aliases.
-  (let (aliases)
+  (let (aliases alias)
     (mapatoms
      (lambda (sym)
        (when (and (boundp sym)
