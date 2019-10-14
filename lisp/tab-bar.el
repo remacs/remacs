@@ -271,7 +271,7 @@ from all windows in the window configuration."
 
 (defun tab-bar-tab-name-current ()
   "Generate tab name from the buffer of the selected window."
-  (window-buffer (minibuffer-selected-window)))
+  (buffer-name (window-buffer (minibuffer-selected-window))))
 
 (defun tab-bar-tab-name-current-with-count ()
   "Generate tab name from the buffer of the selected window.
