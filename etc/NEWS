@@ -752,6 +752,10 @@ remapped to these, respectively.
 
 ** Dired
 
+---
+*** On systems that support it, Dired now font-locks the permissions
+of suid/guid files specially with the 'dired-set-id' face.
+
 +++
 *** New command 'dired-create-empty-file'.
 
