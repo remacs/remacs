@@ -2597,11 +2597,13 @@ not in completion mode."
 (defun tramp-completion-handle-file-name-completion
   (filename directory &optional predicate)
   "Like `file-name-completion' for Tramp files."
-  (try-completion
-   filename
-   (mapcar #'list (file-name-all-completions filename directory))
-   (when (and predicate (tramp-connectable-p directory))
-     (lambda (x) (funcall predicate (expand-file-name (car x) directory))))))
+  ;; Suppress eager completion on not connected hosts.
+  (let ((non-essential t))
+    (try-completion
+     filename
+     (mapcar #'list (file-name-all-completions filename directory))
+     (when (and predicate (tramp-connectable-p directory))
+       (lambda (x) (funcall predicate (expand-file-name (car x) directory)))))))
 
 ;; I misuse a little bit the `tramp-file-name' structure in order to
 ;; handle completion possibilities for partial methods / user names /
