@@ -99,6 +99,29 @@
               (cons (cons 'tab-bar-lines val)
                     (assq-delete-all 'tab-bar-lines
                                      default-frame-alist)))))
+
+  (when (and tab-bar-mode (not (get-text-property 0 'display tab-bar-new-button)))
+    ;; This file is pre-loaded so only here we can use the right data-directory:
+    (let ((file (expand-file-name "images/tabs/new.xpm" data-directory)))
+      (when (file-exists-p file)
+        (add-text-properties 0 (length tab-bar-new-button)
+                             `(display (image :type xpm
+                                              :file ,file
+                                              :margin (2 . 0)
+                                              :ascent center))
+                             tab-bar-new-button))))
+
+  (when (and tab-bar-mode (not (get-text-property 0 'display tab-bar-close-button)))
+    ;; This file is pre-loaded so only here we can use the right data-directory:
+    (let ((file (expand-file-name "images/tabs/close.xpm" data-directory)))
+      (when (file-exists-p file)
+        (add-text-properties 0 (length tab-bar-close-button)
+                             `(display (image :type xpm
+                                              :file ,file
+                                              :margin (2 . 0)
+                                              :ascent center))
+                             tab-bar-close-button))))
+
   (when tab-bar-mode
     (global-set-key [(control shift iso-lefttab)] 'tab-previous)
     (global-set-key [(control shift tab)]         'tab-previous)
@@ -198,14 +221,7 @@ before calling the command that adds a new tab."
   :group 'tab-bar
   :version "27.1")
 
-(defvar tab-bar-new-button
-  (propertize " + "
-              'display `(image :type xpm
-                               :file ,(expand-file-name
-                                       "images/tabs/new.xpm"
-                                       data-directory)
-                               :margin (2 . 0)
-                               :ascent center))
+(defvar tab-bar-new-button " + "
   "Button for creating a new tab.")
 
 (defcustom tab-bar-close-button-show t
@@ -227,12 +243,6 @@ If nil, don't show it at all."
 
 (defvar tab-bar-close-button
   (propertize " x"
-              'display `(image :type xpm
-                               :file ,(expand-file-name
-                                       "images/tabs/close.xpm"
-                                       data-directory)
-                               :margin (2 . 0)
-                               :ascent center)
               'close-tab t
               :help "Click to close tab")
   "Button for closing the clicked tab.")
