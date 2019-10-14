@@ -267,6 +267,11 @@ and is passed 3 arguments: the COMMAND, the FILES and the FLAGS.")
   ;; FIXME what about file names with spaces?
   (if (not filelist) "."  (mapconcat 'identity filelist " ")))
 
+(defcustom vc-tor nil
+  "If non-nil, communicate with the repository site via Tor."
+  :type 'boolean
+  :group 'vc)
+
 ;;;###autoload
 (defun vc-do-command (buffer okstatus command file-or-list &rest flags)
   "Execute a slave command, notifying user and checking for errors.
@@ -295,7 +300,8 @@ case, and the process object in the asynchronous case."
 	 ;; due to potential truncation of long messages.
 	 (message-truncate-lines t)
 	 (full-command
-	  (concat (if (string= (substring command -1) "\n")
+	  (concat (if vc-tor "torsocks " "")
+                  (if (string= (substring command -1) "\n")
 		      (substring command 0 -1)
 		    command)
 		  " " (vc-delistify flags)
