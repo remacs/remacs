@@ -8923,7 +8923,7 @@ accessible position."
        ;; vertically.
        ((and (not (eq fit-window-to-buffer-horizontally 'only))
 	     (not (window-size-fixed-p window 'preserved))
-	     (window-combined-p))
+	     (window-combined-p window))
         (let* ((line-height (window-default-line-height window))
 	       (total-height (window-size window nil pixelwise))
                (min-height
