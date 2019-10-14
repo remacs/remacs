@@ -384,6 +384,13 @@ matches strings where the pattern appears as a subsequence.  Put
 simply, makes "foo" complete to both "barfoo" and "frodo".  Add 'flex'
 to 'completion-styles' or 'completion-category-overrides' to use it.
 
++++
+** New face attribute ':extend' to control face extension at EOL.
+There is a new face attribute :extend to use the face attributes to
+extend after the end of the line until the end of the window.  Such
+:extend is set to nil by default in all faces except for 'hl-line' and
+'region' because those extend until the end of the window by default.
+
 ** Connection-local variables
 
 +++

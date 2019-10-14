@@ -1385,6 +1385,7 @@ If FRAME is omitted or nil, use the selected frame."
 		  (:stipple . "Stipple")
 		  (:font . "Font")
 		  (:fontset . "Fontset")
+                  (:extend . "Extend")
 		  (:inherit . "Inherit")))
 	 (max-width (apply #'max (mapcar #'(lambda (x) (length (cdr x)))
 					 attrs))))
