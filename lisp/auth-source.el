@@ -2049,9 +2049,9 @@ entries for git.gnus.org:
                                           (if (or (null v)
                                                   (eq t v))
                                               nil
-                                            (if (stringp v)
-                                                (setq v (list v)))
-                                            (list k v))))
+                                            (list
+                                             k
+                                             (auth-source-ensure-strings v)))))
                                       search-keys)))
          ;; needed keys (always including host, login, port, and secret)
          (returned-keys (delete-dups (append
