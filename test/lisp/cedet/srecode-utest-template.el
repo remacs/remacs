@@ -215,14 +215,12 @@ Return NIL on success, or a diagnostic on failure."
    (srecode-utest-output
     :point "wrapinclude-basic" :name "wrapinclude-basic"
     :output ";; An includable  we could use.
-;;
-;; Text after a point inserter."
+;; \n;; Text after a point inserter."
     )
    (srecode-utest-output
     :point "wrapinclude-basic2" :name "wrapinclude-basic"
     :output ";; An includable MOOSE we could use.
-;;
-;; Text after a point inserter."
+;; \n;; Text after a point inserter."
     :dict-entries '("COMMENT" "MOOSE")
     )
    (srecode-utest-output
