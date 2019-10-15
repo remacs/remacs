@@ -102,25 +102,21 @@
 
   (when (and tab-bar-mode (not (get-text-property 0 'display tab-bar-new-button)))
     ;; This file is pre-loaded so only here we can use the right data-directory:
-    (let ((file (expand-file-name "images/tabs/new.xpm" data-directory)))
-      (when (file-exists-p file)
-        (add-text-properties 0 (length tab-bar-new-button)
-                             `(display (image :type xpm
-                                              :file ,file
-                                              :margin (2 . 0)
-                                              :ascent center))
-                             tab-bar-new-button))))
+    (add-text-properties 0 (length tab-bar-new-button)
+                         `(display (image :type xpm
+                                          :file "tabs/new.xpm"
+                                          :margin (2 . 0)
+                                          :ascent center))
+                         tab-bar-new-button))
 
   (when (and tab-bar-mode (not (get-text-property 0 'display tab-bar-close-button)))
     ;; This file is pre-loaded so only here we can use the right data-directory:
-    (let ((file (expand-file-name "images/tabs/close.xpm" data-directory)))
-      (when (file-exists-p file)
-        (add-text-properties 0 (length tab-bar-close-button)
-                             `(display (image :type xpm
-                                              :file ,file
-                                              :margin (2 . 0)
-                                              :ascent center))
-                             tab-bar-close-button))))
+    (add-text-properties 0 (length tab-bar-close-button)
+                         `(display (image :type xpm
+                                          :file "tabs/close.xpm"
+                                          :margin (2 . 0)
+                                          :ascent center))
+                         tab-bar-close-button))
 
   (when tab-bar-mode
     (global-set-key [(control shift iso-lefttab)] 'tab-previous)

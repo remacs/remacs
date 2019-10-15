@@ -130,9 +130,7 @@ If nil, don't show the new tab button."
 (defvar tab-line-new-button
   (propertize " + "
               'display `(image :type xpm
-                               :file ,(expand-file-name
-                                       "images/tabs/new.xpm"
-                                       data-directory)
+                               :file "tabs/new.xpm"
                                :margin (2 . 0)
                                :ascent center)
               'keymap tab-line-add-map
@@ -160,9 +158,7 @@ If nil, don't show it at all."
 (defvar tab-line-close-button
   (propertize " x"
               'display `(image :type xpm
-                               :file ,(expand-file-name
-                                       "images/tabs/close.xpm"
-                                       data-directory)
+                               :file "tabs/close.xpm"
                                :margin (2 . 0)
                                :ascent center)
               'keymap tab-line-tab-close-map
