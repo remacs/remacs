@@ -84,6 +84,27 @@
   :group 'tab-bar-faces)
 
 
+(defcustom tab-bar-select-tab-modifiers '()
+  "List of key modifiers for selecting a tab by its index digit.
+Possible modifiers are `control', `meta', `shift', `hyper', `super' and
+`alt'."
+  :type '(set :tag "Tab selection key modifiers"
+              (const control)
+              (const meta)
+              (const shift)
+              (const hyper)
+              (const super)
+              (const alt))
+  :initialize 'custom-initialize-default
+  :set (lambda (sym val)
+         (set-default sym val)
+         ;; Reenable the tab-bar with new keybindings
+         (tab-bar-mode -1)
+         (tab-bar-mode 1))
+  :group 'tab-bar
+  :version "27.1")
+
+
 (define-minor-mode tab-bar-mode
   "Toggle the tab bar in all graphical frames (Tab Bar mode)."
   :global t
@@ -118,10 +139,27 @@
                                           :ascent center))
                          tab-bar-close-button))
 
-  (when tab-bar-mode
-    (global-set-key [(control shift iso-lefttab)] 'tab-previous)
-    (global-set-key [(control shift tab)]         'tab-previous)
-    (global-set-key [(control tab)]               'tab-next)))
+  (if tab-bar-mode
+      (progn
+        (when tab-bar-select-tab-modifiers
+          (dotimes (i 9)
+            (global-set-key (vector (append tab-bar-select-tab-modifiers
+                                            (list (+ i 1 ?0))))
+                            'tab-bar-select-tab)))
+        ;; Don't override user customized key bindings
+        (unless (global-key-binding [(control tab)])
+          (global-set-key [(control tab)] 'tab-next))
+        (unless (global-key-binding [(control shift tab)])
+          (global-set-key [(control shift tab)] 'tab-previous))
+        (unless (global-key-binding [(control shift iso-lefttab)])
+          (global-set-key [(control shift iso-lefttab)] 'tab-previous)))
+    ;; Unset only keys bound by tab-bar
+    (when (eq (global-key-binding [(control tab)]) 'tab-next)
+      (global-unset-key [(control tab)]))
+    (when (eq (global-key-binding [(control shift tab)]) 'tab-previous)
+      (global-unset-key [(control shift tab)]))
+    (when (eq (global-key-binding [(control shift iso-lefttab)]) 'tab-previous)
+      (global-unset-key [(control shift iso-lefttab)]))))
 
 (defun tab-bar-handle-mouse (event)
   "Text-mode emulation of switching tabs on the tab bar.
