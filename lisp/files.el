@@ -339,8 +339,8 @@ Certain major modes set this locally to the value obtained
 from `mode-require-final-newline'.
 
 This variable is only heeded when visiting files (or saving
-visited files).  Writing data to the file system with
-`write-region' and the like is not influenced by this variable."
+buffers into files they visit).  Writing data to the file system
+with `write-region' and the like is not influenced by this variable."
   :safe #'symbolp
   :type '(choice (const :tag "When visiting" visit)
 		 (const :tag "When saving" t)
