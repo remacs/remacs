@@ -2399,6 +2399,12 @@ scrolling.
 
 * Lisp Changes in Emacs 27.1
 
++++
+** New macro 'benchmark-progn'
+This macro works like 'progn', but messages how long it takes to
+evaluate the body forms.  The value of the last form is the return
+value.
+
 ** New function 'read-char-with-history'.
 This function works like 'read-char', but maintains a history that can
 be navigated via the 'M-p'/'M-n' keystrokes.
