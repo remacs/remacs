@@ -2402,7 +2402,7 @@ The value of @code{pointm} at the last redisplay time.
 
 @item force_start
 If this flag is non-@code{nil}, it says that the window has been
-scrolled explicitly by the Lisp program, and the value of the the
+scrolled explicitly by the Lisp program, and the value of the
 window's @code{start} was set for redisplay to honor.  This affects
 what the next redisplay does if point is off the screen: instead of
 scrolling the window to show the text around point, it moves point to
