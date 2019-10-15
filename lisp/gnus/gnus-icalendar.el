@@ -485,7 +485,7 @@ Return nil for non-recurring EVENT."
         (narrow-to-region (point) (point))
         (insert (gnus-icalendar-event:org-timestamp event)
                 "\n\n"
-                description)
+                (or description "No description"))
         (indent-region (point-min) (point-max) 2)
         (fill-region (point-min) (point-max)))
 
