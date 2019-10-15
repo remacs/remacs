@@ -2600,18 +2600,19 @@ goes wrong and syntax highlighting in the shell gets messed up."
 
 (defun python-shell-font-lock-comint-output-filter-function (output)
   "Clean up the font-lock buffer after any OUTPUT."
-  (if (let ((output (ansi-color-filter-apply output)))
-        (and (python-shell-comint-end-of-output-p output)
-             ;; Assume "..." represents a continuation prompt.
-             (not (string-match "\\.\\.\\." output))))
-      ;; If output ends with an initial (not continuation) input prompt
-      ;; then the font-lock buffer must be cleaned up.
-      (python-shell-font-lock-cleanup-buffer)
-    ;; Otherwise just add a newline.
-    (python-shell-font-lock-with-font-lock-buffer
-      (goto-char (point-max))
-      (newline)))
-  output)
+   (unless (string= output "") ;; See Bug#33959.
+    (if (let ((output (ansi-color-filter-apply output)))
+          (and (python-shell-comint-end-of-output-p output)
+               ;; Assume "..." represents a continuation prompt.
+               (not (string-match "\\.\\.\\." output))))
+        ;; If output ends with an initial (not continuation) input prompt
+        ;; then the font-lock buffer must be cleaned up.
+        (python-shell-font-lock-cleanup-buffer)
+      ;; Otherwise just add a newline.
+      (python-shell-font-lock-with-font-lock-buffer
+        (goto-char (point-max))
+        (newline)))
+    output))
 
 (defun python-shell-font-lock-post-command-hook ()
   "Fontifies current line in shell buffer."
