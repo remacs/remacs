@@ -2134,6 +2134,8 @@ disabled: by default, they enable tab-bar-mode in that case.
 The X resource "tabBar", class "TabBar" enables the tab bar
 when its value is "on", "yes" or "1".
 
+The variable 'tab-bar-position' specifies where to show the tab bar.
+
 Read the new Info node "(emacs) Tab Bars" for full description
 of all related features.
 
