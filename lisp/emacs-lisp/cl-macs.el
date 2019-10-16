@@ -2047,7 +2047,9 @@ recursive function definitions.  Use `cl-labels' for that.  See
 info node `(cl) Function Bindings' for details.
 
 \(fn ((FUNC ARGLIST BODY...) ...) FORM...)"
-  (declare (indent 1) (debug ((&rest (cl-defun)) cl-declarations body)))
+  (declare (indent 1)
+           (debug ((&rest [&or (&define name function-form) (cl-defun)])
+                   cl-declarations body)))
   (let ((binds ()) (newenv macroexpand-all-environment))
     (dolist (binding bindings)
       (let ((var (make-symbol (format "--cl-%s--" (car binding))))
