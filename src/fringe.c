@@ -1607,7 +1607,6 @@ If BITMAP already exists, the existing definition is replaced.  */)
   fb.bits = b = ((unsigned short *)
 		 ptr_bounds_clip (xfb + 1, fb.height * BYTES_PER_BITMAP_ROW));
   xfb = ptr_bounds_clip (xfb, sizeof *xfb);
-  memset (b, 0, fb.height);
 
   j = 0;
   while (j < fb.height)
