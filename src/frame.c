@@ -704,18 +704,17 @@ adjust_frame_size (struct frame *f, int new_width, int new_height, int inhibit,
 		inhibit_vertical ? Qt : Qnil));
 
       if (FRAME_TERMINAL (f)->set_window_size_hook)
-        FRAME_TERMINAL (f)->set_window_size_hook (f,
-                                                  0,
-                                                  new_text_width,
-                                                  new_text_height,
-                                                  1);
+        FRAME_TERMINAL (f)->set_window_size_hook
+	  (f, 0, new_text_width, new_text_height, 1);
       f->resized_p = true;
 
       return;
     }
 #endif
 
-  if (new_text_width == old_text_width
+  if ((XWINDOW (FRAME_ROOT_WINDOW (f))->pixel_top
+       == FRAME_TOP_MARGIN_HEIGHT (f))
+      && new_text_width == old_text_width
       && new_text_height == old_text_height
       && new_windows_width == old_windows_width
       && new_windows_height == old_windows_height
