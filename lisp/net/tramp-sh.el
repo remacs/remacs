@@ -279,11 +279,8 @@ The string is used in `tramp-methods'.")
                 ;; it could be interpreted as password prompt if the
                 ;; remote host echoes the command.
                 (tramp-login-args           (("-u" "%u") ("-s") ("-H")
-				             ("-p" "P\"\"a\"\"s\"\"s\"\"w\"\"o\"\"r\"\"d\"\":")))
-                ;; Local $SHELL could be a nasty one, like zsh or
-                ;; fish.  Let's override it.
-                (tramp-login-env            (("SHELL")
-					     (,tramp-default-remote-shell)))
+				             ("-p" "P\"\"a\"\"s\"\"s\"\"w\"\"o\"\"r\"\"d\"\":")
+                                             ("%l")))
                 (tramp-remote-shell         ,tramp-default-remote-shell)
                 (tramp-remote-shell-login   ("-l"))
                 (tramp-remote-shell-args    ("-c"))
@@ -4912,8 +4909,6 @@ connection if a previous connection has died for some reason."
 			 (remote-shell
 			  (tramp-get-method-parameter hop 'tramp-remote-shell))
 			 (extra-args (tramp-get-sh-extra-args remote-shell))
-			 (login-env
-			  (tramp-get-method-parameter hop 'tramp-login-env))
 			 (async-args
 			  (tramp-get-method-parameter hop 'tramp-async-args))
 			 (connection-timeout
@@ -4962,24 +4957,6 @@ connection if a previous connection has died for some reason."
 		       p "session-timeout"
 		       (tramp-get-method-parameter
 			hop 'tramp-session-timeout)))
-
-		    ;; Add login environment.
-		    (when login-env
-		      (setq
-		       login-env
-		       (mapcar
-			(lambda (x)
-			  (setq x (mapcar (lambda (y) (format-spec y spec)) x))
-			  (unless (member "" x) (string-join x " ")))
-			login-env))
-		      (while login-env
-			(setq command
-			      (format
-			       "%s=%s %s"
-			       (pop login-env)
-			       (tramp-shell-quote-argument (pop login-env))
-			       command)))
-		      (setq command (concat "env " command)))
 
 		    ;; Replace `login-args' place holders.
 		    (setq

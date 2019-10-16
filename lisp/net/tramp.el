@@ -240,10 +240,6 @@ pair of the form (KEY VALUE).  The following KEYs are defined:
     absence of `tramp-copy-args', is an indication that the
     method is capable of multi-hops.
 
-  * `tramp-login-env'
-     A list of environment variables and their values, which will
-     be set when calling `tramp-login-program'.
-
   * `tramp-async-args'
     When an asynchronous process is started, we know already that
     the connection works.  Therefore, we can pass additional
