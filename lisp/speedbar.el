@@ -2934,7 +2934,8 @@ the file being checked."
     (if (<= 2 speedbar-verbosity-level)
 	(dframe-message "Speedbar vc check...%s" fulln))
     (and (file-writable-p fulln)
-	 (speedbar-this-file-in-vc f fn))))
+	 (speedbar-this-file-in-vc f fn)
+         t)))
 
 (defun speedbar-vc-check-dir-p (directory)
   "Return t if we should bother checking DIRECTORY for version control files.
@@ -2948,14 +2949,15 @@ This can be overloaded to add new types of version control systems."
    ))
 
 (defun speedbar-this-file-in-vc (directory name)
-  "Check to see if the file in DIRECTORY with NAME is in a version control system.
+  "Return non-nil if the file NAME in DIRECTORY is under version control.
 Automatically recognizes all VCs supported by VC mode.  You can
 optimize this function by overriding it and only doing those checks
 that will occur on your system."
   (or
    (vc-backend (concat directory "/" name))
    ;; User extension
-   (run-hook-with-args 'speedbar-vc-in-control-hook directory name)
+   (run-hook-with-args-until-success 'speedbar-vc-in-control-hook
+                                     directory name)
    ))
 
 ;; Object File scanning
