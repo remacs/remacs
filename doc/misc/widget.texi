@@ -1446,6 +1446,12 @@ Non-@code{nil} if @var{widget} has a value (even @code{nil}) for
 property @var{property}.
 @end defun
 
+@defun widget-apply widget property &rest args
+Apply the value of @var{property} to @var{widget}, passing @var{args}
+as additional arguments to the function.  Return the result of that
+function call.
+@end defun
+
 Occasionally it can be useful to know which kind of widget you have,
 i.e., the name of the widget type you gave when the widget was created.
 
