@@ -4356,7 +4356,7 @@ The document is bounded by `sh-here-document-word'."
   (or arg (sh--maybe-here-document)))
 
 (defun sh--maybe-here-document ()
-  (when (and (looking-back "[^<]<<[ E]" (line-beginning-position))
+  (when (and (looking-back "[^<]<<[ E-]" (line-beginning-position))
              (save-excursion
 	       (backward-char 2)
                (not
@@ -4368,7 +4368,9 @@ The document is bounded by `sh-here-document-word'."
                   ""))
           (delim (replace-regexp-in-string "['\"]" ""
                                            sh-here-document-word)))
-      (delete-char -1)
+      ;; If we're at <<-, we don't want to delete the previous char.
+      (unless (= (preceding-char) ?-)
+        (delete-char -1))
       (insert sh-here-document-word)
       (or (eolp) (looking-at "[ \t]") (insert ?\s))
       (end-of-line 1)
