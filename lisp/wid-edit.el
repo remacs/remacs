@@ -1663,7 +1663,8 @@ The value of the :type attribute should be an unconverted widget type."
       (and (not (widget-get widget :inactive))
 	   (let ((parent (widget-get widget :parent)))
 	     (or (null parent)
-		 (widget-apply parent :active))))))
+		 (widget-apply parent :active)))
+           t)))
 
 (defun widget-default-deactivate (widget)
   "Make WIDGET inactive for user modifications."
