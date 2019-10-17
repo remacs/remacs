@@ -31,10 +31,9 @@
 ;; (erc-button-mode 1)
 ;;
 ;; Todo:
-;; * Rewrite all this to do the same, but use button.el from GNU Emacs
-;; if it's available for xemacs too.  Why? button.el is much faster,
-;; and much more elegant, and solves the problem we get with large buffers
-;; and a large erc-button-marker-list.
+;; * Rewrite all this to do the same, but use button.el.  Why?
+;; button.el is much faster, and much more elegant, and solves the
+;; problem we get with large buffers and a large erc-button-marker-list.
 
 
 ;;; Code:
