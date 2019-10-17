@@ -1345,7 +1345,7 @@ That is, remove duplicates, non-kept, and excluded files."
 
 When Recentf mode is enabled, a \"Open Recent\" submenu is
 displayed in the \"File\" menu, containing a list of files that
-were operated on recently."
+were operated on recently, in the most-recently-used order."
   :global t
   :group 'recentf
   :keymap recentf-mode-map
