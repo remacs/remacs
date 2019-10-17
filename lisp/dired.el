@@ -913,12 +913,16 @@ This feature is used by Auto Revert mode."
 	 (dired-directory-changed-p dirname))))
 
 (defcustom dired-auto-revert-buffer nil
-  "Automatically revert Dired buffer on revisiting.
-If t, revisiting an existing Dired buffer automatically reverts it.
-If its value is a function, call this function with the directory
-name as single argument and revert the buffer if it returns non-nil.
-Otherwise, a message offering to revert the changed dired buffer
-is displayed.
+  "Automatically revert Dired buffers on revisiting their directory.
+This option controls whether to refresh the directory listing in a
+Dired buffer when the directory that is already in some Dired buffer
+is revisited by commands such as \\[dired] and \\[dired-find-file].
+If the value is t, revisiting an existing Dired buffer always reverts it.
+If the value is a function, it is called with the directory name as a
+single argument, and the buffer is reverted if the function returns non-nil.
+One such function is `dired-directory-changed-p', which returns non-nil
+if the directory has been changed since it was last revisited.
+Otherwise, Emacs prompts whether to revert the changed Dired buffer.
 Note that this is not the same as `auto-revert-mode' that
 periodically reverts at specified time intervals."
   :type '(choice
