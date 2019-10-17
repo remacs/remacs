@@ -815,6 +815,11 @@ The default value is 'find-dired-sort-by-filename'.
 *** New command 'log-edit-generate-changelog-from-diff', bound to 'C-c C-w'.
 This generates ChangeLog entries from the VC fileset diff.
 
+*** 'vc-dir' now shows a button allowing you to hide the stash list.
+Controlled by user option 'vc-git-show-stash'.  Default t means show
+the entire list as before.  An integer value limits the list length
+(but still allows you to show the entire list via the button).
+
 *** Recording ChangeLog entries doesn't require an actual file.
 If a ChangeLog file doesn't exist, and if the new user option
 'add-log-dont-create-changelog-file' is non-nil (which is the

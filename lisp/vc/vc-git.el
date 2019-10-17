@@ -102,8 +102,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (eval-when-compile
-  (require 'cl-lib)
   (require 'subr-x) ; for string-trim-right
   (require 'vc)
   (require 'vc-dir))
@@ -190,6 +190,21 @@ The following place holders should be present in the string:
  <F> - file names and wildcards to search.
  <R> - the regular expression searched for."
   :type 'string
+  :version "27.1")
+
+(defcustom vc-git-show-stash t
+  "How much of the git stash list to show by default.
+Default t means all, otherwise an integer specifying the maximum
+number to show.  A text button is always shown allowing you to
+toggle display of the entire list."
+  :type '(choice (const :tag "All" t)
+                 (integer :tag "Limit"
+                          :validate
+                          (lambda (widget)
+                            (unless (>= (widget-value widget) 0)
+                              (widget-put widget :error
+                                          "Invalid value: must be a non-negative integer")
+                              widget))))
   :version "27.1")
 
 ;; History of Git commands.
@@ -635,6 +650,18 @@ or an empty string if none."
     (define-key map "S" 'vc-git-stash-snapshot)
     map))
 
+(defun vc-git-make-stash-button ()
+    (make-text-button "Show/hide stashes" nil
+                      'action
+                      (lambda (&rest _ignore)
+                          (let* ((inhibit-read-only t)
+                                 (start (next-single-property-change (point-min) 'vc-git-hideable))
+                                 (end (next-single-property-change start 'vc-git-hideable)))
+                            (add-text-properties
+                             start end
+                             `(invisible ,(not (get-text-property start 'invisible))))))
+                      'help-echo "mouse-2, RET: Show/hide stashes"))
+
 (defvar vc-git-stash-menu-map
   (let ((map (make-sparse-keymap "Git Stash")))
     (define-key map [de]
@@ -655,9 +682,11 @@ or an empty string if none."
   (let ((str (with-output-to-string
                (with-current-buffer standard-output
                  (vc-git--out-ok "symbolic-ref" "HEAD"))))
-	(stash (vc-git-stash-list))
+	(stash-list (vc-git-stash-list))
 	(stash-help-echo "Use M-x vc-git-stash to create stashes.")
-	branch remote remote-url)
+        (stash-list-help-echo "mouse-3: Show stash menu\nRET: Show stash\nA: Apply stash\nP: Apply and remove stash (pop)\nC-k: Delete stash")
+
+	branch remote remote-url stash-button stash-string)
     (if (string-match "^\\(refs/heads/\\)?\\(.+\\)$" str)
 	(progn
 	  (setq branch (match-string 2 str))
@@ -677,6 +706,50 @@ or an empty string if none."
 	  (when (string-match "\\([^\n]+\\)" remote-url)
 	    (setq remote-url (match-string 1 remote-url))))
       (setq branch "not (detached HEAD)"))
+    (when stash-list
+      (let* ((limit
+              (if (integerp vc-git-show-stash)
+                  (min vc-git-show-stash (length stash-list))
+                (length stash-list)))
+             (shown-stashes (cl-subseq stash-list 0 limit))
+             (hidden-stashes (cl-subseq stash-list limit))
+             (all-hideable (eq vc-git-show-stash t)))
+        (setq stash-button (vc-git-make-stash-button)
+              stash-string
+              (concat
+               (when shown-stashes
+                 (concat
+                  (propertize "\n"
+                              'vc-git-hideable all-hideable)
+                  (mapconcat
+                   (lambda (x)
+                     (propertize x
+                                 'face 'font-lock-variable-name-face
+                                 'mouse-face 'highlight
+                                 'vc-git-hideable all-hideable
+                                 'help-echo stash-list-help-echo
+                                 'keymap vc-git-stash-map))
+                   shown-stashes
+                   (propertize "\n"
+                               'vc-git-hideable all-hideable))))
+               (when hidden-stashes
+                 (concat
+                  (propertize "\n"
+                              'invisible t
+                              'vc-git-hideable t)
+                  (mapconcat
+                   (lambda (x)
+                     (propertize x
+                                 'face 'font-lock-variable-name-face
+                                 'mouse-face 'highlight
+                                 'invisible t
+                                 'vc-git-hideable t
+                                 'help-echo stash-list-help-echo
+                                 'keymap vc-git-stash-map))
+                   hidden-stashes
+                   (propertize "\n"
+                               'invisible t
+                               'vc-git-hideable t))))))))
     ;; FIXME: maybe use a different face when nothing is stashed.
     (concat
      (propertize "Branch     : " 'face 'font-lock-type-face)
@@ -688,26 +761,19 @@ or an empty string if none."
 	(propertize "Remote     : " 'face 'font-lock-type-face)
 	(propertize remote-url
 		    'face 'font-lock-variable-name-face)))
-     "\n"
      ;; For now just a heading, key bindings can be added later for various bisect actions
      (when (file-exists-p (expand-file-name ".git/BISECT_START" (vc-git-root dir)))
-       (propertize  "Bisect     : in progress\n" 'face 'font-lock-warning-face))
+       (propertize  "\nBisect     : in progress" 'face 'font-lock-warning-face))
      (when (file-exists-p (expand-file-name ".git/rebase-apply" (vc-git-root dir)))
-       (propertize  "Rebase     : in progress\n" 'face 'font-lock-warning-face))
-     (if stash
+       (propertize  "\nRebase     : in progress" 'face 'font-lock-warning-face))
+     (if stash-list
        (concat
-	(propertize "Stash      :\n" 'face 'font-lock-type-face
-		    'help-echo stash-help-echo)
-	(mapconcat
-	 (lambda (x)
-	   (propertize x
-		       'face 'font-lock-variable-name-face
-		       'mouse-face 'highlight
-		       'help-echo "mouse-3: Show stash menu\nRET: Show stash\nA: Apply stash\nP: Apply and remove stash (pop)\nC-k: Delete stash"
-		       'keymap vc-git-stash-map))
-	 stash "\n"))
+        (propertize "\nStash      : " 'face 'font-lock-type-face
+                    'help-echo stash-help-echo)
+        stash-button
+        stash-string)
        (concat
-	(propertize "Stash      : " 'face 'font-lock-type-face
+	(propertize "\nStash      : " 'face 'font-lock-type-face
 		    'help-echo stash-help-echo)
 	(propertize "Nothing stashed"
 		    'help-echo stash-help-echo
