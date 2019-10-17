@@ -3508,6 +3508,8 @@ a shell (with its need to quote arguments)."
 With prefix argument, insert the COMMAND's output at point.
 
 Interactively, prompt for COMMAND in the minibuffer.
+If `shell-command-prompt-show-cwd' is non-nil, show the current
+directory in the prompt.
 
 If COMMAND ends in `&', execute it asynchronously.
 The output appears in the buffer `*Async Shell Command*'.
