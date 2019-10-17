@@ -444,7 +444,7 @@ instead of reading master file from disk."
 
 (defun flymake-proc--check-include (source-file-name inc-name include-dirs)
   "Check if SOURCE-FILE-NAME can be found in include path.
-Return t if it can be found via include path using INC-NAME."
+Return non-nil if it can be found via include path using INC-NAME."
   (if (file-name-absolute-p inc-name)
       (flymake-proc--same-files source-file-name inc-name)
     (while (and include-dirs
@@ -458,7 +458,7 @@ Return t if it can be found via include path using INC-NAME."
 
 (defun flymake-proc--find-buffer-for-file (file-name)
   "Check if there exists a buffer visiting FILE-NAME.
-Return t if so, nil if not."
+Return the buffer if it exists, nil if not."
   (let ((buffer-name (get-file-buffer file-name)))
     (if buffer-name
 	(get-buffer buffer-name))))

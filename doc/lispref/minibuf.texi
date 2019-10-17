@@ -2364,8 +2364,8 @@ minibuffer window according to the selected frame.
 
 @c Emacs 19 feature
 @defun window-minibuffer-p &optional window
-This function returns non-@code{nil} if @var{window} is a minibuffer
-window.  @var{window} defaults to the selected window.
+This function returns @code{t} if @var{window} is a minibuffer window.
+@var{window} defaults to the selected window.
 @end defun
 
 The following function returns the window showing the currently active

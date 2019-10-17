@@ -2641,7 +2641,8 @@ means the member buffer is standalone.  CLASS is its class."
 
 
 (defun ebrowse-member-display-p (member)
-  "Return t if MEMBER must be displayed under the current filter settings."
+  "Check if MEMBER must be displayed under the current filter settings.
+If so, return MEMBER; otherwise return nil."
   (if (and (aref ebrowse--filters (ebrowse-ms-visibility member))
 	   (or (null ebrowse--const-display-flag)
 	       (ebrowse-const-p member))

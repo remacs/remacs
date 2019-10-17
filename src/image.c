@@ -10053,7 +10053,7 @@ The list of capabilities can include one or more of the following:
 
 DEFUN ("init-image-library", Finit_image_library, Sinit_image_library, 1, 1, 0,
        doc: /* Initialize image library implementing image type TYPE.
-Return non-nil if TYPE is a supported image type.
+Return t if TYPE is a supported image type.
 
 If image libraries are loaded dynamically (currently only the case on
 MS-Windows), load the library for TYPE if it is not yet loaded, using

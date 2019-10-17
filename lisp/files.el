@@ -3853,7 +3853,7 @@ It is dangerous if either of these conditions are met:
       (hack-one-local-variable-quotep exp)))
 
 (defun hack-one-local-variable-eval-safep (exp)
-  "Return t if it is safe to eval EXP when it is found in a file."
+  "Return non-nil if it is safe to eval EXP when it is found in a file."
   (or (not (consp exp))
       ;; Detect certain `put' expressions.
       (and (eq (car exp) 'put)
