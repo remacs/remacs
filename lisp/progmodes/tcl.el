@@ -604,9 +604,6 @@ already exist."
   (set (make-local-variable 'dabbrev-abbrev-char-regexp) "\\sw\\|\\s_")
 
   (set (make-local-variable 'parse-sexp-ignore-comments) t)
-  ;; XEmacs has defun-prompt-regexp, but I don't believe
-  ;; that it works for end-of-defun -- only for
-  ;; beginning-of-defun.
   (set (make-local-variable 'defun-prompt-regexp) tcl-omit-ws-regexp)
   (set (make-local-variable 'add-log-current-defun-function)
        'tcl-add-log-defun)
@@ -614,11 +611,7 @@ already exist."
   (setq-local beginning-of-defun-function #'tcl-beginning-of-defun-function)
   (setq-local end-of-defun-function #'tcl-end-of-defun-function)
 
-  (easy-menu-add tcl-mode-menu)
-  ;; Append Tcl menu to popup menu for XEmacs.
-  (if (boundp 'mode-popup-menu)
-      (setq mode-popup-menu
-	    (cons (concat mode-name " Mode Commands") tcl-mode-menu))))
+  (easy-menu-add tcl-mode-menu))
 
 
 
@@ -1541,17 +1534,9 @@ The first line is assumed to look like \"#!.../program ...\"."
     (if (looking-at "#![^ \t]*/\\([^ \t\n/]+\\)\\([ \t]\\|$\\)")
 	(set (make-local-variable 'tcl-application) (match-string 1)))))
 
-
-
-;;
-;; XEmacs menu support.
-;; Taken from schmid@fb3-s7.math.TU-Berlin.DE (Gregor Schmid),
-;; who wrote a different Tcl mode.
-;; We also have support for menus in Emacs.  We do this by
-;; loading the XEmacs menu emulation code.
-;;
-
 (defun tcl-popup-menu (_e)
+  "XEmacs menu support."
+  (declare (obsolete nil "27.1"))
   (interactive "@e")
   (popup-menu tcl-mode-menu))
 
