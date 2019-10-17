@@ -3407,7 +3407,8 @@ or shorter, higher or lower, wider or narrow, or replaced with an image.
 @anchor{Text help-echo}
 If text has a string as its @code{help-echo} property, then when you
 move the mouse onto that text, Emacs displays that string in the echo
-area, or in the tooltip window (@pxref{Tooltips}).
+area, or in the tooltip window (@pxref{Tooltips}), after passing it
+through @code{substitute-command-keys}.
 
 If the value of the @code{help-echo} property is a function, that
 function is called with three arguments, @var{window}, @var{object} and
@@ -3436,6 +3437,14 @@ You can alter the way help text is displayed by setting the variable
 @code{show-help-function} (@pxref{Help display}).
 
 This feature is used in the mode line and for other active text.
+
+@item help-echo-inhibit-substitution
+@cindex help-echo text, avoid command-key substitution
+@kindex help-echo-inhibit-substitution @r{(text property)}
+If the first character of a @code{help-echo} string has a
+non-@code{nil} @code{help-echo-inhibit-substitution} property, then it
+is displayed as-is by @code{show-help-function}, without being passed
+through @code{substitute-command-keys}.
 
 @item keymap
 @cindex keymap of character
@@ -3744,7 +3753,9 @@ a function called to display help strings.  These may be
 Items}, @pxref{Extended Menu Items}), or tool bar help strings
 (@pxref{Tool Bar}).  The specified function is called with one
 argument, the help string to display, which is passed through
-@code{substitute-command-keys} before being given to the function; see
+@code{substitute-command-keys} before being given to the function,
+unless the help string has a non-@code{nil}
+@code{help-echo-inhibit-substitution} property on its first character; see
 @ref{Keys in Documentation}.  See the code of Tooltip mode
 (@pxref{Tooltips,,, emacs, The GNU Emacs Manual}) for an example of a
 mode that uses @code{show-help-function}.

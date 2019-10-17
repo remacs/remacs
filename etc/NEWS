@@ -3036,6 +3036,11 @@ in other packages are now obsolete aliases of 'xor'.
 +++
 ** 'define-globalized-minor-mode' now takes BODY forms.
 
++++
+** New text property 'help-echo-inhibit-substitution'.
+Setting this on the first character of a help string disables
+conversions via 'substitute-command-keys'.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

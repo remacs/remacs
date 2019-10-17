@@ -2019,6 +2019,22 @@ make_ctrl_char (int c)
   return c;
 }
 
+/* Substitute key descriptions and quotes in HELP, unless its first
+   character has a non-nil help-echo-inhibit-substitution property.  */
+
+static Lisp_Object
+help_echo_substitute_command_keys (Lisp_Object help)
+{
+  if (STRINGP (help)
+      && SCHARS (help) > 0
+      && !NILP (Fget_text_property (make_fixnum (0),
+                                    Qhelp_echo_inhibit_substitution,
+                                    help)))
+    return help;
+
+  return Fsubstitute_command_keys (help);
+}
+
 /* Display the help-echo property of the character after the mouse pointer.
    Either show it in the echo area, or call show-help-function to display
    it by other means (maybe in a tooltip).
@@ -2078,7 +2094,7 @@ show_help_echo (Lisp_Object help, Lisp_Object window, Lisp_Object object,
   if (STRINGP (help) || NILP (help))
     {
       if (!NILP (Vshow_help_function))
-	call1 (Vshow_help_function, Fsubstitute_command_keys (help));
+	call1 (Vshow_help_function, help_echo_substitute_command_keys (help));
       help_echo_showing_p = STRINGP (help);
     }
 }
@@ -7670,7 +7686,7 @@ parse_menu_item (Lisp_Object item, int inmenubar)
       if (CONSP (item) && STRINGP (XCAR (item)))
 	{
 	  ASET (item_properties, ITEM_PROPERTY_HELP,
-		Fsubstitute_command_keys (XCAR (item)));
+		help_echo_substitute_command_keys (XCAR (item)));
 	  start = item;
 	  item = XCDR (item);
 	}
@@ -7734,7 +7750,7 @@ parse_menu_item (Lisp_Object item, int inmenubar)
 		{
 		  Lisp_Object help = XCAR (item);
 		  if (STRINGP (help))
-		    help = Fsubstitute_command_keys (help);
+		    help = help_echo_substitute_command_keys (help);
 		  ASET (item_properties, ITEM_PROPERTY_HELP, help);
 		}
 	      else if (EQ (tem, QCfilter))
@@ -11455,6 +11471,7 @@ syms_of_keyboard (void)
   /* Tool-bars.  */
   DEFSYM (QCimage, ":image");
   DEFSYM (Qhelp_echo, "help-echo");
+  DEFSYM (Qhelp_echo_inhibit_substitution, "help-echo-inhibit-substitution");
   DEFSYM (QCrtl, ":rtl");
 
   staticpro (&item_properties);
