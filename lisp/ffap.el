@@ -112,8 +112,6 @@
 
 (defgroup ffap nil
   "Find file or URL at point."
-  ;; Dead 2009/07/05.
-;;  :link '(url-link :tag "URL" "ftp://ftp.mathcs.emory.edu/pub/mic/emacs/")
   :group 'matching
   :group 'convenience)
 
@@ -409,8 +407,7 @@ See `mail-extr.el' for the known domains."
 (defun ffap-what-domain (domain)
   ;; Like what-domain in mail-extr.el, returns string or nil.
   (require 'mail-extr)
-  (let ((ob (or (ffap-symbol-value 'mail-extr-all-top-level-domains)
-		(ffap-symbol-value 'all-top-level-domains)))) ; XEmacs
+  (let ((ob (ffap-symbol-value 'mail-extr-all-top-level-domains)))
     (and ob (get (intern-soft (downcase domain) ob) 'domain-name))))
 
 (defun ffap-machine-p (host &optional service quiet strategy)
