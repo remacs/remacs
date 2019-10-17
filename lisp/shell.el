@@ -708,6 +708,8 @@ such as `explicit-csh-args'.  If that symbol is a variable,
 its value is used as a list of arguments when invoking the shell.
 Otherwise, one argument `-i' is passed to the shell.
 
+Make the shell buffer the current buffer, and return it.
+
 \(Type \\[describe-mode] in the shell buffer for a list of commands.)"
   (interactive
    (list
@@ -734,40 +736,39 @@ Otherwise, one argument `-i' is passed to the shell.
                    (get-buffer-create (or buffer "*shell*"))
                  ;; If the current buffer is a dead shell buffer, use it.
                  (current-buffer)))
+  ;; The buffer's window must be correctly set when we call comint
+  ;; (so that comint sets the COLUMNS env var properly).
+  (pop-to-buffer buffer)
 
-  (with-current-buffer buffer
-    (with-connection-local-variables
-     ;; On remote hosts, the local `shell-file-name' might be useless.
-     (when (file-remote-p default-directory)
-       (if (and (called-interactively-p 'any)
-                (null explicit-shell-file-name)
-                (null (getenv "ESHELL")))
-           (set (make-local-variable 'explicit-shell-file-name)
-                (file-local-name
-		 (expand-file-name
-                  (read-file-name
-                   "Remote shell path: " default-directory shell-file-name
-                   t shell-file-name))))))
+  (with-connection-local-variables
+   ;; On remote hosts, the local `shell-file-name' might be useless.
+   (when (file-remote-p default-directory)
+     (if (and (called-interactively-p 'any)
+              (null explicit-shell-file-name)
+              (null (getenv "ESHELL")))
+         (set (make-local-variable 'explicit-shell-file-name)
+              (file-local-name
+	       (expand-file-name
+                (read-file-name
+                 "Remote shell path: " default-directory shell-file-name
+                 t shell-file-name))))))
 
-     ;; The buffer's window must be correctly set when we call comint
-     ;; (so that comint sets the COLUMNS env var properly).
-     (pop-to-buffer buffer)
-     ;; Rain or shine, BUFFER must be current by now.
-     (unless (comint-check-proc buffer)
-       (let* ((prog (or explicit-shell-file-name
-                        (getenv "ESHELL") shell-file-name))
-              (name (file-name-nondirectory prog))
-              (startfile (concat "~/.emacs_" name))
-              (xargs-name (intern-soft (concat "explicit-" name "-args"))))
-         (unless (file-exists-p startfile)
-           (setq startfile (concat user-emacs-directory "init_" name ".sh")))
-         (setq-local shell--start-prog (file-name-nondirectory prog))
-         (apply #'make-comint-in-buffer "shell" buffer prog
-                (if (file-exists-p startfile) startfile)
-                (if (and xargs-name (boundp xargs-name))
-                    (symbol-value xargs-name)
-                  '("-i")))
-         (shell-mode)))))
+   ;; Rain or shine, BUFFER must be current by now.
+   (unless (comint-check-proc buffer)
+     (let* ((prog (or explicit-shell-file-name
+                      (getenv "ESHELL") shell-file-name))
+            (name (file-name-nondirectory prog))
+            (startfile (concat "~/.emacs_" name))
+            (xargs-name (intern-soft (concat "explicit-" name "-args"))))
+       (unless (file-exists-p startfile)
+         (setq startfile (concat user-emacs-directory "init_" name ".sh")))
+       (setq-local shell--start-prog (file-name-nondirectory prog))
+       (apply #'make-comint-in-buffer "shell" buffer prog
+              (if (file-exists-p startfile) startfile)
+              (if (and xargs-name (boundp xargs-name))
+                  (symbol-value xargs-name)
+                '("-i")))
+       (shell-mode))))
   buffer)
 
 ;;; Directory tracking
