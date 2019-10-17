@@ -33,7 +33,7 @@ modify this GNU manual.''
 @titlepage
 @title Guide to Remember Mode
 @subtitle a simple information manager
-@subtitle for Emacs and XEmacs
+@subtitle for Emacs
 
 @c The following two commands
 @c start the copyright page.

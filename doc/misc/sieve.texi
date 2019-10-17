@@ -236,8 +236,8 @@ the @code{fileinto} command.
 @example
 require "fileinto";
 
-if address "sender" "owner-w3-beta@@xemacs.org" @{
-        fileinto "INBOX.w3-beta";
+if address "sender" "emacs-devel@@gnu.org" @{
+        fileinto "INBOX.emacs-devel";
 @}
 @end example
 

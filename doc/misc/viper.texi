@@ -2666,8 +2666,7 @@ menubar.
 @item viper-multiclick-timeout
 This variable controls the rate at which double-clicking must occur for the
 purpose of mouse search and mouse insert.  By default, this is set to
-@code{double-click-time} in Emacs and to
-@code{mouse-track-multi-click-time} milliseconds in XEmacs.
+@code{double-click-time}.
 @end table
 @kindex S-mouse-1
 @kindex S-mouse-2
