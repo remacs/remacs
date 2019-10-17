@@ -4732,13 +4732,16 @@ displayed there."
     ;; Handle case where `buffer-or-name' is nil and the current buffer
     ;; is shown in the selected window.
     (cond
-     ((or buffer-or-name (not (eq buffer (window-buffer)))))
+     ((or buffer-or-name
+          (not (eq buffer (window-buffer)))
+          ;; Don't try to delete the minibuffer window, undedicate it
+          ;; or switch to a previous buffer in it.
+          (window-minibuffer-p)))
      ((window--delete nil t))
      (t
       ;; Switch to another buffer in window.
       (set-window-dedicated-p nil nil)
       (switch-to-prev-buffer nil 'bury)))
-
     ;; Always return nil.
     nil))
 
