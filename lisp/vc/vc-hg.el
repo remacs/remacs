@@ -237,6 +237,7 @@ highlighting the Log View buffer."
 			      process-environment)))
 			(process-file
 			 vc-hg-program nil t nil
+                         "--config" "ui.report_untrusted=0"
 			 "--config" "alias.status=status"
 			 "--config" "defaults.status="
 			 "status" "-A" (file-relative-name file)))
@@ -1436,7 +1437,7 @@ This runs the command \"hg merge\"."
 	 (buffer (format "*vc-hg : %s*" (expand-file-name root)))
          ;; Disable pager.
          (process-environment (cons "HGPLAIN=1" process-environment)))
-    (apply 'vc-do-async-command buffer root vc-hg-program '("merge"))
+    (apply 'vc-do-async-command buffer root vc-hg-program '("--config" "ui.report_untrusted=0" "merge"))
     (with-current-buffer buffer (vc-run-delayed (vc-compilation-mode 'hg)))
     (vc-set-async-update buffer)))
 
@@ -1447,7 +1448,8 @@ This runs the command \"hg merge\"."
 This function differs from vc-do-command in that it invokes
 `vc-hg-program', and passes `vc-hg-global-switches' to it before FLAGS."
   ;; Disable pager.
-  (let ((process-environment (cons "HGPLAIN=1" process-environment)))
+  (let ((process-environment (cons "HGPLAIN=1" process-environment))
+        (flags (append '("--config" "ui.report_untrusted=0") flags)))
     (apply 'vc-do-command (or buffer "*vc*") okstatus vc-hg-program file-or-list
            (if (stringp vc-hg-global-switches)
                (cons vc-hg-global-switches flags)
