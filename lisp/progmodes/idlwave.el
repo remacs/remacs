@@ -3629,7 +3629,7 @@ Calling from a program, arguments are START END."
 (defun idlwave-quoted ()
   "Return t if point is in a comment or quoted string.
 Returns nil otherwise."
-  (or (idlwave-in-comment) (idlwave-in-quote)))
+  (and (or (idlwave-in-comment) (idlwave-in-quote)) t))
 
 (defun idlwave-in-quote ()
   "Return location of the opening quote

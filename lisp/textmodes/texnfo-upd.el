@@ -410,23 +410,24 @@ and to the end of the menu region for the level.
 Return t if the node is found, else nil.  Leave point at the beginning
 of the node if one is found; else do not move point."
   (let ((case-fold-search t))
-    (if (and (< (point) region-end)
-	     (re-search-forward
-	      (concat
-	       "\\(^@node\\).*\n"         ; match node line
-	       "\\(\\(\\(^@c\\).*\n\\)"   ; match comment line, if any
-	       "\\|"                      ; or
-	       "\\(^@ifinfo[ ]*\n\\)"     ; ifinfo line, if any
-               "\\|"                      ; or
-               "\\(^@ifnottex[ ]*\n\\)"   ; ifnottex line, if any
-               "\\)?"                     ; end of expression
-	       (eval (cdr (assoc level texinfo-update-menu-lower-regexps))))
-	      ;; the next higher level node marks the end of this
-	      ;; section, and no lower level node will be found beyond
-	      ;; this position even if region-end is farther off
-	      (texinfo-update-menu-region-end level)
-	      t))
-	(goto-char (match-beginning 1)))))
+    (when (and (< (point) region-end)
+	       (re-search-forward
+		(concat
+		 "\\(^@node\\).*\n"	    ; match node line
+		 "\\(\\(\\(^@c\\).*\n\\)"   ; match comment line, if any
+		 "\\|"			    ; or
+		 "\\(^@ifinfo[ ]*\n\\)"	    ; ifinfo line, if any
+		 "\\|"			    ; or
+		 "\\(^@ifnottex[ ]*\n\\)"   ; ifnottex line, if any
+		 "\\)?"			    ; end of expression
+		 (eval (cdr (assoc level texinfo-update-menu-lower-regexps))))
+		;; the next higher level node marks the end of this
+		;; section, and no lower level node will be found beyond
+		;; this position even if region-end is farther off
+		(texinfo-update-menu-region-end level)
+		t))
+      (goto-char (match-beginning 1))
+      t)))
 
 (defun texinfo-find-higher-level-node (level region-end)
   "Search forward from point for node at any higher level than argument LEVEL.

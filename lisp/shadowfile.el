@@ -417,7 +417,8 @@ filename expansion or contraction, you must do that yourself first."
              (tramp-file-name-localname file-sup))
 	  (string-equal
            (tramp-file-name-localname pattern-sup)
-           (tramp-file-name-localname file-sup))))))
+           (tramp-file-name-localname file-sup)))
+        t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; User-level Commands

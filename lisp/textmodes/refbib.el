@@ -498,8 +498,9 @@ try to replace the {DATA} with an abbreviation."
 	 (assoc name r2b-proceedings-list)
 	 (let ((match (assoc name r2b-booktitle-abbrevs)))
 	    (and match
-	       (string-match "proceedings\\|conference" (car (cdr match)))))
-      )))
+		 (string-match "proceedings\\|conference" (car (cdr match))))))
+      t
+      ))
 
 (defun r2b-isa-university (name)
    "Return t if NAME is a university or similar organization,

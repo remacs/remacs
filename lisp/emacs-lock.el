@@ -115,7 +115,7 @@ Internal use only.")
 
 (defun emacs-lock-live-process-p (buffer-or-name)
   "Return t if BUFFER-OR-NAME is associated with a live process."
-  (process-live-p (get-buffer-process buffer-or-name)))
+  (and (process-live-p (get-buffer-process buffer-or-name)) t))
 
 (defun emacs-lock--can-auto-unlock (action)
   "Return t if the current buffer can auto-unlock for ACTION.

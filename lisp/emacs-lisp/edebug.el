@@ -258,7 +258,8 @@ An extant spec symbol is a symbol that is not a function and has a
 	     (setq spec (cdr spec)))
 	   t))
 	((symbolp spec)
-	 (unless (functionp spec) (function-get spec 'edebug-form-spec)))))
+	 (unless (functionp spec)
+           (and (function-get spec 'edebug-form-spec) t)))))
 
 ;;; Utilities
 

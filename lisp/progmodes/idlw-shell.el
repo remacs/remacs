@@ -2155,7 +2155,7 @@ args of an executive .run, .rnew or .compile."
       ;; Skip backwards over file name chars
       (skip-chars-backward idlwave-shell-file-name-chars limit)
       ;; Check of the next char is a string delimiter
-      (memq (preceding-char) '(?\' ?\")))))
+      (and (memq (preceding-char) '(?\' ?\")) t))))
 
 (defun idlwave-shell-batch-command ()
   "Return t if we're in a batch command statement like @foo"

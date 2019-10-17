@@ -3547,8 +3547,10 @@ If `rmail-confirm-expunge' is non-nil, ask user to confirm."
   (and (stringp rmail-deleted-vector)
        (string-match "D" rmail-deleted-vector)
        (if rmail-confirm-expunge
-	   (funcall rmail-confirm-expunge
-		    "Erase deleted messages from Rmail file? ")
+	   (and (funcall rmail-confirm-expunge
+			 "Erase deleted messages from Rmail file? ")
+		;; In case r-c-e's function returns non-nil, non-t
+		t)
 	 t)))
 
 (defun rmail-only-expunge (&optional dont-show)
