@@ -454,8 +454,8 @@ sure of changing the value of `foo'."
 
 (defmacro imap-disable-multibyte ()
   "Enable multibyte in the current buffer."
-  (unless (featurep 'xemacs)
-    '(set-buffer-multibyte nil)))
+  (declare (obsolete nil "27.1"))
+  '(set-buffer-multibyte nil))
 
 (defsubst imap-utf7-encode (string)
   (if imap-use-utf7
@@ -495,7 +495,7 @@ sure of changing the value of `foo'."
 (defun imap-log (string-or-buffer)
   (when imap-log
     (with-current-buffer (get-buffer-create imap-log-buffer)
-      (imap-disable-multibyte)
+      (set-buffer-multibyte nil)
       (buffer-disable-undo)
       (goto-char (point-max))
       (if (bufferp string-or-buffer)
@@ -1021,7 +1021,7 @@ necessary.  If nil, the buffer name is generated."
     (if (imap-opened buffer)
 	(imap-close buffer))
     (mapc 'make-local-variable imap-local-variables)
-    (imap-disable-multibyte)
+    (set-buffer-multibyte nil)
     (buffer-disable-undo)
     (setq imap-server (or server imap-server))
     (setq imap-port (or port imap-port))
@@ -1044,7 +1044,7 @@ necessary.  If nil, the buffer name is generated."
 		  (with-current-buffer (get-buffer-create
 					(generate-new-buffer-name " *temp*"))
 		    (mapc 'make-local-variable imap-local-variables)
-		    (imap-disable-multibyte)
+		    (set-buffer-multibyte nil)
 		    (buffer-disable-undo)
 		    (setq imap-server (or server imap-server))
 		    (setq imap-port (or port imap-port))
