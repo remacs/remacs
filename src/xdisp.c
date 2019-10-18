@@ -13419,26 +13419,22 @@ static Lisp_Object
 tty_get_tab_bar_item (struct frame *f, int x, int *idx, ptrdiff_t *end)
 {
   ptrdiff_t clen = 0;
-  Lisp_Object caption;
 
-  int i, j;
-  for (i = 0, j = 0; i < f->n_tab_bar_items; i++, j += TAB_BAR_ITEM_NSLOTS)
+  for (int i = 0; i < f->n_tab_bar_items; i++)
     {
-      caption = AREF (f->tab_bar_items, j + TAB_BAR_ITEM_CAPTION);
+      Lisp_Object caption = AREF (f->tab_bar_items, (i * TAB_BAR_ITEM_NSLOTS
+						     + TAB_BAR_ITEM_CAPTION));
       if (NILP (caption))
 	return Qnil;
       clen += SCHARS (caption);
       if (x < clen)
-	break;
+	{
+	  *idx = i;
+	  *end = clen;
+	  return caption;
+	}
     }
-  if (i < f->n_tab_bar_items)
-    {
-      *idx = i;
-      *end = clen;
-      return caption;
-    }
-  else
-    return Qnil;
+  return Qnil;
 }
 
 /* Handle a mouse click at X/Y on the tab bar of TTY frame F.  If the
