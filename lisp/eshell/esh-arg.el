@@ -302,13 +302,7 @@ Point is left at the end of the arguments."
   "Intelligently backslash the character occurring in STRING at INDEX.
 If the character is itself a backslash, it needs no escaping."
   (let ((char (aref string index)))
-    (if (and (eq char ?\\)
-	     ;; In Emacs directory-sep-char is always ?/, so this does nothing.
-	     (not (and (featurep 'xemacs)
-		       (featurep 'mswindows)
-		       (eq directory-sep-char ?\\)
-		       (eq (1- (string-width string))
-			   index))))
+    (if (eq char ?\\)
 	(char-to-string char)
       (if (memq char eshell-special-chars-outside-quoting)
 	  (string ?\\ char)))))
