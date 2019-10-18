@@ -3862,28 +3862,27 @@ extern void visit_static_gc_roots (struct gc_root_visitor visitor);
 /* Build a frequently used 1/2/3/4-integer lists.  */
 
 INLINE Lisp_Object
-list1i (EMACS_INT x)
+list1i (intmax_t a)
 {
-  return list1 (make_fixnum (x));
+  return list1 (make_int (a));
 }
 
 INLINE Lisp_Object
-list2i (EMACS_INT x, EMACS_INT y)
+list2i (intmax_t a, intmax_t b)
 {
-  return list2 (make_fixnum (x), make_fixnum (y));
+  return list2 (make_int (a), make_int (b));
 }
 
 INLINE Lisp_Object
-list3i (EMACS_INT x, EMACS_INT y, EMACS_INT w)
+list3i (intmax_t a, intmax_t b, intmax_t c)
 {
-  return list3 (make_fixnum (x), make_fixnum (y), make_fixnum (w));
+  return list3 (make_int (a), make_int (b), make_int (c));
 }
 
 INLINE Lisp_Object
-list4i (EMACS_INT x, EMACS_INT y, EMACS_INT w, EMACS_INT h)
+list4i (intmax_t a, intmax_t b, intmax_t c, intmax_t d)
 {
-  return list4 (make_fixnum (x), make_fixnum (y),
-		make_fixnum (w), make_fixnum (h));
+  return list4 (make_int (a), make_int (b), make_int (c), make_int (d));
 }
 
 extern Lisp_Object make_uninit_bool_vector (EMACS_INT);
