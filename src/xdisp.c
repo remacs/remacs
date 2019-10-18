@@ -32492,6 +32492,11 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 		? MATRIX_TAB_LINE_ROW (w->current_matrix)
 		: MATRIX_HEADER_LINE_ROW (w->current_matrix)));
 
+      /* On TTY frames the matrix's tab_line_p flag is not set
+	 (FIXME!), so we need to adjust by hand.  */
+      if (!FRAME_WINDOW_P (f) && area == ON_HEADER_LINE
+	  && window_wants_tab_line (w))
+	row++;
       /* Find the glyph under the mouse pointer.  */
       if (row->mode_line_p && row->enabled_p)
 	{
@@ -32706,7 +32711,11 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 		  ? (w->current_matrix)->nrows - 1
 		  : (area == ON_TAB_LINE
 		     ? 0
-		     : (w->current_matrix->tab_line_p
+		     : ((w->current_matrix->tab_line_p
+			 /* The window_wants_tab_line test is for TTY
+			    frames where the tab_line_p flag is not
+			    set (FIXME!).  */
+			 || window_wants_tab_line (w))
 			? 1
 			: 0)));
 
