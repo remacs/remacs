@@ -29,14 +29,11 @@
 ;; The idea is that gui buffers (trees, buttons, etc) will have text
 ;; representations of the GUI elements.  These routines will replace the text
 ;; with an image when images are available.
-;;
-;; This file requires the `image' package if it is available.
-
-(condition-case nil			; for older XEmacs
-    (require 'image)
-  (error nil))
 
 ;;; Code:
+
+(require 'image)
+
 (defcustom ezimage-use-images (and (display-images-p)
                                    (image-type-available-p 'xpm))
   "Non-nil means ezimage should display icons."
