@@ -11589,7 +11589,8 @@ x_ewmh_activate_frame (struct frame *f)
       x_send_client_event (frame, make_fixnum (0), frame,
 			   dpyinfo->Xatom_net_active_window,
 			   make_fixnum (32),
-			   list2i (1, dpyinfo->last_user_time));
+			   list2 (make_fixnum (1),
+				  INT_TO_INTEGER (dpyinfo->last_user_time)));
     }
 }
 

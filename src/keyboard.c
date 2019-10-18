@@ -5242,7 +5242,7 @@ make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y,
 		Fcons (posn,
 		       Fcons (Fcons (make_fixnum (xret),
 				     make_fixnum (yret)),
-			      Fcons (make_fixnum (t),
+			      Fcons (INT_TO_INTEGER (t),
 				     extra_info))));
 }
 
@@ -5267,7 +5267,7 @@ static Lisp_Object
 make_scroll_bar_position (struct input_event *ev, Lisp_Object type)
 {
   return list5 (ev->frame_or_window, type, Fcons (ev->x, ev->y),
-		make_fixnum (ev->timestamp),
+		INT_TO_INTEGER (ev->timestamp),
 		builtin_lisp_symbol (scroll_bar_parts[ev->part]));
 }
 
@@ -5579,7 +5579,7 @@ make_lispy_event (struct input_event *event)
 		    position = list4 (event->frame_or_window,
 				      Qmenu_bar,
 				      Fcons (event->x, event->y),
-				      make_fixnum (event->timestamp));
+				      INT_TO_INTEGER (event->timestamp));
 
 		    return list2 (item, position);
 		  }
