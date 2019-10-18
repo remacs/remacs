@@ -3571,15 +3571,18 @@ A list of sites mirroring @samp{ftp.gnu.org} can be found at
 @cindex Lucid Emacs
 @cindex Epoch
 
-XEmacs is a branch version of Emacs.  It was first called Lucid Emacs,
-and was initially derived from a prerelease version of Emacs 19.  In
-this FAQ, we use the name ``Emacs'' only for the official version.
+XEmacs was a branch version of Emacs that is no longer actively
+developed.  XEmacs was first called Lucid Emacs, and was initially
+derived from a prerelease version of Emacs 19.  In this FAQ, we use
+the name ``Emacs'' only for the official version.
 
-Emacs and XEmacs each come with Lisp packages that are lacking in the
-other.  The two versions have some significant differences at the Lisp
-programming level.  Their current features are roughly comparable,
-though the support for some operating systems, character sets and
-specific packages might be quite different.
+XEmacs last released a new version on January 30, 2009, and it lacks
+many important features that exists in Emacs.  In the past, it was not
+uncommon for Emacs packages to include code for compatibility with
+XEmacs.  Nowadays, although some packages still maintain such
+compatibility code, several of the more popular built-in and third
+party packages have either stopped supporting XEmacs or were developed
+exclusively for Emacs.
 
 Some XEmacs code has been contributed to Emacs, and we would like to
 use other parts, but the earlier XEmacs maintainers did not always
