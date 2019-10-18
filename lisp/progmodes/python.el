@@ -3670,7 +3670,7 @@ using that one instead of current buffer's process."
           (save-excursion
             (if (not (re-search-backward
                       (python-rx
-                       (or whitespace open-paren close-paren string-delimiter))
+                       (or whitespace open-paren close-paren string-delimiter simple-operator))
                       line-start
                       t 1))
                 line-start
