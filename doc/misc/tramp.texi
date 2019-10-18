@@ -1170,8 +1170,8 @@ of the configured system storage.
 
 Optional flags to the different @option{rclone} operations could be
 passed as connection property, @xref{Predefined connection
-information}.  Supported properties are @samp{mount-args},
-@samp{copyto-args} and @samp{moveto-args}.
+information}.  Supported properties are @t{"mount-args"},
+@t{"copyto-args"} and @t{"moveto-args"}.
 
 Access via @option{rclone} is slow.  If you have an alternative method
 for accessing the system storage, you shall prefer this.
@@ -1954,7 +1954,7 @@ property's value.
 @var{property} is any method specific parameter contained in
 @code{tramp-methods}.  The parameter key in @code{tramp-methods} is a
 symbol name @code{tramp-<foo>}.  To overwrite that property, use the
-string @samp{<foo>} for @var{property}.  For example, this changes the
+string @t{"<foo>"} for @var{property}.  For example, this changes the
 remote shell:
 
 @lisp
@@ -1975,37 +1975,73 @@ The parameters @code{tramp-remote-shell} and
 @code{tramp-remote-shell-login} in @code{tramp-methods} now have new
 values for the remote host.
 
-A common use case is to override the session timeout of a connection,
-that is the time (in seconds) after a connection is disabled, and must
-be reestablished.  This can be set for any connection; for the
-@option{sudo} and @option{doas} methods there exist predefined values.
-A value of @code{nil} disables this feature.  For example:
-
-@lisp
-@group
-(add-to-list 'tramp-connection-properties
-             (list (regexp-quote "@trampfn{sudo,root@@system-name,}")
-                   "session-timeout" 30))
-@end group
-@end lisp
-
-@noindent
-@samp{system-name} stands here for the host returned by the function
-@command{(system-name)}.
-
 @var{property} could also be any property found in
 @code{tramp-persistency-file-name}.
 
-To get around how restricted shells randomly drop connections, set the
-special property @samp{busybox}.  For example:
 
-@lisp
-@group
-(add-to-list 'tramp-connection-properties
-             (list (regexp-quote "@trampfn{ssh,user@@randomhost.your.domain,}")
-                   "busybox" t))
-@end group
-@end lisp
+@subsection Relevant connection properties to override
+
+Not all connection properties need to be changed.  The most relevant
+properties are listed here:
+
+@itemize
+@item @t{"login-program"}
+
+The property @t{"login-program"} keeps the program to be called in
+order to connect the remote host.  Sometimes, the program might have
+another name on your host, or it is located on another path.  In this
+case, you can overwrite the default value, which is special for every
+connection method.  It is used in all connection methods of
+@file{tramp-sh.el}.
+
+@item @t{"login-args"}
+
+@t{"login-args"} specifies a list of lists of arguments to pass to
+@t{"login-program"}.  Read the docstring of @code{tramp-methods} how
+to construct these lists.
+
+@item @t{"remote-shell"}
+
+This property tells Tramp which remote shell to apply on the remote
+host.  It is used in all connection methods of @file{tramp-sh.el}.
+The default value is @t{"/bin/sh"}.
+
+@item @t{"remote-shell-login"}
+
+A property to be used in conjunction with @t{"remote-shell"}.  It
+specifies, which shell argument triggers a login shell.  Its default
+value is @t{"-l"}, but some shells, like @command{ksh}, prefer
+@t{"-"}.
+
+@item @t{"session-timeout"}
+
+All @file{tramp-sh.el} based methods accept the property
+@t{"session-timeout"}.  This is the time (in seconds) after a
+connection is disabled for security reasons, and must be
+reestablished.  A value of @code{nil} disables this feature.  Most of
+the methods do not set this property except the @option{sudo} and
+@option{doas} methods, which use predefined values.
+
+@item @t{"posix"}
+
+Connections using the @option{smb} method check, whether the remote
+host supports posix commands.  If the remote host runs Samba, it
+confirms this capability.  However, some very old Samba versions have
+errors in their implementation.  In order to suppress the posix
+commands for those hosts, the property @t{"posix"} shall be set to
+@code{nil}.
+
+The default value of this property is @code{t} (not specified in
+@code{tramp-methods}).  If the remote host runs native MS Windows,
+there is no effect of this property.
+
+@item @t{"mount-args"}@*
+@t{"copyto-args"}@*
+@t{"moveto-args"}
+
+These properties keep optional flags to the different @option{rclone}
+operations.  Their default value is @code{nil}.
+@end itemize
 
 
 @node Remote programs
@@ -2106,7 +2142,7 @@ be recomputed.  To force @value{tramp} to recompute afresh, call
 
 Per default, @value{tramp} uses the command @command{/bin/sh} for
 starting a shell on the remote host.  This can be changed by setting
-the connection property @option{remote-shell}, see @xref{Predefined
+the connection property @t{"remote-shell"}, see @xref{Predefined
 connection information}.  If you want, for example, use
 @command{/usr/bin/zsh} on a remote host, you might apply
 
@@ -2215,7 +2251,7 @@ prompts, for which @value{tramp} uses @code{tramp-wrong-passwd-regexp}.
 
 @value{tramp} uses the user option @code{tramp-terminal-type} to set
 the remote environment variable @env{TERM} for the shells it runs.
-Per default, it is @samp{"dumb"}, but this could be changed.  A dumb
+Per default, it is @t{"dumb"}, but this could be changed.  A dumb
 terminal is best suited to run the background sessions of
 @value{tramp}.  However, running interactive remote shells might
 require a different setting.  This could be achieved by tweaking the
@@ -3782,10 +3818,10 @@ following line to @file{~/.zshrc}:
 [[ $TERM == "dumb" ]] && unsetopt zle && PS1='$ ' && return
 @end example
 
-This uses the default value of @code{tramp-terminal-type},
-@samp{"dumb"}, as value of the @env{TERM} environment variable.  If
-you want to use another value for @env{TERM}, change
-@code{tramp-terminal-type} and this line accordingly.
+This uses the default value of @code{tramp-terminal-type}, @t{"dumb"},
+as value of the @env{TERM} environment variable.  If you want to use
+another value for @env{TERM}, change @code{tramp-terminal-type} and
+this line accordingly.
 
 Alternatively, you could set the remote login shell explicitly.  See
 @ref{Remote shell setup} for discussion of this technique,

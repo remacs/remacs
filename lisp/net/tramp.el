@@ -1922,7 +1922,7 @@ If VAR is nil, then we bind `v' to the structure and `method', `user',
       (tramp-compat-progress-reporter-update reporter value suffix))))
 
 (defmacro with-tramp-progress-reporter (vec level message &rest body)
-  "Executes BODY, spinning a progress reporter with MESSAGE.
+  "Execute BODY, spinning a progress reporter with MESSAGE.
 If LEVEL does not fit for visible messages, there are only traces
 without a visible progress reporter."
   (declare (indent 3) (debug t))

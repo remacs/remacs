@@ -1814,8 +1814,13 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 
 (defun tramp-smb-get-cifs-capabilities (vec)
   "Check, whether the SMB server supports POSIX commands."
-  ;; When we are not logged in yet, we return nil.
-  (if (process-live-p (tramp-get-connection-process vec))
+  ;; When we are not logged in yet, we return nil.  The
+  ;; connection-local property "posix" is not set explicitly; it is
+  ;; just checked in order to let a user configure it to nil on hosts
+  ;; which return cifs properties, but lack a proper implementation.
+  ;; Very old Samba implementations, for example.
+  (if (and (process-live-p (tramp-get-connection-process vec))
+	   (tramp-get-connection-property vec "posix" t))
       (with-tramp-connection-property
 	  (tramp-get-connection-process vec) "cifs-capabilities"
 	(save-match-data
