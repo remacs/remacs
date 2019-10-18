@@ -1321,8 +1321,10 @@ coordinates_in_window (register struct window *w, int x, int y)
 	       && y < top_y + CURRENT_TAB_LINE_HEIGHT (w)
 	       && (part = ON_TAB_LINE))
 	   || (window_wants_header_line (w)
-	       && y < top_y + CURRENT_TAB_LINE_HEIGHT (w)
-			    + CURRENT_HEADER_LINE_HEIGHT (w)
+	       && y < top_y + CURRENT_HEADER_LINE_HEIGHT (w)
+	       + (window_wants_tab_line (w)
+		  ? CURRENT_TAB_LINE_HEIGHT (w)
+		  : 0)
 	       && (part = ON_HEADER_LINE)))
     {
       /* If it's under/over the scroll bar portion of the mode/header
