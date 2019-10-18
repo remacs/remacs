@@ -1765,23 +1765,6 @@ determines which interpreter you're using by examining the first line of
 the script.  Use @kbd{C-h v} (or @kbd{M-x describe-variable}) on
 @code{interpreter-mode-alist} to learn more.
 
-@node Highlighting a region
-@section How can I highlight a region of text in Emacs?
-@cindex Highlighting text
-@cindex Text, highlighting
-@cindex @code{transient-mark-mode}
-@cindex Region, highlighting a
-
-You can cause the region to be highlighted when the mark is active by
-including
-
-@lisp
-(transient-mark-mode 1)
-@end lisp
-
-@noindent
-in your @file{.emacs} file.  Since Emacs 23.1, this feature is on by default.
-
 @node Replacing highlighted text
 @section How can I replace highlighted text with what I type?
 @cindex @code{delete-selection-mode}
