@@ -643,7 +643,7 @@ The answer will be provided by `tramp-action-terminal', which see."
 (defcustom tramp-antispoof-regexp
   (regexp-quote "Access granted. Press Return to begin session. ")
   "Regular expression matching plink's anti-spoofing message."
-  :version 27.1
+  :version "27.1"
   :type 'regexp)
 
 (defcustom tramp-operation-not-permitted-regexp
