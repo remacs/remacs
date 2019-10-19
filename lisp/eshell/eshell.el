@@ -216,7 +216,13 @@ shells such as bash, zsh, rc, 4dos."
   :group 'eshell)
 
 (defcustom eshell-buffer-name "*eshell*"
-  "The basename used for Eshell buffers."
+  "The basename used for Eshell buffers.
+This is the default name used when running `eshell'.
+
+With a numeric prefix argument to `eshell', the buffer name will
+be the value of this variable followed by the number.  For
+example, with the numeric prefix argument 2, the buffer would be
+named \"*eshell*<2>\"."
   :type 'string
   :group 'eshell)
 
@@ -229,13 +235,20 @@ shells such as bash, zsh, rc, 4dos."
 ;;;###autoload
 (defun eshell (&optional arg)
   "Create an interactive Eshell buffer.
-The buffer used for Eshell sessions is determined by the value of
-`eshell-buffer-name'.  If there is already an Eshell session active in
-that buffer, Emacs will simply switch to it.  Otherwise, a new session
-will begin.  A numeric prefix arg (as in `C-u 42 M-x eshell RET')
-switches to the session with that number, creating it if necessary.  A
-nonnumeric prefix arg means to create a new session.  Returns the
-buffer selected (or created)."
+Start a new Eshell session, or switch to an already active
+session.  Return the buffer selected (or created).
+
+With a nonnumeric prefix arg, create a new session.
+
+With a numeric prefix arg (as in `C-u 42 M-x eshell RET'), switch
+to the session with that number, or create it if it doesn't
+already exist.
+
+The buffer name used for Eshell sessions is determined by the
+value of `eshell-buffer-name', which see.
+
+Eshell is a shell-like command interpreter.  For more
+information on Eshell, see Info node `(eshell)Top'."
   (interactive "P")
   (cl-assert eshell-buffer-name)
   (let ((buf (cond ((numberp arg)
