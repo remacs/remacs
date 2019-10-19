@@ -904,10 +904,8 @@ t if it successfully authenticates, nil otherwise."
 (declare-function sasl-step-set-data  "sasl" (step data))
 
 (defun imap-sasl-auth-p (buffer)
-  (and (condition-case ()
-	   (require 'sasl)
-	 (error nil))
-       (sasl-find-mechanism (imap-sasl-make-mechanisms buffer))))
+  (require 'sasl)
+  (sasl-find-mechanism (imap-sasl-make-mechanisms buffer)))
 
 (defun imap-sasl-auth (buffer)
   "Login to server using the SASL method."
