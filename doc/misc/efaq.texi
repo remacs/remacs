@@ -280,13 +280,12 @@ For information on some of the files in the @file{etc} directory,
 @pxref{Informational files for Emacs}.
 
 @node Common acronyms
-@section What are FSF, GNU, RMS, FTP, and GPL?
+@section What are FSF, GNU, RMS, and GPL?
 @cindex FSF, definition of
 @cindex GNU, definition of
 @cindex RMS, definition of
 @cindex Stallman, Richard, acronym for
 @cindex Richard Stallman, acronym for
-@cindex FTP, definition of
 @cindex GPL, definition of
 @cindex Acronyms, definitions for
 @cindex Common acronyms, definitions for
@@ -301,9 +300,6 @@ GNU's Not Unix
 
 @item RMS
 Richard Matthew Stallman
-
-@item FTP
-File Transfer Protocol
 
 @item GPL
 GNU General Public License
