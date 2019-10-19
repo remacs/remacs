@@ -556,6 +556,7 @@ shell from reading its init file."
     (tramp-yesno-prompt-regexp tramp-action-yesno)
     (tramp-yn-prompt-regexp tramp-action-yn)
     (tramp-terminal-prompt-regexp tramp-action-terminal)
+    (tramp-antispoof-regexp tramp-action-confirm-message)
     (tramp-process-alive-regexp tramp-action-process-alive))
   "List of pattern/action pairs.
 Whenever a pattern matches, the corresponding action is performed.

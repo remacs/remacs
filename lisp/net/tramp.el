@@ -636,6 +636,16 @@ The regexp should match at end of buffer.
 The answer will be provided by `tramp-action-terminal', which see."
   :type 'regexp)
 
+;; Plink 0.71 has added an additional anti-spoofing prompt after
+;; authentication.  This could be discarded with the argument
+;; \"-no-antispoof\".  However, since we don't know which PuTTY
+;; version is installed, we must react interactively.
+(defcustom tramp-antispoof-regexp
+  (regexp-quote "Access granted. Press Return to begin session. ")
+  "Regular expression matching plink's anti-spoofing message."
+  :version 27.1
+  :type 'regexp)
+
 (defcustom tramp-operation-not-permitted-regexp
   (concat "\\(" "preserving times.*" "\\|" "set mode" "\\)" ":\\s-*"
 	  (regexp-opt '("Operation not permitted") t))
@@ -3933,6 +3943,13 @@ The terminal type can be configured with `tramp-terminal-type'."
   (with-current-buffer (tramp-get-connection-buffer vec)
     (tramp-message vec 6 "\n%s" (buffer-string)))
   (tramp-send-string vec (concat tramp-terminal-type tramp-local-end-of-line))
+  t)
+
+(defun tramp-action-confirm-message (_proc vec)
+  "Return RET in order to confirm the message."
+  (with-current-buffer (tramp-get-connection-buffer vec)
+    (tramp-message vec 6 "\n%s" (buffer-string)))
+  (tramp-send-string vec tramp-local-end-of-line)
   t)
 
 (defun tramp-action-process-alive (proc _vec)
