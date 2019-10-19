@@ -41,10 +41,7 @@
   "A wrapper of url package and external url command for Gnus."
   :group 'gnus)
 
-(defcustom mm-url-use-external (not
-				(condition-case nil
-				    (require 'url)
-				  (error nil)))
+(defcustom mm-url-use-external nil
   "If non-nil, use external grab program `mm-url-program'."
   :version "22.1"
   :type 'boolean
