@@ -461,6 +461,11 @@ RGB triplets with a single hexadecimal digit per component.
 Note that this key binding will not work on MS-Windows systems if
 'w32-scroll-lock-modifier' is non-nil.
 
+---
+** 'global-set-key', called interactively, now no longer downcases a
+key binding with an upper case letter - if you can type it, you can
+bind it.
+
 
 * Editing Changes in Emacs 27.1
 

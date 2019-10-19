@@ -1120,7 +1120,7 @@ that local binding will continue to shadow any global binding
 that you make with this function."
   (interactive
    (let* ((menu-prompting nil)
-          (key (read-key-sequence "Set key globally: ")))
+          (key (read-key-sequence "Set key globally: " nil t)))
      (list key
            (read-command (format "Set key %s to command: "
                                  (key-description key))))))
