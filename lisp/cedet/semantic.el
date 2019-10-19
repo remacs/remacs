@@ -368,8 +368,7 @@ to use Semantic, and `semantic-init-hook' is run."
 
 ;;; Parsing Commands
 ;;
-(eval-when-compile
-  (condition-case nil (require 'pp) (error nil)))
+(require 'pp)
 
 (defvar semantic-edebug nil
   "When non-nil, activate the interactive parsing debugger.

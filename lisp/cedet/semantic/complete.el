@@ -1666,10 +1666,7 @@ Display mechanism using tooltip for a list of possible completions.")
 
 (cl-defmethod initialize-instance :after ((obj semantic-displayer-tooltip) &rest args)
   "Make sure we have tooltips required."
-  (condition-case nil
-      (require 'tooltip)
-    (error nil))
-  )
+  (require 'tooltip))
 
 (defvar tooltip-mode)
 
