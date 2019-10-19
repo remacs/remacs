@@ -1268,7 +1268,7 @@ Directory-local variables can now be defined, in a similar manner to
 file-local variables.
 
 @item
-Transient Mark mode (@pxref{Highlighting a region}) is on by default.
+Transient Mark mode is on by default.
 
 @end itemize
 
@@ -1428,7 +1428,6 @@ of files from Macintosh, Microsoft, and Unix platforms.
 * Displaying the current file name in the titlebar::
 * Turning on abbrevs by default::
 * Associating modes with files::
-* Highlighting a region::
 * Replacing highlighted text::
 * Controlling case sensitivity::
 * Working with unprintable characters::
