@@ -5517,15 +5517,7 @@ mode_line_string (struct window *w, enum window_part part,
   else if (part == ON_TAB_LINE)
     row = MATRIX_TAB_LINE_ROW (w->current_matrix);
   else
-    {
-      row = MATRIX_HEADER_LINE_ROW (w->current_matrix);
-      /* On TTY frames the matrix's tab_line_p flag is not set
-	 (FIXME!), so we need to adjust by hand.  */
-      if (!FRAME_WINDOW_P (XFRAME (w->frame))
-	  && window_wants_tab_line (w))
-
-	row++;
-    }
+    row = MATRIX_HEADER_LINE_ROW (w->current_matrix);
   y0 = *y - row->y;
   *y = row - MATRIX_FIRST_TEXT_ROW (w->current_matrix);
 

@@ -15988,6 +15988,8 @@ mark_window_display_accurate_1 (struct window *w, bool accurate_p)
       w->current_matrix->buffer = b;
       w->current_matrix->begv = BUF_BEGV (b);
       w->current_matrix->zv = BUF_ZV (b);
+      w->current_matrix->header_line_p = window_wants_header_line (w);
+      w->current_matrix->tab_line_p = window_wants_tab_line (w);
 
       w->last_cursor_vpos = w->cursor.vpos;
       w->last_cursor_off_p = w->cursor_off_p;
@@ -24947,7 +24949,12 @@ display_mode_line (struct window *w, enum face_id face_id, Lisp_Object format)
 
   it.glyph_row->mode_line_p = true;
   if (face_id == TAB_LINE_FACE_ID)
-    it.glyph_row->tab_line_p = true;
+    {
+      it.glyph_row->tab_line_p = true;
+      w->desired_matrix->tab_line_p = true;
+    }
+  else if (face_id == HEADER_LINE_FACE_ID)
+    w->desired_matrix->header_line_p = true;
 
   /* FIXME: This should be controlled by a user option.  But
      supporting such an option is not trivial, since the mode line is
@@ -32488,11 +32495,6 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 		? MATRIX_TAB_LINE_ROW (w->current_matrix)
 		: MATRIX_HEADER_LINE_ROW (w->current_matrix)));
 
-      /* On TTY frames the matrix's tab_line_p flag is not set
-	 (FIXME!), so we need to adjust by hand.  */
-      if (!FRAME_WINDOW_P (f) && area == ON_HEADER_LINE
-	  && window_wants_tab_line (w))
-	row++;
       /* Find the glyph under the mouse pointer.  */
       if (row->mode_line_p && row->enabled_p)
 	{
@@ -32707,11 +32709,7 @@ note_mode_line_or_margin_highlight (Lisp_Object window, int x, int y,
 		  ? (w->current_matrix)->nrows - 1
 		  : (area == ON_TAB_LINE
 		     ? 0
-		     : ((w->current_matrix->tab_line_p
-			 /* The window_wants_tab_line test is for TTY
-			    frames where the tab_line_p flag is not
-			    set (FIXME!).  */
-			 || window_wants_tab_line (w))
+		     : (w->current_matrix->tab_line_p
 			? 1
 			: 0)));
 
