@@ -371,7 +371,7 @@ found."
                    (file-regular-p file)
                    (throw 'found
                           (apply #'create-image
-                                 (car fmt) file nil
+                                 file (car fmt) nil
                                  (tree-widget-image-properties name))))))))
       nil)))
 
