@@ -545,8 +545,14 @@ key.
 
 @item
 @cindex @kbd{C-x 6}
-@vindex ctl-x-6-map
-@code{ctl-x-6-map} is the global keymap used for the @kbd{C-x 6} prefix
+@vindex 2C-mode-map
+@code{2C-mode-map} is the global keymap used for the @kbd{C-x 6} prefix
+key.
+
+@item
+@cindex @kbd{C-x t}
+@vindex tab-prefix-map
+@code{tab-prefix-map} is the global keymap used for the @kbd{C-x t} prefix
 key.
 
 @item

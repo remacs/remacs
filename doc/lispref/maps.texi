@@ -21,7 +21,7 @@ keymaps, @pxref{Keymaps}.
 @c Don't add xrefs to things covered in {Keymaps}.
 @table @code
 @item 2C-mode-map
-A sparse keymap for subcommands of the prefix @key{F2}.@*
+A sparse keymap for subcommands of the prefix @kbd{C-x 6}.@*
 @xref{Two-Column,, Two-Column Editing, emacs, The GNU Emacs Manual}.
 
 @item abbrev-map
@@ -41,9 +41,6 @@ A sparse keymap for subcommands of the prefix @kbd{C-x 4}.
 
 @item ctl-x-5-map
 A sparse keymap for subcommands of the prefix @kbd{C-x 5}.
-
-@item ctl-x-6-map
-A sparse keymap for subcommands of the prefix @kbd{C-x 6}.
 
 @item ctl-x-map
 A full keymap for @kbd{C-x} commands.
@@ -180,6 +177,14 @@ A sparse keymap that provides global bindings for search-related commands.
 @item special-mode-map
 The keymap used by Special mode.@*
 @xref{Basic Major Modes}.
+
+@item tab-prefix-map
+The global keymap used for the @kbd{C-x t} prefix key for tab-bar related commands.@*
+@xref{Tab Bars,,, emacs, The GNU Emacs Manual}.
+
+@item tab-bar-map
+The keymap defining the contents of the tab bar.@*
+@xref{Tab Bars,,, emacs, The GNU Emacs Manual}.
 
 @item tool-bar-map
 The keymap defining the contents of the tool bar.@*

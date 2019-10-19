@@ -34138,6 +34138,7 @@ resumed later.
 ;;;;;;  0 0))
 ;;; Generated autoloads from textmodes/two-column.el
  (autoload '2C-command "two-column" () t 'keymap)
+ (global-set-key "\C-x6" '2C-command)
  (global-set-key [f2] '2C-command)
 
 (autoload '2C-two-columns "two-column" "\

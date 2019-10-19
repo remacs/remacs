@@ -1257,32 +1257,32 @@ use persistent named window configurations without using the tab bar
 by typing the related commands: @kbd{M-x tab-new}, @kbd{M-x tab-next},
 @kbd{M-x tab-list}, @kbd{M-x tab-close}, etc.
 
-@kindex C-x 6
-  The prefix key @kbd{C-x 6} is analogous to @kbd{C-x 5}.
+@kindex C-x t
+  The prefix key @kbd{C-x t} is analogous to @kbd{C-x 5}.
 Whereas each @kbd{C-x 5} command pops up a buffer in a different frame
-(@pxref{Creating Frames}), the @kbd{C-x 6} commands use a different
+(@pxref{Creating Frames}), the @kbd{C-x t} commands use a different
 tab with a different window configuration in the selected frame.
 
-  The various @kbd{C-x 6} commands differ in how they find or create the
+  The various @kbd{C-x t} commands differ in how they find or create the
 buffer to select:
 
 @table @kbd
-@item C-x 6 2
-@kindex C-x 6 2
+@item C-x t 2
+@kindex C-x t 2
 @findex tab-new
 Add a new tab (@code{tab-new}).  You can control the choice of the
 buffer displayed in a new tab by customizing the variable
 @code{tab-bar-new-tab-choice}.
-@item C-x 6 b @var{bufname} @key{RET}
+@item C-x t b @var{bufname} @key{RET}
 Select buffer @var{bufname} in another tab.  This runs
 @code{switch-to-buffer-other-tab}.
-@item C-x 6 f @var{filename} @key{RET}
+@item C-x t f @var{filename} @key{RET}
 Visit file @var{filename} and select its buffer in another tab.  This
 runs @code{find-file-other-tab}.  @xref{Visiting}.
-@item C-x 6 d @var{directory} @key{RET}
+@item C-x t d @var{directory} @key{RET}
 Select a Dired buffer for directory @var{directory} in another tab.
 This runs @code{dired-other-tab}.  @xref{Dired}.
-@item C-x 6 r @var{tabname} @key{RET}
+@item C-x t r @var{tabname} @key{RET}
 Renames the current tab to @var{tabname}.  You can control the
 programmatic name given to a tab by default by customizing the
 variable @code{tab-bar-tab-name-function}.
@@ -1297,14 +1297,14 @@ new tab with other buffers, customize the variable
   The following commands are used to delete and operate on tabs:
 
 @table @kbd
-@item C-x 6 0
-@kindex C-x 6 0
+@item C-x t 0
+@kindex C-x t 0
 @findex tab-close
 Close the selected tab (@code{tab-close}).  It has no effect if there
 is only one tab.
 
-@item C-x 6 o
-@kindex C-x 6 o
+@item C-x t o
+@kindex C-x t o
 @kindex C-TAB
 @findex tab-next
 Switch to another tab.  If you repeat this command, it cycles through
@@ -1312,8 +1312,8 @@ all the tabs on the selected frame.  With a positive numeric argument
 N, it switches to the next Nth tab; with a negative argument −N, it
 switches back to the previous Nth tab.
 
-@item C-x 6 1
-@kindex C-x 6 1
+@item C-x t 1
+@kindex C-x t 1
 @findex tab-close-other
 Close all tabs on the selected frame, except the selected one.
 @end table

@@ -962,14 +962,14 @@ Like \\[find-file-other-frame] (which see), but creates a new tab."
           value)
       (switch-to-buffer-other-tab value))))
 
-(define-key ctl-x-6-map "2" 'tab-new)
-(define-key ctl-x-6-map "1" 'tab-close-other)
-(define-key ctl-x-6-map "0" 'tab-close)
-(define-key ctl-x-6-map "o" 'tab-next)
-(define-key ctl-x-6-map "b" 'switch-to-buffer-other-tab)
-(define-key ctl-x-6-map "f" 'find-file-other-tab)
-(define-key ctl-x-6-map "\C-f" 'find-file-other-tab)
-(define-key ctl-x-6-map "r" 'tab-rename)
+(define-key tab-prefix-map "2" 'tab-new)
+(define-key tab-prefix-map "1" 'tab-close-other)
+(define-key tab-prefix-map "0" 'tab-close)
+(define-key tab-prefix-map "o" 'tab-next)
+(define-key tab-prefix-map "b" 'switch-to-buffer-other-tab)
+(define-key tab-prefix-map "f" 'find-file-other-tab)
+(define-key tab-prefix-map "\C-f" 'find-file-other-tab)
+(define-key tab-prefix-map "r" 'tab-rename)
 
 
 (provide 'tab-bar)
