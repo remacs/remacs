@@ -474,7 +474,10 @@ Other major modes are defined by comparison with this one."
 
 (put 'special-mode 'mode-class 'special)
 (define-derived-mode special-mode nil "Special"
-  "Parent major mode from which special major modes should inherit."
+  "Parent major mode from which special major modes should inherit.
+
+A special major mode is intended to view specially formatted data
+rather than files.  These modes usually use read-only buffers."
   (setq buffer-read-only t))
 
 ;; Making and deleting lines.
