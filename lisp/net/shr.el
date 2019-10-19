@@ -1075,7 +1075,8 @@ element is the data blob and the second element is the content-type."
 		      (create-image data nil t :ascent 100
 				    :format content-type))
 		     ((eq content-type 'image/svg+xml)
-		      (create-image data 'svg t :ascent 100))
+                      (when (image-type-available-p 'svg)
+		        (create-image data 'svg t :ascent 100)))
 		     ((eq size 'full)
 		      (ignore-errors
 			(shr-rescale-image data content-type
