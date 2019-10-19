@@ -1517,10 +1517,11 @@ is not silent.)
 
   We call Emacs @dfn{advanced} because it can do much more than simple
 insertion and deletion of text.  It can control subprocesses, indent
-programs automatically, show multiple files at once, and more.
-Emacs editing commands operate in terms of characters, words, lines,
-sentences, paragraphs, and pages, as well as expressions and comments
-in various programming languages.
+programs automatically, show multiple files at once, edit remote files
+like they were local files, and more.  Emacs editing commands operate
+in terms of characters, words, lines, sentences, paragraphs, and
+pages, as well as expressions and comments in various programming
+languages.
 
   @dfn{Self-documenting} means that at any time you can use special
 commands, known as @dfn{help commands}, to find out what your options
