@@ -391,9 +391,9 @@ to 'completion-styles' or 'completion-category-overrides' to use it.
 ** New face attribute ':extend' to control face extension at EOL.
 The new face attribute ':extend' controls whether to use the face for
 displaying the empty space beyond end of line (EOL) till the edge of
-the window.  By default, this attribute is non-nil only for 'region'
-and 'hl-line' faces; any other face that crosses end of line will not
-affect the display of the empty space at EOL.
+the window.  By default, this attribute is non-nil only for 'region',
+'secondary-selection', 'hl-line' and diff faces; any other face that
+crosses end of line will not affect the display of the empty space at EOL.
 
 ** Connection-local variables
 

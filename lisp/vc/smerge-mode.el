@@ -77,9 +77,9 @@ Used in `smerge-diff-base-upper' and related functions."
 
 (defface smerge-upper
   '((((class color) (min-colors 88) (background light))
-     :background "#ffdddd")
+     :background "#ffdddd" :extend t)
     (((class color) (min-colors 88) (background dark))
-     :background "#553333")
+     :background "#553333" :extend t)
     (((class color))
      :foreground "red"))
   "Face for the `upper' version of a conflict.")
@@ -88,9 +88,9 @@ Used in `smerge-diff-base-upper' and related functions."
 
 (defface smerge-lower
   '((((class color) (min-colors 88) (background light))
-     :background "#ddffdd")
+     :background "#ddffdd" :extend t)
     (((class color) (min-colors 88) (background dark))
-     :background "#335533")
+     :background "#335533" :extend t)
     (((class color))
      :foreground "green"))
   "Face for the `lower' version of a conflict.")
@@ -99,9 +99,9 @@ Used in `smerge-diff-base-upper' and related functions."
 
 (defface smerge-base
   '((((class color) (min-colors 88) (background light))
-     :background "#ffffaa")
+     :background "#ffffaa" :extend t)
     (((class color) (min-colors 88) (background dark))
-     :background "#888833")
+     :background "#888833" :extend t)
     (((class color))
      :foreground "yellow"))
   "Face for the base code.")
@@ -109,9 +109,9 @@ Used in `smerge-diff-base-upper' and related functions."
 
 (defface smerge-markers
   '((((background light))
-     (:background "grey85"))
+     (:background "grey85" :extend t))
     (((background dark))
-     (:background "grey30")))
+     (:background "grey30" :extend t)))
   "Face for the conflict markers.")
 (defvar smerge-markers-face 'smerge-markers)
 

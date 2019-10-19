@@ -298,9 +298,9 @@ well."
 
 (defface diff-header
   '((((class color) (min-colors 88) (background light))
-     :background "grey85")
+     :background "grey85" :extend t)
     (((class color) (min-colors 88) (background dark))
-     :background "grey45")
+     :background "grey45" :extend t)
     (((class color))
      :foreground "blue1" :weight bold)
     (t :weight bold))
@@ -308,9 +308,9 @@ well."
 
 (defface diff-file-header
   '((((class color) (min-colors 88) (background light))
-     :background "grey75" :weight bold)
+     :background "grey75" :weight bold :extend t)
     (((class color) (min-colors 88) (background dark))
-     :background "grey60" :weight bold)
+     :background "grey60" :weight bold :extend t)
     (((class color))
      :foreground "cyan" :weight bold)
     (t :weight bold))			; :height 1.3
@@ -328,11 +328,11 @@ well."
   '((default
      :inherit diff-changed)
     (((class color) (min-colors 257) (background light))
-     :background "#ffeeee")
+     :background "#ffeeee" :extend t)
     (((class color) (min-colors 88) (background light))
-     :background "#ffdddd")
+     :background "#ffdddd" :extend t)
     (((class color) (min-colors 88) (background dark))
-     :background "#553333")
+     :background "#553333" :extend t)
     (((class color))
      :foreground "red"))
   "`diff-mode' face used to highlight removed lines.")
@@ -341,11 +341,11 @@ well."
   '((default
      :inherit diff-changed)
     (((class color) (min-colors 257) (background light))
-     :background "#eeffee")
+     :background "#eeffee" :extend t)
     (((class color) (min-colors 88) (background light))
-     :background "#ddffdd")
+     :background "#ddffdd" :extend t)
     (((class color) (min-colors 88) (background dark))
-     :background "#335533")
+     :background "#335533" :extend t)
     (((class color))
      :foreground "green"))
   "`diff-mode' face used to highlight added lines.")

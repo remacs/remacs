@@ -2365,15 +2365,15 @@ If you set `term-file-prefix' to nil, this function does nothing."
 
 (defface secondary-selection
   '((((class color) (min-colors 88) (background light))
-     :background "yellow1")
+     :background "yellow1" :extend t)
     (((class color) (min-colors 88) (background dark))
-     :background "SkyBlue4")
+     :background "SkyBlue4" :extend t)
     (((class color) (min-colors 16) (background light))
-     :background "yellow")
+     :background "yellow" :extend t)
     (((class color) (min-colors 16) (background dark))
-     :background "SkyBlue4")
+     :background "SkyBlue4" :extend t)
     (((class color) (min-colors 8))
-     :background "cyan" :foreground "black")
+     :background "cyan" :foreground "black" :extend t)
     (t :inverse-video t))
   "Basic face for displaying the secondary selection."
   :group 'basic-faces)
@@ -2419,9 +2419,9 @@ unwanted effects."
 
 (defface line-number-major-tick
   '((((class color grayscale) (background light))
-     :foreground "grey55" :bold t)
+     :background "grey85" :bold t)
     (((class color grayscale) (background dark))
-     :foreground "grey75" :bold t)
+     :background "grey75" :bold t)
     (t :inherit line-number))
   "Face for highlighting \"major ticks\" (as in a ruler).
 When `display-line-numbers-major-tick' is positive, highlight
@@ -2440,9 +2440,9 @@ unwanted effects."
 
 (defface line-number-minor-tick
   '((((class color grayscale) (background light))
-     :foreground "grey65" :bold t)
+     :background "grey95" :bold t)
     (((class color grayscale) (background dark))
-     :foreground "grey55" :bold t)
+     :background "grey55" :bold t)
     (t :inherit line-number))
   "Face for highlighting \"minor ticks\" (as in a ruler).
 When `display-line-numbers-minor-tick' is positive, highlight
