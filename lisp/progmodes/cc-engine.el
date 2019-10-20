@@ -1468,10 +1468,14 @@ comment at the start of cc-engine.el for more info."
 		     (progn
 		       (if (setq lit-start (c-literal-start from)) ; Have we landed in a string/comment?
 			   (goto-char lit-start))
-		       (c-backward-syntactic-ws) ; ? put a limit here, maybe?
+		       (c-backward-syntactic-ws (c-point 'bopl))
 		       (setq vsemi-pos (point))
 		       (c-at-vsemi-p))))
 	      (throw 'done vsemi-pos))
+	     ;; Optimize for large blocks of comments.
+	     ((progn (c-forward-syntactic-ws to)
+		     (>= (point) to))
+	      (throw 'done nil))
 	     ;; In a string/comment?
 	     ((setq lit-range (c-literal-limits from))
 	      (goto-char (cdr lit-range)))
