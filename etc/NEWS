@@ -1462,6 +1462,10 @@ the Elisp manual for documentation of the new mode and its commands.
 
 ** Edebug
 
+*** New face 'edebug-breakpoint'
+When setting breakpoints in Edebug, an overlay with this face is
+placed over the point in question.
+
 +++
 *** New command 'edebug-unset-breakpoints'
 To clear all breakpoints in the current form, the 'U' command in

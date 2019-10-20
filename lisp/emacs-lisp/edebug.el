@@ -63,6 +63,9 @@
   "A source-level debugger for Emacs Lisp."
   :group 'lisp)
 
+(defface edebug-breakpoint '((t :inherit highlight))
+  "Face used to mark breakpoints."
+  :version "27.1")
 
 (defcustom edebug-setup-hook nil
   "Functions to call before edebug is used.
@@ -3226,7 +3229,7 @@ the breakpoint."
         (let* ((pos (+ start (aref offsets (car breakpoint))))
                (overlay (make-overlay pos (1+ pos))))
           (overlay-put overlay 'edebug t)
-          (overlay-put overlay 'face 'highlight))))))
+          (overlay-put overlay 'face 'edebug-breakpoint))))))
 
 (defun edebug--overlay-breakpoints-remove (start end)
   (dolist (overlay (overlays-in start end))
