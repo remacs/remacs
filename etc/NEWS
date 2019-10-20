@@ -2184,7 +2184,7 @@ the previous window-local tab is the same as typing 'C-x <LEFT>'
 ('next-buffer').  Both commands support a numeric prefix argument as
 a repeat count.  Clicking on the plus icon adds a new buffer to the
 window-local tab line of buffers.  Using the mouse wheel on the tab
-line scrolls tabs that display the window buffers.
+line scrolls tabs.
 
 ** fileloop.el lets one setup multifile operations like search&replace.
 

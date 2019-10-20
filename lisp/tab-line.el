@@ -94,8 +94,6 @@
   (let ((map (make-sparse-keymap)))
     (define-key map [tab-line mouse-1] 'tab-line-select-tab)
     (define-key map [tab-line mouse-2] 'tab-line-close-tab)
-    (define-key map [tab-line mouse-4] 'tab-line-switch-to-prev-tab)
-    (define-key map [tab-line mouse-5] 'tab-line-switch-to-next-tab)
     (define-key map "\C-m" 'tab-line-select-tab)
     map)
   "Local keymap for `tab-line-mode' window tabs.")
@@ -262,16 +260,16 @@ variable `tab-line-tabs-function'."
                                tab-line-new-button))))))
 
 
-(defun tab-line-new-tab (&optional e)
+(defun tab-line-new-tab (&optional mouse-event)
   "Add a new tab to the tab line.
 Usually is invoked by clicking on the plus-shaped button.
 But any switching to other buffer also adds a new tab
 corresponding to the switched buffer."
-  (interactive "e")
+  (interactive (list last-nonmenu-event))
   (if (functionp tab-line-new-tab-choice)
       (funcall tab-line-new-tab-choice)
-    (if window-system                   ; (display-popup-menus-p)
-        (mouse-buffer-menu e)           ; like (buffer-menu-open)
+    (if (and (listp mouse-event) window-system) ; (display-popup-menus-p)
+        (mouse-buffer-menu mouse-event) ; like (buffer-menu-open)
       ;; tty menu doesn't support mouse clicks, so use tmm
       (tmm-prompt (mouse-buffer-menu-keymap)))))
 
@@ -302,19 +300,21 @@ using the `previous-buffer' command."
       (with-selected-window window
         (switch-to-buffer buffer))))))
 
-(defun tab-line-switch-to-prev-tab (&optional e)
+(defun tab-line-switch-to-prev-tab (&optional mouse-event)
   "Switch to the previous tab.
 Its effect is the same as using the `previous-buffer' command
 (\\[previous-buffer])."
-  (interactive "e")
-  (switch-to-prev-buffer (posn-window (event-start e))))
+  (interactive (list last-nonmenu-event))
+  (switch-to-prev-buffer
+   (and (listp mouse-event) (posn-window (event-start mouse-event)))))
 
-(defun tab-line-switch-to-next-tab (&optional e)
+(defun tab-line-switch-to-next-tab (&optional mouse-event)
   "Switch to the next tab.
 Its effect is the same as using the `next-buffer' command
 (\\[next-buffer])."
-  (interactive "e")
-  (switch-to-next-buffer (posn-window (event-start e))))
+  (interactive (list last-nonmenu-event))
+  (switch-to-next-buffer
+   (and (listp mouse-event) (posn-window (event-start mouse-event)))))
 
 (defcustom tab-line-close-tab-action 'bury-buffer
   "Defines what to do on closing the tab.
@@ -326,16 +326,17 @@ If `kill-buffer', kills the tab's buffer."
   :group 'tab-line
   :version "27.1")
 
-(defun tab-line-close-tab (&optional e)
+(defun tab-line-close-tab (&optional mouse-event)
   "Close the selected tab.
 Usually is invoked by clicking on the close button on the right side
 of the tab.  This command buries the buffer, so it goes out of sight
 from the tab line."
-  (interactive "e")
-  (let* ((posnp (event-start e))
-         (window (posn-window posnp))
-         (buffer (get-pos-property 1 'tab (car (posn-string posnp)))))
-    (with-selected-window window
+  (interactive (list last-nonmenu-event))
+  (let* ((posnp (and (listp mouse-event) (event-start mouse-event)))
+         (window (and posnp (posn-window posnp)))
+         (buffer (or (get-pos-property 1 'tab (car (posn-string posnp)))
+                     (current-buffer))))
+    (with-selected-window (or window (selected-window))
       (cond
        ((eq tab-line-close-tab-action 'kill-buffer)
         (kill-buffer buffer))
@@ -356,6 +357,12 @@ from the tab line."
   :init-value nil
   (setq-default tab-line-format (when global-tab-line-mode
                                   '(:eval (tab-line-format)))))
+
+
+(global-set-key [tab-line mouse-4] 'tab-line-switch-to-prev-tab)
+(global-set-key [tab-line mouse-5] 'tab-line-switch-to-next-tab)
+(global-set-key [tab-line wheel-up] 'tab-line-switch-to-prev-tab)
+(global-set-key [tab-line wheel-down] 'tab-line-switch-to-next-tab)
 
 
 (provide 'tab-line)
