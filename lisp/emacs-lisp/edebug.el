@@ -3198,12 +3198,14 @@ the breakpoint."
     ;; First remove all old breakpoint overlays.
     (edebug--overlay-breakpoints-remove
      start (+ start (aref offsets (1- (length offsets)))))
-    ;; Then make overlays for the breakpoints.
-    (dolist (breakpoint breakpoints)
-      (let* ((pos (+ start (aref offsets (car breakpoint))))
-             (overlay (make-overlay pos (1+ pos))))
-        (overlay-put overlay 'edebug t)
-        (overlay-put overlay 'face 'highlight)))))
+    ;; Then make overlays for the breakpoints (but only when we are in
+    ;; edebug mode).
+    (when edebug-active
+      (dolist (breakpoint breakpoints)
+        (let* ((pos (+ start (aref offsets (car breakpoint))))
+               (overlay (make-overlay pos (1+ pos))))
+          (overlay-put overlay 'edebug t)
+          (overlay-put overlay 'face 'highlight))))))
 
 (defun edebug--overlay-breakpoints-remove (start end)
   (dolist (overlay (overlays-in start end))
