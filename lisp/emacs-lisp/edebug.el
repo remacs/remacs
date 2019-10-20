@@ -3419,14 +3419,37 @@ instrumented.  Then it does `edebug-on-entry' and switches to `go' mode."
 
 (defun edebug-on-entry (function &optional flag)
   "Cause Edebug to stop when FUNCTION is called.
+
+FUNCTION needs to be edebug-instrumented for this to work; if
+FUNCTION isn't, this function has no effect.
+
 With prefix argument, make this temporary so it is automatically
 canceled the first time the function is entered."
   (interactive "aEdebug on entry to: \nP")
   ;; Could store this in the edebug data instead.
   (put function 'edebug-on-entry (if flag 'temp t)))
 
+(defalias 'edebug-cancel-edebug-on-entry #'cancel-edebug-on-entry)
+
 (defun cancel-edebug-on-entry (function)
-  (interactive "aEdebug on entry to: ")
+  "Cause Edebug to not stop when FUNCTION is called.
+The removes the effect of `edebug-on-entry'."
+  (interactive
+   (list (let ((name (completing-read
+                      "Cancel edebug on entry to: "
+                      (let ((functions nil))
+                        (mapatoms
+                         (lambda (symbol)
+                           (when (and (fboundp symbol)
+                                      (get symbol 'edebug-on-entry))
+                             (push symbol functions)))
+                         obarray)
+                        (unless functions
+                          (error "No functions have `edebug-on-entry'."))
+                        functions))))
+           (when (and name
+                      (not (equal name "")))
+             (intern name)))))
   (put function 'edebug-on-entry nil))
 
 
