@@ -3216,6 +3216,11 @@ the breakpoint."
   "Set the breakpoint of nearest sexp.
 With prefix argument, make it a temporary breakpoint."
   (interactive "P")
+  ;; If the form hasn't been instrumented yet, do it now.
+  (when (and (not edebug-active)
+	     (let ((data (get (edebug-form-data-symbol) 'edebug)))
+	       (or (null data) (markerp data))))
+    (edebug-defun))
   (edebug-modify-breakpoint t nil arg))
 
 (defun edebug-unset-breakpoint ()
