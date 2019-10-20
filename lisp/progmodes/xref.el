@@ -131,8 +131,13 @@ Line numbers start from 1 and columns from 0.")
         (widen)
         (save-excursion
           (goto-char (point-min))
-          (beginning-of-line line)
-          (forward-char column)
+          (ignore-errors
+            ;; xref location may be out of date; it may be past the
+            ;; end of the current file, or the file may have been
+            ;; deleted. Return a reasonable location; the user will
+            ;; figure it out.
+            (beginning-of-line line)
+            (forward-char column))
           (point-marker))))))
 
 (cl-defmethod xref-location-group ((l xref-file-location))
