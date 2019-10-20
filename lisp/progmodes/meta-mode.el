@@ -871,15 +871,15 @@ The environment marked is the one that contains point or follows point."
        ["Indent Line"                   meta-indent-line t]
        ["Indent Environment"            meta-indent-defun t]
        ["Indent Region"                 meta-indent-region
-        :active (meta-mark-active)]
+        :active mark-active]
        ["Indent Buffer"                 meta-indent-buffer t]
        "--"
        ["Comment Out Environment"       meta-comment-defun t]
        ["Uncomment Environment"         meta-uncomment-defun t]
        ["Comment Out Region"            meta-comment-region
-        :active (meta-mark-active)]
+        :active mark-active]
        ["Uncomment Region"              meta-uncomment-region
-        :active (meta-mark-active)]
+        :active mark-active]
        "--"
        ["Complete Symbol"               completion-at-point t]
 ;      "--"
@@ -887,12 +887,6 @@ The environment marked is the one that contains point or follows point."
 ;      ["Kill Job"                      meta-kill-job t]
 ;      ["Recenter Output Buffer"        meta-recenter-output-buffer t]
        ))
-
-;; Compatibility: XEmacs doesn't have the  `mark-active' variable.
-(defun meta-mark-active ()
-  "Return whether the mark and region are currently active in this buffer."
-  (if (boundp 'mark-active) mark-active (mark)))
-
 
 
 ;;; Hook variables.
