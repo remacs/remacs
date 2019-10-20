@@ -2856,6 +2856,8 @@ See `edebug-behavior-alist' for implementations.")
 (defvar edebug-inside-windows)
 (defvar edebug-interactive-p)
 
+(defvar edebug-mode-map)		; will be defined fully later.
+
 (defun edebug--recursive-edit (arg-mode)
   ;; Start up a recursive edit inside of edebug.
   ;; The current buffer is the edebug-buffer, which is put into edebug-mode.
@@ -2902,6 +2904,10 @@ See `edebug-behavior-alist' for implementations.")
               ;; Don't get confused by the user's keymap changes.
               (overriding-local-map nil)
               (overriding-terminal-local-map nil)
+              ;; Override other minor modes that may bind the keys
+              ;; edebug uses.
+              (minor-mode-overriding-map-alist
+               (list (cons 'edebug-mode edebug-mode-map)))
 
               ;; Bind again to outside values.
 	      (debug-on-error edebug-outside-debug-on-error)
@@ -3560,8 +3566,6 @@ This is useful for exiting even if `unwind-protect' code may be executed."
     (edebug-Continue-fast-mode . Continue-fast)
     (edebug-Go-nonstop-mode . Go-nonstop))
   "Association list between commands and the modes they set.")
-
-(defvar edebug-mode-map)		; will be defined fully later.
 
 (defun edebug-set-initial-mode ()
   "Set the initial execution mode of Edebug.
