@@ -2959,7 +2959,7 @@ like this:
 
 @defvar while-no-input-ignore-events
 This variable allow setting which special events @code{while-no-input}
-should ignore.  It is a list of symbols.
+should ignore.  It is a list of event symbols (@pxref{Event Examples}).
 
 @end defvar
 
