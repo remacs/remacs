@@ -230,6 +230,10 @@ evaluating forms that never instrument them: from a file with
 @code{load}, and from the minibuffer with @code{eval-expression}
 (@kbd{M-:}).
 
+@findex edebug-remove-instrumentation
+  If you want to remove Edebug instrumentation from all functions, you
+can use the @code{edebug-remove-instrumentation} command.
+
   @xref{Edebug Eval}, for other evaluation functions available
 inside of Edebug.
 

@@ -4423,5 +4423,23 @@ With prefix argument, make it a temporary breakpoint."
   ;; Continue standard unloading.
   nil)
 
+(defun edebug-remove-instrumentation ()
+  "Remove Edebug instrumentation from all functions."
+  (interactive)
+  (let ((functions nil))
+    (mapatoms
+     (lambda (symbol)
+       (when (and (functionp symbol)
+                  (get symbol 'edebug))
+         (let ((unwrapped (edebug-unwrap* (symbol-function symbol))))
+           (unless (equal unwrapped (symbol-function symbol))
+             (push symbol functions)
+             (setf (symbol-function symbol) unwrapped)))))
+     obarray)
+    (if (not functions)
+        (message "Found no functions to remove instrumentation from")
+      (message "Remove edebug instrumentation from %s"
+               (mapconcat #'symbol-name functions ", ")))))
+
 (provide 'edebug)
 ;;; edebug.el ends here

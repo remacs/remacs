@@ -1463,6 +1463,11 @@ the Elisp manual for documentation of the new mode and its commands.
 ** Edebug
 
 +++
+*** New command 'edebug-remove-instrumentation.
+This command removes Edebug instrumentation from all functions that
+have been instrumented.
+
++++
 *** The runtime behavior of Edebug's instrumentation can be changed
 using the new variables 'edebug-behavior-alist',
 'edebug-after-instrumentation-function' and
