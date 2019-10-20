@@ -683,8 +683,6 @@ Redefining FUNCTION also cancels it."
          (push s funs))))
     funs))
 
-(defalias 'edebug-cancel-debug-on-entry #'cancel-debug-on-entry)
-
 ;;;###autoload
 (defun cancel-debug-on-entry (&optional function)
   "Undo effect of \\[debug-on-entry] on FUNCTION.
