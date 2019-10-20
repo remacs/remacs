@@ -1462,9 +1462,17 @@ the Elisp manual for documentation of the new mode and its commands.
 
 ** Edebug
 
-*** New face 'edebug-breakpoint'
-When setting breakpoints in Edebug, an overlay with this face is
-placed over the point in question.
++++
+*** New faces 'edebug-enabled-breakpoint' and 'edebug-disabled-breakpoint'
+When setting breakpoints in Edebug, an overlay with these faces are
+placed over the point in question, depending on whether they are
+enabled or not.
+
++++
+*** New command 'edebug-toggle-disable-breakpoint'
+This command allows you to disable a breakpoint temporarily.  This is
+mainly useful with breakpoints that are conditional and would take
+some time to recreate.
 
 +++
 *** New command 'edebug-unset-breakpoints'

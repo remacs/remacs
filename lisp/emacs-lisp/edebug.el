@@ -63,8 +63,16 @@
   "A source-level debugger for Emacs Lisp."
   :group 'lisp)
 
-(defface edebug-breakpoint '((t :inherit highlight))
-  "Face used to mark breakpoints."
+(defface edebug-enabled-breakpoint '((t :inherit highlight))
+  "Face used to mark enabled breakpoints."
+  :version "27.1")
+
+(defface edebug-disabled-breakpoint
+  '((((class color) (min-colors 88) (background light))
+     :background "#ddffdd" :extend t)
+    (((class color) (min-colors 88) (background dark))
+     :background "#335533" :extend t))
+  "Face used to mark disabled breakpoints."
   :version "27.1")
 
 (defcustom edebug-setup-hook nil
@@ -2536,6 +2544,7 @@ See `edebug-behavior-alist' for implementations.")
 	   (edebug-breakpoints (car (cdr edebug-data)))	; list of breakpoints
 	   (edebug-break-data (assq offset-index edebug-breakpoints))
 	   (edebug-break-condition (car (cdr edebug-break-data)))
+           (breakpoint-disabled (nth 4 edebug-break-data))
 	   (edebug-global-break
 	    (if edebug-global-break-condition
 		(condition-case nil
@@ -2549,6 +2558,7 @@ See `edebug-behavior-alist' for implementations.")
       (setq edebug-break
 	    (or edebug-global-break
 		(and edebug-break-data
+                     (not breakpoint-disabled)
 		     (or (not edebug-break-condition)
 			 (setq edebug-break-result
 			       (edebug-eval edebug-break-condition))))))
@@ -3206,7 +3216,8 @@ the breakpoint."
 		      (edebug-sort-alist
 		       (cons
 			(list index condition temporary
-                              (set-marker (make-marker) position))
+                              (set-marker (make-marker) position)
+                              nil)
 			edebug-breakpoints)
                        '<))
 		(if condition
@@ -3236,7 +3247,10 @@ the breakpoint."
         (let* ((pos (+ start (aref offsets (car breakpoint))))
                (overlay (make-overlay pos (1+ pos))))
           (overlay-put overlay 'edebug t)
-          (overlay-put overlay 'face 'edebug-breakpoint))))))
+          (overlay-put overlay 'face
+                       (if (nth 4 breakpoint)
+                           'edebug-disabled-breakpoint
+                         'edebug-enabled-breakpoint)))))))
 
 (defun edebug--overlay-breakpoints-remove (start end)
   (dolist (overlay (overlays-in start end))
@@ -3270,6 +3284,22 @@ With prefix argument, make it a temporary breakpoint."
       (dolist (breakpoint breakpoints)
         (goto-char (nth 3 breakpoint))
         (edebug-modify-breakpoint nil)))))
+
+(defun edebug-toggle-disable-breakpoint ()
+  "Toggle whether the breakpoint near point is disabled."
+  (interactive)
+  (let ((stop-point (edebug-find-stop-point)))
+    (unless stop-point
+      (user-error "No stop point near point"))
+    (let* ((name (car stop-point))
+           (index (cdr stop-point))
+           (data (get name 'edebug))
+           (breakpoint (assq index (nth 1 data))))
+      (unless breakpoint
+        (user-error "No breakpoint near point"))
+      (setf (nth 4 breakpoint)
+            (not (nth 4 breakpoint)))
+      (edebug--overlay-breakpoints name))))
 
 (defun edebug-set-global-break-condition (expression)
   "Set `edebug-global-break-condition' to EXPRESSION."
@@ -3779,6 +3809,7 @@ be installed in `emacs-lisp-mode-map'.")
     (define-key map "B" 'edebug-next-breakpoint)
     (define-key map "x" 'edebug-set-conditional-breakpoint)
     (define-key map "X" 'edebug-set-global-break-condition)
+    (define-key map "D" 'edebug-toggle-disable-breakpoint)
 
     ;; evaluation
     (define-key map "r" 'edebug-previous-result)
@@ -3834,8 +3865,10 @@ be installed in `emacs-lisp-mode-map'.")
     ;; breakpoints
     (define-key map "b" 'edebug-set-breakpoint)
     (define-key map "u" 'edebug-unset-breakpoint)
+    (define-key map "U" 'edebug-unset-breakpoints)
     (define-key map "x" 'edebug-set-conditional-breakpoint)
     (define-key map "X" 'edebug-set-global-break-condition)
+    (define-key map "D" 'edebug-toggle-disable-breakpoint)
 
     ;; views
     (define-key map "w" 'edebug-where)
@@ -4381,6 +4414,8 @@ It is removed when you hit any char."
     ("Breaks"
      ["Set Breakpoint" edebug-set-breakpoint t]
      ["Unset Breakpoint" edebug-unset-breakpoint t]
+     ["Unset Breakpoints In Form" edebug-unset-breakpoints t]
+     ["Toggle Disable Breakpoint" edebug-toggle-disable-breakpoint t]
      ["Set Conditional Breakpoint" edebug-set-conditional-breakpoint t]
      ["Set Global Break Condition" edebug-set-global-break-condition t]
      ["Show Next Breakpoint" edebug-next-breakpoint t])

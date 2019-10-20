@@ -497,8 +497,8 @@ Edebug commands for breakpoints:
 Set a breakpoint at the stop point at or after point
 (@code{edebug-set-breakpoint}).  If you use a prefix argument, the
 breakpoint is temporary---it turns off the first time it stops the
-program.  An overlay with the @code{edebug-breakpoint} face is put at
-the breakpoint.
+program.  An overlay with the @code{edebug-enabled-breakpoint} or
+@code{edebug-disabled-breakpoint} faces is put at the breakpoint.
 
 @item u
 Unset the breakpoint (if any) at the stop point at or after
@@ -507,6 +507,12 @@ point (@code{edebug-unset-breakpoint}).
 @item U
 Unset any breakpoints in the current form
 (@code{edebug-unset-breakpoints}).
+
+@item D
+Toggle whether to disable the breakpoint near point
+(@code{edebug-toggle-disable-breakpoint}).  This command is mostly
+useful if the breakpoint is conditional and it would take some work to
+recreate the condition.
 
 @item x @var{condition} @key{RET}
 Set a conditional breakpoint which stops the program only if
