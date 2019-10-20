@@ -3821,6 +3821,9 @@ upward.
 @itemx default-ascent
 Numbers controlling how to compose characters.
 
+@item max-width
+The maximum advance width of the font.
+
 @item ascent
 @itemx descent
 The ascent and descent of this font.  The sum of these two numbers
