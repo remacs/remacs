@@ -1520,7 +1520,10 @@ If the archive version is too new, signal an error."
          (contents (package--read-archive-file contents-file)))
     (when contents
       (dolist (package contents)
-        (package--add-to-archive-contents package archive)))))
+        (if package
+            (package--add-to-archive-contents package archive)
+          (lwarn '(package refresh) :warning
+                 "Ignoring `nil' package on `%s' package archive" archive))))))
 
 (defvar package--old-archive-priorities nil
   "Store currently used `package-archive-priorities'.

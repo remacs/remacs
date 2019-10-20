@@ -452,6 +452,16 @@ Must called from within a `tar-mode' buffer."
              (search-forward-regexp "^ +simple-single" nil t))))
       (if (process-live-p process) (kill-process process)))))
 
+(ert-deftest package-test-update-archives/ignore-nil-entry ()
+  "Ignore any packages that are nil.  Test for Bug#28502."
+  (with-package-test ()
+    (let* ((with-nil-entry (expand-file-name "package-resources/with-nil-entry"
+                                             package-test-file-dir))
+           (package-archives `(("with-nil-entry" . ,with-nil-entry))))
+      (package-initialize)
+      (package-refresh-contents)
+      (should (equal (length package-archive-contents) 2)))))
+
 (ert-deftest package-test-describe-package ()
   "Test displaying help for a package."
 
