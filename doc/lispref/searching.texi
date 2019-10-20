@@ -1425,13 +1425,15 @@ Corresponding string regexp: @samp{\'}
 Match at point.@*
 Corresponding string regexp: @samp{\=}
 
-@item @code{word-start}
+@item @code{word-start}, @code{bow}
 @cindex @code{word-start} in rx
+@cindex @code{bow} in rx
 Match at the beginning of a word.@*
 Corresponding string regexp: @samp{\<}
 
-@item @code{word-end}
+@item @code{word-end}, @code{eow}
 @cindex @code{word-end} in rx
+@cindex @code{eow} in rx
 Match at the end of a word.@*
 Corresponding string regexp: @samp{\>}
 

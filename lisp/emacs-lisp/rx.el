@@ -1064,8 +1064,8 @@ Zero-width assertions: these all match the empty string in specific places.
  string-end         At the end of the string or buffer.
                      Alias: buffer-end, eos, eot.
  point              At point.
- word-start         At the beginning of a word.
- word-end           At the end of a word.
+ word-start         At the beginning of a word.  Alias: bow.
+ word-end           At the end of a word.  Alias: eow.
  word-boundary      At the beginning or end of a word.
  not-word-boundary  Not at the beginning or end of a word.
  symbol-start       At the beginning of a symbol.
