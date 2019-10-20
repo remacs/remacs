@@ -544,6 +544,26 @@ to the numeric argument.  ARG counts from 1."
 (defalias 'tab-bar-select-tab-by-name 'tab-bar-switch-to-tab)
 
 
+(defun tab-bar-swap-tabs (to-index &optional from-index)
+  "Exchange positions of two tabs referred by FROM-INDEX and TO-INDEX.
+FROM-INDEX defaults to the current tab index.
+FROM-INDEX and TO-INDEX count from 1."
+  (interactive "P")
+  (let* ((tabs (funcall tab-bar-tabs-function))
+         (from-index (or from-index (1+ (tab-bar--current-tab-index tabs)))))
+    (rotatef (nth (1- from-index) tabs)
+             (nth (1- to-index) tabs))))
+
+(defun tab-bar-move-tab (&optional arg)
+  "Move the current tab ARG positions to the right.
+If a negative ARG, move the current tab ARG positions to the left."
+  (interactive "p")
+  (let* ((tabs (funcall tab-bar-tabs-function))
+         (from-index (or (tab-bar--current-tab-index tabs) 0))
+         (to-index (mod (+ from-index arg) (length tabs))))
+    (tab-bar-swap-tabs (1+ to-index) (1+ from-index))))
+
+
 (defcustom tab-bar-new-tab-to 'right
   "Defines where to create a new tab.
 If `leftmost', create as the first tab.
@@ -717,14 +737,16 @@ function `tab-bar-tab-name-function'."
 
 ;;; Short aliases
 
-(defalias 'tab-new      'tab-bar-new-tab)
-(defalias 'tab-close    'tab-bar-close-tab)
+(defalias 'tab-new         'tab-bar-new-tab)
+(defalias 'tab-close       'tab-bar-close-tab)
 (defalias 'tab-close-other 'tab-bar-close-other-tabs)
-(defalias 'tab-select   'tab-bar-select-tab)
-(defalias 'tab-next     'tab-bar-switch-to-next-tab)
-(defalias 'tab-previous 'tab-bar-switch-to-prev-tab)
-(defalias 'tab-rename   'tab-bar-rename-tab)
-(defalias 'tab-list     'tab-bar-list)
+(defalias 'tab-select      'tab-bar-select-tab)
+(defalias 'tab-next        'tab-bar-switch-to-next-tab)
+(defalias 'tab-previous    'tab-bar-switch-to-prev-tab)
+(defalias 'tab-swap        'tab-bar-swap-tabs)
+(defalias 'tab-move        'tab-bar-move-tab)
+(defalias 'tab-rename      'tab-bar-rename-tab)
+(defalias 'tab-list        'tab-bar-list)
 
 
 ;;; Non-graphical access to frame-local tabs (named window configurations)
