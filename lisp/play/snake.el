@@ -202,12 +202,17 @@ and then start moving it leftwards.")
     ["End game"       snake-end-game
      :active (snake-active-p)
      :help "End the current Snake game"]
-    ["Pause"          snake-pause-game
-     :active (and (snake-active-p) (not snake-paused))
-     :help "Pause running Snake game"]
-    ["Resume"         snake-pause-game
-     :active (and (snake-active-p) snake-paused)
-     :help "Resume paused Snake game"])
+    ;; FIXME: Pause and resume from the menu currently doesn't work
+    ;;        very well and is therefore disabled.  The game continues
+    ;;        running while navigating the menu.  See also
+    ;;        `tetris--menu-def' which has the same problem.
+    ;; ["Pause"          snake-pause-game
+    ;;  :active (and (snake-active-p) (not snake-paused))
+    ;;  :help "Pause running Snake game"]
+    ;; ["Resume"         snake-pause-game
+    ;;  :active (and (snake-active-p) snake-paused)
+    ;;  :help "Resume paused Snake game"]
+    )
   "Menu for `snake'.  Used to initialize menus.")
 
 (easy-menu-define

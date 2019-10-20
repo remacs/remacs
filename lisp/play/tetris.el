@@ -289,12 +289,17 @@ each one of its four blocks.")
     ["End game"          tetris-end-game
      :active (tetris-active-p)
      :help "End the current Tetris game"]
-    ["Pause"             tetris-pause-game
-     :active (and (tetris-active-p) (not tetris-paused))
-     :help "Pause running Tetris game"]
-    ["Resume"            tetris-pause-game
-     :active (and (tetris-active-p) tetris-paused)
-     :help "Resume paused Tetris game"])
+    ;; FIXME: Pause and resume from the menu currently doesn't work
+    ;;        very well and is therefore disabled.  The game continues
+    ;;        running while navigating the menu.  See also
+    ;;        `snake--menu-def' which has the same problem.
+    ;; ["Pause"             tetris-pause-game
+    ;;  :active (and (tetris-active-p) (not tetris-paused))
+    ;;  :help "Pause running Tetris game"]
+    ;; ["Resume"            tetris-pause-game
+    ;;  :active (and (tetris-active-p) tetris-paused)
+    ;;  :help "Resume paused Tetris game"]
+    )
   "Menu for `tetris'.  Used to initialize menus.")
 
 (easy-menu-define
