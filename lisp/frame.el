@@ -1548,7 +1548,9 @@ often have their own features for raising or lowering frames."
 When called interactively, prompt for the name of the frame.
 On text terminals, the frame name is displayed on the mode line.
 On graphical displays, it is displayed on the frame's title bar."
-  (interactive "sFrame name: ")
+  (interactive
+   (list (read-string "Frame name: " nil nil
+                      (cdr (assq 'name (frame-parameters))))))
   (modify-frame-parameters (selected-frame)
 			   (list (cons 'name name))))
 

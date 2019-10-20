@@ -541,6 +541,8 @@ to the numeric argument.  ARG counts from 1."
                                               (funcall tab-bar-tabs-function)))))
   (tab-bar-select-tab (1+ (tab-bar--tab-index-by-name name))))
 
+(defalias 'tab-bar-select-tab-by-name 'tab-bar-switch-to-tab)
+
 
 (defcustom tab-bar-new-tab-to 'right
   "Defines where to create a new tab.
@@ -669,13 +671,20 @@ TO-INDEX counts from 1."
           (force-mode-line-update)
         (message "Deleted all other tabs")))))
 
+
 (defun tab-bar-rename-tab (name &optional arg)
   "Rename the tab specified by its absolute position ARG.
 If no ARG is specified, then rename the current tab.
 ARG counts from 1.
 If NAME is the empty string, then use the automatic name
 function `tab-bar-tab-name-function'."
-  (interactive "sNew name for tab (leave blank for automatic naming): \nP")
+  (interactive
+   (let* ((tabs (funcall tab-bar-tabs-function))
+          (tab-index (or current-prefix-arg (1+ (tab-bar--current-tab-index tabs))))
+          (tab-name (cdr (assq 'name (nth (1- tab-index) tabs)))))
+     (list (read-string "New name for tab (leave blank for automatic naming): "
+                        nil nil tab-name)
+           current-prefix-arg)))
   (let* ((tabs (funcall tab-bar-tabs-function))
          (tab-index (if arg
                         (1- (max 0 (min arg (length tabs))))
@@ -687,7 +696,7 @@ function `tab-bar-tab-name-function'."
                          (funcall tab-bar-tab-name-function))))
     (setf (cdr (assq 'name tab-to-rename)) tab-new-name
           (cdr (assq 'explicit-name tab-to-rename)) tab-explicit-name)
-    (if (tab-bar-mode)
+    (if tab-bar-mode
         (force-mode-line-update)
       (message "Renamed tab to '%s'" tab-new-name))))
 
@@ -695,12 +704,15 @@ function `tab-bar-tab-name-function'."
   "Rename the tab named TAB-NAME.
 If NEW-NAME is the empty string, then use the automatic name
 function `tab-bar-tab-name-function'."
-  (interactive (list (completing-read "Rename tab by name: "
-                                      (mapcar (lambda (tab)
-                                                (cdr (assq 'name tab)))
-                                              (funcall tab-bar-tabs-function)))
-                     (read-from-minibuffer "New name for tab (leave blank for automatic naming): ")))
-  (tab-bar-rename-tab new-name (tab-bar--tab-index-by-name tab-name)))
+  (interactive
+   (let ((tab-name (completing-read "Rename tab by name: "
+                                    (mapcar (lambda (tab)
+                                              (cdr (assq 'name tab)))
+                                            (funcall tab-bar-tabs-function)))))
+     (list tab-name
+           (read-string "New name for tab (leave blank for automatic naming): "
+                        nil nil tab-name))))
+  (tab-bar-rename-tab new-name (1+ (tab-bar--tab-index-by-name tab-name))))
 
 
 ;;; Short aliases
