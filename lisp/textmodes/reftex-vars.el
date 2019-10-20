@@ -1059,9 +1059,9 @@ This is used to string together whole reference sets, like
 
 (defcustom reftex-ref-style-alist
   '(("Default" t
-     (("\\ref" ?\C-m) ("\\pageref" ?p)))
+     (("\\ref" ?\C-m) ("\\Ref" ?R) ("\\pageref" ?p)))
     ("Varioref" "varioref"
-     (("\\vref" ?v) ("\\vpageref" ?g) ("\\Vref" ?V) ("\\Ref" ?R)))
+     (("\\vref" ?v) ("\\Vref" ?V) ("\\vpageref" ?g)))
     ("Fancyref" "fancyref"
      (("\\fref" ?f) ("\\Fref" ?F)))
     ("Hyperref" "hyperref"
