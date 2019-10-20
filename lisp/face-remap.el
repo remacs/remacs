@@ -64,12 +64,14 @@
 ;; Names of face attributes corresponding to lisp face-vector positions.
 ;; This variable should probably be defined in C code where the actual
 ;; definitions are available.
+;; :vector must be always at the end as a guard
 ;;
 (defvar internal-lisp-face-attributes
   [nil
-   :family :foundry :swidth :height :weight :slant :underline :inverse
-   :foreground :background :stipple :overline :strike :box
-   :font :inherit :fontset :vector])
+   :family :foundry :width :height :weight :slant :underline
+   :inverse-video
+   :foreground :background :stipple :overline :strike-through :box
+   :font :inherit :fontset :distant-foreground :extend :vector])
 
 (defun face-attrs-more-relative-p (attrs1 attrs2)
   "Return true if ATTRS1 contains a greater number of relative
