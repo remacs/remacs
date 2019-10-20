@@ -551,8 +551,8 @@ FROM-INDEX and TO-INDEX count from 1."
   (interactive "P")
   (let* ((tabs (funcall tab-bar-tabs-function))
          (from-index (or from-index (1+ (tab-bar--current-tab-index tabs)))))
-    (rotatef (nth (1- from-index) tabs)
-             (nth (1- to-index) tabs))))
+    (cl-rotatef (nth (1- from-index) tabs)
+                (nth (1- to-index) tabs))))
 
 (defun tab-bar-move-tab (&optional arg)
   "Move the current tab ARG positions to the right.
