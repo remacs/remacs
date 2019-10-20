@@ -1462,6 +1462,11 @@ the Elisp manual for documentation of the new mode and its commands.
 
 ** Edebug
 
+---
+*** Re-instrumenting a function with Edebug will now try to preserve
+previously-set breakpoints.  If the code has changed substantially,
+this may not be possible.
+
 +++
 *** New command 'edebug-remove-instrumentation.
 This command removes Edebug instrumentation from all functions that

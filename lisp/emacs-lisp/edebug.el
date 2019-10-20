@@ -1403,14 +1403,32 @@ contains a circular object."
       (put edebug-def-name 'edebug
 	   ;; A struct or vector would be better here!!
 	   (list edebug-form-begin-marker
-		 nil			; clear breakpoints
+		 (edebug--restore-breakpoints edebug-old-def-name)
 		 edebug-offset-list
-		 edebug-top-window-data
-		 ))
+		 edebug-top-window-data))
 
       (funcall edebug-new-definition-function edebug-def-name)
       result
       )))
+
+(defun edebug--restore-breakpoints (name)
+  (let* ((data (get name 'edebug))
+         (offsets (nth 2 data))
+         (breakpoints (nth 1 data))
+         (start (nth 0 data))
+         index)
+    ;; Breakpoints refer to offsets from the start of the function.
+    ;; The start position is a marker, so it'll move around in a
+    ;; similar fashion as the breakpoint markers.  If we find a
+    ;; breakpoint marker that refers to an offset (which is a place
+    ;; where breakpoints can be made), then we restore it.
+    (cl-loop for breakpoint in breakpoints
+             for marker = (nth 3 breakpoint)
+             when (and (marker-position marker)
+                       (setq index (seq-position
+                                    offsets
+                                    (- (marker-position marker) start))))
+             collect (cons index (cdr breakpoint)))))
 
 (defun edebug-new-definition (def-name)
   "Set up DEF-NAME to use Edebug's instrumentation functions."
@@ -3166,6 +3184,7 @@ the breakpoint."
 	       (edebug-def-mark (car edebug-data))
 	       (edebug-breakpoints (car (cdr edebug-data)))
 	       (offset-vector (nth 2 edebug-data))
+               (position (+ edebug-def-mark (aref offset-vector index)))
 	       present)
 	  ;; delete it either way
 	  (setq present (assq index edebug-breakpoints))
@@ -3176,8 +3195,10 @@ the breakpoint."
 		(setq edebug-breakpoints
 		      (edebug-sort-alist
 		       (cons
-			(list index condition temporary)
-			edebug-breakpoints) '<))
+			(list index condition temporary
+                              (set-marker (make-marker) position))
+			edebug-breakpoints)
+                       '<))
 		(if condition
 		    (message "Breakpoint set in %s with condition: %s"
 			     edebug-def-name condition)
@@ -3187,7 +3208,7 @@ the breakpoint."
 	      (message "No breakpoint here")))
 
 	  (setcar (cdr edebug-data) edebug-breakpoints)
-	  (goto-char (+ edebug-def-mark (aref offset-vector index)))
+	  (goto-char position)
           (edebug--overlay-breakpoints edebug-def-name)))))
 
 (defun edebug--overlay-breakpoints (function)
