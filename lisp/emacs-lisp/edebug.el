@@ -2723,6 +2723,7 @@ See `edebug-behavior-alist' for implementations.")
 	      (edebug-stop))
 
 	    (edebug-overlay-arrow)
+            (edebug--overlay-breakpoints edebug-function)
 
             (unwind-protect
                 (if (or edebug-stop
@@ -2905,6 +2906,7 @@ See `edebug-behavior-alist' for implementations.")
 	    (setq signal-hook-function #'edebug-signal)
 	    (if edebug-backtrace-buffer
 		(kill-buffer edebug-backtrace-buffer))
+            (edebug--overlay-breakpoints-remove (point-min) (point-max))
 
 	    ;; Remember selected-window after recursive-edit.
 	    ;;      (setq edebug-inside-window (selected-window))
@@ -3186,7 +3188,27 @@ the breakpoint."
 
 	  (setcar (cdr edebug-data) edebug-breakpoints)
 	  (goto-char (+ edebug-def-mark (aref offset-vector index)))
-	  ))))
+          (edebug--overlay-breakpoints edebug-def-name)))))
+
+(defun edebug--overlay-breakpoints (function)
+  (let* ((data (get function 'edebug))
+         (start (nth 0 data))
+         (breakpoints (nth 1 data))
+         (offsets (nth 2 data)))
+    ;; First remove all old breakpoint overlays.
+    (edebug--overlay-breakpoints-remove
+     start (+ start (aref offsets (1- (length offsets)))))
+    ;; Then make overlays for the breakpoints.
+    (dolist (breakpoint breakpoints)
+      (let* ((pos (+ start (aref offsets (car breakpoint))))
+             (overlay (make-overlay pos (1+ pos))))
+        (overlay-put overlay 'edebug t)
+        (overlay-put overlay 'face 'highlight)))))
+
+(defun edebug--overlay-breakpoints-remove (start end)
+  (dolist (overlay (overlays-in start end))
+    (when (overlay-get overlay 'edebug)
+      (delete-overlay overlay))))
 
 (defun edebug-set-breakpoint (arg)
   "Set the breakpoint of nearest sexp.
