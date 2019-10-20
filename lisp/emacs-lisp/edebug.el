@@ -3460,27 +3460,36 @@ canceled the first time the function is entered."
 
 (defalias 'edebug-cancel-edebug-on-entry #'cancel-edebug-on-entry)
 
+(defun edebug--edebug-on-entry-functions ()
+  (let ((functions nil))
+    (mapatoms
+     (lambda (symbol)
+       (when (and (fboundp symbol)
+                  (get symbol 'edebug-on-entry))
+         (push symbol functions)))
+     obarray)
+    functions))
+
 (defun cancel-edebug-on-entry (function)
   "Cause Edebug to not stop when FUNCTION is called.
-The removes the effect of `edebug-on-entry'."
+The removes the effect of `edebug-on-entry'.  If FUNCTION is is
+nil, remove `edebug-on-entry' on all functions."
   (interactive
    (list (let ((name (completing-read
-                      "Cancel edebug on entry to: "
-                      (let ((functions nil))
-                        (mapatoms
-                         (lambda (symbol)
-                           (when (and (fboundp symbol)
-                                      (get symbol 'edebug-on-entry))
-                             (push symbol functions)))
-                         obarray)
+                      "Cancel edebug on entry to (default all functions): "
+                      (let ((functions (edebug--edebug-on-entry-functions)))
                         (unless functions
                           (user-error "No functions have `edebug-on-entry'"))
                         functions))))
            (when (and name
                       (not (equal name "")))
              (intern name)))))
-  (put function 'edebug-on-entry nil))
-
+  (unless function
+    (message "Removing `edebug-on-entry' from all functions."))
+  (dolist (function (if function
+                        (list function)
+                      (edebug--edebug-on-entry-functions)))
+    (put function 'edebug-on-entry nil)))
 
 '(advice-add 'debug-on-entry :around 'edebug--debug-on-entry)  ;; Should we do this?
 ;; Also need edebug-cancel-debug-on-entry
