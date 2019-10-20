@@ -1415,23 +1415,24 @@ contains a circular object."
       )))
 
 (defun edebug--restore-breakpoints (name)
-  (let* ((data (get name 'edebug))
-         (offsets (nth 2 data))
-         (breakpoints (nth 1 data))
-         (start (nth 0 data))
-         index)
-    ;; Breakpoints refer to offsets from the start of the function.
-    ;; The start position is a marker, so it'll move around in a
-    ;; similar fashion as the breakpoint markers.  If we find a
-    ;; breakpoint marker that refers to an offset (which is a place
-    ;; where breakpoints can be made), then we restore it.
-    (cl-loop for breakpoint in breakpoints
-             for marker = (nth 3 breakpoint)
-             when (and (marker-position marker)
-                       (setq index (seq-position
-                                    offsets
-                                    (- (marker-position marker) start))))
-             collect (cons index (cdr breakpoint)))))
+  (let ((data (get name 'edebug)))
+    (when (listp data)
+      (let ((offsets (nth 2 data))
+            (breakpoints (nth 1 data))
+            (start (nth 0 data))
+            index)
+        ;; Breakpoints refer to offsets from the start of the function.
+        ;; The start position is a marker, so it'll move around in a
+        ;; similar fashion as the breakpoint markers.  If we find a
+        ;; breakpoint marker that refers to an offset (which is a place
+        ;; where breakpoints can be made), then we restore it.
+        (cl-loop for breakpoint in breakpoints
+                 for marker = (nth 3 breakpoint)
+                 when (and (marker-position marker)
+                           (setq index (seq-position
+                                        offsets
+                                        (- (marker-position marker) start))))
+                 collect (cons index (cdr breakpoint)))))))
 
 (defun edebug-new-definition (def-name)
   "Set up DEF-NAME to use Edebug's instrumentation functions."
