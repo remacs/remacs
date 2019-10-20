@@ -190,11 +190,6 @@ icon widgets used to draw the tree.  By default these images are used:
   "Default properties of Emacs images."
   :type 'plist)
 
-(defcustom tree-widget-image-properties-xemacs
-  nil
-  "Default properties of XEmacs images."
-  :type 'plist)
-
 (defcustom tree-widget-space-width 0.5
   "Amount of space between an icon image and a node widget.
 Must be a valid space :width display property.
@@ -262,10 +257,7 @@ Typically it should contain something like this:
 
   (tree-widget-set-parent-theme \"my-parent-theme\")
   (tree-widget-set-image-properties
-   (if (featurep \\='xemacs)
-       \\='(:ascent center)
-     \\='(:ascent center :mask (heuristic t))
-     ))"
+     \\='(:ascent center :mask (heuristic t)))"
   (or name (setq name (or tree-widget-theme "default")))
   (unless (string-equal name (tree-widget-theme-name))
     (set (make-local-variable 'tree-widget--theme)
@@ -326,8 +318,7 @@ has been found accessible."
 
 (defconst tree-widget--cursors
   ;; Pointer shapes when the mouse pointer is over inactive
-  ;; tree-widget images.  This feature works since Emacs 22, and
-  ;; ignored on older versions, and XEmacs.
+  ;; tree-widget images.
   '(
     ("guide"     . arrow)
     ("no-guide"  . arrow)
@@ -345,9 +336,8 @@ theme."
 
 (defsubst tree-widget-image-properties (name)
   "Return the properties of image NAME in current theme.
-Default global properties are provided for respectively Emacs and
-XEmacs in the variables `tree-widget-image-properties-emacs', and
-`tree-widget-image-properties-xemacs'."
+Default global properties are provided in the variable
+`tree-widget-image-properties-emacs'."
   ;; Add the pointer shape
   (cons :pointer
         (cons (or (cdr (assoc name tree-widget--cursors)) 'hand)
@@ -406,14 +396,8 @@ EVENT is the mouse event received."
 
 (defvar tree-widget-button-keymap
   (let ((km (make-sparse-keymap)))
-    (if (boundp 'widget-button-keymap)
-        ;; XEmacs
-        (progn
-          (set-keymap-parent km widget-button-keymap)
-          (define-key km [button1] 'tree-widget-button-click))
-      ;; Emacs
-      (set-keymap-parent km widget-keymap)
-      (define-key km [down-mouse-1] 'tree-widget-button-click))
+    (set-keymap-parent km widget-keymap)
+    (define-key km [down-mouse-1] 'tree-widget-button-click)
     km)
   "Keymap used inside node buttons.
 Handle mouse button 1 click on buttons.")
@@ -421,8 +405,7 @@ Handle mouse button 1 click on buttons.")
 (define-widget 'tree-widget-icon 'push-button
   "Basic widget other tree-widget icons are derived from."
   :format        "%[%t%]"
-  :button-keymap tree-widget-button-keymap ; XEmacs
-  :keymap        tree-widget-button-keymap ; Emacs
+  :keymap        tree-widget-button-keymap
   :create        'tree-widget-icon-create
   :action        'tree-widget-icon-action
   :help-echo     'tree-widget-icon-help-echo
@@ -616,8 +599,6 @@ This hook should be local in the buffer setup to display widgets.")
                                    (widget-get tree :dynargs)))
     tree))
 
-(defvar widget-glyph-enable) ; XEmacs
-
 (defun tree-widget-value-create (tree)
   "Create the TREE tree-widget."
   (let* ((node   (tree-widget-node tree))
@@ -626,8 +607,7 @@ This hook should be local in the buffer setup to display widgets.")
          ;; Setup widget's image support.  Looking up for images, and
          ;; setting widgets' :tag-glyph is done here, to allow us to
          ;; dynamically change the image theme.
-         (widget-image-enable (tree-widget-use-image-p))     ; Emacs
-         (widget-glyph-enable widget-image-enable)           ; XEmacs
+         (widget-image-enable (tree-widget-use-image-p))
          children buttons)
     (and indent (not (widget-get tree :parent))
          (insert-char ?\  indent))
