@@ -638,11 +638,12 @@ The answer will be provided by `tramp-action-terminal', which see."
 
 ;; Plink 0.71 has added an additional anti-spoofing prompt after
 ;; authentication.  This could be discarded with the argument
-;; \"-no-antispoof\".  However, since we don't know which PuTTY
+;; "-no-antispoof".  However, since we don't know which PuTTY
 ;; version is installed, we must react interactively.
 (defcustom tramp-antispoof-regexp
   (regexp-quote "Access granted. Press Return to begin session. ")
-  "Regular expression matching plink's anti-spoofing message."
+  "Regular expression matching plink's anti-spoofing message.
+The regexp should match at end of buffer."
   :version "27.1"
   :type 'regexp)
 
@@ -2261,7 +2262,7 @@ preventing reentrant calls of Tramp.")
 ;; Main function.
 (defun tramp-file-name-handler (operation &rest args)
   "Invoke Tramp file name handler.
-Falls back to normal file name handler if no Tramp file name handler exists."
+Fall back to normal file name handler if no Tramp file name handler exists."
   (let ((filename (apply #'tramp-file-name-for-operation operation args))
 	;; `file-remote-p' is called for everything, even for symbolic
 	;; links which look remote.  We don't want to get an error.
