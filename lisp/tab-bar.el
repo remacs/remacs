@@ -445,36 +445,16 @@ Return its existing value or a new value."
       (explicit-name . ,tab-explicit-name))))
 
 (defun tab-bar--current-tab-index (&optional tabs)
-  ;; FIXME: could be replaced with 1-liner using seq-position
-  (let ((tabs (or tabs (funcall tab-bar-tabs-function)))
-        (i 0))
-    (catch 'done
-      (while tabs
-        (when (eq (car (car tabs)) 'current-tab)
-          (throw 'done i))
-        (setq i (1+ i) tabs (cdr tabs))))))
+  (seq-position (or tabs (funcall tab-bar-tabs-function))
+                'current-tab (lambda (a b) (eq (car a) b))))
 
 (defun tab-bar--tab-index (tab &optional tabs)
-  ;; FIXME: could be replaced with 1-liner using seq-position
-  (let ((tabs (or tabs (funcall tab-bar-tabs-function)))
-        (i 0))
-    (catch 'done
-      (while tabs
-        (when (eq (car tabs) tab)
-          (throw 'done i))
-        (setq i (1+ i) tabs (cdr tabs))))
-    i))
+  (seq-position (or tabs (funcall tab-bar-tabs-function))
+                tab))
 
 (defun tab-bar--tab-index-by-name (name &optional tabs)
-  ;; FIXME: could be replaced with 1-liner using seq-position
-  (let ((tabs (or tabs (funcall tab-bar-tabs-function)))
-        (i 0))
-    (catch 'done
-      (while tabs
-        (when (equal (cdr (assq 'name (car tabs))) name)
-          (throw 'done i))
-        (setq i (1+ i) tabs (cdr tabs))))
-    i))
+  (seq-position (or tabs (funcall tab-bar-tabs-function))
+                name (lambda (a b) (equal (cdr (assq 'name a)) b))))
 
 
 (defun tab-bar-select-tab (&optional arg)
@@ -513,8 +493,7 @@ to the numeric argument.  ARG counts from 1."
           (setf (nth from-index tabs) from-tab))
         (setf (nth to-index tabs) (tab-bar--current-tab (nth to-index tabs))))
 
-      (when tab-bar-mode
-        (force-mode-line-update)))))
+      (force-mode-line-update))))
 
 (defun tab-bar-switch-to-next-tab (&optional arg)
   "Switch to ARGth next tab."
@@ -617,8 +596,9 @@ If `rightmost', create as the last tab."
                    (and (natnump tab-bar-show)
                         (> (length tabs) tab-bar-show))))
       (tab-bar-mode 1))
-    (if tab-bar-mode
-        (force-mode-line-update)
+
+    (force-mode-line-update)
+    (unless tab-bar-mode
       (message "Added new tab at %s" tab-bar-new-tab-to))))
 
 
@@ -664,8 +644,9 @@ TO-INDEX counts from 1."
                (and (natnump tab-bar-show)
                     (<= (length tabs) tab-bar-show)))
       (tab-bar-mode -1))
-    (if tab-bar-mode
-        (force-mode-line-update)
+
+    (force-mode-line-update)
+    (unless tab-bar-mode
       (message "Deleted tab and switched to %s" tab-bar-close-tab-select))))
 
 (defun tab-bar-close-tab-by-name (name)
@@ -687,8 +668,9 @@ TO-INDEX counts from 1."
                  (and (natnump tab-bar-show)
                       (<= 1 tab-bar-show)))
         (tab-bar-mode -1))
-      (if tab-bar-mode
-          (force-mode-line-update)
+
+      (force-mode-line-update)
+      (unless tab-bar-mode
         (message "Deleted all other tabs")))))
 
 
@@ -702,8 +684,9 @@ function `tab-bar-tab-name-function'."
    (let* ((tabs (funcall tab-bar-tabs-function))
           (tab-index (or current-prefix-arg (1+ (tab-bar--current-tab-index tabs))))
           (tab-name (cdr (assq 'name (nth (1- tab-index) tabs)))))
-     (list (read-string "New name for tab (leave blank for automatic naming): "
-                        nil nil tab-name)
+     (list (read-from-minibuffer
+            "New name for tab (leave blank for automatic naming): "
+            nil nil nil nil tab-name)
            current-prefix-arg)))
   (let* ((tabs (funcall tab-bar-tabs-function))
          (tab-index (if arg
@@ -716,8 +699,9 @@ function `tab-bar-tab-name-function'."
                          (funcall tab-bar-tab-name-function))))
     (setf (cdr (assq 'name tab-to-rename)) tab-new-name
           (cdr (assq 'explicit-name tab-to-rename)) tab-explicit-name)
-    (if tab-bar-mode
-        (force-mode-line-update)
+
+    (force-mode-line-update)
+    (unless tab-bar-mode
       (message "Renamed tab to '%s'" tab-new-name))))
 
 (defun tab-bar-rename-tab-by-name (tab-name new-name)
@@ -729,9 +713,9 @@ function `tab-bar-tab-name-function'."
                                     (mapcar (lambda (tab)
                                               (cdr (assq 'name tab)))
                                             (funcall tab-bar-tabs-function)))))
-     (list tab-name
-           (read-string "New name for tab (leave blank for automatic naming): "
-                        nil nil tab-name))))
+     (list tab-name (read-from-minibuffer
+                     "New name for tab (leave blank for automatic naming): "
+                     nil nil nil nil tab-name))))
   (tab-bar-rename-tab new-name (1+ (tab-bar--tab-index-by-name tab-name))))
 
 
@@ -950,8 +934,7 @@ Then move up one line.  Prefix arg means move that many lines."
             (delete-region (point) (progn (forward-line 1) (point))))))))
   (beginning-of-line)
   (move-to-column tab-bar-list-column)
-  (when tab-bar-mode
-    (force-mode-line-update)))
+  (force-mode-line-update))
 
 (defun tab-bar-list-select ()
   "Select this line's window configuration.
