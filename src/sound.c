@@ -1115,7 +1115,7 @@ alsa_write (struct sound_device *sd, const char *buffer, ptrdiff_t nbytes)
 {
   struct alsa_params *p = (struct alsa_params *) sd->data;
 
-  /* The the third parameter to snd_pcm_writei is frames, not bytes. */
+  /* The third parameter to snd_pcm_writei is frames, not bytes. */
   int fact = snd_pcm_format_size (sd->format, 1) * sd->channels;
   ptrdiff_t nwritten = 0;
   int err;

@@ -727,7 +727,7 @@ In this list of window configurations you can delete or select them.
 Type ? after invocation to get help on commands available.
 Type q to remove the list of window configurations from the display.
 
-The first column shows `D' for for a window configuration you have
+The first column shows `D' for a window configuration you have
 marked for deletion."
   (interactive)
   (let ((dir default-directory)

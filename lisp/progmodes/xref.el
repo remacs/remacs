@@ -268,8 +268,8 @@ find a search tool; by default, this uses \"find | grep\" in the
 (cl-defgeneric xref-backend-identifier-at-point (_backend)
   "Return the relevant identifier at point.
 
-The return value must be a string or nil.  nil means no
-identifier at point found.
+The return value must be a string, or nil meaning no identifier
+at point found.
 
 If it's hard to determine the identifier precisely (e.g., because
 it's a method call on unknown type), the implementation can
@@ -280,7 +280,7 @@ recognize and then delegate the work to an external process."
     (and thing (substring-no-properties thing))))
 
 (cl-defgeneric xref-backend-identifier-completion-table (backend)
-  "Returns the completion table for identifiers.")
+  "Return the completion table for identifiers.")
 
 
 ;;; misc utilities

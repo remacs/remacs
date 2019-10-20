@@ -1577,14 +1577,14 @@ errors for shares like \"C$/\", which are common in Microsoft Windows."
 ;; Internal file name functions.
 
 (defun tramp-smb-get-share (vec)
-  "Returns the share name of LOCALNAME."
+  "Return the share name of LOCALNAME."
   (save-match-data
     (let ((localname (tramp-file-name-unquote-localname vec)))
       (when (string-match "^/?\\([^/]+\\)/" localname)
 	(match-string 1 localname)))))
 
 (defun tramp-smb-get-localname (vec)
-  "Returns the file name of LOCALNAME.
+  "Return the file name of LOCALNAME.
 If VEC has no cifs capabilities, exchange \"/\" by \"\\\\\"."
   (save-match-data
     (let ((localname (tramp-file-name-unquote-localname vec)))
@@ -1717,8 +1717,8 @@ Result is a list of (LOCALNAME MODE SIZE MONTH DAY TIME YEAR)."
 ;; So we try to analyze backwards.
 (defun tramp-smb-read-file-entry (share)
   "Parse entry in SMB output buffer.
-If SHARE is result, entries are of type dir. Otherwise, shares are listed.
-Result is the list (LOCALNAME MODE SIZE MTIME)."
+If SHARE is result, entries are of type dir.  Otherwise, shares
+are listed.  Result is the list (LOCALNAME MODE SIZE MTIME)."
 ;; We are called from `tramp-smb-get-file-entries', which sets the
 ;; current buffer.
   (let ((line (buffer-substring (point) (point-at-eol)))
@@ -1813,7 +1813,7 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
       (list localname mode size mtime))))
 
 (defun tramp-smb-get-cifs-capabilities (vec)
-  "Check, whether the SMB server supports POSIX commands."
+  "Check whether the SMB server supports POSIX commands."
   ;; When we are not logged in yet, we return nil.  The
   ;; connection-local property "posix" is not set explicitly; it is
   ;; just checked in order to let a user configure it to nil on hosts
@@ -1835,7 +1835,7 @@ Result is the list (LOCALNAME MODE SIZE MTIME)."
 		  (buffer-substring (point) (point-at-eol)) nil 'omit)))))))))
 
 (defun tramp-smb-get-stat-capability (vec)
-  "Check, whether the SMB server supports the STAT command."
+  "Check whether the SMB server supports the STAT command."
   ;; When we are not logged in yet, we return nil.
   (if (and (tramp-smb-get-share vec)
 	   (process-live-p (tramp-get-connection-process vec)))

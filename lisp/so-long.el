@@ -654,7 +654,7 @@ an example."
 ;; `provided-mode-derived-p' was added in 26.1
 (unless (fboundp 'provided-mode-derived-p)
   (defun provided-mode-derived-p (mode &rest modes)
-    "Non-nil if MODE is derived from one of MODES.
+    "Return non-nil if MODE is derived from one of MODES.
 Uses the `derived-mode-parent' property of the symbol to trace backwards.
 If you just want to check `major-mode', use `derived-mode-p'."
     (while (and (not (memq mode modes))
@@ -982,7 +982,7 @@ serves the same purpose.")
 (put 'so-long-mode-line-info 'risky-local-variable t)
 
 (defun so-long-mode-line-info ()
-  "Returns the mode line construct for variable `so-long-mode-line-info'."
+  "Return the mode line construct for variable `so-long-mode-line-info'."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "<mode-line> <down-mouse-1>")
       `(menu-item "" nil
@@ -1189,7 +1189,7 @@ values), despite potential performance issues, type \\[so-long-revert].
 
 Use \\[so-long-commentary] for more information.
 
-Use \\[so-long-customize] to configure the behaviour."
+Use \\[so-long-customize] to configure the behavior."
   ;; Housekeeping.  `so-long-mode' might be invoked directly rather than via
   ;; `so-long', so replicate the necessary behaviours.  We could use this same
   ;; test in `so-long-after-change-major-mode' to run `so-long-hook', but that's
@@ -1371,7 +1371,7 @@ This is a `so-long-file-local-mode-function' option."
 
 (defun so-long--check-header-modes ()
   ;; See also "Files with a file-local 'mode'" in the Commentary.
-  "Handles the header-comments processing in `set-auto-mode'.
+  "Handle the header-comments processing in `set-auto-mode'.
 
 `set-auto-mode' has some special-case code to handle the 'mode' pseudo-variable
 when set in the header comment.  This runs outside of `hack-local-variables'

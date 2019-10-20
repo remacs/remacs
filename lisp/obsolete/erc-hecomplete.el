@@ -51,7 +51,7 @@ This function is obsolete, use `erc-pcomplete' instead."
     (hippie-expand nil)))
 
 (defgroup erc-hecomplete nil
-  "Nick completion.  It is recommended to use erc-pcomplete instead."
+  "Nick completion.  It is recommended to use `erc-pcomplete' instead."
   :group 'erc)
 
 (defcustom erc-nick-completion 'all
@@ -99,7 +99,7 @@ add this string when a unique expansion was found."
   :type 'string)
 
 (defun erc-command-list ()
-  "Returns a list of strings of the defined user commands."
+  "Return a list of strings of the defined user commands."
   (let ((case-fold-search nil))
     (mapcar (lambda (x)
 	      (concat "/" (downcase (substring (symbol-name x) 8))))
@@ -208,7 +208,7 @@ Window configurations are stored in
     (equal point (point))))
 
 (defun erc-complete-at-prompt ()
-  "Returns t if point is directly after `erc-prompt' when doing completion."
+  "Return t if point is directly after `erc-prompt' when doing completion."
   (erc-at-beginning-of-line-p (he-dabbrev-beg)))
 
 (provide 'erc-hecomplete)

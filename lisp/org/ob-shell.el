@@ -111,12 +111,12 @@ This function is called by `org-babel-execute-src-block'."
 ;;; Helper functions
 (defun org-babel--variable-assignments:sh-generic
     (varname values &optional sep hline)
-  "Returns a list of statements declaring the values as a generic variable."
+  "Return a list of statements declaring the values as a generic variable."
   (format "%s=%s" varname (org-babel-sh-var-to-sh values sep hline)))
 
 (defun org-babel--variable-assignments:bash_array
     (varname values &optional sep hline)
-  "Returns a list of statements declaring the values as a bash array."
+  "Return a list of statements declaring the values as a bash array."
   (format "unset %s\ndeclare -a %s=( %s )"
 	  varname varname
 	  (mapconcat
@@ -126,7 +126,7 @@ This function is called by `org-babel-execute-src-block'."
 
 (defun org-babel--variable-assignments:bash_assoc
     (varname values &optional sep hline)
-  "Returns a list of statements declaring the values as bash associative array."
+  "Return a list of statements declaring the values as bash associative array."
   (format "unset %s\ndeclare -A %s\n%s"
     varname varname
     (mapconcat
@@ -139,7 +139,7 @@ This function is called by `org-babel-execute-src-block'."
      "\n")))
 
 (defun org-babel--variable-assignments:bash (varname values &optional sep hline)
-  "Represents the parameters as useful Bash shell variables."
+  "Represent the parameters as useful Bash shell variables."
   (pcase values
     (`((,_ ,_ . ,_) . ,_)		;two-dimensional array
      (org-babel--variable-assignments:bash_assoc varname values sep hline))

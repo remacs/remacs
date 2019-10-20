@@ -283,7 +283,7 @@ The current buffer is given by BUFFER."
 	    erc-enable-logging nil))))
 
 (defun erc-log-all-but-server-buffers (buffer)
-  "Returns t if logging should be enabled in BUFFER.
+  "Return t if logging should be enabled in BUFFER.
 Returns nil if `erc-server-buffer-p' returns t."
   (save-excursion
     (save-window-excursion

@@ -75,7 +75,7 @@ Add the extension of F, if existing."
     #'tramp-handle-temporary-file-directory))
 
 (defun tramp-compat-process-running-p (process-name)
-  "Returns t if system process PROCESS-NAME is running for `user-login-name'."
+  "Return t if system process PROCESS-NAME is running for `user-login-name'."
   (when (stringp process-name)
     (cond
      ;; GNU Emacs 22 on w32.

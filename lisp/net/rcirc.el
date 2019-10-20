@@ -3063,7 +3063,7 @@ Passwords are stored in `rcirc-authinfo' (which see)."
 ;; When using M-x flyspell-mode, only check words after the prompt
 (put 'rcirc-mode 'flyspell-mode-predicate 'rcirc-looking-at-input)
 (defun rcirc-looking-at-input ()
-  "Returns true if point is past the input marker."
+  "Return true if point is past the input marker."
   (>= (point) rcirc-prompt-end-marker))
 
 

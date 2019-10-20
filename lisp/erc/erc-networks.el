@@ -730,9 +730,9 @@ MATCHER is used to find a corresponding network to a server while
 
 ;;;###autoload
 (defun erc-determine-network ()
-  "Return the name of the network or \"Unknown\" as a symbol.  Use the
-server parameter NETWORK if provided, otherwise parse the server name and
-search for a match in `erc-networks-alist'."
+  "Return the name of the network or \"Unknown\" as a symbol.
+Use the server parameter NETWORK if provided, otherwise parse the
+server name and search for a match in `erc-networks-alist'."
   ;; The server made it easy for us and told us the name of the NETWORK
   (let ((network-name (cdr (assoc "NETWORK" erc-server-parameters))))
     (if network-name
@@ -760,7 +760,7 @@ Return the name of this server's network as a symbol."
 		   "Obsolete since erc-networks 1.5")
 
 (defun erc-network-name ()
-  "Returns the name of the current network as a string."
+  "Return the name of the current network as a string."
   (erc-with-server-buffer (symbol-name erc-network)))
 
 (defun erc-set-network-name (proc parsed)

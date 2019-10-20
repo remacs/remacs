@@ -138,7 +138,7 @@ considered related."
 (declare-function viper-forward-char-carefully "viper-cmd" (&optional arg))
 
 (defun viper-surrounding-word (count click-count)
-   "Returns word surrounding point according to a heuristic.
+  "Return word surrounding point according to a heuristic.
 COUNT indicates how many regions to return.
 If CLICK-COUNT is 1, `word' is a word in Vi sense.
 If CLICK-COUNT is 2,then `word' is a Word in Vi sense.
@@ -219,7 +219,7 @@ is ignored."
 
 
 (defun viper-mouse-click-get-word (click count click-count)
-  "Returns word surrounding the position of a mouse click.
+  "Return word surrounding the position of a mouse click.
 Click may be in another window.  Current window and buffer isn't changed.
 On single or double click, returns the word as determined by
 `viper-surrounding-word-function'."
@@ -334,12 +334,13 @@ See `viper-surrounding-word' for the definition of a word in this case."
 (declare-function viper-adjust-window "viper-cmd" ())
 
 (defun viper-mouse-click-search-word (click arg)
-   "Find the word clicked or double-clicked on.  Word may be in another window.
+  "Find the word clicked or double-clicked on.  Word may be in another window.
 With prefix argument, N, search for N-th occurrence.
 This command must be bound to a mouse click.  The double-click action of the
 same button must not be bound \(or it must be bound to the same function).
 See `viper-surrounding-word' for the details on what constitutes a word for
-this command."
+this command.
+\n(fn CLICK N)"
   (interactive "e\nP")
   (if viper-frame-of-focus	;; to handle clicks in another frame
       (select-frame viper-frame-of-focus))

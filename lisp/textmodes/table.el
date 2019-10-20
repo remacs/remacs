@@ -4950,7 +4950,7 @@ When optional LOCATION is provided the test is performed at that location."
 		(equal cell-beg (progn (goto-char end) (table--probe-cell))))))))
 
 (defun table--at-cell-p (position &optional object at-column)
-  "Returns non-nil if POSITION has table-cell property in OBJECT.
+  "Return non-nil if POSITION has table-cell property in OBJECT.
 OBJECT is optional and defaults to the current buffer.
 If POSITION is at the end of OBJECT, the value is nil."
   (if (and at-column (stringp object))
@@ -5042,7 +5042,7 @@ Focus only on the corner pattern.  Further cell validity check is required."
        (get-text-property (point) 'table-cell)))
 
 (defun table--probe-cell (&optional abort-on-error)
-  "Probes a table cell around the point.
+  "Probe a table cell around the point.
 Searches for the left upper corner and the right bottom corner of a table
 cell which contains the current point location.
 
@@ -5198,11 +5198,11 @@ instead of the current buffer and returns the OBJECT."
       (get-text-property (1- (cdr cell)) property)))
 
 (defun table--get-cell-justify-property (cell)
-  "Get cell's justify property."
+  "Get CELL's justify property."
   (table--get-property cell 'table-justify))
 
 (defun table--get-cell-valign-property (cell)
-  "Get cell's vertical alignment property."
+  "Get CELL's vertical alignment property."
   (table--get-property cell 'table-valign))
 
 (defun table--put-property  (cell property value)
@@ -5213,11 +5213,11 @@ instead of the current buffer and returns the OBJECT."
     (put-text-property (1- end) end property value)))
 
 (defun table--put-cell-justify-property (cell justify)
-  "Put cell's justify property."
+  "Put CELL's JUSTIFY property."
   (table--put-property cell 'table-justify justify))
 
 (defun table--put-cell-valign-property (cell valign)
-  "Put cell's vertical alignment property."
+  "Put CELL's vertical alignment property."
   (table--put-property cell 'table-valign valign))
 
 (defun table--point-entered/left-cell-function (_window _oldpos dir)

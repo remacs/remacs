@@ -102,7 +102,7 @@
   (puthash session-name buffer org-babel-scheme-repl-map))
 
 (defun org-babel-scheme-get-buffer-impl (buffer)
-  "Returns the scheme implementation geiser associates with the buffer."
+  "Return the scheme implementation geiser associates with the buffer."
   (with-current-buffer (set-buffer buffer)
     geiser-impl--implementation))
 

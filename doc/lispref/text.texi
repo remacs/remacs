@@ -4632,7 +4632,7 @@ decoded text.
 The decoding functions ignore newline characters in the encoded text.
 
 
-If optional argument @var{base64url} is is non-@code{nil}, then padding
+If optional argument @var{base64url} is non-@code{nil}, then padding
 is optional, and the URL variant of base 64 encoding is used.
 @end defun
 

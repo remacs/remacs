@@ -177,14 +177,14 @@ It is used for TCP/IP devices."
 		tramp-adb-method)))
 
 ;;;###tramp-autoload
-(defun tramp-adb-file-name-handler (operation &rest args)
+(defun tramp-adb-file-name-handler (operation &rest arguments)
   "Invoke the ADB handler for OPERATION.
-First arg specifies the OPERATION, second arg is a list of arguments to
-pass to the OPERATION."
+First arg specifies the OPERATION, second arg is a list of
+ARGUMENTS to pass to the OPERATION."
   (let ((fn (assoc operation tramp-adb-file-name-handler-alist)))
     (if fn
-	(save-match-data (apply (cdr fn) args))
-      (tramp-run-real-handler operation args))))
+	(save-match-data (apply (cdr fn) arguments))
+      (tramp-run-real-handler operation arguments))))
 
 ;;;###tramp-autoload
 (tramp--with-startup
@@ -462,7 +462,7 @@ Convert (\"-al\") to (\"-a\" \"-l\").  Remove arguments like \"--dired\"."
 
 (defun tramp-adb-sh-fix-ls-output (&optional sort-by-time)
   "Insert dummy 0 in empty size columns.
-Androids \"ls\" command doesn't insert size column for directories:
+Android's \"ls\" command doesn't insert size column for directories:
 Emacs dired can't find files."
   (save-excursion
     ;; Insert missing size.
@@ -1089,7 +1089,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
 		 vec 'file-error "Could not find device %s" host)))))))
 
 (defun tramp-adb-execute-adb-command (vec &rest args)
-  "Returns nil on success error-output on failure."
+  "Return nil on success error-output on failure."
   (when (and (> (length (tramp-file-name-host vec)) 0)
 	     ;; The -s switch is only available for ADB device commands.
 	     (not (member (car args) '("connect" "disconnect"))))
@@ -1103,7 +1103,7 @@ E.g. a host name \"192.168.1.1#5555\" returns \"192.168.1.1:5555\"
       (tramp-message vec 6 "%s" (buffer-string)))))
 
 (defun tramp-adb-find-test-command (vec)
-  "Checks, whether the ash has a builtin \"test\" command.
+  "Check whether the ash has a builtin \"test\" command.
 This happens for Android >= 4.0."
   (with-tramp-connection-property vec "test"
     (tramp-adb-send-command-and-check vec "type test")))

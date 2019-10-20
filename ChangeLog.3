@@ -1037,7 +1037,7 @@
 	If there are directory entries in the list then they are sorted in
 	order of name length.  The list of modes for that dir is then
 	recursively sorted with the same mechanism.  That way variables tied
-	to a particular subdirectory override those in in a parent directory.
+	to a particular subdirectory override those in a parent directory.
 
 	Previously the behaviour didn’t seem to be well defined anyway and was
 	dependent on the order they appeared in the file.  However this order
@@ -8841,7 +8841,7 @@
 	If grow_specpdl fails due to outgrowing max_specpdl_size, it will
 	signal an error *before* growing the specpdl array.  Therefore, when
 	handling the signal, specpdl_ptr points past the end of the specpdl
-	array and any further use of of specpdl before unwinding (e.g., if
+	array and any further use of specpdl before unwinding (e.g., if
 	edebug binds signal-hook-function) will cause memory corruption.
 	* src/eval.c (signal_or_quit): Don't call `signal-hook-function' if
 	the specpdl_ptr is already past the end of the specpdl array.
@@ -12008,7 +12008,7 @@
 	Improve edit-kbd-macro prompting in case of remapped keys (Bug#29399)
 
 	* lisp/edmacro.el (edit-kbd-macro): Use substitute-command-keys to
-	present the current bindings in the prompt.  Check the the
+	present the current bindings in the prompt.  Check the
 	non-remapped binding of the entered key sequence as well.
 
 2017-12-02  Lele Gaifax  <lele@metapensiero.it>
@@ -24195,7 +24195,7 @@
 
 	Optimize UCS normalization tests
 
-	Brings the the time for `ucs-normalize-part1' from 200s down to 130s.
+	Brings the time for `ucs-normalize-part1' from 200s down to 130s.
 	* test/lisp/international/ucs-normalize-tests.el
 	(ucs-normalize-tests--parse-column): Use character instead of string
 	of length 1 for terminator.  Convert return value into string since
@@ -63687,7 +63687,7 @@
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
-	Compilation for for systems with getaddrinfo_a
+	Compilation for systems with getaddrinfo_a
 
 	* src/process.c (Fmake_network_process): Make stuff work again on
 	systems with getaddrinfo_a.
@@ -63701,7 +63701,7 @@
 
 2016-01-29  Lars Ingebrigtsen  <larsi@gnus.org>
 
-	Compilation for for non-GNU systems
+	Compilation for non-GNU systems
 
 	* src/process.c (Fmake_network_process): Make compilation work
 	again on hosts that don't have getaddrinfo_a.

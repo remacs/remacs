@@ -97,7 +97,7 @@ details see the info pages."
   "Whether persistent cache data have been changed.")
 
 (defun tramp-get-hash-table (key)
-  "Returns the hash table for KEY.
+  "Return the hash table for KEY.
 If it doesn't exist yet, it is created and initialized with
 matching entries of `tramp-connection-properties'."
   (or (gethash key tramp-cache-data)

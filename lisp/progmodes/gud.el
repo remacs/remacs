@@ -3009,7 +3009,7 @@ Obeying it means displaying in another window the specified file and line."
 ;; Rich Schaefer <schaefer@asc.slb.com> Schlumberger, Austin, Tx.
 
 (defun gud-find-c-expr ()
-  "Returns the expr that surrounds point."
+  "Return the expr that surrounds point."
   (interactive)
   (save-excursion
     (let ((p (point))
@@ -3034,7 +3034,7 @@ Obeying it means displaying in another window the specified file and line."
       (buffer-substring (car expr) (cdr expr)))))
 
 (defun gud-innermost-expr ()
-  "Returns the smallest expr that point is in; move point to beginning of it.
+  "Return the smallest expr that point is in; move point to beginning of it.
 The expr is represented as a cons cell, where the car specifies the point in
 the current buffer that marks the beginning of the expr and the cdr specifies
 the character after the end of the expr."
@@ -3066,7 +3066,7 @@ the character after the end of the expr."
     (error t)))
 
 (defun gud-prev-expr ()
-  "Returns the previous expr, point is set to beginning of that expr.
+  "Return the previous expr, point is set to beginning of that expr.
 The expr is represented as a cons cell, where the car specifies the point in
 the current buffer that marks the beginning of the expr and the cdr specifies
 the character after the end of the expr."
@@ -3079,7 +3079,7 @@ the character after the end of the expr."
     (cons begin end)))
 
 (defun gud-next-expr ()
-  "Returns the following expr, point is set to beginning of that expr.
+  "Return the following expr, point is set to beginning of that expr.
 The expr is represented as a cons cell, where the car specifies the point in
 the current buffer that marks the beginning of the expr and the cdr specifies
 the character after the end of the expr."

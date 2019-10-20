@@ -179,7 +179,7 @@ See also: `nsm-check-tls-connection', `nsm-save-host-names',
                                (const :tag "High" high)))))
 
 (defun nsm-save-fingerprint-maybe (host port status &rest _)
-  "Saves the certificate's fingerprint.
+  "Save the certificate's fingerprint.
 
 In order to detect man-in-the-middle attacks, when
 `network-security-level' is `high', this function will save the
@@ -199,7 +199,7 @@ RESULTS is an alist where the keys are the checks run and the
 values the results of the checks.")
 
 (defun nsm-network-same-subnet (local-ip mask ip)
-  "Returns t if IP is in the same subnet as LOCAL-IP/MASK.
+  "Return t if IP is in the same subnet as LOCAL-IP/MASK.
 LOCAL-IP, MASK, and IP are specified as vectors of integers, and
 are expected to have the same length.  Works for both IPv4 and
 IPv6 addresses."
@@ -217,7 +217,7 @@ IPv6 addresses."
     matches))
 
 (defun nsm-should-check (host)
-  "Determines whether NSM should check for TLS problems for HOST.
+  "Determine whether NSM should check for TLS problems for HOST.
 
 If `nsm-trust-local-network' is or returns non-nil, and if the
 host address is a localhost address, or in the same subnet as one

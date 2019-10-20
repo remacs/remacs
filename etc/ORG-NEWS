@@ -3754,7 +3754,7 @@ that Calc formulas can operate on them.
 **** org-ctags.el (Paul Sexton)
 
      Targets like =<<my target>>= can now be found by Emacs' etag
-     functionality, and Org-mode links can be used to to link to
+     functionality, and Org-mode links can be used to link to
      etags, also in non-Org-mode files.  For details, see the file
      /org-ctags.el/.
 

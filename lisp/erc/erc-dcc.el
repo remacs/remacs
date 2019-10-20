@@ -309,7 +309,7 @@ Should be set to a string or nil.  If nil, use the value of
   :type '(choice (const ask) (const auto) (const ignore)))
 
 (defun erc-dcc-get-host (proc)
-  "Returns the local IP address used for an open PROCess."
+  "Return the local IP address used for an open process PROC."
   (format-network-address (process-contact proc :local) t))
 
 (defun erc-dcc-host ()
@@ -413,7 +413,7 @@ where FOO is one of CLOSE, GET, SEND, LIST, CHAT, etc."
 
 ;;;###autoload
 (defun pcomplete/erc-mode/DCC ()
-  "Provides completion for the /DCC command."
+  "Provide completion for the /DCC command."
   (pcomplete-here (append '("chat" "close" "get" "list")
                           (when (fboundp 'make-network-process) '("send"))))
   (pcomplete-here
@@ -685,9 +685,10 @@ It extracts the information about the dcc request and adds it to
        ?n nick ?u login ?h host ?q query)))))
 
 (defun erc-dcc-auto-mask-p (spec)
-  "Takes a full SPEC of a user in the form \"nick!login@host\" and
-matches against all the regexp's in `erc-dcc-auto-masks'.  If any
-match, returns that regexp and nil otherwise."
+  "Match SPEC against `erc-dcc-auto-masks'.
+SPEC is a full spec of a user in the form \"nick!login@host\", which
+is matched against all the regexps in `erc-dcc-auto-masks'.  Return
+the matching regexp, or nil if none found."
   (let ((lst erc-dcc-auto-masks))
     (while (and lst
                 (not (string-match (car lst) spec)))
@@ -907,9 +908,9 @@ other client."
 (make-variable-buffer-local 'erc-dcc-file-name)
 
 (defun erc-dcc-get-file (entry file parent-proc)
-  "This function does the work of setting up a transfer from the remote client
-to the local one over a tcp connection.  This involves setting up a process
-filter and a process sentinel, and making the connection."
+  "Set up a transfer from the remote client to the local over a TCP connection.
+This involves setting up a process filter and a process sentinel,
+and making the connection."
   (let* ((buffer (generate-new-buffer (file-name-nondirectory file)))
          proc)
     (with-current-buffer buffer

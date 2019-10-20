@@ -493,7 +493,7 @@ This is an internal function, it shall not be used outside dbus.el."
 ;;; Hash table of registered functions.
 
 (defun dbus-list-hash-table ()
-  "Returns all registered member registrations to D-Bus.
+  "Return all registered member registrations to D-Bus.
 The return value is a list, with elements of kind (KEY . VALUE).
 See `dbus-registered-objects-table' for a description of the
 hash table."
@@ -888,7 +888,7 @@ association to the service from D-Bus."
 ;;; D-Bus type conversion.
 
 (defun dbus-string-to-byte-array (string)
-  "Transforms STRING to list (:array :byte c1 :byte c2 ...).
+  "Transform STRING to list (:array :byte c1 :byte c2 ...).
 STRING shall be UTF8 coded."
   (if (zerop (length string))
       '(:array :signature "y")
@@ -897,7 +897,7 @@ STRING shall be UTF8 coded."
 	(setq result (append result (list :byte elt)))))))
 
 (defun dbus-byte-array-to-string (byte-array &optional multibyte)
-  "Transforms BYTE-ARRAY into UTF8 coded string.
+  "Transform BYTE-ARRAY into UTF8 coded string.
 BYTE-ARRAY must be a list of structure (c1 c2 ...), or a byte
 array as produced by `dbus-string-to-byte-array'.  The resulting
 string is unibyte encoded, unless MULTIBYTE is non-nil."
@@ -947,7 +947,7 @@ STRING must have been encoded with `dbus-escape-as-identifier'."
 ;;; D-Bus events.
 
 (defun dbus-check-event (event)
-  "Checks whether EVENT is a well formed D-Bus event.
+  "Check whether EVENT is a well formed D-Bus event.
 EVENT is a list which starts with symbol `dbus-event':
 
   (dbus-event BUS TYPE SERIAL SERVICE PATH INTERFACE MEMBER HANDLER &rest ARGS)
@@ -1319,7 +1319,7 @@ SERVICE is a service of D-Bus BUS at object path PATH."
       (push (dbus-introspect-get-attribute elt "name") result))))
 
 (defun dbus-introspect-get-property (bus service path interface property)
-  "This function returns PROPERTY of INTERFACE as XML object.
+  "Return PROPERTY of INTERFACE as XML object.
 It must be located at SERVICE in D-Bus BUS at object path PATH.
 PROPERTY must be a string, element of the list returned by
 `dbus-introspect-get-property-names'.  The resulting PROPERTY

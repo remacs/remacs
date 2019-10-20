@@ -639,7 +639,7 @@ copy."
     (nbutlast (copy-sequence list) n)))
 
 (defun nbutlast (list &optional n)
-  "Modifies LIST to remove the last N elements.
+  "Modify LIST to remove the last N elements.
 If N is omitted or nil, remove the last element."
   (let ((m (length list)))
     (or n (setq n 1))
@@ -2341,7 +2341,7 @@ Signal an error if the program returns with a non-zero exit status."
 	(nreverse lines)))))
 
 (defun process-live-p (process)
-  "Returns non-nil if PROCESS is alive.
+  "Return non-nil if PROCESS is alive.
 A process is considered alive if its status is `run', `open',
 `listen', `connect' or `stop'.  Value is nil if PROCESS is not a
 process."

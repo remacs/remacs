@@ -646,7 +646,7 @@ These will be logged to the \"*nnmail split*\" buffer."
    (or file "")))
 
 (defun nnmail-get-active ()
-  "Returns an assoc of group names and active ranges.
+  "Return an assoc of group names and active ranges.
 nn*-request-list should have been called before calling this function."
   ;; Go through all groups from the active list.
   (with-current-buffer nntp-server-buffer
@@ -1909,7 +1909,7 @@ If TIME is nil, then return the cutoff time for oldness instead."
 	    (gnus-group-mark-article-read target (cdr group-art))))))))
 
 (defun nnmail-fancy-expiry-target (group)
-  "Returns a target expiry group determined by `nnmail-fancy-expiry-targets'."
+  "Return a target expiry group determined by `nnmail-fancy-expiry-targets'."
   (let* (header
 	 (case-fold-search nil)
 	 (from (or (message-fetch-field "from") ""))

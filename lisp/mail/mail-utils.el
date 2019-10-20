@@ -56,7 +56,7 @@ also the To field, unless this would leave an empty To field."
       (looking-at "BABYL OPTIONS:"))))
 
 (defun mail-string-delete (string start end)
-  "Returns a string containing all of STRING except the part
+  "Return a string containing all of STRING except the part
 from START (inclusive) to END (exclusive)."
   (if (null end) (substring string 0 start)
     (concat (substring string 0 start)

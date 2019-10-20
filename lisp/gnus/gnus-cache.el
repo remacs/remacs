@@ -732,7 +732,7 @@ If LOW, update the lower bound instead."
   (rename-file gnus-cache-directory dir))
 
 (defun gnus-cache-fully-p (&optional group)
-  "Returns non-nil if the cache should be fully used.
+  "Return non-nil if the cache should be fully used.
 If GROUP is non-nil, also cater to `gnus-cacheable-groups' and
 `gnus-uncacheable-groups'."
   (and gnus-use-cache

@@ -1324,7 +1324,7 @@ the last)."
 (defvar cperl-sub-regexp (regexp-opt cperl-sub-keywords))
 
 (defun cperl-char-ends-sub-keyword-p (char)
-  "Return T if CHAR is the last character of a perl sub keyword."
+  "Return t if CHAR is the last character of a perl sub keyword."
   (cl-loop for keyword in cperl-sub-keywords
            when (eq char (aref keyword (1- (length keyword))))
            return t))

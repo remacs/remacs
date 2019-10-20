@@ -1708,7 +1708,7 @@ good, skip, fatal, or unknown."
        (not (string-match-p ange-ftp-local-host-regexp host))))
 
 (defun ange-ftp-use-smart-gateway-p (host)
-  "Returns whether to access this HOST via a smart gateway."
+  "Return whether to access this HOST via a smart gateway."
   (and ange-ftp-smart-gateway
        (not (string-match-p ange-ftp-local-host-regexp host))))
 

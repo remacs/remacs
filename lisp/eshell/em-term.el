@@ -150,7 +150,7 @@ behavior for short-lived processes, see bug#18108."
 	      eshell-interpreter-alist)))
 
 (defun eshell-visual-command-p (command args)
-  "Returns non-nil when given a visual command.
+  "Return non-nil when given a visual command.
 If either COMMAND or a subcommand in ARGS (e.g. git log) is a
 visual command, returns non-nil."
   (let ((command (file-name-nondirectory command)))

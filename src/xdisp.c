@@ -21697,7 +21697,7 @@ extend_face_to_end_of_line (struct it *it)
 	      memset (&it->position, 0, sizeof it->position);
 
 	      /* Only generate a stretch glyph if there is distance
-		 between current_x and and the indicator position.  */
+		 between current_x and the indicator position.  */
 	      if (stretch_width > 0)
 		{
 		  int stretch_ascent = (((it->ascent + it->descent)

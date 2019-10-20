@@ -4711,7 +4711,7 @@ code."
 
 ;;;; For Tables
 ;;
-;; `org-export-table-has-special-column-p' and and
+;; `org-export-table-has-special-column-p' and
 ;; `org-export-table-row-is-special-p' are predicates used to look for
 ;; meta-information about the table structure.
 ;;

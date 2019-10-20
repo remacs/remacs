@@ -287,7 +287,7 @@ to continue it."
       (buffer-substring (point) end))))
 
 (defun lisp-input-filter (str)
-  "t if STR does not match `inferior-lisp-filter-regexp'."
+  "Return t if STR does not match `inferior-lisp-filter-regexp'."
   (not (string-match inferior-lisp-filter-regexp str)))
 
 ;;;###autoload
@@ -564,7 +564,7 @@ Used by these commands to determine defaults."
 
 ;;; Adapted from function-called-at-point in help.el.
 (defun lisp-fn-called-at-pt ()
-  "Returns the name of the function called in the current call.
+  "Return the name of the function called in the current call.
 The value is nil if it can't find one."
   (condition-case nil
       (save-excursion

@@ -532,7 +532,7 @@ to raise errors for all languages.")
   "Hook for functions to be called after `org-babel-execute-src-block'")
 
 (defun org-babel-named-src-block-regexp-for-name (&optional name)
-  "This generates a regexp used to match a src block named NAME.
+  "Generate a regexp used to match a src block named NAME.
 If NAME is nil, match any name.  Matched name is then put in
 match group 9.  Other match groups are defined in
 `org-babel-src-block-regexp'."
@@ -543,7 +543,7 @@ match group 9.  Other match groups are defined in
 	  (substring org-babel-src-block-regexp 1)))
 
 (defun org-babel-named-data-regexp-for-name (name)
-  "This generates a regexp used to match data named NAME."
+  "Generate a regexp used to match data named NAME."
   (concat org-babel-name-regexp (regexp-quote name) "[ \t]*$"))
 
 (defun org-babel--normalize-body (datum)
@@ -1774,7 +1774,7 @@ to `org-babel-named-src-block-regexp'."
 	  (ignore-errors (org-next-block 1 nil regexp))))))
 
 (defun org-babel-src-block-names (&optional file)
-  "Returns the names of source blocks in FILE or the current buffer."
+  "Return the names of source blocks in FILE or the current buffer."
   (with-current-buffer (if file (find-file-noselect file) (current-buffer))
     (org-with-point-at 1
       (let ((regexp "^[ \t]*#\\+begin_src ")
@@ -1819,7 +1819,7 @@ buffer or nil if no such result exists."
 	      (throw :found (line-beginning-position)))))))))
 
 (defun org-babel-result-names (&optional file)
-  "Returns the names of results in FILE or the current buffer."
+  "Return the names of results in FILE or the current buffer."
   (save-excursion
     (when file (find-file file)) (goto-char (point-min))
     (let ((case-fold-search t) names)
