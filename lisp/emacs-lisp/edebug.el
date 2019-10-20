@@ -3249,6 +3249,17 @@ With prefix argument, make it a temporary breakpoint."
   (interactive)
   (edebug-modify-breakpoint nil))
 
+(defun edebug-unset-breakpoints ()
+  "Unset all the breakpoints in the current form."
+  (interactive)
+  (let* ((name (edebug-form-data-symbol))
+         (breakpoints (nth 1 (get name 'edebug))))
+    (unless breakpoints
+      (user-error "There are no breakpoints in %s" name))
+    (save-excursion
+      (dolist (breakpoint breakpoints)
+        (goto-char (nth 3 breakpoint))
+        (edebug-modify-breakpoint nil)))))
 
 (defun edebug-set-global-break-condition (expression)
   "Set `edebug-global-break-condition' to EXPRESSION."
@@ -3756,6 +3767,7 @@ be installed in `emacs-lisp-mode-map'.")
     ;; breakpoints
     (define-key map "b" 'edebug-set-breakpoint)
     (define-key map "u" 'edebug-unset-breakpoint)
+    (define-key map "U" 'edebug-unset-breakpoints)
     (define-key map "B" 'edebug-next-breakpoint)
     (define-key map "x" 'edebug-set-conditional-breakpoint)
     (define-key map "X" 'edebug-set-global-break-condition)

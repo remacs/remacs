@@ -1462,6 +1462,11 @@ the Elisp manual for documentation of the new mode and its commands.
 
 ** Edebug
 
++++
+*** New command 'edebug-unset-breakpoints'
+To clear all breakpoints in the current form, the 'U' command in
+'edebug-mode', or 'M-x edebug-unset-breakpoints' can be used.
+
 ---
 *** Re-instrumenting a function with Edebug will now try to preserve
 previously-set breakpoints.  If the code has changed substantially,

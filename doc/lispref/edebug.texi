@@ -503,6 +503,10 @@ program.
 Unset the breakpoint (if any) at the stop point at or after
 point (@code{edebug-unset-breakpoint}).
 
+@item U
+Unset any breakpoints in the current form
+(@code{edebug-unset-breakpoints}).
+
 @item x @var{condition} @key{RET}
 Set a conditional breakpoint which stops the program only if
 evaluating @var{condition} produces a non-@code{nil} value
