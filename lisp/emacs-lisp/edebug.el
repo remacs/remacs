@@ -3474,7 +3474,7 @@ The removes the effect of `edebug-on-entry'."
                              (push symbol functions)))
                          obarray)
                         (unless functions
-                          (error "No functions have `edebug-on-entry'."))
+                          (user-error "No functions have `edebug-on-entry'"))
                         functions))))
            (when (and name
                       (not (equal name "")))
