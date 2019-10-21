@@ -534,6 +534,12 @@ do_mouse_event (MOUSE_EVENT_RECORD *event,
     case MOUSE_HWHEELED:
       {
 	struct frame *f = get_frame ();
+	/* Mouse positions in console wheel events are reported to
+	   ReadConsoleInput relative to the display's top-left
+	   corner(!), not relative to the origin of the console screen
+	   buffer.  This makes these coordinates unusable; e.g.,
+	   scrolling the tab-line in general doesn't work.
+	   FIXME (but how?).  */
 	int mx = event->dwMousePosition.X, my = event->dwMousePosition.Y;
 	bool down_p = (event->dwButtonState & 0x10000000) != 0;
 
