@@ -798,7 +798,7 @@ Its numeric meaning is what you would get from `(interactive "p")'.  */)
   else if (EQ (raw, Qminus))
     XSETINT (val, -1);
   else if (CONSP (raw) && FIXNUMP (XCAR (raw)))
-    XSETINT (val, XFIXNUM (XCAR (raw)));
+    val = XCAR (raw);
   else if (FIXNUMP (raw))
     val = raw;
   else
