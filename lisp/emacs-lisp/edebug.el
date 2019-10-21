@@ -3258,7 +3258,7 @@ the breakpoint."
                        (overlay-put overlay 'help-echo "Breakpoint")
                        (overlay-put overlay 'face 'edebug-enabled-breakpoint))))
           (overlay-put overlay 'edebug t)
-          (let ((fringe (make-overlay pos pos (current-buffer))))
+          (let ((fringe (make-overlay pos pos)))
             (overlay-put fringe 'edebug t)
             (overlay-put fringe 'before-string
                          (propertize
