@@ -341,23 +341,6 @@ attached to and added to this list before the new frame is initialized."
 		       (symbol :tag "Parameter")
 		       (sexp :tag "Value"))))
 
-;; These values by Hrvoje Nikšić <hrvoje.niksic@avl.com>
-(defcustom speedbar-frame-plist
-  '(minibuffer nil width 20 border-width 0
-	       internal-border-width 0 unsplittable t
-	       default-toolbar-visible-p nil has-modeline-p nil
-	       menubar-visible-p nil
-	       default-gutter-visible-p nil
-	       )
-  "Parameters to use when creating the speedbar frame in XEmacs.
-Parameters not listed here which will be added automatically are
-`height' which will be initialized to the height of the frame speedbar
-is attached to."
-  :group 'speedbar
-  :type '(repeat (group :inline t
-			(symbol :tag "Property")
-			(sexp :tag "Value"))))
-
 (defcustom speedbar-use-imenu-flag (fboundp 'imenu)
   "Non-nil means use imenu for file parsing, nil to use etags.
 XEmacs prior to 20.4 doesn't support imenu, therefore the default is to
@@ -941,20 +924,15 @@ directories.")
 (defvar speedbar-power-click nil
   "Never set this by hand.  Value is t when S-mouse activity occurs.")
 
-
-;;; Compatibility
-;;
-(defalias 'speedbar-make-overlay
-  (if (featurep 'xemacs) 'make-extent 'make-overlay))
+(define-obsolete-function-alias 'speedbar-make-overlay
+  'make-overlay "27.1")
+(define-obsolete-function-alias 'speedbar-overlay-put
+  'overlay-put "27.1")
+(define-obsolete-function-alias 'speedbar-delete-overlay
+  'delete-overlay "27.1")
+(define-obsolete-function-alias 'speedbar-mode-line-update
+  'force-mode-line-update "27.1")
 
-(defalias 'speedbar-overlay-put
-  (if (featurep 'xemacs) 'set-extent-property 'overlay-put))
-
-(defalias 'speedbar-delete-overlay
-  (if (featurep 'xemacs) 'delete-extent 'delete-overlay))
-
-(defalias 'speedbar-mode-line-update
-  (if (featurep 'xemacs) 'redraw-modeline 'force-mode-line-update))
 
 ;;; Mode definitions/ user commands
 ;;
@@ -982,12 +960,7 @@ supported at a time.
 		     'speedbar-buffer
 		     "Speedbar"
 		     #'speedbar-frame-mode
-		     (if (featurep 'xemacs)
-			 (append speedbar-frame-plist
-				 ;; This is a hack to get speedbar to iconify
-				 ;; with the selected frame.
-				 (list 'parent (selected-frame)))
-		       speedbar-frame-parameters)
+		     speedbar-frame-parameters
 		     'speedbar-before-delete-hook
 		     'speedbar-before-popup-hook
 		     'speedbar-after-create-hook)
@@ -1008,18 +981,8 @@ supported at a time.
 
 (defun speedbar-frame-reposition-smartly ()
   "Reposition the speedbar frame to be next to the attached frame."
-  (cond ((and (featurep 'xemacs)
-	      (or (member 'left speedbar-frame-plist)
-		  (member 'top speedbar-frame-plist)))
-	 (dframe-reposition-frame
-	  speedbar-frame
-	  (dframe-attached-frame speedbar-frame)
-	  (cons (car (cdr (member 'left speedbar-frame-plist)))
-		(car (cdr (member 'top speedbar-frame-plist)))))
-	 )
-	((and (not (featurep 'xemacs))
-	      (or (assoc 'left speedbar-frame-parameters)
-		  (assoc 'top speedbar-frame-parameters)))
+  (cond ((or (assoc 'left speedbar-frame-parameters)
+             (assoc 'top speedbar-frame-parameters))
 	 ;; if left/top were specified in the parameters, pass them
 	 ;; down to the reposition function
 	 (dframe-reposition-frame
@@ -1147,9 +1110,6 @@ return true without a query."
 This gives visual indications of what is up.  It EXPECTS the speedbar
 frame and window to be the currently active frame and window."
   (if (and (frame-live-p (speedbar-current-frame))
-	   (or (not (featurep 'xemacs))
-	       (with-no-warnings
-		 (specifier-instance has-modeline-p)))
 	   speedbar-buffer)
       (with-current-buffer speedbar-buffer
 	(let* ((w (or (speedbar-frame-width) 20))
@@ -1173,7 +1133,7 @@ frame and window to be the currently active frame and window."
 	  (if (not (equal mode-line-format tf))
 	      (progn
 		(setq mode-line-format tf)
-		(speedbar-mode-line-update)))))))
+		(force-mode-line-update)))))))
 
 (defvar speedbar-previous-menu nil
   "The menu before the last `speedbar-reconfigure-keymaps' was called.")
@@ -1233,13 +1193,8 @@ and the existence of packages."
       (if speedbar-previous-menu (easy-menu-remove speedbar-previous-menu))
       (setq speedbar-previous-menu md)
       ;; Now add the new menu
-      (if (not (featurep 'xemacs))
-	  (easy-menu-define speedbar-menu-map (current-local-map)
-			    "Speedbar menu" md)
-	(easy-menu-add md (current-local-map))
-	;; XEmacs-specific:
-	(if (fboundp 'set-buffer-menubar)
-	    (set-buffer-menubar (list md)))))
+      (easy-menu-define speedbar-menu-map (current-local-map)
+        "Speedbar menu" md))
 
     (run-hooks 'speedbar-reconfigure-keymaps-hook)))
 
@@ -1848,7 +1803,6 @@ of the special mode functions."
 		(setq speedbar-special-mode-expansion-list t)
 	      ;; If it is autoloaded, we need to load it now so that
 	      ;; we have access to the variable -speedbar-menu-items.
-	      ;; Is this XEmacs safe?
               (autoload-do-load (symbol-function v) v)
 	      (setq speedbar-special-mode-expansion-list (list v))
 	      (setq v (intern-soft (concat ms "-speedbar-key-map")))
@@ -2884,10 +2838,7 @@ to add more types of version control systems."
 	     (speedbar-vc-check-dir-p default-directory)
 	     (not (or (and (featurep 'ange-ftp)
 			   (string-match
-			    (car (symbol-value
-				  (if (featurep 'xemacs)
-				      'ange-ftp-directory-format
-				    'ange-ftp-name-format)))
+			    (car (symbol-value 'ange-ftp-name-format))
 			    (expand-file-name default-directory)))
 		      ;; efs support: Bob Weiner
 		      (and (featurep 'efs)
@@ -3966,17 +3917,17 @@ TEXT is the buffer's name, TOKEN and INDENT are unused."
   "Highlight the current line, unhighlighting a previously jumped to line."
   (speedbar-unhighlight-one-tag-line)
   (setq speedbar-highlight-one-tag-line
-	(speedbar-make-overlay (line-beginning-position)
-			       (line-beginning-position 2)))
-  (speedbar-overlay-put speedbar-highlight-one-tag-line 'face
-			'speedbar-highlight-face)
+        (make-overlay (line-beginning-position)
+                      (line-beginning-position 2)))
+  (overlay-put speedbar-highlight-one-tag-line 'face
+               'speedbar-highlight-face)
   (add-hook 'pre-command-hook 'speedbar-unhighlight-one-tag-line))
 
 (defun speedbar-unhighlight-one-tag-line ()
   "Unhighlight the currently highlighted line."
   (when (and speedbar-highlight-one-tag-line
 	     (not (eq this-command 'handle-switch-frame)))
-    (speedbar-delete-overlay speedbar-highlight-one-tag-line)
+    (delete-overlay speedbar-highlight-one-tag-line)
     (setq speedbar-highlight-one-tag-line nil)
     (remove-hook 'pre-command-hook 'speedbar-unhighlight-one-tag-line)))
 

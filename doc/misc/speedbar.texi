@@ -695,18 +695,11 @@ file being edited.
 Face used when the mouse passes over a button.
 @end table
 
-You can also customize speedbar's initial frame parameters.  How this is
-accomplished is dependent on your platform being Emacs or XEmacs.
-
-@cindex @code{speedbar-frame-parameters}, Emacs
-In Emacs, change the alist @code{speedbar-frame-parameters}.  This
-variable is used to set up initial details.  Height is also
-automatically added when speedbar is created, though you can override
-it.
-
-@cindex @code{speedbar-frame-plist}, XEmacs
-In XEmacs, change the plist @code{speedbar-frame-plist}.  This is the
-XEmacs way of doing the same thing.
+@cindex @code{speedbar-frame-parameters}
+You can also customize speedbar's initial frame parameters by changing
+the alist @code{speedbar-frame-parameters}.  This variable is used to
+set up initial details.  Height is also automatically added when
+speedbar is created, though you can override it.
 
 @node Tag Hierarchy Methods
 @section Tag Hierarchy Methods
