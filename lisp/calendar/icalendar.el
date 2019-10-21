@@ -347,14 +347,9 @@ mix of different line endings."
 (defsubst icalendar--rris (regexp rep string &optional fixedcase literal)
   "Replace regular expression in string.
 Pass arguments REGEXP REP STRING FIXEDCASE LITERAL to
-`replace-regexp-in-string' (Emacs) or to `replace-in-string' (XEmacs)."
-  (cond ((fboundp 'replace-regexp-in-string)
-         ;; Emacs:
-         (replace-regexp-in-string regexp rep string fixedcase literal))
-        ((fboundp 'replace-in-string)
-         ;; XEmacs:
-         (save-match-data ;; apparently XEmacs needs save-match-data
-           (replace-in-string string regexp rep literal)))))
+`replace-regexp-in-string'."
+  (declare (obsolete replace-regexp-in-string "27.1"))
+  (replace-regexp-in-string regexp rep string fixedcase literal))
 
 (defun icalendar--read-element (invalue inparams)
   "Recursively read the next iCalendar element in the current buffer.
@@ -978,14 +973,14 @@ TIMESTRING and has the same result as \"9:00\"."
 
 (defun icalendar--convert-string-for-export (string)
   "Escape comma and other critical characters in STRING."
-  (icalendar--rris "," "\\\\," string))
+  (replace-regexp-in-string "," "\\\\," string))
 
 (defun icalendar--convert-string-for-import (string)
   "Remove escape chars for comma, semicolon etc. from STRING."
-  (icalendar--rris
-   "\\\\n" "\n " (icalendar--rris
-                  "\\\\\"" "\"" (icalendar--rris
-                                 "\\\\;" ";" (icalendar--rris
+  (replace-regexp-in-string
+   "\\\\n" "\n " (replace-regexp-in-string
+                  "\\\\\"" "\"" (replace-regexp-in-string
+                                 "\\\\;" ";" (replace-regexp-in-string
                                               "\\\\," "," string)))))
 
 ;; ======================================================================
@@ -1232,7 +1227,7 @@ Returns an alist."
 		 (setq ct (+ ct 1))
                  (setq pos-uid (* 2 ct)))) )
         (mapc (lambda (ij)
-                (setq s (icalendar--rris (car ij) (cadr ij) s t t)))
+                (setq s (replace-regexp-in-string (car ij) (cadr ij) s t t)))
               (list
                ;; summary must be first! because of %s
                (list "%s"
@@ -1253,7 +1248,7 @@ Returns an alist."
                      (concat "\\(" icalendar-import-format-uid "\\)??"))))
 	;; Need the \' regexp in order to detect multi-line items
         (setq s (concat "\\`"
-			   (icalendar--rris "%s" "\\(.*?\\)" s nil t)
+                        (replace-regexp-in-string "%s" "\\(.*?\\)" s nil t)
                         "\\'"))
         (if (string-match s summary-and-rest)
             (let (cla des loc org sta url uid) ;; sum
@@ -1395,7 +1390,7 @@ entries.  ENTRY-MAIN is the first line of the diary entry."
         (when starttimestring
           (unless endtimestring
             (let ((time
-                   (read (icalendar--rris "^T0?" ""
+                   (read (replace-regexp-in-string "^T0?" ""
                                           starttimestring))))
               (if (< time 230000)
                   ;; Case: ends on same day
@@ -1483,7 +1478,7 @@ entries.  ENTRY-MAIN is the first line of the diary entry."
         (when starttimestring
           (unless endtimestring
             (let ((time (read
-                         (icalendar--rris "^T0?" ""
+                         (replace-regexp-in-string "^T0?" ""
                                           starttimestring))))
               (setq endtimestring (format "T%06d"
                                           (+ 10000 time))))))
@@ -1570,7 +1565,7 @@ entries.  ENTRY-MAIN is the first line of the diary entry."
         (when starttimestring
           (unless endtimestring
             (let ((time (read
-                         (icalendar--rris "^T0?" ""
+                         (replace-regexp-in-string "^T0?" ""
                                           starttimestring))))
               (setq endtimestring (format "T%06d"
                                           (+ 10000 time))))))
@@ -1704,7 +1699,7 @@ entries.  ENTRY-MAIN is the first line of the diary entry."
         (when starttimestring
           (unless endtimestring
             (let ((time
-                   (read (icalendar--rris "^T0?" ""
+                   (read (replace-regexp-in-string "^T0?" ""
                                           starttimestring))))
               (setq endtimestring (format "T%06d"
                                           (+ 10000 time))))))
@@ -1747,7 +1742,7 @@ entries.  ENTRY-MAIN is the first line of the diary entry."
                (n (nth 3 sexp))
                (day (nth 4 sexp))
                (summary
-		(replace-regexp-in-string
+                (replace-regexp-in-string
 		 "\\(^\s+\\|\s+$\\)" ""
 		 (buffer-substring (point) (point-max)))))
 
@@ -1857,7 +1852,7 @@ entries.  ENTRY-MAIN is the first line of the diary entry."
         (when starttimestring
           (unless endtimestring
             (let ((time
-                   (read (icalendar--rris "^T0?" ""
+                   (read (replace-regexp-in-string "^T0?" ""
                                           starttimestring))))
               (setq endtimestring (format "T%06d"
                                           (+ 10000 time))))))
@@ -1926,7 +1921,7 @@ entries.  ENTRY-MAIN is the first line of the diary entry."
         (when starttimestring
           (unless endtimestring
             (let ((time
-                   (read (icalendar--rris "^T0?" ""
+                   (read (replace-regexp-in-string "^T0?" ""
                                           starttimestring))))
               (setq endtimestring (format "T%06d"
                                           (+ 10000 time))))))
@@ -2051,12 +2046,12 @@ buffer `*icalendar-errors*'."
 		   (formatted-contents ""))
 	      (when (and contents (> (length contents) 0))
 		(setq formatted-contents
-		      (icalendar--rris "%s"
+		      (replace-regexp-in-string "%s"
 				       (icalendar--convert-string-for-import
 					contents)
 				       (symbol-value format)
 				       t t)))
-	      (setq string (icalendar--rris spec
+	      (setq string (replace-regexp-in-string spec
 					    formatted-contents
 					    string
 					    t t))))
@@ -2450,7 +2445,7 @@ END-T is the event's end time in diary format."
                (ex-d (icalendar--datetime-to-diary-date
                       ex-start)))
           (setq result
-                (icalendar--rris "^%%(\\(and \\)?"
+                (replace-regexp-in-string "^%%(\\(and \\)?"
                                  (format
                                   "%%%%(and (not (diary-date %s)) "
                                   ex-d)
