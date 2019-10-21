@@ -256,8 +256,20 @@ Blank lines separate paragraphs.  Semicolons start comments.
   (setq-local project-vc-external-roots-function #'elisp-load-path-roots)
   (add-hook 'completion-at-point-functions
             #'elisp-completion-at-point nil 'local)
-  (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc nil t)
-  (add-hook 'flymake-diagnostic-functions #'elisp-flymake-byte-compile nil t))
+  ;; .dir-locals.el and lock files will cause the byte-compiler and
+  ;; checkdoc emit spurious warnings, because they don't follow the
+  ;; conventions of Emacs Lisp sources.  Until we have a better fix,
+  ;; like teaching elisp-mode about files that only hold data
+  ;; structures, we disable the ELisp Flymake backend for these files.
+  (unless
+      (let* ((bfname (buffer-file-name))
+             (fname (and (stringp bfname) (file-name-nondirectory bfname))))
+        (or (not (stringp fname))
+            (string-match "\\`\\.#" fname)
+            (string-equal dir-locals-file fname)))
+    (add-hook 'flymake-diagnostic-functions #'elisp-flymake-checkdoc nil t)
+    (add-hook 'flymake-diagnostic-functions
+              #'elisp-flymake-byte-compile nil t)))
 
 ;; Font-locking support.
 
