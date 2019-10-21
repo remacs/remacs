@@ -725,6 +725,7 @@ The annotations are relative to the current time, unless overridden by OFFSET."
                ;; Make the face if not done.
                (face (or (intern-soft face-name)
                          (let ((tmp-face (make-face (intern face-name))))
+                           (set-face-extend tmp-face t)
                            (cond
                             (vc-annotate-background-mode
                              (set-face-background tmp-face (cdr color)))
