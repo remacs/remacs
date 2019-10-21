@@ -411,6 +411,8 @@
 (add-to-list 'customize-package-emacs-version-alist
              '(so-long ("1.0" . "27.1")))
 
+(defconst so-long--latest-version "1.0")
+
 (declare-function longlines-mode "longlines")
 (defvar longlines-mode)
 
@@ -1817,6 +1819,54 @@ or call the function `global-so-long-mode'.")
 If it appears in `%s', you should remove it."
               (cdr hookfunc)))
     (make-obsolete (car hookfunc) nil "so-long.el version 1.0")))
+
+;; Live upgrades, for when a newer version is loaded over an older one.
+;;
+;; If `so-long-version' was already bound then that tells us which version we
+;; should upgrade from.  If `so-long-version' is unbound then most likely there
+;; was no older version loaded; however, prior to version 1.0 `so-long-version'
+;; was not defined at all, and so we also need to detect that scenario, which
+;; we can do by testing for the presence of a symbol which was removed in 1.0.
+;;
+;; The variable `so-long-mode-enabled' covers versions 0.5 - 0.7.6, which is
+;; every pre-1.0 release using the name "so-long.el".
+(defvar so-long-version (if (boundp 'so-long-mode-enabled)
+                            "0.5" ;; >= 0.5 and < 1.0
+                          so-long--latest-version)
+  "The loaded version of so-long.el.")
+
+;; Version-specific updates.
+(when (version< so-long-version so-long--latest-version)
+  ;; Perform each update in sequence, as necessary.
+  ;; Update to version 1.0 from earlier versions:
+  (when (version< so-long-version "1.0")
+    (remove-hook 'change-major-mode-hook 'so-long-change-major-mode)
+    (require 'advice)
+    (when (ad-find-advice 'hack-local-variables 'after 'so-long--file-local-mode)
+      (ad-remove-advice 'hack-local-variables 'after 'so-long--file-local-mode)
+      (ad-activate 'hack-local-variables))
+    (when (ad-find-advice 'set-auto-mode 'around 'so-long--set-auto-mode)
+      (ad-remove-advice 'set-auto-mode 'around 'so-long--set-auto-mode)
+      (ad-activate 'set-auto-mode))
+    (when (boundp 'so-long-mode-map)
+      (define-key so-long-mode-map [remap so-long-mode-revert] #'so-long-revert))
+    (dolist (var '(so-long-mode--inhibited
+                   so-long-original-mode))
+      (makunbound var))
+    (dolist (func '(so-long-change-major-mode
+                    so-long-check-header-modes
+                    so-long-line-detected-p))
+      (fmakunbound func))
+    (defvar so-long-mode-enabled)
+    (when so-long-mode-enabled
+      (unless global-so-long-mode
+        (global-so-long-mode 1)))
+    (makunbound 'so-long-mode-enabled))
+  ;; Update to version 1.N:
+  ;; (when (version< so-long-version "1.N") ...)
+  ;;
+  ;; All updates completed.
+  (setq so-long-version so-long--latest-version))
 
 
 (provide 'so-long)
