@@ -3232,6 +3232,9 @@ the breakpoint."
 	  (goto-char position)
           (edebug--overlay-breakpoints edebug-def-name)))))
 
+(define-fringe-bitmap 'edebug-breakpoint
+  "\x3c\x7e\xff\xff\xff\xff\x7e\x3c")
+
 (defun edebug--overlay-breakpoints (function)
   (let* ((data (get function 'edebug))
          (start (nth 0 data))
@@ -3245,12 +3248,22 @@ the breakpoint."
     (when edebug-active
       (dolist (breakpoint breakpoints)
         (let* ((pos (+ start (aref offsets (car breakpoint))))
-               (overlay (make-overlay pos (1+ pos))))
+               (overlay (make-overlay pos (1+ pos)))
+               (face (if (nth 4 breakpoint)
+                         (progn
+                           (overlay-put overlay
+                                        'help-echo "Disabled breakpoint")
+                           (overlay-put overlay
+                                        'face 'edebug-disabled-breakpoint))
+                       (overlay-put overlay 'help-echo "Breakpoint")
+                       (overlay-put overlay 'face 'edebug-enabled-breakpoint))))
           (overlay-put overlay 'edebug t)
-          (overlay-put overlay 'face
-                       (if (nth 4 breakpoint)
-                           'edebug-disabled-breakpoint
-                         'edebug-enabled-breakpoint)))))))
+          (let ((fringe (make-overlay pos pos (current-buffer))))
+            (overlay-put fringe 'edebug t)
+            (overlay-put fringe 'before-string
+                         (propertize
+                          "x" 'display
+                          `(left-fringe edebug-breakpoint ,face)))))))))
 
 (defun edebug--overlay-breakpoints-remove (start end)
   (dolist (overlay (overlays-in start end))
