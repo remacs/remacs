@@ -685,7 +685,7 @@ Otherwise return the normal value."
 	     (y-or-n-p
 	      (format
 	       "File %s is checked in.  Check it out? "
-	       (viper-abbreviate-file-name file))))
+	       (abbreviate-file-name file))))
 	(with-current-buffer buf
 	  (command-execute checkout-function)))))
 
@@ -737,7 +737,7 @@ Otherwise return the normal value."
     ;; just have keymap attached to replace overlay.
     ;;(overlay-put
     ;; viper-replace-overlay
-    ;; (if (featurep 'xemacs) 'keymap 'local-map)
+    ;; 'local-map
     ;; viper-replace-map)
     )
   (if (viper-has-face-support-p)
@@ -804,8 +804,8 @@ Otherwise return the normal value."
 
 ;;; XEmacs compatibility
 
-(defun viper-abbreviate-file-name (file)
-  (abbreviate-file-name file))
+(define-obsolete-function-alias 'viper-abbreviate-file-name
+  'abbreviate-file-name "27.1")
 
 ;; Sit for VAL milliseconds.  XEmacs doesn't support the millisecond arg
 ;; in sit-for, so this function smooths out the differences.

@@ -4756,14 +4756,12 @@ Please, specify your level now: "))
 (defun viper-submit-report ()
   "Submit bug report on Viper."
   (interactive)
-  (defvar viper-device-type)
   (defvar viper-color-display-p)
   (defvar viper-frame-parameters)
   (defvar viper-minibuffer-emacs-face)
   (defvar viper-minibuffer-vi-face)
   (defvar viper-minibuffer-insert-face)
   (let ((reporter-prompt-for-summary-p t)
-	(viper-device-type (viper-device-type))
 	(viper-color-display-p (if (viper-window-display-p)
 			      (viper-color-display-p)
                               'non-x))
@@ -4824,7 +4822,7 @@ Please, specify your level now: "))
 		        'ex-cycle-through-non-files
 		        'viper-expert-level
 		        'major-mode
-		        'viper-device-type
+		        'window-system
 			'viper-color-display-p
 			'viper-frame-parameters
 			'viper-minibuffer-vi-face

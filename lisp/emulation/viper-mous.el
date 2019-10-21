@@ -109,8 +109,7 @@ considered related."
 
 ;; Returns window where click occurs
 (defun viper-mouse-click-window (click)
-  (let ((win (if (featurep 'xemacs) (event-window click)
-	       (posn-window (event-start click)))))
+  (let ((win (posn-window (event-start click))))
     (if (window-live-p win)
 	win
       (error "Click was not over a live window"))))
@@ -127,10 +126,10 @@ considered related."
 (defsubst viper-mouse-click-window-buffer-name (click)
   (buffer-name (viper-mouse-click-window-buffer click)))
 
-;; Returns position of a click
 (defsubst viper-mouse-click-posn (click)
-  (if (featurep 'xemacs) (event-point click)
-    (posn-point (event-start click))))
+  "Returns position of a click."
+  (declare (obsolete nil "27.1"))
+  (posn-point (event-start click)))
 
 
 
@@ -225,7 +224,7 @@ On single or double click, returns the word as determined by
 `viper-surrounding-word-function'."
 
   (let ((click-word "")
-	(click-pos (viper-mouse-click-posn click))
+	(click-pos (posn-point (event-start click)))
 	(click-buf (viper-mouse-click-window-buffer click)))
     (or (natnump count) (setq count 1))
     (or (natnump click-count) (setq click-count 1))
@@ -257,8 +256,7 @@ See `viper-surrounding-word' for the definition of a word in this case."
 	(or (not (eq (key-binding viper-mouse-down-insert-key-parsed)
 		     'viper-mouse-catch-frame-switch))
 	    (not (eq (key-binding viper-mouse-up-insert-key-parsed)
-		     'viper-mouse-click-insert-word))
-	    (and (featurep 'xemacs) (not (event-over-text-area-p click)))))
+		     'viper-mouse-click-insert-word))))
       () ; do nothing, if binding isn't right or not over text
     ;; turn arg into a number
     (cond ((integerp arg) nil)
@@ -348,8 +346,7 @@ this command.
 	(or (not (eq (key-binding viper-mouse-down-search-key-parsed)
 		     'viper-mouse-catch-frame-switch))
 	    (not (eq (key-binding viper-mouse-up-search-key-parsed)
-		     'viper-mouse-click-search-word))
-	    (and (featurep 'xemacs) (not (event-over-text-area-p click)))))
+		     'viper-mouse-click-search-word))))
       () ; do nothing, if binding isn't right or not over text
     (let ((previous-search-string viper-s-string)
 	  click-word click-count)
