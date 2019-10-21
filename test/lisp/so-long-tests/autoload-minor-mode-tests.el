@@ -39,6 +39,7 @@
 (ert-deftest so-long-tests-autoload-minor-mode ()
   "File-local -*- so-long-action: so-long-minor-mode; eval: (so-long) -*-"
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (so-long-tests-remember)
     (insert "-*- so-long-action: so-long-minor-mode; eval: (so-long) -*-\n")
     (put 'so-long-action 'safe-local-variable #'symbolp)

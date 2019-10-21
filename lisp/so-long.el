@@ -162,6 +162,23 @@
 ;; this option can also be configured to inhibit so-long entirely in this
 ;; scenario, or to not treat a file-local mode as a special case at all.
 
+;; * Buffers which are not displayed in a window
+;; ---------------------------------------------
+;; When a file with long lines is visited and the buffer is not displayed right
+;; away, it may be that it is not intended to be displayed at all, and that it
+;; has instead been visited for behind-the-scenes processing by some library.
+;; Invisible buffers are less likely to cause performance issues, and it also
+;; might be surprising to the other library if such a buffer were manipulated by
+;; `so-long' (which might in turn lead to confusing errors for the user); so in
+;; these situations the `so-long-invisible-buffer-function' value is called
+;; instead.  By default this arranges for `so-long' to be invoked on the buffer
+;; if and when it is displayed, but not otherwise.
+;;
+;; This 'deferred call' is actually the most common scenario -- even when a
+;; visited file is displayed "right away", it is normal for the buffer to be
+;; invisible when `global-so-long-mode' processes it, and the gap between
+;; "arranging to call" and "calling" `so-long' is simply extremely brief.
+
 ;; * Inhibiting and disabling minor modes
 ;; --------------------------------------
 ;; Certain minor modes cause significant performance issues in the presence of
@@ -345,6 +362,7 @@
 ;;       - New user option `so-long-variable-overrides'.
 ;;       - New user option `so-long-skip-leading-comments'.
 ;;       - New user option `so-long-file-local-mode-function'.
+;;       - New user option `so-long-invisible-buffer-function'.
 ;;       - New user option `so-long-predicate'.
 ;;       - New variable and function `so-long-function'.
 ;;       - New variable and function `so-long-revert-function'.
@@ -484,6 +502,37 @@ files would prevent Emacs from handling them correctly."
   ;; Use 'symbol', as 'function' may be unknown => mismatch.
   :type '(choice (repeat :tag "Specified modes" symbol)
                  (const :tag "All modes" t))
+  :package-version '(so-long . "1.0")
+  :group 'so-long)
+
+(defcustom so-long-invisible-buffer-function #'so-long-deferred
+  "Function called in place of `so-long' when the buffer is not displayed.
+
+This affects the behaviour of `global-so-long-mode'.
+
+We treat invisible buffers differently from displayed buffers because, in
+cases where a library is using a buffer for behind-the-scenes processing,
+it might be surprising if that buffer were unexpectedly manipulated by
+`so-long' (which might in turn lead to confusing errors for the user).
+Invisible buffers are less likely to cause performance issues related to
+long lines, so this differentiation is generally satisfactory.
+
+The default value `so-long-deferred' prevents `global-so-long-mode' from
+triggering `so-long' for any given buffer until such time as the buffer is
+displayed in a window.
+
+\(Note that buffers are normally invisible at this point -- when `find-file'
+is used, the buffer is not displayed in a window until a short time after
+`global-so-long-mode' has seen it.)
+
+The value nil or `so-long' means that `so-long' will be called directly; in
+which case it may be problematic for `so-long-variable-overrides' to enable
+`buffer-read-only', or for `so-long-action' to be set to `so-long-mode'.
+This is because the buffer may not be intended to be displayed at all, and
+the mentioned options might interfere with some intended processing."
+  :type '(radio (const so-long-deferred)
+                (const :tag "nil: Call so-long as normal" nil)
+                (function :tag "Custom function"))
   :package-version '(so-long . "1.0")
   :group 'so-long)
 
@@ -1486,7 +1535,17 @@ major mode is a member (or derivative of a member) of `so-long-target-modes'.
        (or (eq so-long-target-modes t)
            (apply #'derived-mode-p so-long-target-modes))
        (setq so-long-detected-p (funcall so-long-predicate))
-       (so-long)))
+       ;; `so-long' should be called; but only if and when the buffer is
+       ;; displayed in a window.  Long lines in invisible buffers are generally
+       ;; not problematic, whereas it might cause problems if an invisible
+       ;; buffer being used for behind-the-scenes processing is manipulated
+       ;; unexpectedly.  The default `so-long-invisible-buffer-function' value
+       ;; is `so-long-deferred', which arranges to call `so-long' as soon as
+       ;; the buffer is displayed.
+       (if (or (get-buffer-window (current-buffer) t)
+               (not so-long-invisible-buffer-function))
+           (so-long)
+         (funcall so-long-invisible-buffer-function))))
 
 (defun so-long--hack-one-local-variable (orig-fun var val)
   ;; Advice, enabled with:
@@ -1530,6 +1589,14 @@ These local variables will thus not vanish on setting a major mode."
     ;; VAR is not the 'mode' pseudo-variable.
     (funcall orig-fun var val)))
 
+(defun so-long-deferred ()
+  "Arrange to call `so-long' if the current buffer is displayed in a window."
+  ;; The first time that a window-configuration change results in the buffer
+  ;; being displayed in a window, `so-long' will be called (with the window
+  ;; selected and the buffer set as current).  Because `so-long' removes this
+  ;; buffer-local hook value, it triggers once at most.
+  (add-hook 'window-configuration-change-hook #'so-long nil :local))
+
 ;;;###autoload
 (defun so-long (&optional action)
   "Invoke `so-long-action' and run `so-long-hook'.
@@ -1547,6 +1614,8 @@ argument, select the action to use interactively."
                (completing-read "Action (none): "
                                 (mapcar #'car so-long-action-alist)
                                 nil :require-match)))))
+  ;; Ensure that `so-long-deferred' only triggers `so-long' once (at most).
+  (remove-hook 'window-configuration-change-hook #'so-long :local)
   (unless so-long--calling
     (let ((so-long--calling t))
       (so-long--ensure-enabled)
@@ -1693,6 +1762,12 @@ or call the function `global-so-long-mode'.")
 (defun so-long-unload-function ()
   "Handler for `unload-feature'."
   (global-so-long-mode 0)
+  ;; Remove buffer-local `window-configuration-change-hook' values set by
+  ;; `so-long-deferred'.
+  (dolist (buf (buffer-list))
+    (with-current-buffer buf
+      (remove-hook 'window-configuration-change-hook #'so-long :local)))
+  ;; Return nil.  Refer to `unload-feature'.
   nil)
 
 
