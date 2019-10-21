@@ -1761,14 +1761,45 @@ or call the function `global-so-long-mode'.")
 
 (defun so-long-unload-function ()
   "Handler for `unload-feature'."
-  (global-so-long-mode 0)
-  ;; Remove buffer-local `window-configuration-change-hook' values set by
-  ;; `so-long-deferred'.
-  (dolist (buf (buffer-list))
-    (with-current-buffer buf
-      (remove-hook 'window-configuration-change-hook #'so-long :local)))
-  ;; Return nil.  Refer to `unload-feature'.
-  nil)
+  (condition-case err
+      (progn
+        (global-so-long-mode 0)
+        ;; Process existing buffers.
+        (dolist (buf (buffer-list))
+          (with-current-buffer buf
+            ;; Remove buffer-local `window-configuration-change-hook' values set
+            ;; by `so-long-deferred'.
+            (remove-hook 'window-configuration-change-hook #'so-long :local)
+            ;; Call `so-long-revert' in all buffers where so-long is active.
+            (when (bound-and-true-p so-long--active)
+              (so-long-revert))))
+        ;; Un-define our buffer-local variables, as `unload-feature' will not do
+        ;; this automatically.  We remove them from `unload-function-defs-list'
+        ;; as well, to prevent them being redefined.  n.b.: `so-long--active' is
+        ;; tested (above) using `bound-and-true-p' because that is one of the
+        ;; variables which we unbind (below); and if something subsequent to
+        ;; this handler signals an error, the user may need to call this again.
+        (defvar unload-function-defs-list)
+        (dolist (var '(so-long--active
+                       so-long--inhibited
+                       so-long-detected-p
+                       so-long-file-local-mode-function
+                       so-long-function
+                       so-long-minor-mode
+                       so-long-mode-abbrev-table
+                       so-long-mode-line-info
+                       so-long-mode-syntax-table
+                       so-long-original-values
+                       so-long-revert-function))
+          (makunbound var)
+          (setq unload-function-defs-list
+                (delq var unload-function-defs-list)))
+        ;; Return nil if unloading was successful.  Refer to `unload-feature'.
+        nil)
+    ;; If any error occurred, return non-nil.
+    (error (progn
+             (message "Error unloading so-long: %S %S" (car err) (cdr err))
+             t))))
 
 
 (provide 'so-long)
