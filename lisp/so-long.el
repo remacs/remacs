@@ -545,8 +545,8 @@ The specified function will be called with no arguments.  If it returns non-nil
 then `so-long' will be invoked.
 
 Defaults to `so-long-detected-long-line-p'."
-  :type '(choice (const so-long-detected-long-line-p)
-                 (function :tag "Custom function"))
+  :type '(radio (const so-long-detected-long-line-p)
+                (function :tag "Custom function"))
   :package-version '(so-long . "1.0")
   :group 'so-long)
 
