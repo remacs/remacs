@@ -2845,6 +2845,7 @@ See `edebug-behavior-alist' for implementations.")
 	    (goto-char edebug-buffer-outside-point))
 	  ;; ... nothing more.
 	  )
+      (edebug--overlay-breakpoints-remove (point-min) (point-max))
       ;; Could be an option to keep eval display up.
       (if edebug-eval-buffer (kill-buffer edebug-eval-buffer))
       (with-timeout-unsuspend edebug-with-timeout-suspend)
@@ -2944,7 +2945,6 @@ See `edebug-behavior-alist' for implementations.")
 	    (setq signal-hook-function #'edebug-signal)
 	    (if edebug-backtrace-buffer
 		(kill-buffer edebug-backtrace-buffer))
-            (edebug--overlay-breakpoints-remove (point-min) (point-max))
 
 	    ;; Remember selected-window after recursive-edit.
 	    ;;      (setq edebug-inside-window (selected-window))
