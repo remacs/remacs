@@ -1801,6 +1801,23 @@ or call the function `global-so-long-mode'.")
              (message "Error unloading so-long: %S %S" (car err) (cdr err))
              t))))
 
+;; Backwards-compatibility definitions.
+;;
+;; The following obsolete functions may exist in the user's customized hook
+;; values dating from versions < 1.0, so we need to ensure that such saved
+;; values will not trigger errors.
+(cl-flet ((ignore () nil))
+  (dolist (hookfunc '((so-long-inhibit-whitespace-mode . so-long-hook)
+                      (so-long-make-buffer-read-only . so-long-hook)
+                      (so-long-revert-buffer-read-only . so-long-revert-hook)
+                      (so-long-inhibit-global-hl-line-mode . so-long-mode-hook)))
+    (defalias (car hookfunc) #'ignore
+      (format "Obsolete function.  It now does nothing.
+
+If it appears in `%s', you should remove it."
+              (cdr hookfunc)))
+    (make-obsolete (car hookfunc) nil "so-long.el version 1.0")))
+
 
 (provide 'so-long)
 
