@@ -344,12 +344,8 @@ mix of different line endings."
     (while (re-search-forward "\r\n\\|\n\r" nil t)
       (replace-match "\n" nil nil))))
 
-(defsubst icalendar--rris (regexp rep string &optional fixedcase literal)
-  "Replace regular expression in string.
-Pass arguments REGEXP REP STRING FIXEDCASE LITERAL to
-`replace-regexp-in-string'."
-  (declare (obsolete replace-regexp-in-string "27.1"))
-  (replace-regexp-in-string regexp rep string fixedcase literal))
+(define-obsolete-function-alias 'icalendar--rris
+  'replace-regexp-in-string "27.1")
 
 (defun icalendar--read-element (invalue inparams)
   "Recursively read the next iCalendar element in the current buffer.
