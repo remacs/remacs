@@ -325,7 +325,7 @@
 
 ;; * Caveats
 ;; ---------
-;; The variables affecting the automated behavior of this library (such as
+;; The variables affecting the automated behaviour of this library (such as
 ;; `so-long-action') can be used as file- or dir-local values in Emacs 26+, but
 ;; not in previous versions of Emacs.  This is on account of improvements made
 ;; to `normal-mode' in 26.1, which altered the execution order with respect to
@@ -413,7 +413,7 @@ Has no effect if `global-so-long-mode' is not enabled.")
   "Non-nil while `set-auto-mode' is executing.")
 
 (defvar so-long--hack-local-variables-no-mode nil ; internal use
-  "Non-nil to prevent `hack-local-variables' applying a 'mode' variable.")
+  "Non-nil to prevent `hack-local-variables' applying a `mode' variable.")
 
 (defvar-local so-long--inhibited nil ; internal use
   "When non-nil, prevents the `set-auto-mode' advice from calling `so-long'.")
@@ -654,7 +654,7 @@ an example."
 ;; `provided-mode-derived-p' was added in 26.1
 (unless (fboundp 'provided-mode-derived-p)
   (defun provided-mode-derived-p (mode &rest modes)
-    "Return non-nil if MODE is derived from one of MODES.
+    "Non-nil if MODE is derived from one of MODES.
 Uses the `derived-mode-parent' property of the symbol to trace backwards.
 If you just want to check `major-mode', use `derived-mode-p'."
     (while (and (not (memq mode modes))
@@ -707,7 +707,7 @@ was established."
   "List of buffer-local minor modes to explicitly disable.
 
 The ones which were originally enabled in the buffer are disabled by calling
-them with the numeric argument 0.  Unknown modes, and modes which were were not
+them with the numeric argument 0.  Unknown modes, and modes which were not
 enabled, are ignored.
 
 This happens after any globalized minor modes have acted, so that buffer-local
@@ -742,8 +742,8 @@ If `so-long-revert' is subsequently invoked, then the variables are restored
 to their original states.
 
 The combination of `line-move-visual' (enabled) and `truncate-lines' (disabled)
-is important for avoiding performance hits when moving vertically between
-excessively long lines, as otherwise the full length of the line may need to be
+is important for maximising responsiveness when moving vertically within an
+extremely long line, as otherwise the full length of the line may need to be
 scanned to find the next position."
   :type '(alist :key-type (variable :tag "Variable")
                 :value-type (sexp :tag "Value"))
@@ -1174,11 +1174,11 @@ enabled, and `so-long-predicate' has detected that the file contains long lines.
 Many Emacs modes struggle with buffers which contain excessively long lines,
 and may consequently cause unacceptable performance issues.
 
-This is commonly on account of \"minified\" code (i.e., code compacted
-into the smallest file size possible, which often entails removing newlines
-should they not be strictly necessary).  These kinds of files are typically
-not intended to be edited, so not providing the usual editing mode in these
-cases will rarely be an issue.
+This is commonly on account of \"minified\" code (i.e. code that has been
+compacted into the smallest file size possible, which often entails removing
+newlines should they not be strictly necessary).  These kinds of files are
+typically not intended to be edited, so not providing the usual editing mode
+in these cases will rarely be an issue.
 
 This major mode disables any active minor modes listed in `so-long-minor-modes'
 for the current buffer, and buffer-local values are assigned to variables in
@@ -1189,7 +1189,7 @@ values), despite potential performance issues, type \\[so-long-revert].
 
 Use \\[so-long-commentary] for more information.
 
-Use \\[so-long-customize] to configure the behavior."
+Use \\[so-long-customize] to configure the behaviour."
   ;; Housekeeping.  `so-long-mode' might be invoked directly rather than via
   ;; `so-long', so replicate the necessary behaviours.  We could use this same
   ;; test in `so-long-after-change-major-mode' to run `so-long-hook', but that's
@@ -1344,7 +1344,7 @@ This is the `so-long-revert-function' for `so-long-mode'."
 
 A buffer-local \"downgrade\" from `so-long-mode' to `so-long-minor-mode'.
 
-When `so-long-function' is set to `so-long-mode', then we change it to to
+When `so-long-function' is set to `so-long-mode', then we change it to
 `turn-on-so-long-minor-mode' instead -- retaining the file-local major
 mode, but still doing everything else that `so-long-mode' would have done.
 `so-long-revert-function' is likewise updated.
@@ -1379,7 +1379,7 @@ and cannot be conveniently intercepted, so we are forced to replicate it here.
 
 This special-case code will ultimately be removed from Emacs, as it exists to
 deal with a deprecated feature; but until then we need to replicate it in order
-to inhibit our own behavior in the presence of a header comment `mode'
+to inhibit our own behaviour in the presence of a header comment `mode'
 declaration.
 
 If a file-local mode is detected in the header comment, then we call the
@@ -1626,9 +1626,9 @@ Equivalent to calling (global-so-long-mode 0)"
 Many Emacs modes struggle with buffers which contain excessively long lines,
 and may consequently cause unacceptable performance issues.
 
-This is commonly on account of \"minified\" code (i.e., code compacted into the
-smallest file size possible, which often entails removing newlines should they
-not be strictly necessary).
+This is commonly on account of \"minified\" code (i.e. code that has been
+compacted into the smallest file size possible, which often entails removing
+newlines should they not be strictly necessary).
 
 When such files are detected by `so-long-predicate', we invoke the selected
 `so-long-action' to mitigate potential performance problems in the buffer.
@@ -1695,13 +1695,33 @@ or call the function `global-so-long-mode'.")
   (global-so-long-mode 0)
   nil)
 
+
 (provide 'so-long)
 
 ;; Local Variables:
 ;; emacs-lisp-docstring-fill-column: 80
 ;; fill-column: 80
 ;; indent-tabs-mode: nil
+;; ispell-check-comments: exclusive
+;; ispell-local-dictionary: "british"
 ;; End:
+
+;; This library is extensively documented in British English, contrary to the
+;; preference for American English in Emacs.  I hope the benefits of the library
+;; will outweigh any discontent you may experience regarding the spelling (or
+;; that you find the spelling to be an agreeable bonus).  Certain standard Emacs
+;; terminology, and text quoted from elsewhere in Emacs, retains its original
+;; spelling.  The following LocalWords should result in no misspellings from
+;; M-x ispell-buffer (using aspell).
+
+; LocalWords:  LocalWords british ispell aspell hunspell emacs elisp el init dir
+; LocalWords:  customize customized customizing Customization globalized amongst
+; LocalWords:  initialized profiler boolean minified pre redisplay config keymap
+; LocalWords:  noerror selectable mapc sgml nxml hl flydiff defs arg Phil Sainty
+; LocalWords:  defadvice nadvice whitespace ie bos eos eobp origmode un Un cXXXr
+; LocalWords:  docstring auf wiedersehen longlines alist autoload Refactored Inc
+; LocalWords:  MERCHANTABILITY RET REGEXP VAR ELPA WS mitigations EmacsWiki eval
+; LocalWords:  setq rx filename filenames
 
 ;; So long, farewell, auf wiedersehen, goodbye
 ;; You have to go, this code is minified
