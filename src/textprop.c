@@ -564,7 +564,7 @@ If OBJECT is a string, POSITION is a 0-based index into it.
 If POSITION is at the end of OBJECT, the value is nil.
 
 If you want to display the text properties at point in a human-readable
-form, the `describe-text-properties' command can be used.  */)
+form, use the `describe-text-properties' command.  */)
   (Lisp_Object position, Lisp_Object object)
 {
   register INTERVAL i;
