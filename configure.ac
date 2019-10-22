@@ -1114,15 +1114,16 @@ AS_IF([test $gl_gcc_warnings = no],
   fi
 
   AC_DEFINE([GCC_LINT], [1], [Define to 1 if --enable-gcc-warnings.])
-  AC_DEFINE([GNULIB_PORTCHECK], [1], [enable some gnulib portability checks])
-  AH_VERBATIM([GNULIB_PORTCHECK_FORTIFY_SOURCE],
-  [/* Enable compile-time and run-time bounds-checking, and some warnings,
-      without upsetting glibc 2.15+. */
-   #if (defined GNULIB_PORTCHECK && !defined _FORTIFY_SOURCE \
-        && defined __OPTIMIZE__ && __OPTIMIZE__)
-   # define _FORTIFY_SOURCE 2
-   #endif
-  ])
+  AS_IF([test $gl_gcc_warnings = yes],
+    [AC_DEFINE([GNULIB_PORTCHECK], [1], [enable some gnulib portability checks])
+     AH_VERBATIM([GNULIB_PORTCHECK_FORTIFY_SOURCE],
+     [/* Enable compile-time and run-time bounds-checking, and some warnings,
+	 without upsetting glibc 2.15+. */
+      #if (defined GNULIB_PORTCHECK && !defined _FORTIFY_SOURCE \
+	   && defined __OPTIMIZE__ && __OPTIMIZE__)
+      # define _FORTIFY_SOURCE 2
+      #endif
+     ])])
  ])
 
 # clang is picky about these regardless of whether
