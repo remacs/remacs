@@ -4218,6 +4218,17 @@ to display.  The optional @var{face} names a face whose foreground
 color is used to display the bitmap; this face is automatically merged
 with the @code{fringe} face.
 
+  For instance, to display an arrow in the left fringe, using the
+@code{warning} face, you could say something like:
+
+@lisp
+(overlay-put
+ (make-overlay (point) (point))
+ 'before-string (propertize
+                 "x" 'display
+                 `(left-fringe right-arrow warning)))
+@end lisp
+
   Here is a list of the standard fringe bitmaps defined in Emacs, and
 how they are currently used in Emacs (via
 @code{fringe-indicator-alist} and @code{fringe-cursor-alist}):
