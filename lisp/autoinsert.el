@@ -32,7 +32,7 @@
 ;;  auto-mode-alist.
 ;;
 ;;  To use:
-;;     (add-hook 'find-file-hook 'auto-insert)
+;;     (auto-insert-mode t)
 ;;     setq auto-insert-directory to an appropriate slash-terminated value
 ;;
 ;;  You can also customize the variable `auto-insert-mode' to load the
