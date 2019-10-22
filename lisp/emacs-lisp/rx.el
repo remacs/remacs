@@ -210,7 +210,8 @@ each on the form (REGEXP . PRECEDENCE), returning (REGEXP . PRECEDENCE)."
                      'seq)))))))               ; seq ++ seq
 
 (defun rx--translate-seq (body)
-  "Translate a sequence of one or more rx items.  Return (REGEXP . PRECEDENCE)."
+  "Translate a sequence of zero or more rx items.
+Return (REGEXP . PRECEDENCE)."
   (if body
       (let* ((items (mapcar #'rx--translate body))
              (result (car items)))
@@ -231,7 +232,7 @@ each on the form (REGEXP . PRECEDENCE), returning (REGEXP . PRECEDENCE)."
   (null list))
 
 (defun rx--translate-or (body)
-  "Translate an or-pattern of one of more rx items.
+  "Translate an or-pattern of zero or more rx items.
 Return (REGEXP . PRECEDENCE)."
   ;; FIXME: Possible improvements:
   ;;
@@ -982,7 +983,7 @@ For extending the `rx' notation in FORM, use `rx-define' or `rx-let-eval'."
 (defmacro rx (&rest regexps)
   "Translate regular expressions REGEXPS in sexp form to a regexp string.
 Each argument is one of the forms below; RX is a subform, and RX... stands
-for one or more RXs.  For details, see Info node `(elisp) Rx Notation'.
+for zero or more RXs.  For details, see Info node `(elisp) Rx Notation'.
 See `rx-to-string' for the corresponding function.
 
 STRING         Match a literal string.
