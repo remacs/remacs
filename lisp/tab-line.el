@@ -113,6 +113,22 @@
     map)
   "Local keymap to close `tab-line-mode' window tabs.")
 
+(defvar tab-line-left-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [tab-line mouse-1] 'tab-line-hscroll-left)
+    (define-key map [tab-line mouse-2] 'tab-line-hscroll-left)
+    (define-key map "\C-m" 'tab-line-new-tab)
+    map)
+  "Local keymap to scroll `tab-line-mode' window tabs to the left.")
+
+(defvar tab-line-right-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [tab-line mouse-1] 'tab-line-hscroll-right)
+    (define-key map [tab-line mouse-2] 'tab-line-hscroll-right)
+    (define-key map "\C-m" 'tab-line-new-tab)
+    map)
+  "Local keymap to scroll `tab-line-mode' window tabs to the right.")
+
 
 (defcustom tab-line-new-tab-choice t
   "Defines what to show in a new tab.
@@ -164,22 +180,60 @@ If nil, don't show it at all."
               'help-echo "Click to close tab")
   "Button for closing the clicked tab.")
 
+(defvar tab-line-left-button
+  (propertize " <"
+              'display `(image :type xpm
+                               :file "tabs/left-arrow.xpm"
+                               :margin (2 . 0)
+                               :ascent center)
+              'keymap tab-line-left-map
+              'mouse-face 'tab-line-highlight
+              'help-echo "Click to scroll left")
+  "Button for scrolling horizontally to the left.")
+
+(defvar tab-line-right-button
+  (propertize "> "
+              'display `(image :type xpm
+                               :file "tabs/right-arrow.xpm"
+                               :margin (2 . 0)
+                               :ascent center)
+              'keymap tab-line-right-map
+              'mouse-face 'tab-line-highlight
+              'help-echo "Click to scroll right")
+  "Button for scrolling horizontally to the right.")
+
 (defvar tab-line-separator nil)
 
 (defvar tab-line-tab-name-ellipsis
   (if (char-displayable-p ?…) "…" "..."))
 
 
-(defvar tab-line-tab-name-function #'tab-line-tab-name
+(defcustom tab-line-tab-name-function #'tab-line-tab-name-buffer
   "Function to get a tab name.
 Function gets two arguments: tab to get name for and a list of tabs
-to display.  By default, use function `tab-line-tab-name'.")
+to display.  By default, use function `tab-line-tab-name'."
+  :type '(choice (const :tag "Buffer name"
+                        tab-line-tab-name-buffer)
+                 (const :tag "Truncated buffer name"
+                        tab-line-tab-name-truncated-buffer)
+                 (function  :tag "Function"))
+  :initialize 'custom-initialize-default
+  :set (lambda (sym val)
+         (set-default sym val)
+         (force-mode-line-update))
+  :group 'tab-line
+  :version "27.1")
 
-(defun tab-line-tab-name (buffer &optional buffers)
+(defun tab-line-tab-name-buffer (buffer &optional _buffers)
   "Generate tab name from BUFFER.
 Reduce tab width proportionally to space taken by other tabs.
 This function can be overridden by changing the default value of the
 variable `tab-line-tab-name-function'."
+  (buffer-name buffer))
+
+(defun tab-line-tab-name-truncated-buffer (buffer &optional buffers)
+  "Generate tab name from BUFFER.
+Reduce tab width proportionally to space taken by other tabs."
   (let ((tab-name (buffer-name buffer))
         (limit (when buffers
                  (max 1 (- (/ (window-width) (length buffers)) 3)))))
@@ -189,8 +243,9 @@ variable `tab-line-tab-name-function'."
                                             tab-line-tab-name-ellipsis)
                   'help-echo tab-name))))
 
-(defvar tab-line-tabs-limit 15
-  "Maximum number of buffer tabs displayed in the tab line.")
+(defvar tab-line-tabs-limit nil
+  "Maximum number of buffer tabs displayed in the tab line.
+If nil, no limit.")
 
 (defvar tab-line-tabs-function #'tab-line-tabs
   "Function to get a list of tabs to display in the tab line.
@@ -213,51 +268,89 @@ variable `tab-line-tabs-function'."
                                    (mapcar #'car (window-prev-buffers window))))
          (prev-buffers (seq-filter #'buffer-live-p prev-buffers))
          ;; Remove next-buffers from prev-buffers
-         (prev-buffers (seq-difference prev-buffers next-buffers))
-         (half-limit (/ tab-line-tabs-limit 2))
-         (prev-buffers-limit
-          (if (> (length prev-buffers) half-limit)
-              (if (> (length next-buffers) half-limit)
-                  half-limit
-                (+ half-limit (- half-limit (length next-buffers))))
-            (length prev-buffers)))
-         (next-buffers-limit
-          (- tab-line-tabs-limit prev-buffers-limit))
-         (buffer-tabs
+         (prev-buffers (seq-difference prev-buffers next-buffers)))
+    (if (natnump tab-line-tabs-limit)
+        (let* ((half-limit (/ tab-line-tabs-limit 2))
+               (prev-buffers-limit
+                (if (> (length prev-buffers) half-limit)
+                    (if (> (length next-buffers) half-limit)
+                        half-limit
+                      (+ half-limit (- half-limit (length next-buffers))))
+                  (length prev-buffers)))
+               (next-buffers-limit
+                (- tab-line-tabs-limit prev-buffers-limit)))
           (append (reverse (seq-take prev-buffers prev-buffers-limit))
                   (list buffer)
-                  (seq-take next-buffers next-buffers-limit))))
-    buffer-tabs))
+                  (seq-take next-buffers next-buffers-limit)))
+      (append (reverse prev-buffers)
+              (list buffer)
+              next-buffers))))
 
 (defun tab-line-format ()
   "Template for displaying tab line for selected window."
   (let* ((window (selected-window))
          (selected-buffer (window-buffer window))
          (tabs (funcall tab-line-tabs-function))
-         (separator (or tab-line-separator (if window-system " " "|"))))
+         (separator (or tab-line-separator (if window-system " " "|")))
+         (hscroll (window-parameter nil 'tab-line-hscroll))
+         (strings
+          (mapcar
+           (lambda (tab)
+             (concat
+              separator
+              (apply 'propertize
+                     (concat (propertize
+                              (funcall tab-line-tab-name-function tab tabs)
+                              'keymap tab-line-tab-map)
+                             (or (and tab-line-close-button-show
+                                      (not (eq tab-line-close-button-show
+                                               (if (eq tab selected-buffer)
+                                                   'non-selected
+                                                 'selected)))
+                                      tab-line-close-button) ""))
+                     `(
+                       tab ,tab
+                       face ,(if (eq tab selected-buffer)
+                                 'tab-line-tab
+                               'tab-line-tab-inactive)
+                       mouse-face tab-line-highlight))))
+           tabs)))
     (append
-     (mapcar
-      (lambda (tab)
-        (concat
-         separator
-         (apply 'propertize (concat (propertize
-                                     (funcall tab-line-tab-name-function tab tabs)
-                                     'keymap tab-line-tab-map)
-                                    (or (and tab-line-close-button-show
-                                             (not (eq tab-line-close-button-show
-                                                      (if (eq tab selected-buffer)
-                                                          'non-selected
-                                                        'selected)))
-                                             tab-line-close-button) ""))
-                `(
-                  tab ,tab
-                  face ,(if (eq tab selected-buffer)
-                            'tab-line-tab
-                          'tab-line-tab-inactive)
-                  mouse-face tab-line-highlight))))
-      tabs)
+     (list separator
+           (when (and (natnump hscroll) (> hscroll 0))
+             tab-line-left-button)
+           (when (if (natnump hscroll)
+                     (< hscroll (1- (length strings)))
+                   (> (length strings) 1))
+               tab-line-right-button))
+     (if hscroll (nthcdr hscroll strings) strings)
      (list (concat separator (when tab-line-new-tab-choice
                                tab-line-new-button))))))
+
+
+(defun tab-line-hscroll (&optional arg window)
+  (let* ((hscroll (window-parameter window 'tab-line-hscroll))
+         (tabs (if window
+                   (with-selected-window window (funcall tab-line-tabs-function))
+                 (funcall tab-line-tabs-function))))
+    (set-window-parameter
+     window 'tab-line-hscroll
+     (max 0 (min (+ (or hscroll 0) (or arg 1))
+                 (1- (length tabs)))))
+    (when window
+      (force-mode-line-update t))))
+
+(defun tab-line-hscroll-right (&optional arg mouse-event)
+  (interactive (list current-prefix-arg last-nonmenu-event))
+  (let ((window (and (listp mouse-event) (posn-window (event-start mouse-event)))))
+    (tab-line-hscroll arg window)
+    (force-mode-line-update window)))
+
+(defun tab-line-hscroll-left (&optional arg mouse-event)
+  (interactive (list current-prefix-arg last-nonmenu-event))
+  (let ((window (and (listp mouse-event) (posn-window (event-start mouse-event)))))
+    (tab-line-hscroll (- (or arg 1)) window)
+    (force-mode-line-update window)))
 
 
 (defun tab-line-new-tab (&optional mouse-event)
@@ -316,6 +409,7 @@ Its effect is the same as using the `next-buffer' command
   (switch-to-next-buffer
    (and (listp mouse-event) (posn-window (event-start mouse-event)))))
 
+
 (defcustom tab-line-close-tab-action 'bury-buffer
   "Defines what to do on closing the tab.
 If `bury-buffer', put the tab's buffer at the end of the list of all
@@ -359,10 +453,15 @@ from the tab line."
                                   '(:eval (tab-line-format)))))
 
 
-(global-set-key [tab-line mouse-4] 'tab-line-switch-to-prev-tab)
-(global-set-key [tab-line mouse-5] 'tab-line-switch-to-next-tab)
-(global-set-key [tab-line wheel-up] 'tab-line-switch-to-prev-tab)
-(global-set-key [tab-line wheel-down] 'tab-line-switch-to-next-tab)
+(global-set-key [tab-line mouse-4]    'tab-line-hscroll-left)
+(global-set-key [tab-line mouse-5]    'tab-line-hscroll-right)
+(global-set-key [tab-line wheel-up]   'tab-line-hscroll-left)
+(global-set-key [tab-line wheel-down] 'tab-line-hscroll-right)
+
+(global-set-key [tab-line C-mouse-4]    'tab-line-switch-to-prev-tab)
+(global-set-key [tab-line C-mouse-5]    'tab-line-switch-to-next-tab)
+(global-set-key [tab-line C-wheel-up]   'tab-line-switch-to-prev-tab)
+(global-set-key [tab-line C-wheel-down] 'tab-line-switch-to-next-tab)
 
 
 (provide 'tab-line)
