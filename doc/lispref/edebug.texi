@@ -705,7 +705,9 @@ Evaluate expression @var{exp} in the context of Edebug itself
 
 @item C-x C-e
 Evaluate the expression before point, in the context outside of Edebug
-(@code{edebug-eval-last-sexp}).
+(@code{edebug-eval-last-sexp}).  If given a zero prefix (for instance
+@kbd{C-u 0 C-x C-e}), don't shorten long items (like strings and
+lists).
 @end table
 
 @cindex lexical binding (Edebug)
@@ -735,8 +737,10 @@ Manual}) as well as these special commands:
 
 @table @kbd
 @item C-j
-Evaluate the expression before point, in the outside context, and insert
-the value in the buffer (@code{edebug-eval-print-last-sexp}).
+Evaluate the expression before point, in the outside context, and
+insert the value in the buffer (@code{edebug-eval-print-last-sexp}).
+If given a zero prefix (for instance @kbd{C-u 0 C-j}), don't shorten
+long items (like strings and lists).
 
 @item C-x C-e
 Evaluate the expression before point, in the context outside of Edebug
