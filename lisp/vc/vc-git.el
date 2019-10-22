@@ -650,17 +650,34 @@ or an empty string if none."
     (define-key map "S" 'vc-git-stash-snapshot)
     map))
 
-(defun vc-git-make-stash-button ()
-    (make-text-button "Show/hide stashes" nil
-                      'action
-                      (lambda (&rest _ignore)
-                          (let* ((inhibit-read-only t)
-                                 (start (next-single-property-change (point-min) 'vc-git-hideable))
-                                 (end (next-single-property-change start 'vc-git-hideable)))
-                            (add-text-properties
-                             start end
-                             `(invisible ,(not (get-text-property start 'invisible))))))
-                      'help-echo "mouse-2, RET: Show/hide stashes"))
+(defun vc-git--make-button-text (show count1 count2)
+  (if show
+      (format "Show all stashes (%s)" count2)
+    (if (= count1 count2)
+        (format "Hide all stashes (%s)" count2)
+      (format "Show %s stash%s (of %s)" count1 (if (= count1 1) "" "es") count2))))
+
+(defun vc-git-make-stash-button (show count1 count2)
+  (let ((orig-text (vc-git--make-button-text show count1 count2)))
+    (make-text-button
+     orig-text nil
+     'action
+     (lambda (counts)
+       (let* ((inhibit-read-only t)
+              (start (next-single-property-change
+                      (point-min) 'vc-git-hideable))
+              (end (next-single-property-change
+                    start 'vc-git-hideable))
+              (state (get-text-property start 'invisible)))
+         (add-text-properties
+          start end
+          `(invisible ,(not state)))
+         (save-excursion
+           (delete-region (button-start (point)) (button-end (point)))
+           (insert (vc-git-make-stash-button
+                    (not state) (car counts) (cdr counts))))))
+     'button-data (cons count1 count2)
+     'help-echo "mouse-2, RET: Show/hide stashes")))
 
 (defvar vc-git-stash-menu-map
   (let ((map (make-sparse-keymap "Git Stash")))
@@ -707,14 +724,18 @@ or an empty string if none."
 	    (setq remote-url (match-string 1 remote-url))))
       (setq branch "not (detached HEAD)"))
     (when stash-list
-      (let* ((limit
+      (let* ((len (length stash-list))
+             (limit
               (if (integerp vc-git-show-stash)
-                  (min vc-git-show-stash (length stash-list))
-                (length stash-list)))
+                  (min vc-git-show-stash len)
+                len))
              (shown-stashes (cl-subseq stash-list 0 limit))
              (hidden-stashes (cl-subseq stash-list limit))
-             (all-hideable (eq vc-git-show-stash t)))
-        (setq stash-button (vc-git-make-stash-button)
+             (all-hideable (or (eq vc-git-show-stash t)
+                               (<= len vc-git-show-stash))))
+        (setq stash-button (if all-hideable
+                               (vc-git-make-stash-button nil limit limit)
+                             (vc-git-make-stash-button t vc-git-show-stash len))
               stash-string
               (concat
                (when shown-stashes
