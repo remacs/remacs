@@ -171,11 +171,16 @@ make some customization fail to work.
 
 +++
 ** Installed packages are now activated *before* loading the init file.
-This is part of a change intended to eliminate the behavior of
-package.el inserting a call to 'package-initialize' into the init
-file, which was previously done when Emacs was started.  As a result
-of this change, it is no longer necessary to call 'package-initialize'
-in your init file.
+As a result of this change, it is no longer necessary to call
+'package-initialize' in your init file.
+
+Previously, a call to 'package-initialize' was automatically inserted
+into the init file when Emacs was started.  This call can now safely
+be removed.  Alternatively, if you want to ensure that your init file
+is still compatible with earlier versions of Emacs, change it to:
+
+(when (version< emacs-version "27.1")
+  (package-initialize))
 
 However, if your init file changes the values of 'package-load-list'
 or 'package-user-dir', or sets 'package-enable-at-startup' to nil then
