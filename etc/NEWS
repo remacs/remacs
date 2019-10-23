@@ -1234,6 +1234,13 @@ fail.
 ** erc
 
 ---
+*** New hook 'erc-insert-done-hook'.
+This hook is called after strings have been inserted into the buffer,
+and is free to alter point and window configurations, as it's not
+called from inside a 'save-excursion', as opposed to
+'erc-insert-post-hook'.
+
+---
 *** 'erc-button-google-url' has been renamed to 'erc-button-search-url'
 and its value has been changed to Duck Duck Go.
 

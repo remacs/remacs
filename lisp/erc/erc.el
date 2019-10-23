@@ -1097,6 +1097,14 @@ At this point, all modifications from prior hook functions are done."
              erc-make-read-only
              erc-save-buffer-in-logs))
 
+(defcustom erc-insert-done-hook nil
+  "This hook is called after inserting strings into the buffer.
+This hook is not called from inside `save-excursion' and should
+preserve point if needed."
+  :group 'erc-hooks
+  :version "27.1"
+  :type 'hook)
+
 (defcustom erc-send-modify-hook nil
   "Sending hook for functions that will change the text's appearance.
 This hook is called just after `erc-send-pre-hook' when the values
@@ -2419,6 +2427,7 @@ If STRING is nil, the function does nothing."
                   (when erc-remove-parsed-property
                     (remove-text-properties (point-min) (point-max)
                                             '(erc-parsed nil))))))))
+        (run-hooks 'erc-insert-done-hook)
         (erc-update-undo-list (- (or (marker-position erc-insert-marker)
                                      (point-max))
                                  insert-position))))))
