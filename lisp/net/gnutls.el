@@ -137,7 +137,8 @@ network security is handled at a higher level via
 node `(emacs) Network Security'."
   :type '(choice (const :tag "Use default value" nil)
                  (integer :tag "Number of bits" 2048))
-  :group 'gnutls)
+  :group 'gnutls
+  :version "27.1")
 
 (defcustom gnutls-crlfiles
   '(
