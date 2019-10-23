@@ -561,9 +561,11 @@ If `rightmost', create as the last tab."
   :group 'tab-bar
   :version "27.1")
 
-(defun tab-bar-new-tab ()
-  "Add a new tab at the position specified by `tab-bar-new-tab-to'."
-  (interactive)
+(defun tab-bar-new-tab-to (&optional to-index)
+  "Add a new tab at the absolute position TO-INDEX.
+TO-INDEX counts from 1.  If no TO-INDEX is specified, then add
+a new tab at the position specified by `tab-bar-new-tab-to'."
+  (interactive "P")
   (let* ((tabs (funcall tab-bar-tabs-function))
          (from-index (tab-bar--current-tab-index tabs))
          (from-tab (tab-bar--tab)))
@@ -585,11 +587,12 @@ If `rightmost', create as the last tab."
     (when from-index
       (setf (nth from-index tabs) from-tab))
     (let ((to-tab (tab-bar--current-tab))
-          (to-index (pcase tab-bar-new-tab-to
-                      ('leftmost 0)
-                      ('rightmost (length tabs))
-                      ('left (1- (or from-index 1)))
-                      ('right (1+ (or from-index 0))))))
+          (to-index (or (if to-index (1- to-index))
+                        (pcase tab-bar-new-tab-to
+                          ('leftmost 0)
+                          ('rightmost (length tabs))
+                          ('left (1- (or from-index 1)))
+                          ('right (1+ (or from-index 0)))))))
       (setq to-index (max 0 (min (or to-index 0) (length tabs))))
       (cl-pushnew to-tab (nthcdr to-index tabs))
       (when (eq to-index 0)
@@ -605,6 +608,18 @@ If `rightmost', create as the last tab."
     (force-mode-line-update)
     (unless tab-bar-mode
       (message "Added new tab at %s" tab-bar-new-tab-to))))
+
+(defun tab-bar-new-tab (&optional arg)
+  "Create a new tab ARG positions to the right.
+If a negative ARG, create a new tab ARG positions to the left.
+If ARG is zero, create a new tab in place of the current tab."
+  (interactive "P")
+  (if arg
+      (let* ((tabs (funcall tab-bar-tabs-function))
+             (from-index (or (tab-bar--current-tab-index tabs) 0))
+             (to-index (+ from-index (prefix-numeric-value arg))))
+        (tab-bar-new-tab-to (1+ to-index)))
+    (tab-bar-new-tab-to)))
 
 
 (defvar tab-bar-closed-tabs nil
@@ -771,6 +786,7 @@ function `tab-bar-tab-name-function'."
 ;;; Short aliases
 
 (defalias 'tab-new         'tab-bar-new-tab)
+(defalias 'tab-new-to      'tab-bar-new-tab-to)
 (defalias 'tab-close       'tab-bar-close-tab)
 (defalias 'tab-close-other 'tab-bar-close-other-tabs)
 (defalias 'tab-undo        'tab-bar-undo-close-tab)
