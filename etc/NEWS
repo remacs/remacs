@@ -1142,6 +1142,10 @@ Of course it will still find it if you have it in "~/.ecompleterc".
 
 ** Gnus
 
+---
+*** 'mm-uu-diff-groups-regexp' now defaults to matching all groups,
+which means that "git am" diffs are recognised everywhere.
+
 +++
 *** Two new Gnus summary mode navigation commands have been added,
 bound to the '[' and ']' keys: 'gnus-summary-prev-unseen-article' and

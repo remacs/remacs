@@ -77,10 +77,9 @@ This can be either \"inline\" or \"attachment\".")
   :type 'regexp
   :group 'gnus-article-mime)
 
-(defcustom mm-uu-diff-groups-regexp
-  "\\(gmane\\|gnu\\)\\..*\\(diff\\|commit\\|cvs\\|bug\\|devel\\)"
+(defcustom mm-uu-diff-groups-regexp "."
   "Regexp matching diff groups."
-  :version "22.1"
+  :version "27.1"
   :type 'regexp
   :group 'gnus-article-mime)
 
