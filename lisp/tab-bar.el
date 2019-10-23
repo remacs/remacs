@@ -525,15 +525,18 @@ to the numeric argument.  ARG counts from 1."
 (defalias 'tab-bar-select-tab-by-name 'tab-bar-switch-to-tab)
 
 
-(defun tab-bar-swap-tabs (to-index &optional from-index)
-  "Exchange positions of two tabs referred by FROM-INDEX and TO-INDEX.
+(defun tab-bar-move-tab-to (to-index &optional from-index)
+  "Move tab from FROM-INDEX position to new position at TO-INDEX.
 FROM-INDEX defaults to the current tab index.
 FROM-INDEX and TO-INDEX count from 1."
   (interactive "P")
   (let* ((tabs (funcall tab-bar-tabs-function))
-         (from-index (or from-index (1+ (tab-bar--current-tab-index tabs)))))
-    (cl-rotatef (nth (1- from-index) tabs)
-                (nth (1- to-index) tabs))))
+         (from-index (or from-index (1+ (tab-bar--current-tab-index tabs))))
+         (from-tab (nth (1- from-index) tabs))
+         (to-index (max 0 (min (1- to-index) (1- (length tabs))))))
+    (setq tabs (delq from-tab tabs))
+    (cl-pushnew from-tab (nthcdr to-index tabs))
+    (set-frame-parameter nil 'tabs tabs)))
 
 (defun tab-bar-move-tab (&optional arg)
   "Move the current tab ARG positions to the right.
@@ -542,7 +545,7 @@ If a negative ARG, move the current tab ARG positions to the left."
   (let* ((tabs (funcall tab-bar-tabs-function))
          (from-index (or (tab-bar--current-tab-index tabs) 0))
          (to-index (mod (+ from-index arg) (length tabs))))
-    (tab-bar-swap-tabs (1+ to-index) (1+ from-index))))
+    (tab-bar-move-tab-to (1+ to-index) (1+ from-index))))
 
 
 (defcustom tab-bar-new-tab-to 'right
@@ -774,8 +777,8 @@ function `tab-bar-tab-name-function'."
 (defalias 'tab-select      'tab-bar-select-tab)
 (defalias 'tab-next        'tab-bar-switch-to-next-tab)
 (defalias 'tab-previous    'tab-bar-switch-to-prev-tab)
-(defalias 'tab-swap        'tab-bar-swap-tabs)
 (defalias 'tab-move        'tab-bar-move-tab)
+(defalias 'tab-move-to     'tab-bar-move-tab-to)
 (defalias 'tab-rename      'tab-bar-rename-tab)
 (defalias 'tab-list        'tab-bar-list)
 
