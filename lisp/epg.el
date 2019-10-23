@@ -420,7 +420,7 @@ callback data (if any)."
      (if user-id
 	 (concat " "
 		 (if (stringp user-id)
-		     user-id
+		     (epg--decode-percent-escape-as-utf-8 user-id)
 		   (epg-decode-dn user-id)))
        "")
      (if (epg-signature-validity signature)
