@@ -3207,23 +3207,12 @@ You can tell Emacs the shell's current directory with the command
 @itemize @bullet
 
 @item
-The @file{movemail} incident.  (No, this is not a risk.)
+Third party packages.
 
-In his book @cite{The Cuckoo's Egg}, Cliff Stoll describes this in
-chapter 4.  The site at LBL had installed the @file{/etc/movemail}
-program setuid root.  (As of version 19, @file{movemail} is in your
-architecture-specific directory; type @kbd{C-h v exec-directory
-@key{RET}} to see what it is.)  Since @code{movemail} had not been
-designed for this situation, a security hole was created and users could
-get root privileges.
-
-@code{movemail} has since been changed so that this security hole will
-not exist, even if it is installed setuid root.  However,
-@code{movemail} no longer needs to be installed setuid root, which
-should eliminate this particular risk.
-
-We have heard unverified reports that the 1988 Internet worm took
-advantage of this configuration problem.
+Any package you install into Emacs can run arbtitrary code with the
+same privileges as the Emacs process itself.  Be aware of this when
+you use the package system (e.g. @code{M-x list-packages}) with third
+party archives.  Use only third parties that you can trust!
 
 @item
 The @code{file-local-variable} feature.  (Yes, a risk, but easy to
