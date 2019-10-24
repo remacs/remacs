@@ -828,7 +828,13 @@ that warning is not logged.
 
 Sometimes, you may wish to avoid showing a warning while a command is
 running, and only show it only after the end of the command.  You can
-use the variable @code{delayed-warnings-list} for this.
+use the function @code{delay-warning} for this.
+
+@defun delay-warning type message &optional level buffer-name
+This function is the delayed counterpart to @code{display-warning}
+(@pxref{Warning Basics}), and it is called with the same arguments.
+The warning message is queued into @code{delayed-warnings-list}.
+@end defun
 
 @defvar delayed-warnings-list
 The value of this variable is a list of warnings to be displayed after
@@ -840,8 +846,8 @@ the current command has finished.  Each element must be a list
 
 @noindent
 with the same form, and the same meanings, as the argument list of
-@code{display-warning} (@pxref{Warning Basics}).  Immediately after
-running @code{post-command-hook} (@pxref{Command Overview}), the Emacs
+@code{display-warning}.  Immediately after running
+@code{post-command-hook} (@pxref{Command Overview}), the Emacs
 command loop displays all the warnings specified by this variable,
 then resets it to @code{nil}.
 @end defvar
