@@ -68,6 +68,8 @@ extern char *tzname[];
 #include <string.h>
 #include <stdbool.h>
 
+#include <intprops.h>
+
 #ifndef FALLTHROUGH
 # if __GNUC__ < 7
 #  define FALLTHROUGH ((void) 0)
@@ -112,13 +114,6 @@ extern char *tzname[];
   (-1 >> 1 == -1        \
    ? (a) >> (b)         \
    : (a) / (1 << (b)) - ((a) % (1 << (b)) < 0))
-
-/* Bound on length of the string representing an integer type or expression T.
-   Subtract 1 for the sign bit if t is signed; log10 (2.0) < 146/485;
-   add 1 for integer division truncation; add 1 more for a minus sign
-   if needed.  */
-#define INT_STRLEN_BOUND(t) \
-  ((sizeof (t) * CHAR_BIT - 1) * 146 / 485 + 2)
 
 #define TM_YEAR_BASE 1900
 
@@ -704,15 +699,9 @@ __strftime_internal (STREAM_OR_CHAR_T *s, STRFTIME_ARG (size_t maxsize)
           width = 0;
           do
             {
-              if (width > INT_MAX / 10
-                  || (width == INT_MAX / 10 && *f - L_('0') > INT_MAX % 10))
-                /* Avoid overflow.  */
+              if (INT_MULTIPLY_WRAPV (width, 10, &width)
+                  || INT_ADD_WRAPV (width, *f - L_('0'), &width))
                 width = INT_MAX;
-              else
-                {
-                  width *= 10;
-                  width += *f - L_('0');
-                }
               ++f;
             }
           while (ISDIGIT (*f));

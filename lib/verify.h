@@ -56,16 +56,6 @@
 # undef _Static_assert
 #endif
 
-/* If the compiler lacks __has_builtin, define it well enough for this
-   source file only.  */
-#ifndef __has_builtin
-# define __has_builtin(x) _GL_HAS_##x
-# define _GL_HAS___builtin_unreachable (4 < __GNUC__ + (5 <= __GNUC_MINOR__))
-# define _GL_HAS___builtin_trap \
-    (3 < __GNUC__ + (3 < __GNUC_MINOR__ + (4 <= __GNUC_PATCHLEVEL__)))
-# define _GL_TEMPDEF___has_builtin
-#endif
-
 /* Each of these macros verifies that its argument R is nonzero.  To
    be portable, R should be an integer constant expression.  Unlike
    assert (R), there is no run-time overhead.
@@ -243,6 +233,22 @@ template <int w>
 
 /* @assert.h omit start@  */
 
+#if 3 < __GNUC__ + (3 < __GNUC_MINOR__ + (4 <= __GNUC_PATCHLEVEL__))
+# define _GL_HAS_BUILTIN_TRAP 1
+#elif defined __has_builtin
+# define _GL_HAS_BUILTIN_TRAP __has_builtin (__builtin_trap)
+#else
+# define _GL_HAS_BUILTIN_TRAP 0
+#endif
+
+#if 4 < __GNUC__ + (5 <= __GNUC_MINOR__)
+# define _GL_HAS_BUILTIN_UNREACHABLE 1
+#elif defined __has_builtin
+# define _GL_HAS_BUILTIN_UNREACHABLE __has_builtin (__builtin_unreachable)
+#else
+# define _GL_HAS_BUILTIN_UNREACHABLE 0
+#endif
+
 /* Each of these macros verifies that its argument R is nonzero.  To
    be portable, R should be an integer constant expression.  Unlike
    assert (R), there is no run-time overhead.
@@ -276,11 +282,11 @@ template <int w>
    can suffer if R uses hard-to-optimize features such as function
    calls not inlined by the compiler.  */
 
-#if __has_builtin (__builtin_unreachable)
+#if _GL_HAS_BUILTIN_UNREACHABLE
 # define assume(R) ((R) ? (void) 0 : __builtin_unreachable ())
 #elif 1200 <= _MSC_VER
 # define assume(R) __assume (R)
-#elif (defined GCC_LINT || defined lint) && __has_builtin (__builtin_trap)
+#elif (defined GCC_LINT || defined lint) && _GL_HAS_BUILTIN_TRAP
   /* Doing it this way helps various packages when configured with
      --enable-gcc-warnings, which compiles with -Dlint.  It's nicer
      when 'assume' silences warnings even with older GCCs.  */
@@ -288,13 +294,6 @@ template <int w>
 #else
   /* Some tools grok NOTREACHED, e.g., Oracle Studio 12.6.  */
 # define assume(R) ((R) ? (void) 0 : /*NOTREACHED*/ (void) 0)
-#endif
-
-#ifdef _GL_TEMPDEF___has_builtin
-# undef __has_builtin
-# undef _GL_HAS___builtin_unreachable
-# undef _GL_HAS___builtin_trap
-# undef _GL_TEMPDEF___has_builtin
 #endif
 
 /* @assert.h omit end@  */

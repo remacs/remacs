@@ -22,18 +22,6 @@
 
 #include <limits.h>
 
-/* If the compiler lacks __has_builtin, define it well enough for this
-   source file only.  */
-#ifndef __has_builtin
-# define __has_builtin(x) _GL_HAS_##x
-# if 5 <= __GNUC__ && !defined __ICC
-#  define _GL_HAS___builtin_add_overflow 1
-# else
-#  define _GL_HAS___builtin_add_overflow 0
-# endif
-# define _GL_TEMPDEF___has_builtin
-#endif
-
 /* Return a value with the common real type of E and V and the value of V.
    Do not evaluate E.  */
 #define _GL_INT_CONVERT(e, v) ((1 ? 0 : (e)) + (v))
@@ -234,8 +222,10 @@
 
 /* True if __builtin_add_overflow (A, B, P) and __builtin_sub_overflow
    (A, B, P) work when P is non-null.  */
-#if __has_builtin (__builtin_add_overflow)
+#if 5 <= __GNUC__ && !defined __ICC
 # define _GL_HAS_BUILTIN_ADD_OVERFLOW 1
+#elif defined __has_builtin
+# define _GL_HAS_BUILTIN_ADD_OVERFLOW __has_builtin (__builtin_add_overflow)
 #else
 # define _GL_HAS_BUILTIN_ADD_OVERFLOW 0
 #endif
@@ -585,11 +575,5 @@
          ? (EXPR_SIGNED (b) ? 0 < (b) + (tmin) : -1 - (tmin) < (b) - 1) \
          : (tmin) / (a) < (b)) \
       : (tmax) / (b) < (a)))
-
-#ifdef _GL_TEMPDEF___has_builtin
-# undef __has_builtin
-# undef _GL_HAS___builtin_add_overflow
-# undef _GL_TEMPDEF___has_builtin
-#endif
 
 #endif /* _GL_INTPROPS_H */
