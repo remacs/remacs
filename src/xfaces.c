@@ -2052,23 +2052,48 @@ merge_face_heights (Lisp_Object from, Lisp_Object to, Lisp_Object invalid)
    be 0 when called from other places.  If window W is non-NULL, use W
    to interpret face specifications. */
 static void
-merge_face_vectors (struct window *w,
-                    struct frame *f, Lisp_Object *from, Lisp_Object *to,
-		    struct named_merge_point *named_merge_points)
+merge_face_vectors (struct window *w, struct frame *f,
+                    const Lisp_Object *from, Lisp_Object *to,
+                    struct named_merge_point *named_merge_points,
+                    enum lface_attribute_index attr_filter)
 {
   int i;
   Lisp_Object font = Qnil;
+
+  eassert (attr_filter <  LFACE_VECTOR_SIZE);
+
+  /* When FROM sets attr_filter to nil explicitly we don't merge it.  */
+  if (attr_filter > 0 && NILP(from[attr_filter]))
+    return;
 
   /* If FROM inherits from some other faces, merge their attributes into
      TO before merging FROM's direct attributes.  Note that an :inherit
      attribute of `unspecified' is the same as one of nil; we never
      merge :inherit attributes, so nil is more correct, but lots of
-     other code uses `unspecified' as a generic value for face attributes. */
-  if (!UNSPECIFIEDP (from[LFACE_INHERIT_INDEX])
-      && !NILP (from[LFACE_INHERIT_INDEX]))
-    merge_face_ref (w, f, from[LFACE_INHERIT_INDEX],
-                    to, false, named_merge_points,
-		    0);
+     other code uses `unspecified' as a generic value for face
+     attributes. */
+  if (!NILP (from[LFACE_INHERIT_INDEX])
+      && !UNSPECIFIEDP (from[LFACE_INHERIT_INDEX]))
+    {
+      if (attr_filter == 0                      /* No Filter  */
+          || !UNSPECIFIEDP (from[attr_filter])) /* FROM specifies filter  */
+	merge_face_ref (w, f, from[LFACE_INHERIT_INDEX],
+	                to, false, named_merge_points, 0);
+      else if (UNSPECIFIEDP (from[attr_filter])) /* FROM don't specify filter */
+	{
+	  Lisp_Object tmp[LFACE_VECTOR_SIZE];
+	  memcpy (tmp, to, LFACE_VECTOR_SIZE * sizeof *tmp);
+
+	  merge_face_ref (w, f, from[LFACE_INHERIT_INDEX],
+	                  tmp, false, named_merge_points, 0);
+
+	  if (NILP (tmp[attr_filter])
+	      || UNSPECIFIEDP (tmp[attr_filter]))
+	    return;
+
+	  memcpy (to, tmp, LFACE_VECTOR_SIZE * sizeof *to);
+	}
+    }
 
   if (FONT_SPEC_P (from[LFACE_FONT_INDEX]))
     {
@@ -2092,8 +2117,8 @@ merge_face_vectors (struct window *w,
 	    to[i] = from[i];
 	    if (i >= LFACE_FAMILY_INDEX && i <=LFACE_SLANT_INDEX)
 	      font_clear_prop (to,
-			       (i == LFACE_FAMILY_INDEX ? FONT_FAMILY_INDEX
-				: i == LFACE_FOUNDRY_INDEX ? FONT_FOUNDRY_INDEX
+	                       (i == LFACE_FAMILY_INDEX ? FONT_FAMILY_INDEX
+			        : i == LFACE_FOUNDRY_INDEX ? FONT_FOUNDRY_INDEX
 				: i == LFACE_SWIDTH_INDEX ? FONT_WIDTH_INDEX
 				: i == LFACE_HEIGHT_INDEX ? FONT_SIZE_INDEX
 				: i == LFACE_WEIGHT_INDEX ? FONT_WEIGHT_INDEX
@@ -2140,19 +2165,15 @@ merge_named_face (struct window *w,
   struct named_merge_point named_merge_point;
 
   if (push_named_merge_point (&named_merge_point,
-			      face_name, NAMED_MERGE_POINT_NORMAL,
-			      &named_merge_points))
+                              face_name, NAMED_MERGE_POINT_NORMAL,
+                              &named_merge_points))
     {
       Lisp_Object from[LFACE_VECTOR_SIZE];
       bool ok = get_lface_attributes (w, f, face_name, from, false,
                                       named_merge_points);
 
-      eassert (attr_filter <  LFACE_VECTOR_SIZE);
-
-      if (ok && (attr_filter == 0
-                 || (!NILP (from[attr_filter])
-		     && !UNSPECIFIEDP (from[attr_filter]))))
-	merge_face_vectors (w, f, from, to, named_merge_points);
+      if (ok && (attr_filter == 0 || !NILP(from[attr_filter])))
+        merge_face_vectors (w, f, from, to, named_merge_points, attr_filter);
 
       return ok;
     }
@@ -3851,7 +3872,7 @@ Default face attributes override any local face attributes.  */)
 	  /* Ensure that the face vector is fully specified by merging
 	     the previously-cached vector.  */
 	  memcpy (attrs, oldface->lface, sizeof attrs);
-	  merge_face_vectors (NULL, f, lvec, attrs, 0);
+	  merge_face_vectors (NULL, f, lvec, attrs, 0, 0);
 	  vcopy (local_lface, 0, attrs, LFACE_VECTOR_SIZE);
 	  newface = realize_face (c, lvec, DEFAULT_FACE_ID);
 
@@ -4607,7 +4628,7 @@ lookup_named_face (struct window *w, struct frame *f,
     return -1;
 
   memcpy (attrs, default_face->lface, sizeof attrs);
-  merge_face_vectors (w, f, symbol_attrs, attrs, 0);
+  merge_face_vectors (w, f, symbol_attrs, attrs, 0, 0);
 
   return lookup_face (f, attrs);
 }
@@ -4776,7 +4797,7 @@ lookup_derived_face (struct window *w,
 
   default_face = FACE_FROM_ID (f, face_id);
   memcpy (attrs, default_face->lface, sizeof attrs);
-  merge_face_vectors (w, f, symbol_attrs, attrs, 0);
+  merge_face_vectors (w, f, symbol_attrs, attrs, 0, 0);
   return lookup_face (f, attrs);
 }
 
@@ -4874,7 +4895,7 @@ gui_supports_face_attributes_p (struct frame *f,
 
       memcpy (merged_attrs, def_attrs, sizeof merged_attrs);
 
-      merge_face_vectors (NULL, f, attrs, merged_attrs, 0);
+      merge_face_vectors (NULL, f, attrs, merged_attrs, 0, 0);
 
       face_id = lookup_face (f, merged_attrs);
       face = FACE_FROM_ID_OR_NULL (f, face_id);
@@ -5519,7 +5540,7 @@ realize_named_face (struct frame *f, Lisp_Object symbol, int id)
 
   /* Merge SYMBOL's face with the default face.  */
   get_lface_attributes_no_remap (f, symbol, symbol_attrs, true);
-  merge_face_vectors (NULL, f, symbol_attrs, attrs, 0);
+  merge_face_vectors (NULL, f, symbol_attrs, attrs, 0, 0);
 
   /* Realize the face.  */
   realize_face (c, attrs, id);
@@ -6386,7 +6407,7 @@ merge_faces (struct window *w, Lisp_Object face_name, int face_id,
       if (!face)
 	return base_face_id;
 
-      merge_face_vectors (w, f, face->lface, attrs, 0);
+      merge_face_vectors (w, f, face->lface, attrs, 0, 0);
     }
 
   /* Look up a realized face with the given face attributes,
