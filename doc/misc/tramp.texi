@@ -2834,10 +2834,11 @@ much more appropriate.
 
 @value{tramp} can complete the following @value{tramp} file name
 components: method names, user names, host names, and file names
-located on remote hosts.  Enable this by activating partial completion
-in @file{.emacs}.
+located on remote hosts.  User name and host name completion is
+activated only, if file name completion has one of the styles
+@code{basic}, @code{emacs21}, or @code{emacs22}.
 @ifinfo
-@xref{Completion Options, , , emacs}.
+@xref{Completion Styles, , , emacs}.
 @end ifinfo
 
 For example, type @kbd{C-x C-f @value{prefixwithspace} s @key{TAB}},
