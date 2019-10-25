@@ -109,14 +109,6 @@
 ;;
 ;;    (setq windmove-wrap-around t)
 ;;
-;;
-;; Note: If you have an Emacs that manifests a bug that sometimes
-;; causes the occasional creation of a "lost column" between windows,
-;; so that two adjacent windows do not actually touch, you may want to
-;; increase the value of `windmove-window-distance-delta' to 2 or 3:
-;;
-;;     (setq windmove-window-distance-delta 2)
-;;
 
 ;; Acknowledgments:
 ;;
@@ -167,150 +159,41 @@ to a value larger than 1 may be useful in getting around window-
 placement bugs in old versions of Emacs."
   :type 'number
   :group 'windmove)
+(make-obsolete-variable 'windmove-window-distance-delta
+                        "no longer used." "27.1")
 
 
-;; Implementation overview:
+;; Note:
 ;;
-;; The conceptual framework behind this code is all fairly simple.  We
-;; are on one window; we wish to move to another.  The correct window
-;; to move to is determined by the position of point in the current
-;; window as well as the overall window setup.
-;;
-;; Early on, I made the decision to base my implementation around the
-;; built-in function `window-at'.  This function takes a frame-based
-;; coordinate, and returns the window that contains it.  Using this
-;; function, the job of the various top-level windmove functions can
-;; be decomposed: first, find the current frame-based location of
-;; point; second, manipulate it in some way to give a new location,
-;; that hopefully falls in the window immediately at left (or right,
-;; etc.); third, use `window-at' and `select-window' to select the
-;; window at that new location.
-;;
-;; This is probably not the only possible architecture, and it turns
-;; out to have some inherent cruftiness.  (Well, okay, the third step
-;; is pretty clean....)  We will consider each step in turn.
-;;
-;; A quick digression about coordinate frames: most of the functions
-;; in the windmove package deal with screen coordinates in one way or
-;; another.  These coordinates are always relative to some reference
-;; points.  Window-based coordinates have their reference point in the
-;; upper-left-hand corner of whatever window is being talked about;
-;; frame-based coordinates have their reference point in the
-;; upper-left-hand corner of the entire frame (of which the current
-;; window is a component).
-;;
-;; All coordinates are zero-based, which simply means that the
-;; reference point (whatever it is) is assigned the value (x=0, y=0).
-;; X-coordinates grow down the screen, and Y-coordinates grow towards
-;; the right of the screen.
-;;
-;; Okay, back to work.  The first step is to gather information about
-;; the frame-based coordinates of point, or rather, the reference
-;; location.  The reference location can be point, or the upper-left,
-;; or the lower-right corner of the window; the particular one used is
-;; controlled by the prefix argument to `windmove-left' and all the
-;; rest.
-;;
-;; This work is done by `windmove-reference-loc'.  It can figure out
-;; the locations of the corners by calling `window-edges' combined
-;; with the result of `posn-at-point'.
-;;
-;; The second step is more messy.  Conceptually, it is fairly simple:
-;; if we know the reference location, and the coordinates of the
-;; current window, we can "throw" our reference point just over the
-;; appropriate edge of the window, and see what other window is
-;; there.  More explicitly, consider this example from the user
-;; documentation above.
-;;
-;;                    -------------
-;;                    |      | A  |
-;;                    |      |    |
-;;                    |      |-----
-;;                    | *    |    |    (* is point in the currently
-;;                    |      | B  |     selected window)
-;;                    |      |    |
-;;                    -------------
-;;
-;; The asterisk marks the reference point; we wish to move right.
-;; Since we are moving horizontally, the Y coordinate of the new
-;; location will be the same.  The X coordinate can be such that it is
-;; just past the edge of the present window.  Obviously, the new point
-;; will be inside window B.  This in itself is fairly simple: using
-;; the result of `windmove-reference-loc' and `window-edges', all the
-;; necessary math can be performed.  (Having said that, there is a
-;; good deal of room for off-by-one errors, and Emacs 19.34, at least,
-;; sometimes manifests a bug where two windows don't actually touch,
-;; so a larger skip is required.)  The actual math here is done by
-;; `windmove-other-window-loc'.
-;;
-;; But we can't just pass the result of `windmove-other-window-loc' to
-;; `window-at' directly.  Why not?  Suppose a move would take us off
-;; the edge of the screen, say to the left.  We want to give a
-;; descriptive error message to the user.  Or, suppose that a move
-;; would place us in the minibuffer.  What if the minibuffer is
-;; inactive?
-;;
-;; Actually, the whole subject of the minibuffer edge of the frame is
-;; rather messy.  It turns out that with a sufficiently large delta,
-;; we can fly off the bottom edge of the frame and miss the minibuffer
-;; altogether.  This, I think, is never right: if there's a minibuffer
-;; and you're not in it, and you move down, the minibuffer should be
-;; in your way.
-;;
-;; (By the way, I'm not totally sure that the code does the right
-;; thing in really weird cases, like a frame with no minibuffer.)
-;;
-;; So, what we need is some ways to do constraining and such.  The
-;; early versions of windmove took a fairly simplistic approach to all
-;; this.  When I added the wrap-around option, those internals had to
-;; be rewritten.  After a *lot* of futzing around, I came up with a
-;; two-step process that I think is general enough to cover the
-;; relevant cases.  (I'm not totally happy with having to pass the
-;; window variable as deep as I do, but we can't have everything.)
-;;
-;; In the first phase, we make sure that the new location is sane.
-;; "Sane" means that we can only fall of the edge of the frame in the
-;; direction we're moving in, and that we don't miss the minibuffer if
-;; we're moving down and not already in the minibuffer.  The function
-;; `windmove-constrain-loc-for-movement' takes care of all this.
-;;
-;; Then, we handle the wraparound, if it's enabled.  The function
-;; `windmove-wrap-loc-for-movement' takes coordinate values (both X
-;; and Y) that fall off the edge of the frame, and replaces them with
-;; values on the other side of the frame.  It also has special
-;; minibuffer-handling code again, because we want to wrap through the
-;; minibuffer if it's not enabled.
-;;
-;; So, that's it.  Seems to work.  All of this work is done by the fun
-;; function `windmove-find-other-window'.
-;;
-;; So, now we have a window to move to (or nil if something's gone
-;; wrong).  The function `windmove-do-window-select' is the main
-;; driver function: it actually does the `select-window'.  It is
-;; called by four little convenience wrappers, `windmove-left',
-;; `windmove-up', `windmove-right', and `windmove-down', which make
-;; for convenient keybinding.
-
+;; The functions that follow were used in the implementation of
+;; `windmove-find-other-window', but they are known to be unreliable
+;; after the window and frame rework done in 2013, so they are no
+;; longer used or maintained; their functionality is subsumed in the
+;; new function `window-in-direction'.  They are kept only for
+;; compatibility and will be removed in the future.  Please consider
+;; using the new window interfaces documented in "(elisp)Windows".
 
 ;; Quick & dirty utility function to add two (x . y) coords.
 (defun windmove-coord-add (coord1 coord2)
   "Add the two coordinates.
 Both COORD1 and COORD2 are coordinate cons pairs, (HPOS . VPOS).  The
 result is another coordinate cons pair."
+  (declare (obsolete "no longer used." "27.1"))
   (cons (+ (car coord1) (car coord2))
         (+ (cdr coord1) (cdr coord2))))
-
 
 (defun windmove-constrain-to-range (n min-n max-n)
   "Ensure that N is between MIN-N and MAX-N inclusive by constraining.
 If N is less than MIN-N, return MIN-N; if greater than MAX-N, return
 MAX-N."
+  (declare (obsolete "no longer used." "27.1"))
   (max min-n (min n max-n)))
 
 (defun windmove-constrain-around-range (n min-n max-n)
   "Ensure that N is between MIN-N and MAX-N inclusive by wrapping.
 If N is less than MIN-N, return MAX-N; if greater than MAX-N, return
 MIN-N."
+  (declare (obsolete "no longer used." "27.1"))
   (cond
    ((< n min-n) max-n)
    ((> n max-n) min-n)
@@ -324,18 +207,9 @@ of the frame; (X-MAX, Y-MAX) is the zero-based coordinate of the
 bottom-right corner of the frame.
 For example, if a frame has 76 rows and 181 columns, the return value
 from `windmove-frame-edges' will be the list (0 0 180 75)."
+  (declare (obsolete "no longer used." "27.1"))
   (window-edges (frame-root-window window)))
 
-;; it turns out that constraining is always a good thing, even when
-;; wrapping is going to happen.  this is because:
-;; first, since we disallow exotic diagonal-around-a-corner type
-;; movements, so we can always fix the unimportant direction (the one
-;; we're not moving in).
-;; second, if we're moving down and we're not in the minibuffer, then
-;; constraining the y coordinate to max-y is okay, because if that
-;; falls in the minibuffer and the minibuffer isn't active, that y
-;; coordinate will still be off the bottom of the frame as the
-;; wrapping function sees it and so will get wrapped around anyway.
 (defun windmove-constrain-loc-for-movement (coord window dir)
   "Constrain COORD so that it is reasonable for the given movement.
 This involves two things: first, make sure that the \"off\" coordinate
@@ -347,6 +221,7 @@ accidentally.  WINDOW is the window that movement is relative to; DIR
 is the direction of the movement, one of `left', `up', `right',
 or `down'.
 Returns the constrained coordinate."
+  (declare (obsolete "no longer used." "27.1"))
   (let ((frame-edges (windmove-frame-edges window))
         (in-minibuffer (window-minibuffer-p window)))
     (let ((min-x (nth 0 frame-edges))
@@ -368,17 +243,13 @@ Returns the constrained coordinate."
                (cdr coord))))
         (cons new-x new-y)))))
 
-;; having constrained in the limited sense of windmove-constrain-loc-
-;; for-movement, the wrapping code is actually much simpler than it
-;; otherwise would be.  the only complication is that we need to check
-;; if the minibuffer is active, and, if not, pretend that it's not
-;; even part of the frame.
 (defun windmove-wrap-loc-for-movement (coord window)
   "Takes the constrained COORD and wraps it around for the movement.
 This makes an out-of-range x or y coordinate and wraps it around the
 frame, giving a coordinate (hopefully) in the window on the other edge
 of the frame.  WINDOW is the window that movement is relative to (nil
 means the currently selected window).  Returns the wrapped coordinate."
+  (declare (obsolete "no longer used." "27.1"))
   (let* ((frame-edges (windmove-frame-edges window))
          (frame-minibuffer (minibuffer-window (if window
                                                   (window-frame window)
@@ -396,10 +267,6 @@ means the currently selected window).  Returns the wrapped coordinate."
        (windmove-constrain-around-range (car coord) min-x max-x)
        (windmove-constrain-around-range (cdr coord) min-y max-y)))))
 
-
-;; This calculates the reference location in the current window: the
-;; frame-based (x . y) of either point, the top-left, or the
-;; bottom-right of the window, depending on ARG.
 (defun windmove-reference-loc (&optional arg window)
   "Return the reference location for directional window selection.
 Return a coordinate (HPOS . VPOS) that is frame-based.  If ARG is nil
@@ -407,6 +274,7 @@ or not supplied, the reference point is the buffer's point in the
 currently-selected window, or WINDOW if supplied; otherwise, it is the
 top-left or bottom-right corner of the selected window, or WINDOW if
 supplied, if ARG is greater or smaller than zero, respectively."
+  (declare (obsolete "no longer used." "27.1"))
   (let ((effective-arg (if (null arg) 0 (prefix-numeric-value arg)))
         (edges (window-inside-edges window)))
     (let ((top-left (cons (nth 0 edges)
@@ -429,15 +297,13 @@ supplied, if ARG is greater or smaller than zero, respectively."
 	 (posn-col-row
 	  (posn-at-point (window-point window) window))))))))
 
-;; This uses the reference location in the current window (calculated
-;; by `windmove-reference-loc' above) to find a reference location
-;; that will hopefully be in the window we want to move to.
 (defun windmove-other-window-loc (dir &optional arg window)
   "Return a location in the window to be moved to.
 Return value is a frame-based (HPOS . VPOS) value that should be moved
 to.  DIR is one of `left', `up', `right', or `down'; an optional ARG
 is handled as by `windmove-reference-loc'; WINDOW is the window that
 movement is relative to."
+  (declare (obsolete "no longer used." "27.1"))
   (let ((edges (window-edges window))   ; edges: (x0, y0, x1, y1)
         (refpoint (windmove-reference-loc arg window))) ; (x . y)
     (cond
@@ -463,15 +329,19 @@ movement is relative to."
 ;; Rewritten on 2013-12-13 using `window-in-direction'.  After the
 ;; pixelwise change the old approach didn't work any more.  martin
 (defun windmove-find-other-window (dir &optional arg window)
-  "Return the window object in direction DIR.
-DIR, ARG, and WINDOW are handled as by `windmove-other-window-loc'."
+  "Return the window object in direction DIR as seen from WINDOW.
+DIR is one of `left', `up', `right', or `down'.
+WINDOW must be a live window and defaults to the selected one.
+Optional ARG, if negative, means to use the right or bottom edge of
+WINDOW as reference position, instead of `window-point'; if positive,
+use the left or top edge of WINDOW as reference point."
   (window-in-direction dir window nil arg windmove-wrap-around t))
 
 ;; Selects the window that's hopefully at the location returned by
-;; `windmove-other-window-loc', or screams if there's no window there.
+;; `windmove-find-other-window', or screams if there's no window there.
 (defun windmove-do-window-select (dir &optional arg window)
-  "Move to the window at direction DIR.
-DIR, ARG, and WINDOW are handled as by `windmove-other-window-loc'.
+  "Move to the window at direction DIR as seen from WINDOW.
+DIR, ARG, and WINDOW are handled as by `windmove-find-other-window'.
 If no window is at direction DIR, an error is signaled.
 If `windmove-create-window' is non-nil, try to create a new window
 in direction DIR instead."

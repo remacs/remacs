@@ -750,6 +750,13 @@ that was in the specified direction.
 to the commands that swap the states of the selected window with the
 window in the specified direction.
 
+*** Windmove code no longer used is now obsolete.  That includes the
+user option 'windmove-window-distance-delta' and the functions
+'windmove-coord-add', 'windmove-constrain-to-range',
+'windmove-constrain-around-range', 'windmove-frame-edges',
+'windmove-constrain-loc-for-movement', 'windmove-wrap-loc-for-movement',
+'windmove-reference-loc' and 'windmove-other-window-loc'.
+
 ** Octave mode
 The mode is automatically enabled in files that start with the
 'function' keyword.
