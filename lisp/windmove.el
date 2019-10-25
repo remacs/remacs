@@ -324,15 +324,7 @@ of the frame; (X-MAX, Y-MAX) is the zero-based coordinate of the
 bottom-right corner of the frame.
 For example, if a frame has 76 rows and 181 columns, the return value
 from `windmove-frame-edges' will be the list (0 0 180 75)."
-  (let* ((frame (if window
-		    (window-frame window)
-		  (selected-frame)))
-	 (top-left (window-edges (frame-first-window frame)))
-	 (x-min (nth 0 top-left))
-	 (y-min (nth 1 top-left))
-	 (x-max (1- (frame-width frame))) ; 1- for last row & col
-	 (y-max (1- (frame-height frame))))
-    (list x-min y-min x-max y-max)))
+  (window-edges (frame-root-window window)))
 
 ;; it turns out that constraining is always a good thing, even when
 ;; wrapping is going to happen.  this is because:
