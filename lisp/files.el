@@ -7711,7 +7711,8 @@ Otherwise, trash FILENAME using the freedesktop.org conventions,
 		    (setq info-fn (make-temp-file
 				   (expand-file-name files-base trash-info-dir)
 				   nil ".trashinfo"))
-		    (setq files-base (file-name-nondirectory info-fn))
+		    (setq files-base (substring (file-name-nondirectory info-fn)
+                                                0 (- (length ".trashinfo"))))
 		    (write-region nil nil info-fn nil 'quiet info-fn)))
 		 ;; Finally, try to move the file to the trashcan.
 		 (let ((delete-by-moving-to-trash nil)
