@@ -222,26 +222,28 @@ is the direction of the movement, one of `left', `up', `right',
 or `down'.
 Returns the constrained coordinate."
   (declare (obsolete "no longer used." "27.1"))
-  (let ((frame-edges (windmove-frame-edges window))
-        (in-minibuffer (window-minibuffer-p window)))
-    (let ((min-x (nth 0 frame-edges))
-          (min-y (nth 1 frame-edges))
-          (max-x (nth 2 frame-edges))
-          (max-y (nth 3 frame-edges)))
-      (let ((new-x
-             (if (memq dir '(up down))    ; vertical movement
-                 (windmove-constrain-to-range (car coord) min-x max-x)
-               (car coord)))
-            (new-y
-             (if (or (memq dir '(left right)) ; horizontal movement
-                     (and (eq dir 'down)
-                          (not in-minibuffer))) ; don't miss minibuffer
-                 ;; (technically, we shouldn't constrain on min-y in the
-                 ;; second case, but this shouldn't do any harm on a
-                 ;; down movement.)
-                 (windmove-constrain-to-range (cdr coord) min-y max-y)
-               (cdr coord))))
-        (cons new-x new-y)))))
+  (with-suppressed-warnings ((obsolete windmove-frame-edges
+                                       windmove-constrain-to-range))
+    (let ((frame-edges (windmove-frame-edges window))
+          (in-minibuffer (window-minibuffer-p window)))
+      (let ((min-x (nth 0 frame-edges))
+            (min-y (nth 1 frame-edges))
+            (max-x (nth 2 frame-edges))
+            (max-y (nth 3 frame-edges)))
+        (let ((new-x
+               (if (memq dir '(up down)) ; vertical movement
+                   (windmove-constrain-to-range (car coord) min-x max-x)
+                 (car coord)))
+              (new-y
+               (if (or (memq dir '(left right)) ; horizontal movement
+                       (and (eq dir 'down)
+                            (not in-minibuffer))) ; don't miss minibuffer
+                   ;; (technically, we shouldn't constrain on min-y in the
+                   ;; second case, but this shouldn't do any harm on a
+                   ;; down movement.)
+                   (windmove-constrain-to-range (cdr coord) min-y max-y)
+                 (cdr coord))))
+          (cons new-x new-y))))))
 
 (defun windmove-wrap-loc-for-movement (coord window)
   "Takes the constrained COORD and wraps it around for the movement.
@@ -250,22 +252,24 @@ frame, giving a coordinate (hopefully) in the window on the other edge
 of the frame.  WINDOW is the window that movement is relative to (nil
 means the currently selected window).  Returns the wrapped coordinate."
   (declare (obsolete "no longer used." "27.1"))
-  (let* ((frame-edges (windmove-frame-edges window))
-         (frame-minibuffer (minibuffer-window (if window
-                                                  (window-frame window)
-                                                (selected-frame))))
-         (minibuffer-active (minibuffer-window-active-p
+  (with-suppressed-warnings ((obsolete windmove-frame-edges
+                                       windmove-constrain-around-range))
+    (let* ((frame-edges (windmove-frame-edges window))
+           (frame-minibuffer (minibuffer-window (if window
+                                                    (window-frame window)
+                                                  (selected-frame))))
+           (minibuffer-active (minibuffer-window-active-p
                                frame-minibuffer)))
-    (let ((min-x (nth 0 frame-edges))
-          (min-y (nth 1 frame-edges))
-          (max-x (nth 2 frame-edges))
-          (max-y (if (not minibuffer-active)
-                     (- (nth 3 frame-edges)
-                        (window-height frame-minibuffer))
-                   (nth 3 frame-edges))))
-      (cons
-       (windmove-constrain-around-range (car coord) min-x max-x)
-       (windmove-constrain-around-range (cdr coord) min-y max-y)))))
+      (let ((min-x (nth 0 frame-edges))
+            (min-y (nth 1 frame-edges))
+            (max-x (nth 2 frame-edges))
+            (max-y (if (not minibuffer-active)
+                       (- (nth 3 frame-edges)
+                          (window-height frame-minibuffer))
+                     (nth 3 frame-edges))))
+        (cons
+         (windmove-constrain-around-range (car coord) min-x max-x)
+         (windmove-constrain-around-range (cdr coord) min-y max-y))))))
 
 (defun windmove-reference-loc (&optional arg window)
   "Return the reference location for directional window selection.
@@ -289,13 +293,14 @@ supplied, if ARG is greater or smaller than zero, respectively."
        ((< effective-arg 0)
 	bottom-right)
        ((= effective-arg 0)
-	(windmove-coord-add
-	 top-left
-	 ;; Don't care whether window is horizontally scrolled -
-	 ;; `posn-at-point' handles that already.  See also:
-	 ;; https://lists.gnu.org/r/emacs-devel/2012-01/msg00638.html
-	 (posn-col-row
-	  (posn-at-point (window-point window) window))))))))
+        (with-suppressed-warnings ((obsolete windmove-coord-add))
+	  (windmove-coord-add
+	   top-left
+	   ;; Don't care whether window is horizontally scrolled -
+	   ;; `posn-at-point' handles that already.  See also:
+	   ;; https://lists.gnu.org/r/emacs-devel/2012-01/msg00638.html
+	   (posn-col-row
+	    (posn-at-point (window-point window) window)))))))))
 
 (defun windmove-other-window-loc (dir &optional arg window)
   "Return a location in the window to be moved to.
@@ -305,7 +310,9 @@ is handled as by `windmove-reference-loc'; WINDOW is the window that
 movement is relative to."
   (declare (obsolete "no longer used." "27.1"))
   (let ((edges (window-edges window))   ; edges: (x0, y0, x1, y1)
-        (refpoint (windmove-reference-loc arg window))) ; (x . y)
+        (refpoint (with-suppressed-warnings
+                      ((obsolete windmove-reference-loc))
+                    (windmove-reference-loc arg window)))) ; (x . y)
     (cond
      ((eq dir 'left)
       (cons (- (nth 0 edges)
