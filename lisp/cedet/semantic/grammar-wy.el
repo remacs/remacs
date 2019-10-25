@@ -421,7 +421,7 @@
 (defun semantic-grammar-wy--install-parser ()
   "Setup the Semantic Parser."
   (semantic-install-function-overrides
-   '((parse-stream . wisent-parse-stream)))
+   '((semantic-parse-stream . wisent-parse-stream)))
   (setq semantic-parser-name "LALR"
 	semantic--parse-table semantic-grammar-wy--parse-table
 	semantic-debug-parser-source "grammar.wy"

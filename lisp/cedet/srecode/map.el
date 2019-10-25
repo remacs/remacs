@@ -346,8 +346,8 @@ if that file is NEW, otherwise assume the mode has not changed."
 Argument FAST implies that the file should not be reparsed if there
 is already an entry for it.
 Return non-nil if the map changed."
-  (when (or (not fast)
-	    (not (srecode-map-entry-for-file-anywhere srecode-current-map file)))
+  (unless (and fast
+               (srecode-map-entry-for-file-anywhere srecode-current-map file))
     (let ((buff-orig (get-file-buffer file))
 	  (dirty nil))
       (save-excursion

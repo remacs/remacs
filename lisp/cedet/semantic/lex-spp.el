@@ -1071,7 +1071,7 @@ and variable state from the current buffer."
 	      (error nil))
 
 	    ;; Hack in mode-local
-	    (activate-mode-local-bindings)
+	    (mode-local--activate-bindings)
 
 	    ;; Call the major mode's setup function
 	    (let ((entry (assq major-mode semantic-new-buffer-setup-functions)))

@@ -2170,7 +2170,8 @@ if you set 'time-stamp-format' or 'time-stamp-pattern' with a
 file-local variable, you may need to update the value.
 
 ** mode-local
-*** 'define-overload' is declared obsolete.
+*** Declare 'define-overload' and 'define-child-mode' as obsolete
+*** Rename several internal functions to use a ''mode-local-' prefix
 
 
 * New Modes and Packages in Emacs 27.1
