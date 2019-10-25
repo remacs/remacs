@@ -21657,10 +21657,6 @@ extend_face_to_end_of_line (struct it *it)
 	      it->glyph_row->used[RIGHT_MARGIN_AREA] = 1;
 	    }
 
-	  /* Display fill column indicator if not in modeline or
-	     toolbar and display fill column indicator mode is
-	     active.  */
-
 	  struct font *font = (default_face->font
 	                       ? default_face->font
 	                       : FRAME_FONT (f));
@@ -21683,14 +21679,17 @@ extend_face_to_end_of_line (struct it *it)
 	  it->avoid_cursor_p = true;
 	  it->object = Qnil;
 
+	  const int stretch_ascent = (((it->ascent + it->descent)
+	                               * FONT_BASE (font)) / FONT_HEIGHT (font));
+
 	  if (indicator_column >= 0
 	      && indicator_column > it->current_x
 	      && indicator_column < it->last_visible_x)
-            {
+	    {
 
 	      /* Here we substract char_width because we want the
-		 column indicator in the column INDICATOR_COLUMN, not
-		 after it.  */
+		 column indicator in the column INDICATOR_COLUMN,
+		 not after it.  */
 	      const int stretch_width =
 		indicator_column - it->current_x - char_width;
 
@@ -21700,8 +21699,6 @@ extend_face_to_end_of_line (struct it *it)
 		 between current_x and the indicator position.  */
 	      if (stretch_width > 0)
 		{
-		  int stretch_ascent = (((it->ascent + it->descent)
-		                         * FONT_BASE (font)) / FONT_HEIGHT (font));
 		  append_stretch_glyph (it, Qnil, stretch_width,
 		                        it->ascent + it->descent,
 		                        stretch_ascent);
@@ -21720,13 +21717,15 @@ extend_face_to_end_of_line (struct it *it)
 		  PRODUCE_GLYPHS (it);
 		  it->face_id = save_face_id;
 		}
-            }
+	    }
 
-	  /* If there is space after the indicator generate an
-	     extra empty glyph to restore the face.  Issue was
-	     observed in X systems.  */
-	  it->char_to_display = ' ';
-	  PRODUCE_GLYPHS (it);
+	  /* Fill space until window edge with the merged face.  */
+	  const int stretch_width = it->last_visible_x - it->current_x;
+
+	  if (stretch_width > 0)
+	      append_stretch_glyph (it, Qnil, stretch_width,
+	                            it->ascent + it->descent,
+	                            stretch_ascent);
 
 	  it->char_to_display = saved_char;
 	  it->position = saved_pos;
@@ -21734,7 +21733,6 @@ extend_face_to_end_of_line (struct it *it)
 	  it->start_of_box_run_p = saved_box_start;
 	  it->object = save_object;
 	  it->face_id = saved_face_id;
-
 	}
       if (it->glyph_row->reversed_p)
 	{
