@@ -1661,6 +1661,12 @@ events within its body.  Outside of @code{track-mouse} forms, Emacs
 does not generate events for mere motion of the mouse, and these
 events do not appear.  @xref{Mouse Tracking}.
 
+@defvar mouse-fine-grained-tracking
+When non-@code{nil}, mouse motion events are generated even for very
+small movements.  Otherwise, motion events are not generated as long
+as the mouse cursor remains pointing to the same glyph in the text.
+@end defvar
+
 @node Focus Events
 @subsection Focus Events
 @cindex focus event

@@ -1045,10 +1045,12 @@ the mouse has moved.  However, it always scrolls at least the number
 of lines specified by this variable."
   :type 'integer)
 
-(defun mouse-scroll-subr (window jump &optional overlay start)
+(defun mouse-scroll-subr (window jump &optional overlay start adjust)
   "Scroll the window WINDOW, JUMP lines at a time, until new input arrives.
 If OVERLAY is an overlay, let it stretch from START to the far edge of
 the newly visible text.
+ADJUST, if non-nil, is a function, without arguments, to call after
+setting point.
 Upon exit, point is at the far edge of the newly visible text."
   (cond
    ((and (> jump 0) (< jump mouse-scroll-min-lines))
@@ -1077,6 +1079,8 @@ Upon exit, point is at the far edge of the newly visible text."
 		   ;; so that we don't mess up the selected window.
 		   (or (eq window (selected-window))
 		       (goto-char opoint))
+                   (when adjust
+                     (funcall adjust))
 		   (sit-for mouse-scroll-delay)))))
     (or (eq window (selected-window))
 	(goto-char opoint))))
@@ -1958,6 +1962,113 @@ When there is no region, this function does nothing."
   (when (region-active-p) ; Create the secondary selection from the region.
     (delete-overlay mouse-secondary-overlay) ; Delete the secondary selection even on a different buffer.
     (move-overlay mouse-secondary-overlay (region-beginning) (region-end))))
+
+
+(defun mouse-drag-region-rectangle (start-event)
+  "Set the region to the rectangle that the mouse is dragged over.
+This must be bound to a button-down mouse event."
+  (interactive "e")
+  (let* ((scroll-margin 0)
+         (start-pos (event-start start-event))
+         (start-posn (event-start start-event))
+         (start-point (posn-point start-posn))
+         (start-window (posn-window start-posn))
+         (start-hscroll (window-hscroll start-window))
+         (start-col (+ (car (posn-col-row start-pos)) start-hscroll))
+         (bounds (window-edges start-window))
+         (top (nth 1 bounds))
+         (bottom (if (window-minibuffer-p start-window)
+                     (nth 3 bounds)
+                   (1- (nth 3 bounds))))
+         (dragged nil)
+         (old-track-mouse track-mouse)
+         (old-mouse-fine-grained-tracking mouse-fine-grained-tracking)
+         ;; For right-to-left text, columns are counted from the right margin;
+         ;; translate from mouse events, which always count from the left.
+         (adjusted-col (lambda (col)
+                         (if (eq (current-bidi-paragraph-direction)
+                                 'right-to-left)
+                             (- (frame-text-cols) col -1)
+                           col)))
+         (map (make-sparse-keymap)))
+    (define-key map [switch-frame] #'ignore)
+    (define-key map [select-window] #'ignore)
+    (define-key map [mouse-movement]
+      (lambda (event)
+        (interactive "e")
+        (unless dragged
+          ;; This is actually a drag.
+          (setq dragged t)
+          (mouse-minibuffer-check start-event)
+          (deactivate-mark)
+          (posn-set-point start-pos)
+          (rectangle-mark-mode)
+          ;; Only tell rectangle about the exact column if we are possibly
+          ;; beyond end-of-line or in a tab, since the column we got from
+          ;; the mouse position isn't necessarily accurate for use in
+          ;; specifying a rectangle (which uses the `move-to-column'
+          ;; measure).
+          (when (or (eolp) (eq (following-char) ?\t))
+            (let ((col (funcall adjusted-col start-col)))
+              (rectangle--col-pos col 'mark)
+              (rectangle--col-pos col 'point))))
+
+        (let* ((posn (event-end event))
+               (window (posn-window posn))
+               (hscroll (if (window-live-p window)
+                            (window-hscroll window)
+                          0))
+               (mouse-pos (mouse-position))
+               (mouse-col (+ (cadr mouse-pos) hscroll))
+               (mouse-row (cddr mouse-pos))
+               (set-col (lambda ()
+                          (if (or (eolp) (eq (following-char) ?\t))
+                              (rectangle--col-pos
+                               (funcall adjusted-col mouse-col) 'point)
+                            (rectangle--reset-point-crutches)))))
+          (if (and (eq window start-window)
+                   mouse-row
+                   (<= top mouse-row (1- bottom)))
+              ;; Drag inside the same window.
+              (progn
+                (posn-set-point posn)
+                (funcall set-col))
+            ;; Drag outside the window: scroll.
+            (cond
+             ((null mouse-row))
+             ((< mouse-row top)
+              (mouse-scroll-subr
+               start-window (- mouse-row top) nil start-point
+               set-col))
+             ((>= mouse-row bottom)
+              (mouse-scroll-subr
+               start-window (1+ (- mouse-row bottom)) nil start-point
+               set-col)))))))
+    (condition-case err
+        (progn
+          (setq track-mouse t)
+          (setq mouse-fine-grained-tracking t)
+          (set-transient-map
+           map t
+           (lambda ()
+             (setq track-mouse old-track-mouse)
+             (setq mouse-fine-grained-tracking old-mouse-fine-grained-tracking)
+             (when (or (not dragged)
+                       (not (mark))
+                       (equal (rectangle-dimensions (mark) (point)) '(0 . 1)))
+               ;; No nontrivial region selected; deactivate rectangle mode.
+               (deactivate-mark)))))
+      ;; Clean up in case something went wrong.
+      (error (setq track-mouse old-track-mouse)
+             (setq mouse-fine-grained-tracking old-mouse-fine-grained-tracking)
+             (signal (car err) (cdr err))))))
+
+;; The drag event must be bound to something but does not need any effect,
+;; as everything takes place in `mouse-drag-region-rectangle'.
+;; The click event can be anything; `mouse-set-point' is just a convenience.
+(global-set-key [C-M-down-mouse-1] #'mouse-drag-region-rectangle)
+(global-set-key [C-M-drag-mouse-1] #'ignore)
+(global-set-key [C-M-mouse-1]      #'mouse-set-point)
 
 
 (defcustom mouse-buffer-menu-maxlen 20

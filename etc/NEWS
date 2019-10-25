@@ -614,6 +614,9 @@ arguments mitigating performance issues when operating on huge
 buffers.
 
 +++
+** Dragging 'C-M-mouse-1' now marks rectangular regions.
+
++++
 ** The command 'delete-indentation' now operates on the active region.
 If the region is active, the command joins all the lines in the
 region.  When there's no active region, the command works on the

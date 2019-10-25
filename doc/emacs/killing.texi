@@ -732,6 +732,9 @@ region is controlled.  But remember that a given combination of point
 and mark values can be interpreted either as a region or as a
 rectangle, depending on the command that uses them.
 
+  A rectangular region can also be marked using the mouse: click and drag
+@kbd{C-M-mouse-1} from one corner of the rectangle to the opposite.
+
 @table @kbd
 @item C-x r k
 Kill the text of the region-rectangle, saving its contents as the

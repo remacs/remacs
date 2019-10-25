@@ -133,10 +133,14 @@ Point is at the end of the segment of this line within the rectangle."
 (defun rectangle--crutches ()
   (cons rectangle--mark-crutches
         (window-parameter nil 'rectangle--point-crutches)))
-(defun rectangle--reset-crutches ()
-  (kill-local-variable 'rectangle--mark-crutches)
+
+(defun rectangle--reset-point-crutches ()
   (if (window-parameter nil 'rectangle--point-crutches)
       (setf (window-parameter nil 'rectangle--point-crutches) nil)))
+
+(defun rectangle--reset-crutches ()
+  (kill-local-variable 'rectangle--mark-crutches)
+  (rectangle--reset-point-crutches))
 
 ;;; Rectangle operations.
 

@@ -91,6 +91,10 @@ If the region is active, move the nearer end of the region to the
 click position; otherwise, set mark at the current value of point and
 point at the click position.  Save the resulting region in the kill
 ring; on a second click, kill it (@code{mouse-save-then-kill}).
+
+@item C-M-mouse-1
+Activate a rectangular region around the text selected by dragging.
+@xref{Rectangles}.
 @end table
 
 @findex mouse-set-point

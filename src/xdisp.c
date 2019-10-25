@@ -2491,6 +2491,12 @@ remember_mouse_glyph (struct frame *f, int gx, int gy, NativeRectangle *rect)
   enum glyph_row_area area;
   int x, y, width, height;
 
+  if (mouse_fine_grained_tracking)
+    {
+      STORE_NATIVE_RECT (*rect, gx, gy, 1, 1);
+      return;
+    }
+
   /* Try to determine frame pixel position and size of the glyph under
      frame pixel coordinates X/Y on frame F.  */
 
@@ -34945,6 +34951,12 @@ display table takes effect; in this case, Emacs does not consult
 The default is to use octal format (\200) whereas hexadecimal (\x80)
 may be more familiar to users.  */);
   display_raw_bytes_as_hex = false;
+
+  DEFVAR_BOOL ("mouse-fine-grained-tracking", mouse_fine_grained_tracking,
+    doc: /* Non-nil for pixel-wise mouse-movement.
+When nil, mouse-movement events will not be generated as long as the
+mouse stays within the extent of a single glyph (except for images).  */);
+  mouse_fine_grained_tracking = false;
 
 }
 
