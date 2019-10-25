@@ -496,7 +496,8 @@ used to perform the override."
   (if (and (eq (semantic-tag-class tag) 'function)
 	   (semantic-tag-get-attribute tag :overloadable))
       ;; Calc the doc to use for the overloadable symbols.
-      (overload-docstring-extension (intern (semantic-tag-name tag)))
+      (mode-local--overload-docstring-extension
+       (intern (semantic-tag-name tag)))
     ""))
 
 (defun semantic-emacs-lisp-obsoleted-doc (tag)
@@ -944,8 +945,10 @@ See `semantic-format-tag-prototype' for Emacs Lisp for more details."
   "Add variables.
 ELisp variables can be pretty long, so track this one too.")
 
-(define-child-mode lisp-mode emacs-lisp-mode
-  "Make `lisp-mode' inherit mode local behavior from `emacs-lisp-mode'.")
+(with-suppressed-warnings ((obsolete define-child-mode))
+  ;; FIXME: We should handle this some other way!
+  (define-child-mode lisp-mode emacs-lisp-mode
+    "Make `lisp-mode' inherit mode local behavior from `emacs-lisp-mode'."))
 
 ;;;###autoload
 (defun semantic-default-elisp-setup ()

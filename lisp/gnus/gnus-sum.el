@@ -334,7 +334,7 @@ If threads are hidden, you have to run the command
   :group 'gnus-thread
   :type '(radio (sexp :format "Non-nil\n"
 		      :match (lambda (widget value)
-			       (not (or (consp value) (functionp value))))
+			       (and value (not (functionp value))))
 		      :value t)
 		(const nil)
 		(sexp :tag "Predicate specifier")))

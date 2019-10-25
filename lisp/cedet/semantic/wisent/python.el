@@ -530,11 +530,6 @@ Shortens `code' tags, but passes through for others."
 				      (code . "Code")))
    )
 
-;; Make sure the newer python modes pull in the same python
-;; mode overrides.
-(define-child-mode python-2-mode python-mode "Python 2 mode")
-(define-child-mode python-3-mode python-mode "Python 3 mode")
-
 
 ;;; Utility functions
 ;;

@@ -49,15 +49,15 @@
 #ifndef __GLIBC__
 # include <stdint.h>
 #endif
-/* Get CHAR_BIT.  */
+/* Get CHAR_BIT, INT_MAX, LONG_MAX, etc.  */
 #include <limits.h>
 /* On mingw, __USE_MINGW_ANSI_STDIO only works if <stdio.h> is also included */
 #if defined _WIN32 && ! defined __CYGWIN__
 # include <stdio.h>
 #endif
 
-#if !(INT_MIN == INT32_MIN && INT_MAX == INT32_MAX)
-# error "This file assumes that 'int' has exactly 32 bits. Please report your platform and compiler to <bug-gnulib@gnu.org>."
+#if !(INT_MAX == 0x7fffffff && INT_MIN + INT_MAX == -1)
+# error "This file assumes that 'int' is 32-bit two's complement. Please report your platform and compiler to <bug-gnulib@gnu.org>."
 #endif
 
 /* The definitions of _GL_FUNCDECL_RPL etc. are copied here.  */

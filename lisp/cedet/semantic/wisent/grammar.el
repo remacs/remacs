@@ -297,7 +297,7 @@ Return the expanded expression."
   "Return the parser setup code."
   (format
    "(semantic-install-function-overrides\n\
-      '((parse-stream . wisent-parse-stream)))\n\
+      '((semantic-parse-stream . wisent-parse-stream)))\n\
     (setq semantic-parser-name \"LALR\"\n\
           semantic--parse-table %s\n\
           semantic-debug-parser-source %S\n\
@@ -326,8 +326,8 @@ Menu items are appended to the common grammar menu.")
   "Major mode for editing Wisent grammars."
   (semantic-grammar-setup-menu wisent-grammar-menu)
   (semantic-install-function-overrides
-   '((grammar-parsetable-builder . wisent-grammar-parsetable-builder)
-     (grammar-setupcode-builder  . wisent-grammar-setupcode-builder))))
+   '((semantic-grammar-parsetable-builder . wisent-grammar-parsetable-builder)
+     (semantic-grammar-setupcode-builder  . wisent-grammar-setupcode-builder))))
 
 (defvar-mode-local wisent-grammar-mode semantic-grammar-macros
   '(

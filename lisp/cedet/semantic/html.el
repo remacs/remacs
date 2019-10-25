@@ -247,13 +247,15 @@ tag with greater section value than LEVEL is found."
 	semantic-stickyfunc-sticky-classes '(section)
 	)
   (semantic-install-function-overrides
-   '((tag-components . semantic-html-components)
+   '((semantic-tag-components . semantic-html-components)
      )
    t)
   )
 
-(define-child-mode html-helper-mode html-mode
-  "`html-helper-mode' needs the same semantic support as `html-mode'.")
+;; `html-helper-mode' hasn't been updated since 2004, so it's not very
+;; relevant nowadays.
+;;(define-child-mode html-helper-mode html-mode
+;;  "`html-helper-mode' needs the same semantic support as `html-mode'.")
 
 (provide 'semantic/html)
 

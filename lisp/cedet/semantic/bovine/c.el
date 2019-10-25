@@ -69,8 +69,10 @@ This function does not do any hidden buffer changes."
   )
 
 ;;; Code:
-(define-child-mode c++-mode c-mode
-  "`c++-mode' uses the same parser as `c-mode'.")
+(with-suppressed-warnings ((obsolete define-child-mode))
+  ;; FIXME: We should handle this some other way!
+  (define-child-mode c++-mode c-mode
+  "`c++-mode' uses the same parser as `c-mode'."))
 
 
 ;;; Include Paths
@@ -930,7 +932,7 @@ the regular parser."
 	    )				; save match data
 
 	  ;; Hack in mode-local
-	  (activate-mode-local-bindings)
+	  (mode-local--activate-bindings)
 	  ;; Setup C parser
 	  (semantic-default-c-setup)
 	  ;; CHEATER!  The following 3 lines are from
