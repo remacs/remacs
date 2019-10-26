@@ -810,6 +810,15 @@ command itself, not how many files are marked in total.
 *** A new face, 'dired-special', is used to highlight sockets, named
 pipes, block devices and character devices.
 
++++
+*** The new user option 'dired-create-destination-dirs' controls whether
+'dired-do-copy' and 'dired-rename-file' should create non-existent
+directories in the destination.
+
++++
+*** The non-nil value of 'dired-dwim-target' uses one of the most recently
+visited windows with a Dired buffer instead of the next window.
+
 ** Find-Dired
 
 *** New user option 'find-dired-refine-function'.
@@ -1366,13 +1375,6 @@ unescaping text.
 *** Python mode supports three different font lock decoration levels.
 The maximum level is used by default; customize
 'font-lock-maximum-decoration' to tone down the decoration.
-
-** Dired
-
-+++
-*** The new user option 'dired-create-destination-dirs' controls whether
-'dired-do-copy' and 'dired-rename-file' should create non-existent
-directories in the destination.
 
 ** Help
 

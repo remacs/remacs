@@ -185,9 +185,9 @@ If a character, new links are unconditionally marked with that character."
 
 (defcustom dired-dwim-target nil
   "If non-nil, Dired tries to guess a default target directory.
-This means: if there is a Dired buffer displayed in the next
-window, use its current directory, instead of this Dired buffer's
-current directory.
+This means: if there is a Dired buffer displayed in one of the most
+recently selected windows, use its current directory, instead of this
+Dired buffer's current directory.
 
 The target is used in the prompt for file copy, rename etc."
   :type 'boolean
