@@ -2731,6 +2731,8 @@ during last redisplay.  'window-old-pixel-width' (renamed from
 'window-old-body-pixel-width' and 'window-old-body-pixel-height'
 return the total and body sizes of any window during last redisplay.
 
+Also 'run-window-configuration-change-hook' is declared obsolete.
+
 See the section "(elisp) Window Hooks" in the Elisp manual for a
 detailed explanation of the new behavior.
 
