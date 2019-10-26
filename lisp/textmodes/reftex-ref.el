@@ -841,7 +841,8 @@ Replace any occurrences of \"\\ref\" with REFSTYLE."
   ;; Replace instances of \ref in `fmt' with the special reference
   ;; style selected by the user.
   (cond
-   ((while (string-match "\\(\\\\ref\\)[ \t]*{" fmt)
+   ((while (let ((case-fold-search nil))
+             (string-match "\\(\\\\ref\\)[ \t]*{" fmt))
       (setq fmt (replace-match refstyle t t fmt 1))))
    ((string-match "\\(\\\\[[:alpha:]]+\\)[ \t]*{" fmt)
     (setq fmt (replace-match refstyle t t fmt 1))))
