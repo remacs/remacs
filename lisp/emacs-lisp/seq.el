@@ -237,6 +237,7 @@ The result is a sequence of the same type as SEQUENCE."
 (cl-defmethod seq-sort (pred (list list))
   (sort (seq-copy list) pred))
 
+;;;###autoload
 (defun seq-sort-by (function pred sequence)
   "Sort SEQUENCE using PRED as a comparison function.
 Elements of SEQUENCE are transformed by FUNCTION before being
@@ -295,6 +296,7 @@ list."
                                exclude))
                            sequence))))
 
+;;;###autoload
 (cl-defgeneric seq-remove (pred sequence)
   "Return a list of all the elements for which (PRED element) is nil in SEQUENCE."
   (seq-filter (lambda (elt) (not (funcall pred elt)))

@@ -458,6 +458,16 @@ Return its existing value or a new value."
   (seq-position (or tabs (funcall tab-bar-tabs-function))
                 name (lambda (a b) (equal (cdr (assq 'name a)) b))))
 
+(defun tab-bar--tab-index-recent (nth &optional tabs)
+  (let* ((tabs (or tabs (funcall tab-bar-tabs-function)))
+         (sorted-tabs
+          (seq-sort-by (lambda (tab) (cdr (assq 'time tab))) #'>
+                       (seq-remove (lambda (tab)
+                                     (eq (car tab) 'current-tab))
+                                   tabs)))
+         (tab (nth (1- nth) sorted-tabs)))
+    (tab-bar--tab-index tab tabs)))
+
 
 (defun tab-bar-select-tab (&optional arg)
   "Switch to the tab by its absolute position ARG in the tab bar.
@@ -513,6 +523,16 @@ to the numeric argument.  ARG counts from 1."
   (unless (integerp arg)
     (setq arg 1))
   (tab-bar-switch-to-next-tab (- arg)))
+
+(defun tab-bar-switch-to-recent-tab (&optional arg)
+  "Switch to ARGth most recently visited tab."
+  (interactive "p")
+  (unless (integerp arg)
+    (setq arg 1))
+  (let ((tab-index (tab-bar--tab-index-recent arg)))
+    (if tab-index
+        (tab-bar-select-tab (1+ tab-index))
+      (message "No more recent tabs"))))
 
 (defun tab-bar-switch-to-tab (name)
   "Switch to the tab by NAME."
@@ -626,12 +646,14 @@ If ARG is zero, create a new tab in place of the current tab."
 (defvar tab-bar-closed-tabs nil
   "A list of closed tabs to be able to undo their closing.")
 
-(defcustom tab-bar-close-tab-select 'right
+(defcustom tab-bar-close-tab-select 'recent
   "Defines what tab to select after closing the specified tab.
 If `left', select the adjacent left tab.
-If `right', select the adjacent right tab."
+If `right', select the adjacent right tab.
+If `recent', select the most recently visited tab."
   :type '(choice (const :tag "Select left tab" left)
-                 (const :tag "Select right tab" right))
+                 (const :tag "Select right tab" right)
+                 (const :tag "Select recent tab" recent))
   :group 'tab-bar
   :version "27.1")
 
@@ -682,7 +704,8 @@ TO-INDEX counts from 1."
                               ('left (1- current-index))
                               ('right (if (> (length tabs) (1+ current-index))
                                           (1+ current-index)
-                                        (1- current-index)))))))
+                                        (1- current-index)))
+                              ('recent (tab-bar--tab-index-recent 1 tabs))))))
           (setq to-index (max 0 (min (or to-index 0) (1- (length tabs)))))
           (tab-bar-select-tab (1+ to-index))
           ;; Re-read tabs after selecting another tab
@@ -819,6 +842,7 @@ function `tab-bar-tab-name-function'."
 (defalias 'tab-select      'tab-bar-select-tab)
 (defalias 'tab-next        'tab-bar-switch-to-next-tab)
 (defalias 'tab-previous    'tab-bar-switch-to-prev-tab)
+(defalias 'tab-recent      'tab-bar-switch-to-recent-tab)
 (defalias 'tab-move        'tab-bar-move-tab)
 (defalias 'tab-move-to     'tab-bar-move-tab-to)
 (defalias 'tab-rename      'tab-bar-rename-tab)
