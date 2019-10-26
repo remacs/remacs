@@ -268,8 +268,11 @@ and is passed 3 arguments: the COMMAND, the FILES and the FLAGS.")
   (if (not filelist) "."  (mapconcat 'identity filelist " ")))
 
 (defcustom vc-tor nil
-  "If non-nil, communicate with the repository site via Tor."
+  "If non-nil, communicate with the repository site via Tor.
+See https://2019.www.torproject.org/about/overview.html.en and
+the man pages for \"torsocks\" for more details about Tor."
   :type 'boolean
+  :version "27.1"
   :group 'vc)
 
 ;;;###autoload

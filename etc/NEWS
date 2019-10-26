@@ -823,6 +823,12 @@ The default value is 'find-dired-sort-by-filename'.
 
 ** Change Logs and VC
 
+---
+*** New user option 'vc-tor'.
+When non-nil, this option causes the VC commands to communicate with
+the repository via Tor's proxy, using the 'torsocks' wrapper script.
+The default is nil.
+
 +++
 *** New command 'log-edit-generate-changelog-from-diff', bound to 'C-c C-w'.
 This generates ChangeLog entries from the VC fileset diff.
