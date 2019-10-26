@@ -57,7 +57,7 @@
 
 ;;; Tests:
 
-(ert-deftest time-stamp-test-day-of-week ()
+(ert-deftest time-stamp-test-format-day-of-week ()
   "Test time-stamp formats for named day of week."
   (with-time-stamp-test-env
     ;; implemented and documented since 1997
@@ -76,7 +76,7 @@
     (should (equal (time-stamp-string "%^a" ref-time1) "MON"))
     (should (equal (time-stamp-string "%A" ref-time1) "Monday"))))
 
-(ert-deftest time-stamp-test-month-name ()
+(ert-deftest time-stamp-test-format-month-name ()
   "Test time-stamp formats for month name."
   (with-time-stamp-test-env
     ;; implemented and documented since 1997
@@ -95,7 +95,7 @@
     (should (equal (time-stamp-string "%^b" ref-time1) "JAN"))
     (should (equal (time-stamp-string "%B" ref-time1) "January"))))
 
-(ert-deftest time-stamp-test-day-of-month ()
+(ert-deftest time-stamp-test-format-day-of-month ()
   "Test time-stamp formats for day of month."
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
@@ -118,7 +118,7 @@
     (should (equal (time-stamp-string "%d" ref-time1) "02"))
     (should (equal (time-stamp-string "%d" ref-time2) "18"))))
 
-(ert-deftest time-stamp-test-hours-24 ()
+(ert-deftest time-stamp-test-format-hours-24 ()
   "Test time-stamp formats for hour on a 24-hour clock."
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
@@ -148,7 +148,7 @@
     (should (equal (time-stamp-string "%H" ref-time2) "12"))
     (should (equal (time-stamp-string "%H" ref-time3) "06"))))
 
-(ert-deftest time-stamp-test-hours-12 ()
+(ert-deftest time-stamp-test-format-hours-12 ()
   "Test time-stamp formats for hour on a 12-hour clock."
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
@@ -178,7 +178,7 @@
     (should (equal (time-stamp-string "%I" ref-time2) "12"))
     (should (equal (time-stamp-string "%I" ref-time3) "06"))))
 
-(ert-deftest time-stamp-test-month-number ()
+(ert-deftest time-stamp-test-format-month-number ()
   "Test time-stamp formats for month number."
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
@@ -201,7 +201,7 @@
     (should (equal (time-stamp-string "%m" ref-time1) "01"))
     (should (equal (time-stamp-string "%m" ref-time2) "11"))))
 
-(ert-deftest time-stamp-test-minute ()
+(ert-deftest time-stamp-test-format-minute ()
   "Test time-stamp formats for minute."
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
@@ -224,7 +224,7 @@
     (should (equal (time-stamp-string "%M" ref-time1) "04"))
     (should (equal (time-stamp-string "%M" ref-time2) "14"))))
 
-(ert-deftest time-stamp-test-second ()
+(ert-deftest time-stamp-test-format-second ()
   "Test time-stamp formats for second."
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
@@ -247,7 +247,7 @@
     (should (equal (time-stamp-string "%S" ref-time1) "05"))
     (should (equal (time-stamp-string "%S" ref-time2) "15"))))
 
-(ert-deftest time-stamp-test-year-2digit ()
+(ert-deftest time-stamp-test-format-year-2digit ()
   "Test time-stamp formats for %y."
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
@@ -272,13 +272,13 @@
     (time-stamp-should-warn
      (equal (time-stamp-string "%4y" ref-time1) "2006"))))
 
-(ert-deftest time-stamp-test-year-4digit ()
+(ert-deftest time-stamp-test-format-year-4digit ()
   "Test time-stamp format %Y."
   (with-time-stamp-test-env
     ;; implemented since 1997, documented since 2019
     (should (equal (time-stamp-string "%Y" ref-time1) "2006"))))
 
-(ert-deftest time-stamp-test-am-pm ()
+(ert-deftest time-stamp-test-format-am-pm ()
   "Test time-stamp formats for AM and PM strings."
   (with-time-stamp-test-env
     ;; implemented and documented since 1997
@@ -290,14 +290,14 @@
     (should (equal (time-stamp-string "%p" ref-time1) "PM"))
     (should (equal (time-stamp-string "%p" ref-time3) "AM"))))
 
-(ert-deftest time-stamp-test-day-number-in-week ()
+(ert-deftest time-stamp-test-format-day-number-in-week ()
   "Test time-stamp formats for day number in week."
   (with-time-stamp-test-env
     (should (equal (time-stamp-string "%w" ref-time1) "1"))
     (should (equal (time-stamp-string "%w" ref-time2) "5"))
     (should (equal (time-stamp-string "%w" ref-time3) "0"))))
 
-(ert-deftest time-stamp-test-time-zone ()
+(ert-deftest time-stamp-test-format-time-zone ()
   "Test time-stamp formats for time zone."
   (with-time-stamp-test-env
     (let ((UTC-abbr (format-time-string "%Z" ref-time1 t))
@@ -309,7 +309,7 @@
       ;; implemented since 1997, documented since 2019
       (should (equal (time-stamp-string "%#Z" ref-time1) utc-abbr)))))
 
-(ert-deftest time-stamp-test-non-date-conversions ()
+(ert-deftest time-stamp-test-format-non-date-conversions ()
   "Test time-stamp formats for non-date items."
   (with-time-stamp-test-env
     ;; implemented and documented since 1995
@@ -333,7 +333,7 @@
     (should (equal
              (time-stamp-string "%q" ref-time1) "test-system-name"))))
 
-(ert-deftest time-stamp-test-ignored-modifiers ()
+(ert-deftest time-stamp-test-format-ignored-modifiers ()
   "Test additional args allowed (but ignored) to allow for future expansion."
   (with-time-stamp-test-env
     ;; allowed modifiers
@@ -341,12 +341,12 @@
     ;; not all punctuation is allowed
     (should-not (equal (time-stamp-string "%&P" ref-time3) "AM"))))
 
-(ert-deftest time-stamp-test-non-conversions ()
+(ert-deftest time-stamp-test-format-non-conversions ()
   "Test that without a %, the text is copied literally."
   (with-time-stamp-test-env
     (should (equal (time-stamp-string "No percent" ref-time1) "No percent"))))
 
-(ert-deftest time-stamp-test-string-width ()
+(ert-deftest time-stamp-test-format-string-width ()
   "Test time-stamp string width modifiers."
   (with-time-stamp-test-env
     ;; strings truncate on the right or are blank-padded on the left
