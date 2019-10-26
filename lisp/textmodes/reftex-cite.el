@@ -763,7 +763,10 @@ in order to only add another reference in the same cite command."
       (setq format "%l"))
 
      ((and (stringp macro)
-           (string-match "\\`\\\\cite\\|cite\\'" macro))
+           ;; Match also commands from biblatex ending with `s'
+           ;; (\parencites) or `*' (\parencite*) and `texts?'
+           ;; (\footcitetext and \footcitetexts).
+           (string-match "\\`\\\\cite\\|cite\\([s*]\\|texts?\\)?\\'" macro))
       ;; We are already inside a cite macro
       (if (or (not arg) (not (listp arg)))
           (setq format
