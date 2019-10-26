@@ -1684,15 +1684,14 @@ See also `display-completion-list'.")
 
 (defface completions-first-difference
   '((t (:inherit bold)))
-  "Face for the first uncommon character in completions.
+  "Face for the first uncommon character in prefix completions.
 See also the face `completions-common-part'.")
 
-(defface completions-common-part '((t nil))
-  "Face for the common prefix substring in completions.
-The idea of this face is that you can use it to make the common parts
-less visible than normal, so that the differing parts are emphasized
-by contrast.
-See also the face `completions-first-difference'.")
+(defface completions-common-part '((t (:inherit underline)))
+  "Face for parts of completions matching a pattern.
+You can use it to make the common parts less visible than normal,
+so that the differing parts are emphasized by contrast.  See also
+the face `completions-first-difference'.")
 
 (defun completion-hilit-commonality (completions prefix-len &optional base-size)
   "Apply font-lock highlighting to a list of completions, COMPLETIONS.
@@ -3082,8 +3081,7 @@ latter (which has two).")
          (setq str (copy-sequence str))
          (unless (string-match re str)
            (error "Internal error: %s does not match %s" re str))
-         (let* ((pos (if point-idx (match-beginning point-idx) (match-end 0)))
-                (md (match-data))
+         (let* ((md (match-data))
                 (start (pop md))
                 (end (pop md))
                 (len (length str))
@@ -3137,10 +3135,6 @@ latter (which has two).")
            (put-text-property start end
                               'font-lock-face 'completions-common-part
                               str)
-           (if (> (length str) pos)
-               (put-text-property pos (1+ pos)
-                                  'font-lock-face 'completions-first-difference
-                                  str))
            (unless (zerop (length str))
              (put-text-property
               0 1 'completion-score
