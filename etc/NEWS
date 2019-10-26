@@ -702,7 +702,7 @@ at the end of the active minibuffer.
 *** New generic function 'map-insert'.
 
 +++
-** The 'type' arg can be a list '(hash-table :key1 VAL1 :key2 VAL2 ...)'
+*** The 'type' arg can be a list '(hash-table :key1 VAL1 :key2 VAL2 ...)'
 
 ** seq.el
 New convenience functions 'seq-first' and 'seq-rest' give easy access
