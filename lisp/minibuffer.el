@@ -922,31 +922,36 @@ This overrides the defaults specified in `completion-category-defaults'."
   ;; The quote/unquote function needs to come from the completion table (rather
   ;; than from completion-extra-properties) because it may apply only to some
   ;; part of the string (e.g. substitute-in-file-name).
-  (let ((requote
-         (when (and
-                (completion-metadata-get metadata 'completion--unquote-requote)
-                ;; Sometimes a table's metadata is used on another
-                ;; table (typically that other table is just a list taken
-                ;; from the output of `all-completions' or something equivalent,
-                ;; for progressive refinement).  See bug#28898 and bug#16274.
-                ;; FIXME: Rather than do nothing, we should somehow call
-                ;; the original table, in that case!
-                (functionp table))
-           (let ((new (funcall table string point 'completion--unquote)))
-             (setq string (pop new))
-             (setq table (pop new))
-             (setq point (pop new))
-	     (cl-assert (<= point (length string)))
-             (pop new))))
-        (result
-         (completion--some (lambda (style)
-                             (funcall (nth n (assq style
-                                                   completion-styles-alist))
-                                      string table pred point))
-                           (completion--styles metadata))))
+  (let* ((requote
+          (when (and
+                 (completion-metadata-get metadata 'completion--unquote-requote)
+                 ;; Sometimes a table's metadata is used on another
+                 ;; table (typically that other table is just a list taken
+                 ;; from the output of `all-completions' or something equivalent,
+                 ;; for progressive refinement).  See bug#28898 and bug#16274.
+                 ;; FIXME: Rather than do nothing, we should somehow call
+                 ;; the original table, in that case!
+                 (functionp table))
+            (let ((new (funcall table string point 'completion--unquote)))
+              (setq string (pop new))
+              (setq table (pop new))
+              (setq point (pop new))
+              (cl-assert (<= point (length string)))
+              (pop new))))
+         (result-and-style
+          (completion--some
+           (lambda (style)
+             (let ((probe (funcall (nth n (assq style
+                                                completion-styles-alist))
+                                   string table pred point)))
+               (and probe (cons probe style))))
+           (completion--styles metadata)))
+         (adjust-fn (get (cdr result-and-style) 'completion--adjust-metadata)))
+    (when adjust-fn
+      (setcdr metadata (cdr (funcall adjust-fn metadata))))
     (if requote
-        (funcall requote result n)
-      result)))
+        (funcall requote (car result-and-style) n)
+      (car result-and-style))))
 
 (defun completion-try-completion (string table pred point &optional metadata)
   "Try to complete STRING using completion table TABLE.
@@ -3461,6 +3466,29 @@ that is non-nil."
 
 ;;; "flex" completion, also known as flx/fuzzy/scatter completion
 ;; Completes "foo" to "frodo" and "farfromsober"
+
+(put 'flex 'completion--adjust-metadata 'completion--flex-adjust-metadata)
+
+(defun completion--flex-adjust-metadata (metadata)
+  (cl-flet ((compose-flex-sort-fn
+             (existing-sort-fn) ; wish `cl-flet' had proper indentation...
+             (lambda (completions)
+               (let ((res
+                      (if existing-sort-fn
+                          (funcall existing-sort-fn completions)
+                        completions)))
+                 (sort
+                  res
+                  (lambda (c1 c2)
+                    (or (equal c1 minibuffer-default)
+                        (> (get-text-property 0 'completion-score c1)
+                           (get-text-property 0 'completion-score c2)))))))))
+    (let ((alist (cdr metadata)))
+      (setf (alist-get 'display-sort-function alist)
+            (compose-flex-sort-fn (alist-get 'display-sort-function alist)))
+      (setf (alist-get 'cycle-sort-function alist)
+            (compose-flex-sort-fn (alist-get 'cycle-sort-function alist)))
+      `(metadata . ,alist))))
 
 (defun completion-flex--make-flex-pattern (pattern)
   "Convert PCM-style PATTERN into PCM-style flex pattern.
