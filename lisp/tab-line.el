@@ -247,13 +247,37 @@ Reduce tab width proportionally to space taken by other tabs."
   "Maximum number of buffer tabs displayed in the tab line.
 If nil, no limit.")
 
-(defvar tab-line-tabs-function #'tab-line-tabs
+(defcustom tab-line-tabs-function #'tab-line-tabs-window-buffers
   "Function to get a list of tabs to display in the tab line.
 This function should return either a list of buffers whose names will
 be displayed, or just a list of strings to display in the tab line.
-By default, use function `tab-line-tabs'.")
+By default, use function `tab-line-tabs-window-buffers' that
+returns a list of buffers associated with the selected window.
+When `tab-line-tabs-mode-buffers', return a list of buffers
+with the same major mode as the current buffer."
+  :type '(choice (const :tag "Window buffers"
+                        tab-line-tabs-window-buffers)
+                 (const :tag "Same mode buffers"
+                        tab-line-tabs-mode-buffers)
+                 (function :tag "Function"))
+  :initialize 'custom-initialize-default
+  :set (lambda (sym val)
+         (set-default sym val)
+         (force-mode-line-update))
+  :group 'tab-line
+  :version "27.1")
 
-(defun tab-line-tabs ()
+(defun tab-line-tabs-mode-buffers ()
+  "Return a list of buffers with the same major mode with current buffer."
+  (let* ((window (selected-window))
+         (buffer (window-buffer window))
+         (mode (with-current-buffer buffer major-mode)))
+    (seq-sort-by #'buffer-name #'string<
+                 (seq-filter (lambda (b) (with-current-buffer b
+                                           (derived-mode-p mode)))
+                             (buffer-list)))))
+
+(defun tab-line-tabs-window-buffers ()
   "Return a list of tabs that should be displayed in the tab line.
 By default returns a list of window buffers, i.e. buffers previously
 shown in the same window where the tab line is displayed.
@@ -383,10 +407,12 @@ using the `previous-buffer' command."
          ;; Remove next-buffers from prev-buffers
          (prev-buffers (seq-difference prev-buffers next-buffers)))
     (cond
-     ((memq buffer next-buffers)
+     ((and (eq tab-line-tabs-function #'tab-line-tabs-window-buffers)
+           (memq buffer next-buffers))
       (dotimes (_ (1+ (seq-position next-buffers buffer)))
         (switch-to-next-buffer window)))
-     ((memq buffer prev-buffers)
+     ((and (eq tab-line-tabs-function #'tab-line-tabs-window-buffers)
+           (memq buffer prev-buffers))
       (dotimes (_ (1+ (seq-position prev-buffers buffer)))
         (switch-to-prev-buffer window)))
      (t
@@ -398,16 +424,26 @@ using the `previous-buffer' command."
 Its effect is the same as using the `previous-buffer' command
 (\\[previous-buffer])."
   (interactive (list last-nonmenu-event))
-  (switch-to-prev-buffer
-   (and (listp mouse-event) (posn-window (event-start mouse-event)))))
+  (let ((window (and (listp mouse-event) (posn-window (event-start mouse-event)))))
+    (if (eq tab-line-tabs-function #'tab-line-tabs-window-buffers)
+        (switch-to-prev-buffer window)
+      (with-selected-window (or window (selected-window))
+        (let ((buffer (cadr (memq (current-buffer)
+                                  (reverse (funcall tab-line-tabs-function))))))
+          (when buffer (switch-to-buffer buffer)))))))
 
 (defun tab-line-switch-to-next-tab (&optional mouse-event)
   "Switch to the next tab.
 Its effect is the same as using the `next-buffer' command
 (\\[next-buffer])."
   (interactive (list last-nonmenu-event))
-  (switch-to-next-buffer
-   (and (listp mouse-event) (posn-window (event-start mouse-event)))))
+  (let ((window (and (listp mouse-event) (posn-window (event-start mouse-event)))))
+    (if (eq tab-line-tabs-function #'tab-line-tabs-window-buffers)
+        (switch-to-next-buffer window)
+      (with-selected-window (or window (selected-window))
+        (let ((buffer (cadr (memq (current-buffer)
+                                  (funcall tab-line-tabs-function)))))
+          (when buffer (switch-to-buffer buffer)))))))
 
 
 (defcustom tab-line-close-tab-action 'bury-buffer
@@ -443,14 +479,37 @@ from the tab line."
 
 
 ;;;###autoload
-(define-minor-mode global-tab-line-mode
-  "Display window-local tab line."
+(define-minor-mode tab-line-mode
+  "Toggle display of window tab line in the buffer."
+  :lighter nil
+  (setq tab-line-format (when tab-line-mode '(:eval (tab-line-format)))))
+
+(defcustom tab-line-exclude-modes
+  '(completion-list-mode)
+  "List of major modes in which the tab line is not enabled."
+  :type '(repeat symbol)
   :group 'tab-line
-  :type 'boolean
-  :global t
-  :init-value nil
-  (setq-default tab-line-format (when global-tab-line-mode
-                                  '(:eval (tab-line-format)))))
+  :version "27.1")
+
+;;;###autoload
+(defvar tab-line-exclude nil)
+;;;###autoload
+(make-variable-buffer-local 'tab-line-exclude)
+
+(defun tab-line-mode--turn-on ()
+  "Turn on `tab-line-mode'."
+  (unless (or (minibufferp)
+              (string-match-p "\\` " (buffer-name))
+              (memq major-mode tab-line-exclude-modes)
+              (get major-mode 'tab-line-exclude)
+              (buffer-local-value 'tab-line-exclude (current-buffer)))
+    (tab-line-mode 1)))
+
+;;;###autoload
+(define-globalized-minor-mode global-tab-line-mode
+  tab-line-mode tab-line-mode--turn-on
+  :group 'tab-line
+  :version "27.1")
 
 
 (global-set-key [tab-line mouse-4]    'tab-line-hscroll-left)

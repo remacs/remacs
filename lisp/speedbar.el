@@ -1080,7 +1080,7 @@ in the selected file.
 	  dframe-mouse-click-function #'speedbar-click
 	  dframe-mouse-position-function #'speedbar-position-cursor-on-line)
     (setq-local tab-bar-mode nil)
-    (setq-local tab-line-format nil))
+    (setq tab-line-exclude nil))
   speedbar-buffer)
 
 (define-obsolete-function-alias 'speedbar-message 'dframe-message "24.4")

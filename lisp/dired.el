@@ -3437,7 +3437,7 @@ argument or confirmation)."
 	  (if (eq (car files) t) (cdr files) files))
 	 (remove-text-properties (point-min) (point-max)
 				 '(mouse-face nil help-echo nil))
-	 (setq tab-line-format nil))))))
+	 (setq tab-line-exclude nil))))))
 
 (defun dired-format-columns-of-files (files)
   (let ((beg (point)))
