@@ -492,7 +492,7 @@ Pre-fill the buffer with CONTENTS."
     (set-buffer buff)
     (setq buffer-offer-save nil)
     (font-lock-mode -1) ;; Font lock has issues in Emacs 23
-    (toggle-read-only -1) ;; In case /tmp doesn't exist.
+    (read-only-mode -1) ;; In case /tmp doesn't exist
     (erase-buffer)
     (insert contents)
     ;(semantic-fetch-tags) ;JAVE could this go here?
@@ -723,29 +723,6 @@ JAVE this thing would need to be recursive to handle java and csharp"
 	)
     (semantic-utest-taglists-equivalent-p table names skipnames)
     ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;
-; JAVE redefine a  new validation function
-; is not quite as good as the old one yet
-(defun semantic-utest-verify-names-jave (name-contents &optional skipnames)
-  "JAVE version of `semantic-utest-verify-names'.
-NAME-CONTENTS is a sample of the tags buffer to test against.
-SKIPNAMES is a list of names to remove from NAME-CONTENTS"
- (assert (semantic-utest-verify-names-2 name-contents (semantic-fetch-tags))
-	 nil "failed test")
-)
-
-(defun semantic-utest-verify-names-2 (l1 l2)
-  (cond   ( (and (consp l1) (equal (car l1) 'overlay))
-            (overlayp l2))
-          ((not (consp l1))
-           (equal l1 l2))
-          ((consp l1)
-           (and (semantic-utest-verify-names-2 (car l1) (car l2)) (semantic-utest-verify-names-2 (cdr l1) (cdr l2))))
-          (t (error "internal error"))))
-
-
-
 
 
 ;;; Kill indicator line

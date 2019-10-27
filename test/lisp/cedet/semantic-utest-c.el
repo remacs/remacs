@@ -49,13 +49,12 @@
   (dolist (fp semantic-utest-c-comparisons)
     (let* ((semantic-lex-c-nested-namespace-ignore-second nil)
 	   (tags-actual
-	    (save-excursion
-	      (set-buffer (find-file-noselect (expand-file-name (car fp) semantic-utest-c-test-directory)))
+	    (with-current-buffer
+	        (find-file-noselect (expand-file-name (car fp) semantic-utest-c-test-directory))
 	      (semantic-clear-toplevel-cache)
 	      (semantic-fetch-tags)))
 	   (tags-expected
-	    (save-excursion
-	      (set-buffer (find-file-noselect (expand-file-name (cdr fp) semantic-utest-c-test-directory)))
+	    (with-current-buffer (find-file-noselect (expand-file-name (cdr fp) semantic-utest-c-test-directory))
 	      (semantic-clear-toplevel-cache)
 	      (semantic-fetch-tags))))
       (when (or (not tags-expected) (not tags-actual))
