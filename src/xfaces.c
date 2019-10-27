@@ -2085,7 +2085,7 @@ merge_face_vectors (struct window *w, struct frame *f,
 	  memcpy (tmp, to, LFACE_VECTOR_SIZE * sizeof *tmp);
 
 	  merge_face_ref (w, f, from[LFACE_INHERIT_INDEX],
-	                  tmp, false, named_merge_points, 0);
+	                  tmp, false, named_merge_points, attr_filter);
 
 	  if (NILP (tmp[attr_filter])
 	      || UNSPECIFIEDP (tmp[attr_filter]))
@@ -2172,7 +2172,12 @@ merge_named_face (struct window *w,
       bool ok = get_lface_attributes (w, f, face_name, from, false,
                                       named_merge_points);
 
-      if (ok && (attr_filter == 0 || !NILP(from[attr_filter])))
+      if (ok && (attr_filter == 0              /* No filter.  */
+                 || (!NILP(from[attr_filter])  /* Filter, but specified.  */
+		     && !UNSPECIFIEDP(from[attr_filter]))
+                 || (!NILP(from[attr_filter])  /* Filter, unspecified, but inherited.  */
+		     && UNSPECIFIEDP(from[attr_filter])
+		     && !NILP (from[LFACE_INHERIT_INDEX]))))
         merge_face_vectors (w, f, from, to, named_merge_points, attr_filter);
 
       return ok;
