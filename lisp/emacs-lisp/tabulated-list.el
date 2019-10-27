@@ -424,7 +424,12 @@ changing `tabulated-list-sort-key'."
 	 (setq saved-col (current-column))
          (when (eq (window-buffer) (current-buffer))
            (setq window-line
-                 (count-screen-lines (window-start) (point)))))
+                 (save-excursion
+                   (save-restriction
+                     (widen)
+                     (narrow-to-region (window-start) (point))
+                     (goto-char (point-min))
+                     (vertical-motion (buffer-size)))))))
     ;; Sort the entries, if necessary.
     (when sorter
       (setq entries (sort entries sorter)))
