@@ -388,80 +388,71 @@ It returns a file name which can be used directly as argument of
 
 ;;; Python specialized rx
 
-(eval-and-compile
-  (defconst python-rx-constituents
-    `((block-start          . ,(rx symbol-start
-                                   (or "def" "class" "if" "elif" "else" "try"
-                                       "except" "finally" "for" "while" "with"
-                                       ;; Python 3.5+ PEP492
-                                       (and "async" (+ space)
-                                            (or "def" "for" "with")))
-                                   symbol-end))
-      (dedenter            . ,(rx symbol-start
-                                   (or "elif" "else" "except" "finally")
-                                   symbol-end))
-      (block-ender         . ,(rx symbol-start
-                                  (or
-                                   "break" "continue" "pass" "raise" "return")
-                                  symbol-end))
-      (decorator            . ,(rx line-start (* space) ?@ (any letter ?_)
-                                   (* (any word ?_))))
-      (defun                . ,(rx symbol-start
-                                   (or "def" "class"
-                                       ;; Python 3.5+ PEP492
-                                       (and "async" (+ space) "def"))
-                                   symbol-end))
-      (if-name-main         . ,(rx line-start "if" (+ space) "__name__"
-                                   (+ space) "==" (+ space)
-                                   (any ?' ?\") "__main__" (any ?' ?\")
-                                   (* space) ?:))
-      (symbol-name          . ,(rx (any letter ?_) (* (any word ?_))))
-      (open-paren           . ,(rx (or "{" "[" "(")))
-      (close-paren          . ,(rx (or "}" "]" ")")))
-      (simple-operator      . ,(rx (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?%)))
-      ;; FIXME: rx should support (not simple-operator).
-      (not-simple-operator  . ,(rx
-                                (not
-                                 (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?%))))
-      ;; FIXME: Use regexp-opt.
-      (operator             . ,(rx (or "+" "-" "/" "&" "^" "~" "|" "*" "<" ">"
-                                       "=" "%" "**" "//" "<<" ">>" "<=" "!="
-                                       "==" ">=" "is" "not")))
-      ;; FIXME: Use regexp-opt.
-      (assignment-operator  . ,(rx (or "=" "+=" "-=" "*=" "/=" "//=" "%=" "**="
-                                       ">>=" "<<=" "&=" "^=" "|=")))
-      (string-delimiter . ,(rx (and
+(defmacro python-rx (&rest regexps)
+  "Python mode specialized rx macro.
+This variant of `rx' supports common Python named REGEXPS."
+  `(rx-let ((block-start       (seq symbol-start
+                                    (or "def" "class" "if" "elif" "else" "try"
+                                        "except" "finally" "for" "while" "with"
+                                        ;; Python 3.5+ PEP492
+                                        (and "async" (+ space)
+                                             (or "def" "for" "with")))
+                                    symbol-end))
+            (dedenter          (seq symbol-start
+                                    (or "elif" "else" "except" "finally")
+                                    symbol-end))
+            (block-ender       (seq symbol-start
+                                    (or
+                                     "break" "continue" "pass" "raise" "return")
+                                    symbol-end))
+            (decorator         (seq line-start (* space) ?@ (any letter ?_)
+                                    (* (any word ?_))))
+            (defun             (seq symbol-start
+                                    (or "def" "class"
+                                        ;; Python 3.5+ PEP492
+                                        (and "async" (+ space) "def"))
+                                    symbol-end))
+            (if-name-main      (seq line-start "if" (+ space) "__name__"
+                                    (+ space) "==" (+ space)
+                                    (any ?' ?\") "__main__" (any ?' ?\")
+                                    (* space) ?:))
+            (symbol-name       (seq (any letter ?_) (* (any word ?_))))
+            (open-paren        (or "{" "[" "("))
+            (close-paren       (or "}" "]" ")"))
+            (simple-operator   (any ?+ ?- ?/ ?& ?^ ?~ ?| ?* ?< ?> ?= ?%))
+            (not-simple-operator (not simple-operator))
+            (operator          (or "==" ">=" "is" "not"
+                                   "**" "//" "<<" ">>" "<=" "!="
+                                   "+" "-" "/" "&" "^" "~" "|" "*" "<" ">"
+                                   "=" "%"))
+            (assignment-operator (or "+=" "-=" "*=" "/=" "//=" "%=" "**="
+                                     ">>=" "<<=" "&=" "^=" "|="
+                                     "="))
+            (string-delimiter  (seq
                                 ;; Match even number of backslashes.
                                 (or (not (any ?\\ ?\' ?\")) point
-                                    ;; Quotes might be preceded by an escaped quote.
+                                    ;; Quotes might be preceded by an
+                                    ;; escaped quote.
                                     (and (or (not (any ?\\)) point) ?\\
                                          (* ?\\ ?\\) (any ?\' ?\")))
                                 (* ?\\ ?\\)
                                 ;; Match single or triple quotes of any kind.
-                                (group (or  "\"\"\"" "\"" "'''" "'")))))
-      (coding-cookie . ,(rx line-start ?# (* space)
-                            (or
-                             ;; # coding=<encoding name>
-                             (: "coding" (or ?: ?=) (* space) (group-n 1 (+ (or word ?-))))
-                             ;; # -*- coding: <encoding name> -*-
-                             (: "-*-" (* space) "coding:" (* space)
-                                (group-n 1 (+ (or word ?-))) (* space) "-*-")
-                             ;; # vim: set fileencoding=<encoding name> :
-                             (: "vim:" (* space) "set" (+ space)
-                                "fileencoding" (* space) ?= (* space)
-                                (group-n 1 (+ (or word ?-))) (* space) ":")))))
-    "Additional Python specific sexps for `python-rx'")
-
-  (defmacro python-rx (&rest regexps)
-    "Python mode specialized rx macro.
-This variant of `rx' supports common Python named REGEXPS."
-    (let ((rx-constituents (append python-rx-constituents rx-constituents)))
-      (cond ((null regexps)
-             (error "No regexp"))
-            ((cdr regexps)
-             (rx-to-string `(and ,@regexps) t))
-            (t
-             (rx-to-string (car regexps) t))))))
+                                (group (or  "\"\"\"" "\"" "'''" "'"))))
+            (coding-cookie (seq line-start ?# (* space)
+                                (or
+                                 ;; # coding=<encoding name>
+                                 (: "coding" (or ?: ?=) (* space)
+                                    (group-n 1 (+ (or word ?-))))
+                                 ;; # -*- coding: <encoding name> -*-
+                                 (: "-*-" (* space) "coding:" (* space)
+                                    (group-n 1 (+ (or word ?-)))
+                                    (* space) "-*-")
+                                 ;; # vim: set fileencoding=<encoding name> :
+                                 (: "vim:" (* space) "set" (+ space)
+                                    "fileencoding" (* space) ?= (* space)
+                                    (group-n 1 (+ (or word ?-)))
+                                    (* space) ":")))))
+     (rx ,@regexps)))
 
 
 ;;; Font-lock and syntax
