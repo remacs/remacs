@@ -156,7 +156,7 @@ icompletion is occurring."
 Use the first of the matches if there are any displayed, and use
 the default otherwise."
   (interactive)
-  (if (or icomplete-show-matches-on-no-input
+  (if (or (and (not minibuffer-default) icomplete-show-matches-on-no-input)
           (> (icomplete--field-end) (icomplete--field-beg)))
       (minibuffer-force-complete-and-exit)
     (minibuffer-complete-and-exit)))
@@ -269,9 +269,7 @@ Usually run by inclusion in `minibuffer-setup-hook'."
     					 (current-local-map)))
     (add-hook 'pre-command-hook  #'icomplete-pre-command-hook  nil t)
     (add-hook 'post-command-hook #'icomplete-post-command-hook nil t)
-    (run-hooks 'icomplete-minibuffer-setup-hook)
-    (when icomplete-show-matches-on-no-input
-      (icomplete-exhibit))))
+    (run-hooks 'icomplete-minibuffer-setup-hook)))
 
 (defvar icomplete--in-region-buffer nil)
 
