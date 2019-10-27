@@ -1811,9 +1811,15 @@ possible to do the same thing via a hook, that is preferable
 (@pxref{Hooks}).  If you simply want to change what a particular key
 does, it may be better to write a new command, and remap the old
 command's key bindings to the new one (@pxref{Remapping Commands}).
-In particular, Emacs's own source files should not put advice on
-functions in Emacs.  (There are currently a few exceptions to this
-convention, but we aim to correct them.)
+
+  If you are writing code for release, for others to use, try to avoid
+including advice in it.  If the function you want to advise has no
+hook to do the job, please talk with the Emacs developers about adding
+a suitable hook.  Especially, Emacs's own source files should not put
+advice on functions in Emacs.  (There are currently a few exceptions
+to this convention, but we aim to correct them.)  It is generally
+cleaner to create a new hook in @code{foo}, and make @code{bar} use
+the hook, than to have @code{bar} put advice in @code{foo}.
 
   Special forms (@pxref{Special Forms}) cannot be advised, however macros can
 be advised, in much the same way as functions.  Of course, this will not affect
