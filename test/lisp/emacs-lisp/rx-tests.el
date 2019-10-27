@@ -268,7 +268,9 @@
   (should (equal (rx (not (syntax punctuation)) (not (syntax escape)))
                  "\\S.\\S\\"))
   (should (equal (rx (not (category tone-mark)) (not (category lao)))
-                 "\\C4\\Co")))
+                 "\\C4\\Co"))
+  (should (equal (rx (not (not ascii)) (not (not (not (any "a-z")))))
+                 "[[:ascii:]][^a-z]")))
 
 (ert-deftest rx-group ()
   (should (equal (rx (group nonl) (submatch "x")
@@ -403,6 +405,19 @@
   (should-error (rx-let ((punctuation "x")) nil))
   (should-error (rx-let-eval '((not-char () "x")) nil))
   (should-error (rx-let-eval '((not-char "x")) nil)))
+
+(ert-deftest rx-def-in-not ()
+  "Test definition expansion inside (not ...)."
+  (rx-let ((a alpha)
+           (b (not hex))
+           (c (not (category base)))
+           (d (x) (any ?a x ?z))
+           (e (x) (syntax x))
+           (f (not b)))
+    (should (equal (rx (not a) (not b) (not c) (not f))
+                   "[^[:alpha:]][[:xdigit:]]\\c.[^[:xdigit:]]"))
+    (should (equal (rx (not (d ?m)) (not (e symbol)))
+                   "[^amz]\\S_"))))
 
 (ert-deftest rx-constituents ()
   (let ((rx-constituents

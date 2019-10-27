@@ -477,6 +477,9 @@ If NEGATED, negate the sense (thus making it positive)."
      ((eq arg 'word-boundary)
       (rx--translate-symbol
        (if negated 'word-boundary 'not-word-boundary)))
+     ((let ((expanded (rx--expand-def arg)))
+        (and expanded
+             (rx--translate-not negated (list expanded)))))
      (t (error "Illegal argument to rx `not': %S" arg)))))
 
 (defun rx--atomic-regexp (item)
