@@ -4010,7 +4010,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
   (let ((proc (get-buffer-process (current-buffer))))
     (when (processp proc)
       (tramp--test-message
-       "cmd: %s\n%s" (process-command proc) (buffer-string))))
+       "cmd: %s\nbuf:\n%s\n---" (process-command proc) (buffer-string))))
   (ert-fail (format "`%s' timed out" (ert-test-name (ert-running-test)))))
 
 (ert-deftest tramp-test29-start-file-process ()

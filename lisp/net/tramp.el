@@ -4660,8 +4660,8 @@ are written with verbosity of 6."
        (setq error (error-message-string err)
 	     result 1)))
     (if (zerop (length error))
-	(tramp-message vec 6 "%d\n%s" result output)
-      (tramp-message vec 6 "%d\n%s\n%s" result output error))
+	(tramp-message vec 6 "%s\n%s" result output)
+      (tramp-message vec 6 "%s\n%s\n%s" result output error))
     result))
 
 (defun tramp-call-process-region
