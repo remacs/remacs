@@ -284,6 +284,12 @@ If nil, don't show it at all."
               :help "Click to close tab")
   "Button for closing the clicked tab.")
 
+(defvar tab-bar-back-button " < "
+  "Button for going back in tab history.")
+
+(defvar tab-bar-forward-button " > "
+  "Button for going forward in tab history.")
+
 (defcustom tab-bar-tab-hints nil
   "Show absolute numbers on tabs in the tab bar before the tab name.
 This helps to select the tab by its number using `tab-bar-select-tab'."
@@ -373,6 +379,15 @@ Return its existing value or a new value."
          (tabs (funcall tab-bar-tabs-function)))
     (append
      '(keymap (mouse-1 . tab-bar-handle-mouse))
+     (when tab-bar-history-mode
+       `((sep-history-back menu-item ,separator ignore)
+         (history-back
+          menu-item ,tab-bar-back-button tab-bar-history-back
+          :help "Click to go back in tab history")
+         (sep-history-forward menu-item ,separator ignore)
+         (history-forward
+          menu-item ,tab-bar-forward-button tab-bar-history-forward
+          :help "Click to go forward in tab history")))
      (mapcan
       (lambda (tab)
         (setq i (1+ i))
@@ -432,7 +447,9 @@ Return its existing value or a new value."
       (time . ,(time-convert nil 'integer))
       (wc . ,(current-window-configuration))
       (ws . ,(window-state-get
-              (frame-root-window (selected-frame)) 'writable)))))
+              (frame-root-window (selected-frame)) 'writable))
+      (history-back . ,(gethash (selected-frame) tab-bar-history-back))
+      (history-forward . ,(gethash (selected-frame) tab-bar-history-forward)))))
 
 (defun tab-bar--current-tab (&optional tab)
   ;; `tab` here is an argument meaning 'use tab as template'. This is
@@ -488,7 +505,9 @@ to the numeric argument.  ARG counts from 1."
       (let* ((from-tab (tab-bar--tab))
              (to-tab (nth to-index tabs))
              (wc (cdr (assq 'wc to-tab)))
-             (ws (cdr (assq 'ws to-tab))))
+             (ws (cdr (assq 'ws to-tab)))
+             (history-back (cdr (assq 'history-back to-tab)))
+             (history-forward (cdr (assq 'history-forward to-tab))))
 
         ;; During the same session, use window-configuration to switch
         ;; tabs, because window-configurations are more reliable
@@ -500,6 +519,14 @@ to the numeric argument.  ARG counts from 1."
             (set-window-configuration wc)
           (if ws (window-state-put ws (frame-root-window (selected-frame))
                                    'safe)))
+
+        (setq tab-bar-history-omit t)
+        (puthash (selected-frame)
+                 (and (window-configuration-p (car history-back)) history-back)
+                 tab-bar-history-back)
+        (puthash (selected-frame)
+                 (and (window-configuration-p (car history-forward)) history-forward)
+                 tab-bar-history-forward)
 
         (when from-index
           (setf (nth from-index tabs) from-tab))
@@ -830,6 +857,87 @@ function `tab-bar-tab-name-function'."
                      "New name for tab (leave blank for automatic naming): "
                      nil nil nil nil tab-name))))
   (tab-bar-rename-tab new-name (1+ (tab-bar--tab-index-by-name tab-name))))
+
+
+;;; Tab history mode
+
+(defvar tab-bar-history-omit nil
+  "When non-nil, omit window-configuration changes from the current command.")
+
+(defvar tab-bar-history-back (make-hash-table)
+  "History of back changes in every tab per frame.")
+
+(defvar tab-bar-history-forward (make-hash-table)
+  "History of forward changes in every tab per frame.")
+
+(defvar tab-bar-history-pre-change nil
+  "Window configuration before the current command.")
+
+(defun tab-bar-history-pre-change ()
+  (setq tab-bar-history-pre-change (current-window-configuration)))
+
+(defun tab-bar-history-change ()
+  (when (and (not tab-bar-history-omit)
+             (zerop (minibuffer-depth)))
+    (puthash (selected-frame)
+             (cons tab-bar-history-pre-change
+                   (gethash (selected-frame) tab-bar-history-back))
+	     tab-bar-history-back))
+  (when tab-bar-history-omit
+    (setq tab-bar-history-omit nil)))
+
+(defun tab-bar-history-back ()
+  (interactive)
+  (setq tab-bar-history-omit t)
+  (let ((wc (pop (gethash (selected-frame) tab-bar-history-back))))
+    (if (window-configuration-p wc)
+        (progn
+          (puthash (selected-frame)
+                   (cons (current-window-configuration)
+                         (gethash (selected-frame) tab-bar-history-forward))
+	           tab-bar-history-forward)
+          (set-window-configuration wc))
+      (message "No more tab back history"))))
+
+(defun tab-bar-history-forward ()
+  (interactive)
+  (setq tab-bar-history-omit t)
+  (let ((wc (pop (gethash (selected-frame) tab-bar-history-forward))))
+    (if (window-configuration-p wc)
+        (progn
+          (puthash (selected-frame)
+                   (cons (current-window-configuration)
+                         (gethash (selected-frame) tab-bar-history-back))
+	           tab-bar-history-back)
+          (set-window-configuration wc))
+      (message "No more tab forward history"))))
+
+(define-minor-mode tab-bar-history-mode
+  "Toggle tab history mode for the tab bar."
+  :global t
+  (if tab-bar-history-mode
+      (progn
+        (when (and tab-bar-mode (not (get-text-property 0 'display tab-bar-back-button)))
+          ;; This file is pre-loaded so only here we can use the right data-directory:
+          (add-text-properties 0 (length tab-bar-back-button)
+                               `(display (image :type xpm
+                                                :file "tabs/left-arrow.xpm"
+                                                :margin (2 . 0)
+                                                :ascent center))
+                               tab-bar-back-button))
+        (when (and tab-bar-mode (not (get-text-property 0 'display tab-bar-forward-button)))
+          ;; This file is pre-loaded so only here we can use the right data-directory:
+          (add-text-properties 0 (length tab-bar-forward-button)
+                               `(display (image :type xpm
+                                                :file "tabs/right-arrow.xpm"
+                                                :margin (2 . 0)
+                                                :ascent center))
+                               tab-bar-forward-button))
+
+        (add-hook 'pre-command-hook 'tab-bar-history-pre-change)
+        (add-hook 'window-configuration-change-hook 'tab-bar-history-change))
+    (remove-hook 'pre-command-hook 'tab-bar-history-pre-change)
+    (remove-hook 'window-configuration-change-hook 'tab-bar-history-change)))
 
 
 ;;; Short aliases
