@@ -57,6 +57,8 @@
 
 ;;; Tests:
 
+;;; Tests of time-stamp-string formatting
+
 (ert-deftest time-stamp-test-format-day-of-week ()
   "Test time-stamp formats for named day of week."
   (with-time-stamp-test-env
@@ -359,5 +361,22 @@
     (should (equal (time-stamp-string "%2%" ref-time3) " %"))
     (should (equal (time-stamp-string "%#3a" ref-time3) "SUN"))
     (should (equal (time-stamp-string "%#3b" ref-time2) "NOV"))))
+
+;;; Tests of helper functions
+
+(ert-deftest time-stamp-test-helper-zone-type-p ()
+  "Test time-stamp-zone-type-p."
+  (should (time-stamp-zone-type-p t))
+  (should (time-stamp-zone-type-p nil))
+  (should (time-stamp-zone-type-p 'wall))
+  (should-not (time-stamp-zone-type-p 'floor))
+  (should (time-stamp-zone-type-p "arbitrary string"))
+  (should (time-stamp-zone-type-p 0))
+  (should-not (time-stamp-zone-type-p 3.14))
+  (should-not (time-stamp-zone-type-p '(0)))
+  (should-not (time-stamp-zone-type-p '(0 . "A")))
+  (should (time-stamp-zone-type-p '(0 "A")))
+  (should-not (time-stamp-zone-type-p '(0 0)))
+  (should-not (time-stamp-zone-type-p '("A" "A"))))
 
 ;;; time-stamp-tests.el ends here
