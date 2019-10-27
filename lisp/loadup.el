@@ -195,7 +195,6 @@
 
 (load "emacs-lisp/nadvice")
 (load "emacs-lisp/cl-preloaded")
-(load "minibuffer")            ;After loaddefs, for define-minor-mode.
 (load "obarray")        ;abbrev.el is implemented in terms of obarrays.
 (load "abbrev")         ;lisp-mode.el and simple.el use define-abbrev-table.
 (load "simple")
@@ -247,6 +246,7 @@
 
 (load "indent")
 (load "emacs-lisp/cl-generic")
+(load "minibuffer") ;Needs cl-generic (and define-minor-mode).
 (load "frame")
 (load "startup")
 (load "term/tty-colors")
@@ -390,10 +390,9 @@ lost after dumping")))
     (let* ((base (concat "emacs-" emacs-version "."))
 	   (exelen (if (eq system-type 'windows-nt) -4))
 	   (files (file-name-all-completions base default-directory))
-	   (versions (mapcar (function
-			      (lambda (name)
-				(string-to-number
-				 (substring name (length base) exelen))))
+	   (versions (mapcar (lambda (name)
+                               (string-to-number
+                                (substring name (length base) exelen)))
 			     files)))
       (setq emacs-repository-version (ignore-errors (emacs-repository-get-version))
             emacs-repository-branch (ignore-errors (emacs-repository-get-branch)))

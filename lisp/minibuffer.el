@@ -2251,6 +2251,8 @@ The completion method is determined by `completion-at-point-functions'."
     ;; (define-key map "\e\t" 'minibuffer-force-complete)
     (define-key map " " 'minibuffer-complete-word)
     (define-key map "?" 'minibuffer-completion-help)
+    (define-key map [prior] 'switch-to-completions)
+    (define-key map "\M-v"  'switch-to-completions)
     map)
   "Local keymap for minibuffer input with completion.")
 

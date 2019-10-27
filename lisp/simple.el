@@ -3336,7 +3336,7 @@ to `shell-command-history'."
         (shell-completion-vars)
 	(set (make-local-variable 'minibuffer-default-add-function)
 	     'minibuffer-default-add-shell-commands))
-    (apply 'read-from-minibuffer prompt initial-contents
+    (apply #'read-from-minibuffer prompt initial-contents
 	   minibuffer-local-shell-command-map
 	   nil
 	   (or hist 'shell-command-history)
@@ -8494,10 +8494,7 @@ Called from `temp-buffer-show-hook'."
 		 "In this buffer, type \\[choose-completion] to \
 select the completion near point.\n\n"))))))
 
-(add-hook 'completion-setup-hook 'completion-setup-function)
-
-(define-key minibuffer-local-completion-map [prior] 'switch-to-completions)
-(define-key minibuffer-local-completion-map "\M-v"  'switch-to-completions)
+(add-hook 'completion-setup-hook #'completion-setup-function)
 
 (defun switch-to-completions ()
   "Select the completion list window."
