@@ -2693,7 +2693,7 @@ is a member of `erc-lurker-hide-list' are hidden if `erc-lurker-p'
 returns non-nil."
   (let* ((command (erc-response.command parsed))
          (sender (car (erc-parse-user (erc-response.sender parsed))))
-         (channel (nth 1 (erc-response.command-args parsed)))
+         (channel (car (erc-response.command-args parsed)))
          (network (or (and (fboundp 'erc-network-name) (erc-network-name))
 		      (erc-shorten-server-name
 		       (or erc-server-announced-name
@@ -2702,9 +2702,9 @@ returns non-nil."
 	  (when erc-network-hide-list
 	    (erc-add-targets network erc-network-hide-list)))
 	 (current-hide-list
-	  (apply 'append current-hide-list
-		 (when erc-channel-hide-list
-		   (erc-add-targets channel erc-channel-hide-list)))))
+	  (append current-hide-list
+		  (when erc-channel-hide-list
+		    (erc-add-targets channel erc-channel-hide-list)))))
     (or (member command erc-hide-list)
         (member command current-hide-list)
         (and (member command erc-lurker-hide-list) (erc-lurker-p sender)))))
