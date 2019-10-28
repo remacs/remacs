@@ -2335,10 +2335,10 @@ contents of the minibuffer before the point.
 @end deffn
 
 @deffn Command goto-history-element nabs
-Puts element of the minibuffer history in the minibuffer.  The
-argument @var{nabs} specifies the absolute history position in
-descending order, where 0 means the current element and a positive
-number N means the Nth previous element.
+This function puts element of the minibuffer history in the
+minibuffer.  The argument @var{nabs} specifies the absolute history
+position in descending order, where 0 means the current element and a
+positive number @var{n} means the @var{n}th previous element.
 @end deffn
 
 @node Minibuffer Windows
