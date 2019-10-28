@@ -271,8 +271,8 @@ textual parts.")
 		(save-excursion
 		  (forward-line)
 		  (null (looking-at-p
-			 ;; We're expecting a mail header.
-			 "^[!-9;-~]+:[[:space:]]"))))
+			 ;; We're expecting a mail-ish header.
+			 "^[!-9;-~]+:[[:space:]]?"))))
 	    (delete-region (line-beginning-position)
 			   (1+ (line-end-position)))
 	  (setq lines nil)
