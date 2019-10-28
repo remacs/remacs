@@ -4877,9 +4877,9 @@ connection if a previous connection has died for some reason."
 			   (tramp-get-connection-buffer vec)
 			   (append
 			    (list tramp-encoding-shell)
+			    (and extra-args (split-string extra-args))
 			    (and tramp-encoding-command-interactive
-				 (list tramp-encoding-command-interactive))
-			    (and extra-args (split-string extra-args)))))))
+				 (list tramp-encoding-command-interactive)))))))
 
 		;; Set sentinel and query flag.  Initialize variables.
 		(set-process-sentinel p #'tramp-process-sentinel)
