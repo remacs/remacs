@@ -870,17 +870,23 @@ function `tab-bar-tab-name-function'."
 (defvar tab-bar-history-forward (make-hash-table)
   "History of forward changes in every tab per frame.")
 
-(defvar tab-bar-history-pre-change nil
-  "Window configuration before the current command.")
+(defvar tab-bar-history--pre-change nil
+  "Window configuration and minibuffer depth before the current command.")
 
-(defun tab-bar-history-pre-change ()
-  (setq tab-bar-history-pre-change (current-window-configuration)))
+(defun tab-bar-history--pre-change ()
+  (setq tab-bar-history--pre-change
+        (list (current-window-configuration)
+              (minibuffer-depth))))
 
-(defun tab-bar-history-change ()
+(defun tab-bar--history-change ()
   (when (and (not tab-bar-history-omit)
+             tab-bar-history--pre-change
+             ;; Entering the minibuffer
+             (zerop (nth 1 tab-bar-history--pre-change))
+             ;; Exiting the minibuffer
              (zerop (minibuffer-depth)))
     (puthash (selected-frame)
-             (cons tab-bar-history-pre-change
+             (cons (nth 0 tab-bar-history--pre-change)
                    (gethash (selected-frame) tab-bar-history-back))
 	     tab-bar-history-back))
   (when tab-bar-history-omit
@@ -934,10 +940,10 @@ function `tab-bar-tab-name-function'."
                                                 :ascent center))
                                tab-bar-forward-button))
 
-        (add-hook 'pre-command-hook 'tab-bar-history-pre-change)
-        (add-hook 'window-configuration-change-hook 'tab-bar-history-change))
-    (remove-hook 'pre-command-hook 'tab-bar-history-pre-change)
-    (remove-hook 'window-configuration-change-hook 'tab-bar-history-change)))
+        (add-hook 'pre-command-hook 'tab-bar-history--pre-change)
+        (add-hook 'window-configuration-change-hook 'tab-bar--history-change))
+    (remove-hook 'pre-command-hook 'tab-bar-history--pre-change)
+    (remove-hook 'window-configuration-change-hook 'tab-bar--history-change)))
 
 
 ;;; Short aliases
