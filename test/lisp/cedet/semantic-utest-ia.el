@@ -27,6 +27,7 @@
 ;; Each file has cursor keys in them of the form:
 ;;   // -#- ("ans1" "ans2" )
 ;; where # is 1, 2, 3, etc, and some sort of answer list.
+;; (Replace // with contents of comment-start for the language being tested.)
 
 ;;; Code:
 (require 'semantic)
@@ -59,8 +60,38 @@
     (should (file-exists-p tst))
     (should-not (semantic-ia-utest tst))))
 
-(ert-deftest semantic-utest-ia-friends.cpp ()
-  (let ((tst (expand-file-name "testfriends.cpp" semantic-utest-test-directory)))
+(ert-deftest semantic-utest-ia-struct.cpp ()
+  (let ((tst (expand-file-name "teststruct.cpp" semantic-utest-test-directory)))
+    (should (file-exists-p tst))
+    (should-not (semantic-ia-utest tst))))
+
+;;(ert-deftest semantic-utest-ia-union.cpp ()
+;;  (let ((tst (expand-file-name "testunion.cpp" semantic-utest-test-directory)))
+;;    (should (file-exists-p tst))
+;;    (should-not (semantic-ia-utest tst))))
+
+(ert-deftest semantic-utest-ia-templates.cpp ()
+  (let ((tst (expand-file-name "testtemplates.cpp" semantic-utest-test-directory)))
+    (should (file-exists-p tst))
+    (should-not (semantic-ia-utest tst))))
+
+;;(ert-deftest semantic-utest-ia-friends.cpp ()
+;;  (let ((tst (expand-file-name "testfriends.cpp" semantic-utest-test-directory)))
+;;    (should (file-exists-p tst))
+;;    (should-not (semantic-ia-utest tst))))
+
+(ert-deftest semantic-utest-ia-using.cpp ()
+  (let ((tst (expand-file-name "testusing.cpp" semantic-utest-test-directory)))
+    (should (file-exists-p tst))
+    (should-not (semantic-ia-utest tst))))
+
+(ert-deftest semantic-utest-ia-nsp.cpp ()
+  (let ((tst (expand-file-name "testnsp.cpp" semantic-utest-test-directory)))
+    (should (file-exists-p tst))
+    (should-not (semantic-ia-utest tst))))
+
+(ert-deftest semantic-utest-ia-localvars.cpp ()
+  (let ((tst (expand-file-name "testlocalvars.cpp" semantic-utest-test-directory)))
     (should (file-exists-p tst))
     (should-not (semantic-ia-utest tst))))
 
@@ -81,6 +112,36 @@
 
 (ert-deftest semantic-utest-ia-javacomp.java ()
   (let ((tst (expand-file-name "testjavacomp.java" semantic-utest-test-directory)))
+    (should (file-exists-p tst))
+    (should-not (semantic-ia-utest tst))))
+
+(ert-deftest semantic-utest-ia-varnamse.java ()
+  (let ((tst (expand-file-name "testvarnames.java" semantic-utest-test-directory)))
+    (should (file-exists-p tst))
+    (should-not (semantic-ia-utest tst))))
+
+;;(ert-deftest semantic-utest-ia-f90.f90 ()
+;;  (let ((tst (expand-file-name "testf90.f90" semantic-utest-test-directory)))
+;;    (should (file-exists-p tst))
+;;    (should-not (semantic-ia-utest tst))))
+
+(ert-deftest semantic-utest-ia-wisent.wy ()
+  (let ((tst (expand-file-name "testwisent.wy" semantic-utest-test-directory)))
+    (should (file-exists-p tst))
+    (should-not (semantic-ia-utest tst))))
+
+(ert-deftest semantic-utest-ia-texi ()
+  (let ((tst (expand-file-name "test.texi" semantic-utest-test-directory)))
+    (should (file-exists-p tst))
+    (should-not (semantic-ia-utest tst))))
+
+(ert-deftest semantic-utest-ia-make ()
+  (let ((tst (expand-file-name "test.mk" semantic-utest-test-directory)))
+    (should (file-exists-p tst))
+    (should-not (semantic-ia-utest tst))))
+
+(ert-deftest semantic-utest-ia-srecoder ()
+  (let ((tst (expand-file-name "test.srt" semantic-utest-test-directory)))
     (should (file-exists-p tst))
     (should-not (semantic-ia-utest tst))))
 
@@ -127,8 +188,10 @@
 
     ;; Keep looking for test points until we run out.
     (while (save-excursion
-	     (setq regex-p (concat "//\\s-*-" (number-to-string idx) "-" )
-		   regex-a (concat "//\\s-*#" (number-to-string idx) "#" ))
+	     (setq regex-p (concat "\\(" comment-start-skip "\\)\\s-*-"
+				   (number-to-string idx) "-" )
+		   regex-a (concat "\\(" comment-start-skip "\\)\\s-*#"
+				   (number-to-string idx) "#" ))
 	     (goto-char (point-min))
 	     (save-match-data
 	       (when (re-search-forward regex-p nil t)
@@ -141,13 +204,18 @@
       (save-excursion
 
 	(goto-char p)
+	(skip-chars-backward " ") ;; some languages need a space.
 
 	(let* ((ctxt (semantic-analyze-current-context))
+               ;; TODO - fix the NOTFOUND case to be nil and not an error when finding
+               ;; completions, then remove the below debug-on-error setting.
+               (debug-on-error nil)
 	       (acomp
-		(condition-case nil
+		(condition-case err
 		    (semantic-analyze-possible-completions ctxt)
-		  (error nil))))
-	  (setq actual (mapcar 'semantic-tag-name acomp)))
+                  ((error user-error) nil))
+                ))
+	  (setq actual (mapcar 'semantic-format-tag-name acomp)))
 
 	(goto-char a)
 
@@ -157,8 +225,14 @@
 	    (error (setq desired (format "  FAILED TO PARSE: %S"
 					 bss)))))
 
+	(setq actual (sort actual 'string<))
+	(setq desired (sort desired 'string<))
+
 	(if (equal actual desired)
-	    (setq pass (cons idx pass))
+            (prog1
+	        (setq pass (cons idx pass))
+              ;;(message "PASS: %S" actual)
+              )
 	  (setq fail (cons
                       (list
                        (format "Failed %d.  Desired: %S Actual %S"
@@ -171,7 +245,7 @@
       )
 
     (when fail
-      (cons "COMPLETION SUBTEST" fail))
+      (cons "COMPLETION SUBTEST" (reverse fail)))
     ))
 
 (defun semantic-ia-utest-buffer-refs ()
@@ -189,7 +263,8 @@
 	 )
     ;; Keep looking for test points until we run out.
     (while (save-excursion
-	     (setq regex-p (concat "//\\s-*\\^" (number-to-string idx) "^" )
+	     (setq regex-p (concat "\\(" comment-start-skip
+				   "\\)\\s-*\\^" (number-to-string idx) "^" )
 		   )
 	     (goto-char (point-min))
 	     (save-match-data
@@ -295,7 +370,8 @@
 	 )
     ;; Keep looking for test points until we run out.
     (while (save-excursion
-	     (setq regex-p (concat "//\\s-*\\%" (number-to-string idx) "%" )
+	     (setq regex-p (concat "\\(" comment-start-skip "\\)\\s-*\\%"
+				   (number-to-string idx) "%" )
 		   )
 	     (goto-char (point-min))
 	     (save-match-data
@@ -307,7 +383,7 @@
 	     tag)
 
       (setq actual-result (semantic-symref-find-references-by-name
-			   (semantic-tag-name tag) 'target
+			   (semantic-format-tag-name tag) 'target
 			   'symref-tool-used))
 
       (if (not actual-result)
@@ -393,13 +469,14 @@ tag that contains point, and return that."
 	 )
     ;; Keep looking for test points until we run out.
     (while (save-excursion
-	     (setq regex-p (concat "//\\s-*@"
+	     (setq regex-p (concat "\\(" comment-start-skip "\\)\\s-*@"
 				   (number-to-string idx)
-				   "@\\s-+\\(\\w+\\)" ))
+				   "@\\s-+\\w+" ))
 	     (goto-char (point-min))
 	     (save-match-data
 	       (when (re-search-forward regex-p nil t)
-		 (goto-char (match-beginning 1))
+		 (goto-char (match-end 0))
+		 (skip-syntax-backward "w")
 		 (setq desired (read (buffer-substring (point) (point-at-eol))))
 		 (setq start (match-beginning 0))
 		 (goto-char start)
