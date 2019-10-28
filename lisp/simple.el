@@ -5197,10 +5197,10 @@ a character from history."
      (t
       (error "Invalid history: %s" history)))
     (while (not result)
-      (setq result (read-char prompt inherit-input-method seconds))
+      (setq result (read-event prompt inherit-input-method seconds))
       ;; Go back in history.
       (cond
-       ((eq result ?\M-p)
+       ((memq result '(?\M-p up))
         (if (>= index (length (symbol-value histvar)))
             (progn
               (message "Beginning of history; no preceding item")
@@ -5211,7 +5211,7 @@ a character from history."
                                 (elt (symbol-value histvar) (1- index)))))
         (setq result nil))
        ;; Go forward in history.
-       ((eq result ?\M-n)
+       ((memq result '(?\M-n down))
         (if (zerop index)
             (progn
               (message "End of history; no next item")
@@ -5225,9 +5225,13 @@ a character from history."
         (setq result nil))
        ;; The user hits RET to either select a history item or to
        ;; return RET.
-       ((eq result ?\r)
-        (unless (zerop index)
-          (setq result (elt (symbol-value histvar) (1- index)))))))
+       ((eq result 'return)
+        (if (zerop index)
+            (setq result ?\r)
+          (setq result (elt (symbol-value histvar) (1- index)))))
+       ;; The user has entered some non-character event.
+       ((not (characterp result))
+        (user-error "Non-character input event"))))
     ;; Record the chosen key.
     (set histvar (cons result (symbol-value histvar)))
     result))
