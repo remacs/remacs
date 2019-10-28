@@ -6435,15 +6435,17 @@ not_in_argv (NSString *arg)
            (unsigned long)selRange.length,
            (unsigned long)selRange.location);
 
-  if (workingText != nil)
-    [self deleteWorkingText];
   if ([str length] == 0)
-    return;
+    {
+      [self deleteWorkingText];
+      return;
+    }
 
   if (!emacs_event)
     return;
 
   processingCompose = YES;
+  [workingText release];
   workingText = [str copy];
   ns_working_text = build_string ([workingText UTF8String]);
 
