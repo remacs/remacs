@@ -79,8 +79,7 @@
 ;;  1. The undo command doesn't restore deleted regions well.  That is, if
 ;;  you delete all characters in a difference region and then invoke
 ;;  `undo', the reinstated text will most likely be inserted outside of
-;;  what Ediff thinks is the current difference region. (This problem
-;;  doesn't seem to exist with XEmacs.)
+;;  what Ediff thinks is the current difference region.
 ;;
 ;;  If at any point you feel that difference regions are no longer correct,
 ;;  you can hit '!' to recompute the differences.

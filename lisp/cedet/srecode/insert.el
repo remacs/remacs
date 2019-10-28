@@ -44,9 +44,7 @@ Dictionary value references that ask begin with the ? character.
 Possible values are:
   `ask'   - Prompt in the minibuffer as the value is inserted.
   `field' - Use the dictionary macro name as the inserted value,
-            and place a field there.  Matched fields change together.
-
-NOTE: The field feature does not yet work with XEmacs."
+            and place a field there.  Matched fields change together."
   :group 'srecode
   :type '(choice (const :tag "Ask" ask)
 		 (const :tag "Field" field)))

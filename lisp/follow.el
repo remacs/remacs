@@ -25,8 +25,8 @@
 
 ;;; Commentary:
 
-;; `Follow mode' is a minor mode for Emacs and XEmacs that
-;; combines windows into one tall virtual window.
+;; `Follow mode' is a minor mode that combines windows into one tall
+;; virtual window.
 ;;
 ;; The feeling of a "virtual window" has been accomplished by the use
 ;; of two major techniques:

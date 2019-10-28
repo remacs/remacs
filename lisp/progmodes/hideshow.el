@@ -152,18 +152,11 @@
 
 ;; * Bugs
 ;;
-;; (1) Hideshow does not work w/ emacs 18 because emacs 18 lacks the
-;;     function `forward-comment' (among other things).  If someone
-;;     writes this, please send me a copy.
-;;
-;; (2) Sometimes `hs-headline' can become out of sync.  To reset, type
+;; (1) Sometimes `hs-headline' can become out of sync.  To reset, type
 ;;     `M-x hs-minor-mode' twice (that is, deactivate then re-activate
 ;;     hideshow).
 ;;
-;; (3) Hideshow 5.x is developed and tested on GNU Emacs 20.7.
-;;     XEmacs compatibility may have bitrotted since 4.29.
-;;
-;; (4) Some buffers can't be `byte-compile-file'd properly.  This is because
+;; (2) Some buffers can't be `byte-compile-file'd properly.  This is because
 ;;     `byte-compile-file' inserts the file to be compiled in a temporary
 ;;     buffer and switches `normal-mode' on.  In the case where you have
 ;;     `hs-hide-initial-comment-block' in `hs-minor-mode-hook', the hiding of
@@ -178,7 +171,7 @@
 ;;       (let ((hs-minor-mode-hook nil))
 ;;         ad-do-it))
 ;;
-;; (5) Hideshow interacts badly with Ediff and `vc-diff'.  At the moment, the
+;; (3) Hideshow interacts badly with Ediff and `vc-diff'.  At the moment, the
 ;;     suggested workaround is to turn off hideshow entirely, for example:
 ;;
 ;;     (add-hook 'ediff-prepare-buffer-hook #'turn-off-hideshow)

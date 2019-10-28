@@ -71,11 +71,6 @@
 
 ;; Requirements
 ;; ------------
-;; Newsticker can be used with GNU Emacs version 21.1 or later as well as
-;; XEmacs.  It requires an XML-parser (`xml.el') which is part of GNU
-;; Emacs.  If you are using XEmacs you want to get the `net-utils' package
-;; which contains `xml.el' for XEmacs.
-
 ;; Newsticker requires a program which can retrieve files via http and
 ;; prints them to stdout.  By default Newsticker will use wget for this
 ;; task.

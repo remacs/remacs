@@ -122,11 +122,7 @@ allows you to type Kirshenbaum on your ASCII-capable keyboard, producing the
 corresponding actual IPA characters in your editor.
 
 See http://www.kirshenbaum.net/IPA/ascii-ipa.pdf for full details of the
-transliteration.
-
-A caveat with regard to that document; while XEmacs currently preserves
-Unicode diacritics on reading and emitting them, it displays them,
-incorrectly, as separate from the modified glyphs.")
+transliteration.")
 
 (quail-define-rules
  ("g" "ɡ")	;; Voiced velar plosive			U+0261
@@ -341,9 +337,7 @@ uses this transliteration to allow you to produce the IPA in your editor
 with a keyboard that's limited to ASCII.
 
 See http://www.phon.ucl.ac.uk/home/sampa/ipasam-x.pdf for a full definition
-of the mapping.  A caveat with regard to that document; while XEmacs
-currently preserves Unicode diacritics on reading and emitting them, it
-displays them, incorrectly, as separate from the modified glyphs.")
+of the mapping.")
 
 (quail-define-rules
  ;; Table taken from http://en.wikipedia.org/wiki/X-SAMPA, checked with
@@ -446,10 +440,7 @@ displays them, incorrectly, as separate from the modified glyphs.")
  ("=\\" "ǂ")	;; Palatal click			U+01C2
  ("-\\" "̮")	;; Linking mark				U+032E
 
- ;; Diacritics. Note that XEmacs doesn't yet have composed characters, so we
- ;; can input them, but they won't display properly. If you send email using
- ;; them, and the recipient's client is capable, they will get through,
- ;; though.
+ ;; Diacritics.
 
  ("_\"" "̈")	;; Centralized		 		U+0308
  ("_+" "̟")	;; Advanced				U+031F

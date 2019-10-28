@@ -85,11 +85,7 @@ minibuffer histories, such as `compile-command' or `kill-ring'."
   "File name where minibuffer history is saved to and loaded from.
 The minibuffer history is a series of Lisp expressions loaded
 automatically when Savehist mode is turned on.  See `savehist-mode'
-for more details.
-
-If you want your minibuffer history shared between Emacs and XEmacs,
-customize this value and make sure that `savehist-coding-system' is
-set to a coding system that exists in both emacsen."
+for more details."
   :type 'file)
 
 (defcustom savehist-file-modes #o600

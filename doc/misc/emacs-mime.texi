@@ -996,8 +996,7 @@ used, of course.
 Things are slightly more complicated when running Emacs with @sc{mule}
 support.  In this case, a list of the @sc{mule} charsets used in the
 part is obtained, and the @sc{mule} charsets are translated to
-@acronym{MIME} charsets by consulting the table provided by Emacs itself
-or the variable @code{mm-mime-mule-charset-alist} for XEmacs.
+@acronym{MIME} charsets by consulting the table provided by Emacs itself.
 If this results in a single @acronym{MIME} charset, this is used to encode
 the part.  But if the resulting list of @acronym{MIME} charsets contains more
 than one element, two things can happen: If it is possible to encode the

@@ -176,9 +176,6 @@
 ;; iswitch for all buffer selections in Emacs, add:
 ;; (setq read-buffer-function #'iswitchb-read-buffer)
 ;; (This variable was introduced in Emacs 20.3.)
-;; XEmacs users can get the same behavior by doing:
-;; (defalias 'read-buffer #'iswitchb-read-buffer)
-;; since `read-buffer' is defined in lisp.
 
 ;; Using iswitchb for other completion tasks.
 
