@@ -438,12 +438,7 @@ Optional argument PARENT is a tag parent of STREAM."
               ;; Rebuild the imenu
               (imenu--cleanup)
               (setq imenu--index-alist nil)
-              (funcall
-               (if (fboundp 'imenu-menu-filter)
-                   ;; XEmacs imenu
-                   'imenu-menu-filter
-                 ;; Emacs imenu
-                 'imenu-update-menubar))))))))
+              (imenu-update-menubar)))))))
 
 (defun semantic-imenu-semanticdb-hook ()
   "Function to be called from `semanticdb-mode-hook'.

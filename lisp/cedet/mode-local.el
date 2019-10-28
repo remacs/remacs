@@ -877,23 +877,13 @@ META-NAME is a cons (OVERLOADABLE-SYMBOL . MAJOR-MODE)."
   "Display mode local bindings active in BUFFER-OR-MODE.
 Optional argument INTERACTIVE-P is non-nil if the calling command was
 invoked interactively."
-  (if (fboundp 'with-displaying-help-buffer)
-      ;; XEmacs
-      (with-displaying-help-buffer
-       #'(lambda ()
-           (with-current-buffer standard-output
-             (mode-local-describe-bindings-2 buffer-or-mode)
-             (when (fboundp 'frob-help-extents)
-               (goto-char (point-min))
-               (frob-help-extents standard-output)))))
-    ;; GNU Emacs
-    (when (fboundp 'help-setup-xref)
-      (help-setup-xref
-       (list 'mode-local-describe-bindings-1 buffer-or-mode)
-       interactive-p))
-    (with-output-to-temp-buffer (help-buffer) ; "*Help*"
-      (with-current-buffer standard-output
-        (mode-local-describe-bindings-2 buffer-or-mode)))))
+  (when (fboundp 'help-setup-xref)
+    (help-setup-xref
+     (list 'mode-local-describe-bindings-1 buffer-or-mode)
+     interactive-p))
+  (with-output-to-temp-buffer (help-buffer) ; "*Help*"
+    (with-current-buffer standard-output
+      (mode-local-describe-bindings-2 buffer-or-mode))))
 
 (defun describe-mode-local-bindings (buffer)
   "Display mode local bindings active in BUFFER."

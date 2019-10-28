@@ -703,8 +703,7 @@ by semanticdb as a time-saving measure."
   '(
     font-lock-comment-face
     font-lock-string-face
-    font-lock-doc-string-face           ; XEmacs.
-    font-lock-doc-face                  ; Emacs 21 and later.
+    font-lock-doc-face
     )
   "List of font-lock faces that indicate a useless summary context.
 Those are generally faces used to highlight comments.
