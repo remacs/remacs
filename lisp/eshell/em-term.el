@@ -258,17 +258,13 @@ the buffer."
 ; (defun eshell-term-mouse-paste (click arg)
 ;   "Insert the last stretch of killed text at the position clicked on."
 ;   (interactive "e\nP")
-;   (if (boundp 'xemacs-logo)
-;       (eshell-term-send-raw-string
-;        (or (condition-case () (x-get-selection) (error ()))
-;	   (error "No selection available")))
-;     ;; Give temporary modes such as isearch a chance to turn off.
-;     (run-hooks 'mouse-leave-buffer-hook)
-;     (setq this-command 'yank)
-;     (eshell-term-send-raw-string
-;      (current-kill (cond ((listp arg) 0)
-;			 ((eq arg '-) -1)
-;			 (t (1- arg)))))))
+;   ;; Give temporary modes such as isearch a chance to turn off.
+;   (run-hooks 'mouse-leave-buffer-hook)
+;   (setq this-command 'yank)
+;   (eshell-term-send-raw-string
+;    (current-kill (cond ((listp arg) 0)
+; 		       ((eq arg '-) -1)
+; 		       (t (1- arg))))))
 
 ; ;; Which would be better:  "\e[A" or "\eOA"? readline accepts either.
 ; ;; For my configuration it's definitely better \eOA but YMMV. -mm
@@ -316,9 +312,7 @@ the buffer."
 ;	(setq eshell-term-raw-map map)
 ;	(setq eshell-term-raw-escape-map
 ;	      (copy-keymap (lookup-key (current-global-map) "\C-x")))
-;	(if (boundp 'xemacs-logo)
-;	    (define-key eshell-term-raw-map [button2] 'eshell-term-mouse-paste)
-;	  (define-key eshell-term-raw-map [mouse-2] 'eshell-term-mouse-paste))
+;	(define-key eshell-term-raw-map [mouse-2] 'eshell-term-mouse-paste)
 ;	(define-key eshell-term-raw-map [up] 'eshell-term-send-up)
 ;	(define-key eshell-term-raw-map [down] 'eshell-term-send-down)
 ;	(define-key eshell-term-raw-map [right] 'eshell-term-send-right)
