@@ -421,11 +421,6 @@ category."))
 	    (delq elem tmp))
 	  (setq tmp (cdr tmp))))
 
-      ;; Decode values posting-style holds.
-      (dolist (style (cdr (assq 'posting-style values)))
-	(when (stringp (cadr style))
-	  (setcdr style (list (decode-coding-string (cadr style) 'utf-8)))))
-
       (setq gnus-custom-params
             (apply 'widget-create 'group
                    :value values
@@ -497,10 +492,6 @@ form, but who cares?"
   "Apply changes and bury the buffer."
   (interactive)
   (let ((params (widget-value gnus-custom-params)))
-    ;; Encode values posting-style holds.
-    (dolist (style (cdr (assq 'posting-style params)))
-      (when (stringp (cadr style))
-	(setcdr style (list (encode-coding-string (cadr style) 'utf-8)))))
     (if gnus-custom-topic
 	(gnus-topic-set-parameters gnus-custom-topic params)
       (gnus-group-edit-group-done 'params gnus-custom-group params)
