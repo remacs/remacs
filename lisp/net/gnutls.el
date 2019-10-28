@@ -111,6 +111,7 @@ Security'."
     "/usr/ssl/certs/ca-bundle.crt"           ; Cygwin
     "/usr/local/share/certs/ca-root-nss.crt" ; FreeBSD
     "/etc/ssl/cert.pem"                      ; macOS
+    "/etc/certs/ca-certificates.crt"         ; OpenIndiana
     )
   "List of CA bundle location filenames or a function returning said list.
 If a file path contains glob wildcards, they will be expanded.
