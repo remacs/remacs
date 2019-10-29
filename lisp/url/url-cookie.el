@@ -304,9 +304,10 @@ i.e. 1970-1-1) are loaded as expiring one year from now instead."
 			 (url-filename url-current-object))))
 	 (expires nil))
     (if (and max-age (string-match "\\`-?[0-9]+\\'" max-age))
-	(setq expires (format-time-string "%a %b %d %H:%M:%S %Y GMT"
-					  (time-add nil (read max-age))
-					  t))
+	(setq expires (ignore-errors
+                        (format-time-string "%a %b %d %H:%M:%S %Y GMT"
+					    (time-add nil (read max-age))
+					    t)))
       (setq expires (cdr-safe (assoc-string "expires" args t))))
     (while (consp trusted)
       (if (string-match (car trusted) current-url)
