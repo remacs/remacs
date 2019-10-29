@@ -2933,6 +2933,9 @@ data about creation times and orientation and the like.
 'exif-parse-file' and 'exif-parse-buffer' are the main interface
 functions.
 
+*** 'image-mode' now uses this library to automatically rotate images
+according to the orientation in the Exif data, if any.
+
 *** New library image-converter.
 If you need to view exotic image formats for which Emacs doesn't have
 native support, customize the new user option
@@ -2940,8 +2943,9 @@ native support, customize the new user option
 GraphicsMagick, ImageMagick or 'ffmpeg' installed, they will then be
 used to convert images automatically before displaying them.
 
-*** 'image-mode' now uses this library to automatically rotate images
-according to the orientation in the Exif data, if any.
+*** 'auto-mode-alist' now includes many of the types typically
+supported by the external image converters, like WEPB, BMP and ICO.
+These now default to using 'image-mode'.
 
 *** 'imagemagick-types-inhibit' disables using ImageMagick by default.
 'image-mode' started using ImageMagick by default for all images

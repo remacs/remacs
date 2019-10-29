@@ -151,6 +151,8 @@ or \"ffmpeg\") is installed."
   :type 'boolean
   :version "27.1")
 
+(define-error 'unknown-image-type "Unknown image type")
+
 ;; Map put into text properties on images.
 (defvar image-map
   (let ((map (make-sparse-keymap)))
@@ -391,7 +393,7 @@ Optional DATA-P non-nil means SOURCE is a string containing image data."
                             (require 'image-converter)
                             (image-convert-p source))))))
     (unless type
-      (error "Cannot determine image type")))
+      (signal 'unknown-image-type "Cannot determine image type")))
   (when (and (not (eq type 'image-convert))
              (not (memq type (and (boundp 'image-types) image-types))))
     (error "Invalid image type `%s'" type))

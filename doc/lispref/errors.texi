@@ -215,6 +215,9 @@ The message is @samp{Wrong number of arguments}.  @xref{Argument List}.
 
 @item wrong-type-argument
 The message is @samp{Wrong type argument}.  @xref{Type Predicates}.
+
+@item unknown-image-type
+The message is @samp{Cannot determine image type}.  @xref{Images}.
 @end table
 
 @ignore    The following seem to be unused now.

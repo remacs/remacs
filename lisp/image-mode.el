@@ -552,76 +552,82 @@ to toggle between display as an image and display as text or hex.
 Key bindings:
 \\{image-mode-map}"
   (interactive)
-  (condition-case err
+  (unless (display-images-p)
+    (error "Display does not support images"))
+
+  (major-mode-suspend)
+  (setq major-mode 'image-mode)
+
+  (if (not (image-get-display-property))
       (progn
-	(unless (display-images-p)
-	  (error "Display does not support images"))
+        (when (condition-case err
+                (progn
+	          (image-toggle-display-image)
+                  t)
+              (unknown-image-type
+               (image-mode-as-text)
+               (funcall
+                (if (called-interactively-p 'any) 'error 'message)
+                "Unknown image type; consider switching `image-use-external-converter' on")
+               nil)
+              (error
+               (image-mode-as-text)
+               (funcall
+                (if (called-interactively-p 'any) 'error 'message)
+                "Cannot display image: %s" (cdr err))
+               nil))
+	  ;; If attempt to display the image fails.
+	  (if (not (image-get-display-property))
+	      (error "Invalid image"))
+          (image-mode--setup-mode)))
+    ;; Set next vars when image is already displayed but local
+    ;; variables were cleared by kill-all-local-variables
+    (setq cursor-type nil truncate-lines t
+	  image-type (plist-get (cdr (image-get-display-property)) :type))
+    (image-mode--setup-mode)))
 
-        (major-mode-suspend)
-	(setq major-mode 'image-mode)
+(defun image-mode--setup-mode ()
+  (setq mode-name (if image-type (format "Image[%s]" image-type) "Image"))
+  (use-local-map image-mode-map)
 
-	(if (not (image-get-display-property))
-	    (progn
-	      (image-toggle-display-image)
-	      ;; If attempt to display the image fails.
-	      (if (not (image-get-display-property))
-		  (error "Invalid image")))
-	  ;; Set next vars when image is already displayed but local
-	  ;; variables were cleared by kill-all-local-variables
-	  (setq cursor-type nil truncate-lines t
-		image-type (plist-get (cdr (image-get-display-property)) :type)))
+  ;; Use our own bookmarking function for images.
+  (setq-local bookmark-make-record-function
+              #'image-bookmark-make-record)
 
-	(setq mode-name (if image-type (format "Image[%s]" image-type) "Image"))
-	(use-local-map image-mode-map)
+  ;; Keep track of [vh]scroll when switching buffers
+  (image-mode-setup-winprops)
 
-	;; Use our own bookmarking function for images.
-	(setq-local bookmark-make-record-function
-                    #'image-bookmark-make-record)
-
-	;; Keep track of [vh]scroll when switching buffers
-	(image-mode-setup-winprops)
-
-	(add-hook 'change-major-mode-hook #'image-toggle-display-text nil t)
-	(add-hook 'after-revert-hook #'image-after-revert-hook nil t)
-	(run-mode-hooks 'image-mode-hook)
-	(let ((image (image-get-display-property))
-	      (msg1 (substitute-command-keys
-             "Type \\[image-toggle-display] or \\[image-toggle-hex-display] to view the image as "))
-	      animated)
-	  (cond
-	   ((null image)
-	    (message "%s" (concat msg1 "an image.")))
-	   ((setq animated (image-multi-frame-p image))
-	    (setq image-multi-frame t
-		  mode-line-process
-		  `(:eval
-		    (concat " "
-			    (propertize
-			     (format "[%s/%s]"
-				     (1+ (image-current-frame ',image))
-				     ,(car animated))
-			     'help-echo "Frames
-mouse-1: Next frame
-mouse-3: Previous frame"
-			     'mouse-face 'mode-line-highlight
-			     'local-map
-			     '(keymap
-			       (mode-line
-				keymap
-				(down-mouse-1 . image-next-frame)
-				(down-mouse-3 . image-previous-frame)))))))
-	    (message "%s"
-		     (concat msg1 "text.  This image has multiple frames.")))
-;;;			     (substitute-command-keys
-;;;			      "\\[image-toggle-animation] to animate."))))
-	   (t
-        (message "%s" (concat msg1 "text or hex."))))))
-
-    (error
-     (image-mode-as-text)
-     (funcall
-      (if (called-interactively-p 'any) 'error 'message)
-      "Cannot display image: %s" (cdr err)))))
+  (add-hook 'change-major-mode-hook #'image-toggle-display-text nil t)
+  (add-hook 'after-revert-hook #'image-after-revert-hook nil t)
+  (run-mode-hooks 'image-mode-hook)
+  (let ((image (image-get-display-property))
+	(msg1 (substitute-command-keys
+               "Type \\[image-toggle-display] or \\[image-toggle-hex-display] to view the image as "))
+	animated)
+    (cond
+     ((null image)
+      (message "%s" (concat msg1 "an image.")))
+     ((setq animated (image-multi-frame-p image))
+      (setq image-multi-frame t
+	    mode-line-process
+	    `(:eval
+	      (concat " "
+		      (propertize
+		       (format "[%s/%s]"
+			       (1+ (image-current-frame ',image))
+			       ,(car animated))
+		       'help-echo "Frames\nmouse-1: Next frame\nmouse-3: Previous frame"
+		       'mouse-face 'mode-line-highlight
+		       'local-map
+		       '(keymap
+			 (mode-line
+			  keymap
+			  (down-mouse-1 . image-next-frame)
+			  (down-mouse-3 . image-previous-frame)))))))
+      (message "%s"
+	       (concat msg1 "text.  This image has multiple frames.")))
+     (t
+      (message "%s" (concat msg1 "text or hex."))))))
 
 ;;;###autoload
 (define-minor-mode image-minor-mode
