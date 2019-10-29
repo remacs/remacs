@@ -212,6 +212,13 @@
      1 nil 27041 "{standard input}")
     ("boost/container/detail/flat_tree.hpp:589:25:   [ skipping 5 instantiation contexts, use -ftemplate-backtrace-limit=0 to disable ]"
      1 25 589 "boost/container/detail/flat_tree.hpp" 0)
+    ;; gradle-kotlin
+    ("e: /src/Test.kt: (34, 15): foo: bar" 4 15 34 "/src/Test.kt" 2)
+    ("w: /src/Test.kt: (11, 98): foo: bar" 4 98 11 "/src/Test.kt" 1)
+    ("e: e:/cygwin/src/Test.kt: (34, 15): foo: bar" 4 15 34 "e:/cygwin/src/Test.kt" 2)
+    ("w: e:/cygwin/src/Test.kt: (11, 98): foo: bar" 4 98 11 "e:/cygwin/src/Test.kt" 1)
+    ("e: e:\\src\\Test.kt: (34, 15): foo: bar" 4 15 34 "e:\\src\\Test.kt" 2)
+    ("w: e:\\src\\Test.kt: (11, 98): foo: bar" 4 98 11 "e:\\src\\Test.kt" 1)
     ;; Guile
     ("In foo.scm:\n" 1 nil nil "foo.scm")
     ("  63:4 [call-with-prompt prompt0 ...]" 1 4 63 nil)
@@ -413,8 +420,8 @@ The test data is in `compile-tests--test-regexps-data'."
           (compilation-num-warnings-found 0)
           (compilation-num-infos-found 0))
       (mapc #'compile--test-error-line compile-tests--test-regexps-data)
-      (should (eq compilation-num-errors-found 87))
-      (should (eq compilation-num-warnings-found 32))
+      (should (eq compilation-num-errors-found 90))
+      (should (eq compilation-num-warnings-found 35))
       (should (eq compilation-num-infos-found 26)))))
 
 (ert-deftest compile-test-grep-regexps ()

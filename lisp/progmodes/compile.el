@@ -236,6 +236,16 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2 nil (1))
      "\\(^Warning .*\\)? line[ \n]\\([0-9]+\\)[ \n]\\(?:col \\([0-9]+\\)[ \n]\\)?file \\([^ :;\n]+\\)"
      4 2 3 (1))
 
+    ;; Gradle with kotlin-gradle-plugin (see
+    ;; GradleStyleMessagerRenderer.kt in kotlin sources, see
+    ;; https://youtrack.jetbrains.com/issue/KT-34683).
+    (gradle-kotlin
+     ,(concat
+       "^\\(?:\\(w\\)\\|.\\): *"            ;type
+       "\\(\\(?:[A-Za-z]:\\)?[^:\n]+\\): *" ;file
+       "(\\([0-9]+\\), *\\([0-9]+\\))")     ;line, column
+     2 3 4 (1))
+
     (iar
      "^\"\\(.*\\)\",\\([0-9]+\\)\\s-+\\(?:Error\\|Warnin\\(g\\)\\)\\[[0-9]+\\]:"
      1 2 nil (3))
