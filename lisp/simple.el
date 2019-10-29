@@ -5167,83 +5167,43 @@ and KILLP is t if a prefix arg was specified."
     (with-no-warnings (delete-backward-char n killp))))
 
 (defvar read-char-with-history--history nil
-  "The default history for `read-char-with-history'.")
+  "The default history for the `read-char-with-history' function.")
 
-(defun read-char-with-history (prompt &optional inherit-input-method seconds
-                                      history)
+(defvar read-char-with-history--map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map minibuffer-local-map)
+    (define-key map [remap self-insert-command]
+      (lambda ()
+        (interactive)
+        (delete-minibuffer-contents)
+        (insert (event-basic-type last-command-event))
+        (exit-minibuffer)))
+    map)
+  "Keymap for the `read-char-with-history' function.")
+
+(defun read-char-with-history (prompt)
   "Like `read-char', but allows navigating in a history.
 HISTORY is like HIST in `read-from-minibuffer'.
 
 The navigation commands are `M-p' and `M-n', with `RET' to select
 a character from history."
-  (let* ((result nil)
-         (real-prompt prompt)
-         (hist-format
-          (lambda (char)
-            (if (string-match ": *\\'" real-prompt)
-                (format "%s (default %c): "
-                        (substring real-prompt 0 (match-beginning 0))
-                        char)
-              (format "%s (default %c) " real-prompt char))))
-         (index 0)
-         histvar)
-    ;; Use the same history interface as `read-from-minibuffer'.
-    (cond
-     ((null history)
-      (setq histvar 'read-char-with-history--history))
-     ((consp history)
-      (setq histvar (car history)
-            index (cdr history)))
-     ((symbolp history)
-      (setq histvar history))
-     (t
-      (error "Invalid history: %s" history)))
-    (while (not result)
-      (setq result (read-event prompt inherit-input-method seconds))
-      ;; Go back in history.
-      (cond
-       ((memq result '(?\M-p up))
-        (if (>= index (length (symbol-value histvar)))
-            (progn
-              (message "Beginning of history; no preceding item")
-              (ding)
-              (sit-for 2))
-          (setq index (1+ index)
-                prompt (funcall hist-format
-                                (elt (symbol-value histvar) (1- index)))))
-        (setq result nil))
-       ;; Go forward in history.
-       ((memq result '(?\M-n down))
-        (if (zerop index)
-            (progn
-              (message "End of history; no next item")
-              (ding)
-              (sit-for 2))
-          (setq index (1- index)
-                prompt (if (zerop index)
-                           real-prompt
-                         (funcall hist-format
-                                  (elt (symbol-value histvar) (1- index))))))
-        (setq result nil))
-       ;; The user hits RET to either select a history item or to
-       ;; return RET.
-       ((eq result 'return)
-        (if (zerop index)
-            (setq result ?\r)
-          (setq result (elt (symbol-value histvar) (1- index)))))
-       ;; The user has entered some non-character event.
-       ((not (characterp result))
-        (user-error "Non-character input event"))))
-    ;; Record the chosen key.
-    (set histvar (cons result (symbol-value histvar)))
-    result))
+  (let ((result
+         (read-from-minibuffer prompt nil
+                               read-char-with-history--map nil
+                               'read-char-with-history--history)))
+    (if (> (length result) 0)
+        ;; We have a string (with one character), so return the first one.
+        (elt result 0)
+      ;; The default value is RET.
+      (push "\r" read-char-with-history--history)
+      ?\r)))
 
 (defun zap-to-char (arg char)
   "Kill up to and including ARGth occurrence of CHAR.
 Case is ignored if `case-fold-search' is non-nil in the current buffer.
 Goes backward if ARG is negative; error if CHAR not found."
   (interactive (list (prefix-numeric-value current-prefix-arg)
-		     (read-char-with-history "Zap to char: " t)))
+		     (read-char-with-history "Zap to char: ")))
   ;; Avoid "obsolete" warnings for translation-table-for-input.
   (with-no-warnings
     (if (char-table-p translation-table-for-input)
