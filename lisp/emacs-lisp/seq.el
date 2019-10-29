@@ -223,6 +223,7 @@ If N is a negative integer or zero, SEQUENCE is returned."
     (let ((length (seq-length sequence)))
       (seq-subseq sequence (min n length) length))))
 
+;;;###autoload
 (cl-defgeneric seq-take (sequence n)
   "Take the first N elements of SEQUENCE and return the result.
 The result is a sequence of the same type as SEQUENCE.
@@ -306,6 +307,7 @@ list."
     (`list (seq--into-list sequence))
     (_ (error "Not a sequence type name: %S" type))))
 
+;;;###autoload
 (cl-defgeneric seq-filter (pred sequence)
   "Return a list of all the elements for which (PRED element) is non-nil in SEQUENCE."
   (let ((exclude (make-symbol "exclude")))
