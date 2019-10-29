@@ -2109,6 +2109,13 @@ the particular scheduled future action.  You can use this value to call
 @code{cancel-timer} (see below).
 @end deffn
 
+@deffn Command run-with-timer secs repeat function &rest args
+This is exactly the same as @code{run-at-time} (so see that definition
+for an explanation of the parameters; @var{secs} is passed as
+@var{time} to that function), but is meant to be used when the delay
+is specified in seconds.
+@end deffn
+
   A repeating timer nominally ought to run every @var{repeat} seconds,
 but remember that any invocation of a timer can be late.  Lateness of
 one repetition has no effect on the scheduled time of the next
