@@ -1121,7 +1121,7 @@ WIDTH and HEIGHT are the sizes given in the HTML data, if any.
 The size of the displayed image will not exceed
 MAX-WIDTH/MAX-HEIGHT.  If not given, use the current window
 width/height instead."
-  (if (not (get-buffer-window (current-buffer)))
+  (if (not (get-buffer-window (current-buffer) t))
       (create-image data nil t :ascent 100)
     (let* ((edges (window-inside-pixel-edges
                    (get-buffer-window (current-buffer))))
