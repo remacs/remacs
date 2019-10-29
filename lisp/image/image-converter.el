@@ -149,10 +149,12 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
 
 (defun image-converter--find-converter ()
   "Find an installed image converter."
-  (dolist (elem image-converter--converters)
-    (when-let ((formats (image-converter--probe (car elem))))
-      (setq image-converter (car elem)
-            image-converter-regexp (concat "\\." (regexp-opt formats) "\\'")))))
+  (catch 'done
+    (dolist (elem image-converter--converters)
+      (when-let ((formats (image-converter--probe (car elem))))
+        (setq image-converter (car elem)
+              image-converter-regexp (concat "\\." (regexp-opt formats) "\\'"))
+        (throw 'done image-converter)))))
 
 (cl-defmethod image-converter--convert ((type (eql graphicsmagick)) file)
   "Convert using GraphicsMagick."
