@@ -129,9 +129,9 @@ This metadata is an alist.  Currently understood keys are:
 The metadata of a completion table should be constant between two boundaries."
   (let ((metadata (if (functionp table)
                       (funcall table string pred 'metadata))))
-    (if (eq (car-safe metadata) 'metadata)
-        metadata
-      '(metadata))))
+    (cons 'metadata
+          (if (eq (car-safe metadata) 'metadata)
+              (cdr metadata)))))
 
 (defun completion--field-metadata (field-start)
   (completion-metadata (buffer-substring-no-properties field-start (point))
@@ -909,9 +909,6 @@ This overrides the defaults specified in `completion-category-defaults'."
 
 (defun completion--nth-completion (n string table pred point metadata)
   "Call the Nth method of completion styles."
-  (unless metadata
-    (setq metadata
-          (completion-metadata (substring string 0 point) table pred)))
   ;; We provide special support for quoting/unquoting here because it cannot
   ;; reliably be done within the normal completion-table routines: Completion
   ;; styles such as `substring' or `partial-completion' need to match the
@@ -922,13 +919,16 @@ This overrides the defaults specified in `completion-category-defaults'."
   ;; The quote/unquote function needs to come from the completion table (rather
   ;; than from completion-extra-properties) because it may apply only to some
   ;; part of the string (e.g. substitute-in-file-name).
-  (let* ((requote
+  (let* ((md (or metadata
+                 (completion-metadata (substring string 0 point) table pred)))
+         (requote
           (when (and
-                 (completion-metadata-get metadata 'completion--unquote-requote)
+                 (completion-metadata-get md 'completion--unquote-requote)
                  ;; Sometimes a table's metadata is used on another
                  ;; table (typically that other table is just a list taken
-                 ;; from the output of `all-completions' or something equivalent,
-                 ;; for progressive refinement).  See bug#28898 and bug#16274.
+                 ;; from the output of `all-completions' or something
+                 ;; equivalent, for progressive refinement).
+                 ;; See bug#28898 and bug#16274.
                  ;; FIXME: Rather than do nothing, we should somehow call
                  ;; the original table, in that case!
                  (functionp table))
@@ -945,9 +945,9 @@ This overrides the defaults specified in `completion-category-defaults'."
                                                 completion-styles-alist))
                                    string table pred point)))
                (and probe (cons probe style))))
-           (completion--styles metadata)))
+           (completion--styles md)))
          (adjust-fn (get (cdr result-and-style) 'completion--adjust-metadata)))
-    (when adjust-fn
+    (when (and adjust-fn metadata)
       (setcdr metadata (cdr (funcall adjust-fn metadata))))
     (if requote
         (funcall requote (car result-and-style) n)
@@ -1684,14 +1684,11 @@ See also `display-completion-list'.")
 
 (defface completions-first-difference
   '((t (:inherit bold)))
-  "Face for the first uncommon character in prefix completions.
+  "Face for the first character after point in completions.
 See also the face `completions-common-part'.")
 
 (defface completions-common-part '((t nil))
-  "Face for the common prefix substring in completions.
-The idea of this face is that you can use it to make the common parts
-less visible than normal, so that the differing parts are emphasized
-by contrast.
+  "Face for the parts of completions which matched the pattern.
 See also the face `completions-first-difference'.")
 
 (defun completion-hilit-commonality (completions prefix-len &optional base-size)
@@ -3078,6 +3075,7 @@ one-letter-long matches).")
 (defun completion-pcm--hilit-commonality (pattern completions)
   (when completions
     (let* ((re (completion-pcm--pattern->regex pattern 'group))
+           (point-idx (completion-pcm--pattern-point-idx pattern))
            (case-fold-search completion-ignore-case))
       (mapcar
        (lambda (str)
@@ -3085,7 +3083,8 @@ one-letter-long matches).")
          (setq str (copy-sequence str))
          (unless (string-match re str)
            (error "Internal error: %s does not match %s" re str))
-         (let* ((md (match-data))
+         (let* ((pos (if point-idx (match-beginning point-idx) (match-end 0)))
+                (md (match-data))
                 (start (pop md))
                 (end (pop md))
                 (len (length str))
@@ -3153,6 +3152,10 @@ one-letter-long matches).")
            (put-text-property start end
                               'font-lock-face 'completions-common-part
                               str)
+           (if (> (length str) pos)
+               (put-text-property pos (1+ pos)
+                                  'font-lock-face 'completions-first-difference
+                                  str))
            (unless (zerop (length str))
              (put-text-property
               0 1 'completion-score
@@ -3495,12 +3498,14 @@ that is non-nil."
                     (or (equal c1 minibuffer-default)
                         (> (get-text-property 0 'completion-score c1)
                            (get-text-property 0 'completion-score c2)))))))))
-    (let ((alist (cdr metadata)))
-      (setf (alist-get 'display-sort-function alist)
-            (compose-flex-sort-fn (alist-get 'display-sort-function alist)))
-      (setf (alist-get 'cycle-sort-function alist)
-            (compose-flex-sort-fn (alist-get 'cycle-sort-function alist)))
-      `(metadata . ,alist))))
+    `(metadata
+      (display-sort-function
+       . ,(compose-flex-sort-fn
+           (completion-metadata-get metadata 'display-sort-function)))
+      (cycle-sort-function
+       . ,(compose-flex-sort-fn
+           (completion-metadata-get metadata 'cycle-sort-function)))
+      ,@(cdr metadata))))
 
 (defun completion-flex--make-flex-pattern (pattern)
   "Convert PCM-style PATTERN into PCM-style flex pattern.
