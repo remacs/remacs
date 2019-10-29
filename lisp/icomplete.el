@@ -195,6 +195,91 @@ Last entry becomes the first and can be selected with
       (push (car last) comps)
       (completion--cache-all-sorted-completions beg end comps))))
 
+;;; `ido-mode' emulation
+;;;
+;;; The following "magic-ido" commands can be bound in
+;;; `icomplete-mode-map' to make `icomplete-mode' behave more like
+;;; `ido-mode'.  Evaluate this to try it out.
+;;;
+;;; (let ((imap icomplete-minibuffer-map))
+;;;   (define-key imap (kbd "C-k") 'icomplete-magic-ido-kill)
+;;;   (define-key imap (kbd "C-d") 'icomplete-magic-ido-delete-char)
+;;;   (define-key imap (kbd "RET") 'icomplete-magic-ido-ret)
+;;;   (define-key imap (kbd "DEL") 'icomplete-magic-ido-backward-updir))
+
+(defun icomplete-magic-ido-kill ()
+  "Kill line or current completion, like `ido-mode'.
+If killing to the end of line make sense, call `kill-line',
+otherwise kill the currently selected completion candidate.
+Exactly what killing entails is dependent on the things being
+completed.  If completing files, it means delete the file.  If
+completing buffers it means kill the buffer.  Both actions
+require user confirmation."
+  (interactive)
+  (let ((beg (icomplete--field-beg)) (end (icomplete--field-end)))
+    (if (< (point) end)
+        (call-interactively 'kill-line)
+      (let* ((md (completion--field-metadata beg))
+             (category (alist-get 'category (cdr md)))
+             (all (completion-all-sorted-completions))
+             (thing (car all))
+             (action
+              (pcase category
+                (`buffer
+                 (lambda ()
+                   (when (yes-or-no-p (concat "Kill buffer " thing "? "))
+                     (kill-buffer thing))))
+                (`file
+                 (lambda ()
+                   (let* ((dir (file-name-directory (icomplete--field-string)))
+                          (path (expand-file-name thing dir)))
+                     (when (yes-or-no-p (concat "Delete file " path "? "))
+                       (delete-file path) t)))))))
+        (when (funcall action)
+          (completion--cache-all-sorted-completions
+           (icomplete--field-beg)
+           (icomplete--field-end)
+           (cdr all)))
+        (message nil)))))
+
+(defun icomplete-magic-ido-delete-char ()
+  "Delete char or maybe call `dired', like `ido-mode'."
+  (interactive)
+  (let* ((beg (icomplete--field-beg))
+         (end (icomplete--field-end))
+         (md (completion--field-metadata beg))
+         (category (alist-get 'category (cdr md))))
+    (if (or (< (point) end) (not (eq category 'file)))
+        (call-interactively 'delete-char)
+      (dired (file-name-directory (icomplete--field-string)))
+      (exit-minibuffer))))
+
+(defun icomplete-magic-ido-ret ()
+  "Exit forcing completion or enter directory, like `ido-mode'."
+  (interactive)
+  (let* ((beg (icomplete--field-beg))
+         (md (completion--field-metadata beg))
+         (category (alist-get 'category (cdr md)))
+         (dir (and (eq category 'file)
+                   (file-name-directory (icomplete--field-string))))
+         (current (and dir
+                       (car (completion-all-sorted-completions))))
+         (probe (and current
+                     (expand-file-name (directory-file-name current) dir))))
+    (if (and probe (file-directory-p probe) (not (string= current "./")))
+        (icomplete-force-complete)
+      (icomplete-force-complete-and-exit))))
+
+(defun icomplete-magic-ido-backward-updir ()
+  "Delete char before or go up directory, like `ido-mode'."
+  (interactive)
+  (let* ((beg (icomplete--field-beg))
+         (md (completion--field-metadata beg))
+         (category (alist-get 'category (cdr md))))
+    (if (and (eq (char-before) ?/) (eq category 'file))
+        (backward-kill-sexp 1)
+      (call-interactively 'backward-delete-char))))
+
 ;;;_ > icomplete-mode (&optional prefix)
 ;;;###autoload
 (define-minor-mode icomplete-mode
