@@ -1590,41 +1590,41 @@ START should be at the beginning of a line."
 START should be at the beginning of a line."
   (syntax-propertize end)  ; Apply any needed syntax-table properties.
   (with-syntax-table (or syntax-ppss-table (syntax-table))
-  (let ((comment-end-regexp
-	 (or font-lock-comment-end-skip
-	     (regexp-quote
-	      (replace-regexp-in-string "^ *" "" comment-end))))
-        ;; Find the `start' state.
-        (state (syntax-ppss start))
-        face beg)
-    (if loudly (message "Fontifying %s... (syntactically...)" (buffer-name)))
-    ;;
-    ;; Find each interesting place between here and `end'.
-    (while
-	(progn
-	  (when (or (nth 3 state) (nth 4 state))
-	    (setq face (funcall font-lock-syntactic-face-function state))
-	    (setq beg (max (nth 8 state) start))
-	    (setq state (parse-partial-sexp (point) end nil nil state
-					    'syntax-table))
-	    (when face (put-text-property beg (point) 'face face))
-	    (when (and (eq face 'font-lock-comment-face)
-                       (or font-lock-comment-start-skip
-			   comment-start-skip))
-	      ;; Find the comment delimiters
-	      ;; and use font-lock-comment-delimiter-face for them.
-	      (save-excursion
-		(goto-char beg)
-		(if (looking-at (or font-lock-comment-start-skip
-				    comment-start-skip))
-		    (put-text-property beg (match-end 0) 'face
-				       font-lock-comment-delimiter-face)))
-	      (if (looking-back comment-end-regexp (point-at-bol) t)
-		  (put-text-property (match-beginning 0) (point) 'face
-				     font-lock-comment-delimiter-face))))
-	  (< (point) end))
-      (setq state (parse-partial-sexp (point) end nil nil state
-				      'syntax-table))))))
+    (let ((comment-end-regexp
+	   (or font-lock-comment-end-skip
+	       (regexp-quote
+	        (replace-regexp-in-string "^ *" "" comment-end))))
+          ;; Find the `start' state.
+          (state (syntax-ppss start))
+          face beg)
+      (if loudly (message "Fontifying %s... (syntactically...)" (buffer-name)))
+      ;;
+      ;; Find each interesting place between here and `end'.
+      (while
+	  (progn
+	    (when (or (nth 3 state) (nth 4 state))
+	      (setq face (funcall font-lock-syntactic-face-function state))
+	      (setq beg (max (nth 8 state) start))
+	      (setq state (parse-partial-sexp (point) end nil nil state
+					      'syntax-table))
+	      (when face (put-text-property beg (point) 'face face))
+	      (when (and (eq face 'font-lock-comment-face)
+                         (or font-lock-comment-start-skip
+			     comment-start-skip))
+	        ;; Find the comment delimiters
+	        ;; and use font-lock-comment-delimiter-face for them.
+	        (save-excursion
+		  (goto-char beg)
+		  (if (looking-at (or font-lock-comment-start-skip
+				      comment-start-skip))
+		      (put-text-property beg (match-end 0) 'face
+				         font-lock-comment-delimiter-face)))
+	        (if (looking-back comment-end-regexp (point-at-bol) t)
+		    (put-text-property (match-beginning 0) (point) 'face
+				       font-lock-comment-delimiter-face))))
+	    (< (point) end))
+        (setq state (parse-partial-sexp (point) end nil nil state
+				        'syntax-table))))))
 
 ;;; End of Syntactic fontification functions.
 
