@@ -476,6 +476,26 @@ run from `point-min' to POS except that values at positions 2 and 6
 in the returned list (counting from 0) cannot be relied upon.
 Point is at POS when this function returns.
 
+Value is a list of elements describing final state of parsing:
+ 0. depth in parens.
+ 1. character address of start of innermost containing list; nil if none.
+ 2. character address of start of last complete sexp terminated.
+ 3. non-nil if inside a string.
+    (it is the character that will terminate the string,
+     or t if the string should be terminated by a generic string delimiter.)
+ 4. nil if outside a comment, t if inside a non-nestable comment,
+    else an integer (the current comment nesting).
+ 5. t if following a quote character.
+ 6. the minimum paren-depth encountered during this scan.
+ 7. style of comment, if any.
+ 8. character address of start of comment or string; nil if not in one.
+ 9. List of positions of currently open parens, outermost first.
+10. When the last position scanned holds the first character of a
+    (potential) two character construct, the syntax of that position,
+    otherwise nil.  That construct can be a two character comment
+    delimiter or an Escaped or Char-quoted character.
+11..... Possible further internal information used by ‘parse-partial-sexp’.
+
 It is necessary to call `syntax-ppss-flush-cache' explicitly if
 this function is called while `before-change-functions' is
 temporarily let-bound, or if the buffer is modified without
