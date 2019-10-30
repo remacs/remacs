@@ -517,9 +517,31 @@ Subexpression 2 must end right before the \\n.")
    (list dired-re-dir
 	 '(".+" (dired-move-to-filename) nil (0 dired-directory-face)))
    ;;
-   ;; Symbolic links.
+   ;; Symbolic link to a directory.
    (list dired-re-sym
-	 '(".+" (dired-move-to-filename) nil (0 dired-symlink-face)))
+         (list (lambda (end)
+                 (when-let* ((file (dired-file-name-at-point))
+                             (truename (ignore-errors (file-truename file))))
+                   (and (file-directory-p truename)
+		        (search-forward-regexp "\\(.+-> ?\\)\\(.+\\)" end t))))
+               '(dired-move-to-filename)
+               nil
+               '(1 dired-symlink-face)
+               '(2 dired-directory-face)))
+   ;;
+   ;; Symbolic link to a non-directory.
+   (list dired-re-sym
+         (list (lambda (end)
+                 (when-let ((file (dired-file-name-at-point)))
+                   (let ((truename (ignore-errors (file-truename file))))
+                     (and (or (not truename)
+		              (not (file-directory-p truename)))
+		          (search-forward-regexp "\\(.+-> ?\\)\\(.+\\)"
+                                                 end t)))))
+               '(dired-move-to-filename)
+               nil
+               '(1 dired-symlink-face)
+               '(2 'default)))
    ;;
    ;; Sockets, pipes, block devices, char devices.
    (list dired-re-special
