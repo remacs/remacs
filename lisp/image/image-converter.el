@@ -100,9 +100,10 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
   (with-temp-buffer
     (let ((command (image-converter--value type :command))
           formats)
-      (when (zerop (apply #'call-process (car command) nil '(t nil) nil
-                          (append (cdr command)
-                                  (image-converter--value type :probe))))
+      (when (and (executable-find (car command))
+                 (zerop (apply #'call-process (car command) nil '(t nil) nil
+                               (append (cdr command)
+                                       (image-converter--value type :probe)))))
         (goto-char (point-min))
         (when (re-search-forward "^-" nil t)
           (forward-line 1)
@@ -119,8 +120,9 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
           formats)
       ;; Can't check return value; ImageMagick convert usually returns
       ;; a non-zero result on "-list format".
-      (apply #'call-process (car command) nil '(t nil) nil
-             (append (cdr command) (image-converter--value type :probe)))
+      (when (executable-find (car command))
+        (apply #'call-process (car command) nil '(t nil) nil
+               (append (cdr command) (image-converter--value type :probe))))
       (goto-char (point-min))
       (when (re-search-forward "^-" nil t)
         (forward-line 1)
@@ -135,9 +137,10 @@ where created with DATA-P nil (i.e., it has to refer to a file)."
   (with-temp-buffer
     (let ((command (image-converter--value type :command))
           formats)
-      (when (zerop (apply #'call-process (car command) nil '(t nil) nil
-                          (append (cdr command)
-                                  (image-converter--value type :probe))))
+      (when (and (executable-find (car command))
+                 (zerop (apply #'call-process (car command) nil '(t nil) nil
+                               (append (cdr command)
+                                       (image-converter--value type :probe)))))
         (goto-char (point-min))
         (when (re-search-forward "^ *-" nil t)
           (forward-line 1)
