@@ -147,3 +147,12 @@ Also check that an encoding error can appear in a symlink."
       (should (file-name-absolute-p (concat "~" user-login-name suffix))))
     (unless (user-full-name "nosuchuser")
       (should (not (file-name-absolute-p (concat "~nosuchuser" suffix)))))))
+
+(ert-deftest fileio-tests--circular-after-insert-file-functions ()
+  "Test after-insert-file-functions as a circular list."
+  (let ((f (make-temp-file "fileio"))
+        (after-insert-file-functions (list 'identity)))
+    (setcdr after-insert-file-functions after-insert-file-functions)
+    (write-region "hello\n" nil f nil 'silent)
+    (should-error (insert-file-contents f) :type 'circular-list)
+    (delete-file f)))

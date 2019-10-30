@@ -4742,7 +4742,7 @@ by calling `format-decode', which see.  */)
       /* For consistency with format-decode call these now iff inserted > 0
 	 (martin 2007-06-28).  */
       p = Vafter_insert_file_functions;
-      while (CONSP (p))
+      FOR_EACH_TAIL (p)
 	{
 	  if (NILP (replace))
 	    {
@@ -4782,9 +4782,6 @@ by calling `format-decode', which see.  */)
 		    inserted = XFIXNAT (insval);
 		}
 	    }
-
-	  maybe_quit ();
-	  p = XCDR (p);
 	}
 
       if (!empty_undo_list_p)
@@ -5375,14 +5372,14 @@ build_annotations (Lisp_Object start, Lisp_Object end)
   Lisp_Object annotations;
   Lisp_Object p, res;
   Lisp_Object original_buffer;
-  int i;
   bool used_global = false;
 
   XSETBUFFER (original_buffer, current_buffer);
 
   annotations = Qnil;
   p = Vwrite_region_annotate_functions;
-  while (CONSP (p))
+ loop_over_p:
+  FOR_EACH_TAIL (p)
     {
       struct buffer *given_buffer = current_buffer;
       if (EQ (Qt, XCAR (p)) && !used_global)
@@ -5391,7 +5388,7 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	  p = CALLN (Fappend,
 		     Fdefault_value (Qwrite_region_annotate_functions),
 		     XCDR (p));
-	  continue;
+	  goto loop_over_p;
 	}
       Vwrite_region_annotations_so_far = annotations;
       res = call2 (XCAR (p), start, end);
@@ -5411,7 +5408,6 @@ build_annotations (Lisp_Object start, Lisp_Object end)
 	}
       Flength (res);   /* Check basic validity of return value */
       annotations = merge (annotations, res, Qcar_less_than_car);
-      p = XCDR (p);
     }
 
   /* Now do the same for annotation functions implied by the file-format */
@@ -5419,7 +5415,8 @@ build_annotations (Lisp_Object start, Lisp_Object end)
     p = BVAR (current_buffer, auto_save_file_format);
   else
     p = BVAR (current_buffer, file_format);
-  for (i = 0; CONSP (p); p = XCDR (p), ++i)
+  EMACS_INT i = 0;
+  FOR_EACH_TAIL (p)
     {
       struct buffer *given_buffer = current_buffer;
 
@@ -5429,7 +5426,7 @@ build_annotations (Lisp_Object start, Lisp_Object end)
          has written annotations to a temporary buffer, which is now
          current.  */
       res = call5 (Qformat_annotate_function, XCAR (p), start, end,
-		   original_buffer, make_fixnum (i));
+		   original_buffer, make_fixnum (i++));
       if (current_buffer != given_buffer)
 	{
 	  XSETFASTINT (start, BEGV);
