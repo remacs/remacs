@@ -1107,7 +1107,9 @@ locking for a mode, and is not meant to be called from lisp functions."
   (interactive)
   (declare (interactive-only t))
   (setq font-lock-major-mode nil)
-  (font-lock-ensure))
+  (font-lock-set-defaults)
+  (save-excursion
+    (font-lock-fontify-region (point-min) (point-max))))
 
 (defun font-lock-ensure (&optional beg end)
   "Make sure the region BEG...END has been fontified.
