@@ -955,6 +955,7 @@ detailed description of this mode.
     (gdb-input "-gdb-set non-stop 1" 'gdb-non-stop-handler))
 
   (gdb-input "-enable-pretty-printing" 'ignore)
+  (gdb-input "-enable-frame-filters" 'ignore)
 
   ;; Find source file and compilation directory here.
   (if gdb-create-source-file-list
