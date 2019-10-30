@@ -1106,7 +1106,8 @@ This functions is a convenience functions when developing font
 locking for a mode, and is not meant to be called from lisp functions."
   (interactive)
   (declare (interactive-only t))
-  (setq font-lock-major-mode nil)
+  (setq font-lock-major-mode nil
+        syntax-propertize--done -1)
   (font-lock-set-defaults)
   (save-excursion
     (font-lock-fontify-region (point-min) (point-max))))
