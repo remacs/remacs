@@ -63,7 +63,7 @@ If m4 is not in your PATH, set this to an absolute file name."
 ;;(defconst m4-program-options '("--prefix-builtins"))
 
 (defvar m4-font-lock-keywords
-  '(("\\(\\_<\\(m4_\\)?dnl\\_>\\).*$" . font-lock-comment-face)
+  '(("\\(\\_<\\(m4_\\)?dnl\\_>\\).*$" (0 font-lock-comment-face t))
     ("\\$[*#@0-9]" . font-lock-variable-name-face)
     ("\\$@" . font-lock-variable-name-face)
     ("\\$\\*" . font-lock-variable-name-face)
