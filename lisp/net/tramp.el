@@ -64,7 +64,6 @@
 (require 'cl-lib)
 (declare-function netrc-parse "netrc")
 (defvar auto-save-file-name-transforms)
-(defvar outline-regexp)
 
 ;;; User Customizable Internal Variables:
 
