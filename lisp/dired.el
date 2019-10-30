@@ -510,7 +510,7 @@ Subexpression 2 must end right before the \\n.")
 		 "[-d]..\\(s\\)......")	; suid
 	 '(1 'dired-set-id))
    (list (concat dired-re-maybe-mark dired-re-inode-size
-		 "[-d].....\\(S\\)...")	; guid
+		 "[-d].....\\([sS]\\)...")	; guid
 	 '(1 'dired-set-id))
    ;;
    ;; Subdirectories.
