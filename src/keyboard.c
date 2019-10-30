@@ -1784,10 +1784,10 @@ safe_run_hooks_error (Lisp_Object error, ptrdiff_t nargs, Lisp_Object *args)
 
   if (SYMBOLP (hook))
     {
-      Lisp_Object val;
       bool found = false;
       Lisp_Object newval = Qnil;
-      for (val = find_symbol_value (hook); CONSP (val); val = XCDR (val))
+      Lisp_Object val = find_symbol_value (hook);
+      FOR_EACH_TAIL (val)
 	if (EQ (fun, XCAR (val)))
 	  found = true;
 	else
@@ -1797,9 +1797,8 @@ safe_run_hooks_error (Lisp_Object error, ptrdiff_t nargs, Lisp_Object *args)
       /* Not found in the local part of the hook.  Let's look at the global
 	 part.  */
       newval = Qnil;
-      for (val = (NILP (Fdefault_boundp (hook)) ? Qnil
-		  : Fdefault_value (hook));
-	   CONSP (val); val = XCDR (val))
+      val = NILP (Fdefault_boundp (hook)) ? Qnil : Fdefault_value (hook);
+      FOR_EACH_TAIL (val)
 	if (EQ (fun, XCAR (val)))
 	  found = true;
 	else
@@ -3196,14 +3195,13 @@ record_menu_key (Lisp_Object c)
 static bool
 help_char_p (Lisp_Object c)
 {
-  Lisp_Object tail;
-
   if (EQ (c, Vhelp_char))
-    return 1;
-  for (tail = Vhelp_event_list; CONSP (tail); tail = XCDR (tail))
+    return true;
+  Lisp_Object tail = Vhelp_event_list;
+  FOR_EACH_TAIL_SAFE (tail)
     if (EQ (c, XCAR (tail)))
-      return 1;
-  return 0;
+      return true;
+  return false;
 }
 
 /* Record the input event C in various ways.  */
@@ -6581,22 +6579,16 @@ The return value is an event type (a character or symbol) which
 has the same base event type and all the specified modifiers.  */)
   (Lisp_Object event_desc)
 {
-  Lisp_Object base;
+  Lisp_Object base = Qnil;
   int modifiers = 0;
-  Lisp_Object rest;
 
-  base = Qnil;
-  rest = event_desc;
-  while (CONSP (rest))
+  FOR_EACH_TAIL_SAFE (event_desc)
     {
-      Lisp_Object elt;
+      Lisp_Object elt = XCAR (event_desc);
       int this = 0;
 
-      elt = XCAR (rest);
-      rest = XCDR (rest);
-
       /* Given a symbol, see if it is a modifier name.  */
-      if (SYMBOLP (elt) && CONSP (rest))
+      if (SYMBOLP (elt) && CONSP (XCDR (event_desc)))
 	this = parse_solitary_modifier (elt);
 
       if (this != 0)
@@ -6605,7 +6597,6 @@ has the same base event type and all the specified modifiers.  */)
 	error ("Two bases given in one event");
       else
 	base = elt;
-
     }
 
   /* Let the symbol A refer to the character A.  */
@@ -6755,24 +6746,23 @@ parse_solitary_modifier (Lisp_Object symbol)
 bool
 lucid_event_type_list_p (Lisp_Object object)
 {
-  Lisp_Object tail;
-
   if (! CONSP (object))
-    return 0;
+    return false;
 
   if (EQ (XCAR (object), Qhelp_echo)
       || EQ (XCAR (object), Qvertical_line)
       || EQ (XCAR (object), Qmode_line)
       || EQ (XCAR (object), Qtab_line)
       || EQ (XCAR (object), Qheader_line))
-    return 0;
+    return false;
 
-  for (tail = object; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = object;
+  FOR_EACH_TAIL_SAFE (object)
     {
-      Lisp_Object elt;
-      elt = XCAR (tail);
+      Lisp_Object elt = XCAR (object);
       if (! (FIXNUMP (elt) || SYMBOLP (elt)))
-	return 0;
+	return false;
+      tail = XCDR (object);
     }
 
   return NILP (tail);
@@ -7401,7 +7391,7 @@ menu_bar_items (Lisp_Object old)
   Lisp_Object *maps;
 
   Lisp_Object mapsbuf[3];
-  Lisp_Object def, tail;
+  Lisp_Object def;
 
   ptrdiff_t mapno;
   Lisp_Object oquit;
@@ -7484,12 +7474,12 @@ menu_bar_items (Lisp_Object old)
 
   /* Move to the end those items that should be at the end.  */
 
-  for (tail = Vmenu_bar_final_items; CONSP (tail); tail = XCDR (tail))
+  Lisp_Object tail = Vmenu_bar_final_items;
+  FOR_EACH_TAIL (tail)
     {
-      int i;
       int end = menu_bar_items_index;
 
-      for (i = 0; i < end; i += 4)
+      for (int i = 0; i < end; i += 4)
 	if (EQ (XCAR (tail), AREF (menu_bar_items_vector, i)))
 	  {
 	    Lisp_Object tem0, tem1, tem2, tem3;
@@ -7726,10 +7716,12 @@ parse_menu_item (Lisp_Object item, int inmenubar)
 	    item = XCDR (item);
 
 	  /* Parse properties.  */
-	  while (CONSP (item) && CONSP (XCDR (item)))
+	  FOR_EACH_TAIL (item)
 	    {
 	      tem = XCAR (item);
 	      item = XCDR (item);
+	      if (!CONSP (item))
+		break;
 
 	      if (EQ (tem, QCenable))
 		{
@@ -7780,7 +7772,6 @@ parse_menu_item (Lisp_Object item, int inmenubar)
 		      ASET (item_properties, ITEM_PROPERTY_TYPE, type);
 		    }
 		}
-	      item = XCDR (item);
 	    }
 	}
       else if (inmenubar || !NILP (start))
@@ -8198,12 +8189,13 @@ parse_tab_bar_item (Lisp_Object key, Lisp_Object item)
     item = XCDR (item);
 
   /* Process the rest of the properties.  */
-  for (; CONSP (item) && CONSP (XCDR (item)); item = XCDR (XCDR (item)))
+  FOR_EACH_TAIL (item)
     {
-      Lisp_Object ikey, value;
-
-      ikey = XCAR (item);
-      value = XCAR (XCDR (item));
+      Lisp_Object ikey = XCAR (item);
+      item = XCDR (item);
+      if (!CONSP (item))
+	break;
+      Lisp_Object value = XCAR (item);
 
       if (EQ (ikey, QCenable))
 	{
@@ -8590,12 +8582,13 @@ parse_tool_bar_item (Lisp_Object key, Lisp_Object item)
     item = XCDR (item);
 
   /* Process the rest of the properties.  */
-  for (; CONSP (item) && CONSP (XCDR (item)); item = XCDR (XCDR (item)))
+  FOR_EACH_TAIL (item)
     {
-      Lisp_Object ikey, value;
-
-      ikey = XCAR (item);
-      value = XCAR (XCDR (item));
+      Lisp_Object ikey = XCAR (item);
+      item = XCDR (item);
+      if (!CONSP (item))
+	break;
+      Lisp_Object value = XCAR (item);
 
       if (EQ (ikey, QCenable))
 	{
