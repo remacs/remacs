@@ -1141,7 +1141,7 @@ subshells can nest."
     ;; metacharacters.  The list of special chars is taken from
     ;; the single-unix spec of the shell command language (under
     ;; `quoting') but with `$' removed.
-    ("\\(?:[^|&;<>(`\\\"' \t\n]\\|\\${\\|\\ \\)\\(#+\\)" (1 "_"))
+    ("\\(?:[^|&;<>(`\\\"' \t\n]\\|\\${\\|\\\\ \\)\\(#+\\)" (1 "_"))
     ;; In addition, `#' at the beginning of closed parentheses
     ;; does not start a comment if the parentheses are not isolated
     ;; by metacharacters, excluding [()].
