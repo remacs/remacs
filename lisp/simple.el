@@ -5166,36 +5166,38 @@ and KILLP is t if a prefix arg was specified."
     ;; Avoid warning about delete-backward-char
     (with-no-warnings (delete-backward-char n killp))))
 
-(defvar read-char-with-history--history nil
-  "The default history for the `read-char-with-history' function.")
+(defvar read-char-from-minibuffer-history nil
+  "The default history for the `read-char-from-minibuffer' function.")
 
-(defvar read-char-with-history--map
+(defvar read-char-from-minibuffer-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map minibuffer-local-map)
     (define-key map [remap self-insert-command]
-      (lambda ()
-        (interactive)
-        (delete-minibuffer-contents)
-        (insert (event-basic-type last-command-event))
-        (exit-minibuffer)))
+      'read-char-from-minibuffer-self-insert)
     map)
-  "Keymap for the `read-char-with-history' function.")
+  "Keymap for the `read-char-from-minibuffer' function.")
 
-(defun read-char-with-history (prompt)
-  "Like `read-char', but allows navigating in a history.
-HISTORY is like HIST in `read-from-minibuffer'.
+(defun read-char-from-minibuffer-self-insert ()
+  "Insert the character you type in the minibuffer."
+  (interactive)
+  (delete-minibuffer-contents)
+  (insert (event-basic-type last-command-event))
+  (exit-minibuffer))
 
-The navigation commands are `M-p' and `M-n', with `RET' to select
-a character from history."
+(defun read-char-from-minibuffer (prompt)
+  "Read a character from the minibuffer, prompting with string PROMPT.
+Like `read-char', but allows navigating in a history.  The navigation
+commands are `M-p' and `M-n', with `RET' to select a character from
+history."
   (let ((result
          (read-from-minibuffer prompt nil
-                               read-char-with-history--map nil
-                               'read-char-with-history--history)))
+                               read-char-from-minibuffer-map nil
+                               'read-char-from-minibuffer-history)))
     (if (> (length result) 0)
         ;; We have a string (with one character), so return the first one.
         (elt result 0)
       ;; The default value is RET.
-      (push "\r" read-char-with-history--history)
+      (push "\r" read-char-from-minibuffer-history)
       ?\r)))
 
 (defun zap-to-char (arg char)
@@ -5203,7 +5205,7 @@ a character from history."
 Case is ignored if `case-fold-search' is non-nil in the current buffer.
 Goes backward if ARG is negative; error if CHAR not found."
   (interactive (list (prefix-numeric-value current-prefix-arg)
-		     (read-char-with-history "Zap to char: ")))
+		     (read-char-from-minibuffer "Zap to char: ")))
   ;; Avoid "obsolete" warnings for translation-table-for-input.
   (with-no-warnings
     (if (char-table-p translation-table-for-input)
