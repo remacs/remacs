@@ -648,6 +648,7 @@ or an empty string if none."
     (define-key map "A" 'vc-git-stash-apply-at-point)
     (define-key map "P" 'vc-git-stash-pop-at-point)
     (define-key map "S" 'vc-git-stash-snapshot)
+    (define-key map "C" 'vc-git-stash)
     map))
 
 (defun vc-git--make-button-text (show count1 count2)
@@ -1596,7 +1597,7 @@ This command shares argument histories with \\[rgrep] and \\[grep]."
 (autoload 'vc-dir-marked-files "vc-dir")
 
 (defun vc-git-stash (name)
-  "Create a stash."
+  "Create a stash given the name NAME."
   (interactive "sStash name: ")
   (let ((root (vc-git-root default-directory)))
     (when root

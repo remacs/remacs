@@ -876,6 +876,9 @@ This new user option allows customizing the default arguments passed to
 When some files are marked, only those are stashed.
 When no files are marked, all modified files are stashed, as before.
 
+*** 'vc-git-stash' has now been bound to the 'C' keystroke in the
+stash headers.
+
 *** The new hook 'vc-retrieve-tag-hook' runs after retrieving a tag.
 
 ---
