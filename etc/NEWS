@@ -575,6 +575,12 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
++++
+** New command 'font-lock-refontify'.
+This is an interactive convenience function to be used when developing
+font locking for a mode.  It recomputes the font locking data and then
+re-fontifies the buffer.
+
 ---
 ** The 'C' command in 'tar-mode' will now preserve the timestamp of
 the extracted file if the new user option 'tar-copy-preserve-time' is

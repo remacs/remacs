@@ -1100,6 +1100,15 @@ accessible portion of the current buffer."
   "Function to make sure a region has been fontified.
 Called with two arguments BEG and END.")
 
+(defun font-lock-refontify ()
+  "Reinitialise the font-lock machinery and re-fontify the buffer.
+This functions is a convenience functions when developing font
+locking for a mode, and is not meant to be called from lisp functions."
+  (interactive)
+  (declare (interactive-only t))
+  (setq font-lock-major-mode nil)
+  (font-lock-ensure))
+
 (defun font-lock-ensure (&optional beg end)
   "Make sure the region BEG...END has been fontified.
 If the region is not specified, it defaults to the entire accessible
