@@ -476,7 +476,7 @@ bind it.
 
 +++
 ** 'zap-to-char' now uses history of characters you used to zap to.
-'zap-to-char' uses the new 'read-char-with-history' function to allow
+'zap-to-char' uses the new 'read-char-from-minibuffer' function to allow
 navigating through the history of characters that have been input.
 This is mostly useful for characters that have complex input methods
 where inputting the character again may involve many keystrokes.
@@ -2480,9 +2480,10 @@ This macro works like 'progn', but messages how long it takes to
 evaluate the body forms.  The value of the last form is the return
 value.
 
-** New function 'read-char-with-history'.
-This function works like 'read-char', but maintains a history that can
-be navigated via the 'M-p'/'M-n' keystrokes.
+** New function 'read-char-from-minibuffer'.
+This function works like 'read-char', but uses 'read-from-minibuffer'
+to read a character, so it maintains a history that can be navigated
+via usual minibuffer keystrokes 'M-p'/'M-n'.
 
 ** 'setq-local' can now set an arbitrary number of variables, which
 makes the syntax more like 'setq'.
