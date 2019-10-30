@@ -546,7 +546,7 @@ An alternative value is \" . \", if you use a font with a narrow period."
         ;; Include args.
         (,(concat slash includes opt arg) 3 font-lock-builtin-face)
         ;; Verbatim-like args.
-        (,(concat slash verbish opt arg) 3 'tex-verbatim)
+        (,(concat slash verbish opt arg) 3 'tex-verbatim t)
         ;; Definitions.  I think.
         ("^[ \t]*\\\\def *\\\\\\(\\(\\w\\|@\\)+\\)"
 	 1 font-lock-function-name-face))))
