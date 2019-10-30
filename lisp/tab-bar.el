@@ -538,13 +538,12 @@ to the numeric argument.  ARG counts from 1."
                        ;; window-configuration restores point to global point
                        ;; in this dired buffer, not to its window point,
                        ;; but this is slightly better than 1.
+                       ;; Maybe better to save dired-filename in each window?
                        (not (eq 1 (marker-position wc-point))))
               (goto-char wc-point))
 
-            (when wc-bl (modify-frame-parameters
-                         nil (list (cons 'buffer-list wc-bl))))
-            (when wc-bbl (modify-frame-parameters
-                          nil (list (cons 'buried-buffer-list wc-bbl))))
+            (when wc-bl  (set-frame-parameter nil 'buffer-list wc-bl))
+            (when wc-bbl (set-frame-parameter nil 'buried-buffer-list wc-bbl))
 
             (puthash (selected-frame)
                      (and (window-configuration-p (cdr (assq 'wc (car wc-history-back))))
@@ -562,10 +561,8 @@ to the numeric argument.  ARG counts from 1."
                                    (mapcar #'get-buffer (cdr (assq 'ws-bl to-tab)))))
                 (ws-bbl (seq-filter #'buffer-live-p
                                     (mapcar #'get-buffer (cdr (assq 'ws-bbl to-tab))))))
-            (when ws-bl (modify-frame-parameters
-                         nil (list (cons 'buffer-list ws-bl))))
-            (when ws-bbl (modify-frame-parameters
-                          nil (list (cons 'buried-buffer-list ws-bbl)))))))
+            (when ws-bl  (set-frame-parameter nil 'buffer-list ws-bl))
+            (when ws-bbl (set-frame-parameter nil 'buried-buffer-list ws-bbl)))))
 
         (setq tab-bar-history-omit t)
 
@@ -1066,9 +1063,9 @@ For more information, see the function `tab-bar-list'."
     (with-current-buffer (get-buffer-create
                           (format " *Tabs*<%s>" (or (frame-parameter nil 'window-id)
                                                     (frame-parameter nil 'name))))
+      (setq buffer-read-only nil)
       (erase-buffer)
       (tab-bar-list-mode)
-      (setq buffer-read-only nil)
       ;; Vertical alignment to the center of the frame
       (insert-char ?\n (/ (- (frame-height) (length tabs) 1) 2))
       ;; Horizontal alignment to the center of the frame
@@ -1088,6 +1085,7 @@ For more information, see the function `tab-bar-list'."
         (tab-bar-list-next-line))
       (move-to-column tab-bar-list-column)
       (set-buffer-modified-p nil)
+      (setq buffer-read-only t)
       (current-buffer))))
 
 (defvar tab-bar-list-column 3)
@@ -1127,8 +1125,7 @@ Letters do not insert themselves; instead, they are commands.
 \\[tab-bar-list-unmark] -- remove all kinds of marks from current line.
   With prefix argument, also move up one line.
 \\[tab-bar-list-backup-unmark] -- back up a line and remove marks."
-  (setq truncate-lines t)
-  (setq buffer-read-only t))
+  (setq truncate-lines t))
 
 (defun tab-bar-list-current-tab (error-if-non-existent-p)
   "Return window configuration described by this line of the list."
