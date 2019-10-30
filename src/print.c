@@ -966,13 +966,12 @@ print_error_message (Lisp_Object data, Lisp_Object stream, const char *context,
     else
       sep = NULL;
 
-    for (; CONSP (tail); tail = XCDR (tail), sep = ", ")
+    FOR_EACH_TAIL (tail)
       {
-	Lisp_Object obj;
-
 	if (sep)
 	  write_string (sep, stream);
-	obj = XCAR (tail);
+	sep = ", ";
+	Lisp_Object obj = XCAR (tail);
 	if (!NILP (file_error)
 	    || EQ (errname, Qend_of_file) || EQ (errname, Quser_error))
 	  Fprinc (obj, stream);
@@ -2087,45 +2086,32 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 	{
 	  printchar ('(', printcharfun);
 
-	  Lisp_Object halftail = obj;
-
 	  /* Negative values of print-length are invalid in CL.
 	     Treat them like nil, as CMUCL does.  */
 	  intmax_t print_length = (FIXNATP (Vprint_length)
 				   ? XFIXNAT (Vprint_length)
 				   : INTMAX_MAX);
-
+	  Lisp_Object objtail = Qnil;
 	  intmax_t i = 0;
-	  while (CONSP (obj))
+	  FOR_EACH_TAIL_SAFE (obj)
 	    {
-	      /* Detect circular list.  */
-	      if (NILP (Vprint_circle))
+	      if (i != 0)
 		{
-		  /* Simple but incomplete way.  */
-		  if (i != 0 && EQ (obj, halftail))
+		  printchar (' ', printcharfun);
+
+		  if (!NILP (Vprint_circle))
 		    {
-		      int len = sprintf (buf, " . #%"PRIdMAX, i >> 1);
-		      strout (buf, len, len, printcharfun);
-		      goto end_of_list;
-		    }
-		}
-	      else
-		{
-		  /* With the print-circle feature.  */
-		  if (i != 0)
-		    {
-		      Lisp_Object num = Fgethash (obj, Vprint_number_table, Qnil);
+		      /* With the print-circle feature.  */
+		      Lisp_Object num = Fgethash (obj, Vprint_number_table,
+						  Qnil);
 		      if (FIXNUMP (num))
 			{
-			  print_c_string (" . ", printcharfun);
+			  print_c_string (". ", printcharfun);
 			  print_object (obj, printcharfun, escapeflag);
 			  goto end_of_list;
 			}
 		    }
 		}
-
-	      if (i)
-		printchar (' ', printcharfun);
 
 	      if (print_length <= i)
 		{
@@ -2135,17 +2121,23 @@ print_object (Lisp_Object obj, Lisp_Object printcharfun, bool escapeflag)
 
 	      i++;
 	      print_object (XCAR (obj), printcharfun, escapeflag);
+	      objtail = XCDR (obj);
+	    }
 
-	      obj = XCDR (obj);
-	      if (!(i & 1))
-		halftail = XCDR (halftail);
-	  }
-
-	  /* OBJ non-nil here means it's the end of a dotted list.  */
-	  if (!NILP (obj))
+	  /* OBJTAIL non-nil here means it's the end of a dotted list
+	     or FOR_EACH_TAIL_SAFE detected a circular list.  */
+	  if (!NILP (objtail))
 	    {
 	      print_c_string (" . ", printcharfun);
-	      print_object (obj, printcharfun, escapeflag);
+
+	      if (CONSP (objtail) && NILP (Vprint_circle))
+		{
+		  int len = sprintf (buf, "#%"PRIdMAX, i >> 1);
+		  strout (buf, len, len, printcharfun);
+		  goto end_of_list;
+		}
+
+	      print_object (objtail, printcharfun, escapeflag);
 	    }
 
 	end_of_list:
