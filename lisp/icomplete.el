@@ -152,13 +152,33 @@ icompletion is occurring."
   "Keymap used by `icomplete-mode' in the minibuffer.")
 
 (defun icomplete-force-complete-and-exit ()
-  "Complete the minibuffer and exit.
+  "Complete the minibuffer with the longest possible match and exit.
 Use the first of the matches if there are any displayed, and use
 the default otherwise."
   (interactive)
-  (if (or (and (not minibuffer-default) icomplete-show-matches-on-no-input)
-          (> (icomplete--field-end) (icomplete--field-beg)))
+  ;; This function is tricky.  The mandate is to "force", meaning we
+  ;; should take the first possible valid completion for the input.
+  ;; However, if there is no input and we can prove that that
+  ;; coincides with the default, it is much faster to just call
+  ;; `minibuffer-complete-and-exit'.  Otherwise, we have to call
+  ;; `minibuffer-force-complete-and-exit', which needs the full
+  ;; completion set and is potentially slow and blocking.  Do the
+  ;; latter if:
+  (if (or
+       ;; there's some input, meaning the default in off the table by
+       ;; definition; OR
+       (> (icomplete--field-end) (icomplete--field-beg))
+       ;; there's no input, but there's also no minibuffer default
+       ;; (and the user really wants to see completions on no input,
+       ;; meaning he expects a "force" to be at least attempted); OR
+       (and (not minibuffer-default)
+            icomplete-show-matches-on-no-input)
+       ;; there's no input but the full completion set has been
+       ;; calculated, This causes the first cached completion to
+       ;; be taken (i.e. the one that the user sees highlighted)
+       completion-all-sorted-completions)
       (minibuffer-force-complete-and-exit)
+    ;; Otherwise take the faster route...
     (minibuffer-complete-and-exit)))
 
 (defun icomplete-force-complete ()
