@@ -1140,8 +1140,10 @@ subshells can nest."
     ;; beginning of a word.  In the shell, words are separated by
     ;; metacharacters.  The list of special chars is taken from
     ;; the single-unix spec of the shell command language (under
-    ;; `quoting') but with `$' removed.
-    ("\\(?:[^|&;<>(`\\\"' \t\n]\\|\\${\\|\\\\ \\)\\(#+\\)" (1 "_"))
+    ;; `quoting') but with `$' removed.  Also -- if there's something like
+    ;; \ #foo, then that's not a comment, unless the backslash itself
+    ;; is backslashed.
+    ("\\(?:[^|&;<>(`\\\"' \t\n]\\|\\${\\|\\(?:[^\\]\\|^\\)\\\\\\(?:\\\\\\\\\\)*.\\)\\(#+\\)" (1 "_"))
     ;; In addition, `#' at the beginning of closed parentheses
     ;; does not start a comment if the parentheses are not isolated
     ;; by metacharacters, excluding [()].
