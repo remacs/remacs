@@ -879,6 +879,10 @@ When no files are marked, all modified files are stashed, as before.
 *** 'vc-git-stash' has now been bound to the 'C' keystroke in the
 stash headers.
 
+*** Some stash keybindings are now available in the stash button.
+'vc-git-stash' and 'vc-git-stash-snapshot' can now be run using 'C'
+and 'S' respectively, including when there are no stashes.
+
 *** The new hook 'vc-retrieve-tag-hook' runs after retrieving a tag.
 
 ---

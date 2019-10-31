@@ -636,8 +636,15 @@ or an empty string if none."
                                  :files files
                                  :update-function update-function)))
 
+(defvar vc-git-stash-shared-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "S" 'vc-git-stash-snapshot)
+    (define-key map "C" 'vc-git-stash)
+    map))
+
 (defvar vc-git-stash-map
   (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map vc-git-stash-shared-map)
     ;; Turn off vc-dir marking
     (define-key map [mouse-2] 'ignore)
 
@@ -647,16 +654,29 @@ or an empty string if none."
     (define-key map "\C-m" 'vc-git-stash-show-at-point)
     (define-key map "A" 'vc-git-stash-apply-at-point)
     (define-key map "P" 'vc-git-stash-pop-at-point)
-    (define-key map "S" 'vc-git-stash-snapshot)
-    (define-key map "C" 'vc-git-stash)
     map))
 
+(defvar vc-git-stash-button-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map vc-git-stash-shared-map)
+    (define-key map [mouse-2] 'push-button)
+    (define-key map "\C-m" 'push-button)
+    map))
+
+(defconst vc-git-stash-shared-help
+  "\\<vc-git-stash-shared-map>\\[vc-git-stash]: Create named stash\n\\[vc-git-stash-snapshot]: Snapshot stash")
+
+(defconst vc-git-stash-list-help (concat "\\<vc-git-stash-map>mouse-3: Show stash menu\n\\[vc-git-stash-show-at-point], =: Show stash\n\\[vc-git-stash-apply-at-point]: Apply stash\n\\[vc-git-stash-pop-at-point]: Apply and remove stash (pop)\n\\[vc-git-stash-delete-at-point]: Delete stash\n"
+                                         vc-git-stash-shared-help))
+
 (defun vc-git--make-button-text (show count1 count2)
-  (if show
-      (format "Show all stashes (%s)" count2)
-    (if (= count1 count2)
-        (format "Hide all stashes (%s)" count2)
-      (format "Show %s stash%s (of %s)" count1 (if (= count1 1) "" "es") count2))))
+  (propertize
+   (if show
+       (format "Show all stashes (%s)" count2)
+     (if (= count1 count2)
+         (format "Hide all stashes (%s)" count2)
+       (format "Show %s stash%s (of %s)" count1 (if (= count1 1) "" "es") count2)))
+   'keymap vc-git-stash-button-map))
 
 (defun vc-git-make-stash-button (show count1 count2)
   (let ((orig-text (vc-git--make-button-text show count1 count2)))
@@ -678,10 +698,16 @@ or an empty string if none."
            (insert (vc-git-make-stash-button
                     (not state) (car counts) (cdr counts))))))
      'button-data (cons count1 count2)
-     'help-echo "mouse-2, RET: Show/hide stashes")))
+     'help-echo (concat "mouse-2, RET: Show/hide stashes\n" vc-git-stash-shared-help))))
 
 (defvar vc-git-stash-menu-map
   (let ((map (make-sparse-keymap "Git Stash")))
+    (define-key map [sn]
+      '(menu-item "Snapshot Stash" vc-git-stash-snapshot
+		  :help "Snapshot stash"))
+    (define-key map [cr]
+      '(menu-item "Create Samed Stash" vc-git-stash
+		  :help "Create named stash"))
     (define-key map [de]
       '(menu-item "Delete Stash" vc-git-stash-delete-at-point
 		  :help "Delete the current stash"))
@@ -701,8 +727,6 @@ or an empty string if none."
                (with-current-buffer standard-output
                  (vc-git--out-ok "symbolic-ref" "HEAD"))))
 	(stash-list (vc-git-stash-list))
-	(stash-help-echo "Use M-x vc-git-stash to create stashes.")
-        (stash-list-help-echo "mouse-3: Show stash menu\nRET: Show stash\nA: Apply stash\nP: Apply and remove stash (pop)\nC-k: Delete stash")
 
 	branch remote remote-url stash-button stash-string)
     (if (string-match "^\\(refs/heads/\\)?\\(.+\\)$" str)
@@ -749,7 +773,7 @@ or an empty string if none."
                                  'face 'font-lock-variable-name-face
                                  'mouse-face 'highlight
                                  'vc-git-hideable all-hideable
-                                 'help-echo stash-list-help-echo
+                                 'help-echo vc-git-stash-list-help
                                  'keymap vc-git-stash-map))
                    shown-stashes
                    (propertize "\n"
@@ -766,7 +790,7 @@ or an empty string if none."
                                  'mouse-face 'highlight
                                  'invisible t
                                  'vc-git-hideable t
-                                 'help-echo stash-list-help-echo
+                                 'help-echo vc-git-stash-list-help
                                  'keymap vc-git-stash-map))
                    hidden-stashes
                    (propertize "\n"
@@ -790,15 +814,14 @@ or an empty string if none."
        (propertize  "\nRebase     : in progress" 'face 'font-lock-warning-face))
      (if stash-list
        (concat
-        (propertize "\nStash      : " 'face 'font-lock-type-face
-                    'help-echo stash-help-echo)
+        (propertize "\nStash      : " 'face 'font-lock-type-face)
         stash-button
         stash-string)
        (concat
-	(propertize "\nStash      : " 'face 'font-lock-type-face
-		    'help-echo stash-help-echo)
+	(propertize "\nStash      : " 'face 'font-lock-type-face)
 	(propertize "Nothing stashed"
-		    'help-echo stash-help-echo
+		    'help-echo vc-git-stash-shared-help
+                    'keymap vc-git-stash-shared-map
 		    'face 'font-lock-variable-name-face))))))
 
 (defun vc-git-branches ()
