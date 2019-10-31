@@ -55,11 +55,19 @@
      25 nil 8 "errors.c")
     ;; ant
     ("[javac] /src/DataBaseTestCase.java:27: unreported exception ..."
-     13 nil 27 "/src/DataBaseTestCase.java")
+     13 nil 27 "/src/DataBaseTestCase.java" 2)
     ("[javac] /src/DataBaseTestCase.java:49: warning: finally clause cannot complete normally"
-     13 nil 49 "/src/DataBaseTestCase.java")
+     13 nil 49 "/src/DataBaseTestCase.java" 1)
     ("[jikes]  foo.java:3:5:7:9: blah blah"
-     14 (5 . 10) (3 . 7) "foo.java")
+     14 (5 . 10) (3 . 7) "foo.java" 2)
+    ("[javac] c:/cygwin/Test.java:12: error: foo: bar"
+     9 nil 12 "c:/cygwin/Test.java" 2)
+    ("[javac] c:\\cygwin\\Test.java:87: error: foo: bar"
+     9 nil 87 "c:\\cygwin\\Test.java" 2)
+    ;; Checkstyle error, but ant reports a warning (note additional
+    ;; severity level after task name)
+    ("[checkstyle] [ERROR] /src/Test.java:38: warning: foo"
+     22 nil 38 "/src/Test.java" 1)
     ;; bash
     ("a.sh: line 1: ls-l: command not found"
      1 nil 1 "a.sh")
@@ -420,8 +428,8 @@ The test data is in `compile-tests--test-regexps-data'."
           (compilation-num-warnings-found 0)
           (compilation-num-infos-found 0))
       (mapc #'compile--test-error-line compile-tests--test-regexps-data)
-      (should (eq compilation-num-errors-found 90))
-      (should (eq compilation-num-warnings-found 35))
+      (should (eq compilation-num-errors-found 92))
+      (should (eq compilation-num-warnings-found 36))
       (should (eq compilation-num-infos-found 26)))))
 
 (ert-deftest compile-test-grep-regexps ()
