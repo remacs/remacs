@@ -1104,6 +1104,12 @@ is dragged over to."
     (run-hooks 'mouse-leave-buffer-hook)
     (mouse-drag-track start-event)))
 
+;; Inhibit the region-confinement when undoing mouse-drag-region
+;; immediately after the command.  Otherwise, the selection left
+;; active around the dragged text would prevent an undo of the whole
+;; operation.
+(put 'mouse-drag-region 'undo-inhibit-region t)
+
 (defun mouse-posn-property (pos property)
   "Look for a property at click position.
 POS may be either a buffer position or a click position like

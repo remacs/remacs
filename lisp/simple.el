@@ -2508,6 +2508,10 @@ as an argument limits undo to changes within the current region."
 	 (base-buffer (or (buffer-base-buffer) (current-buffer)))
 	 (recent-save (with-current-buffer base-buffer
 			(recent-auto-save-p)))
+         ;; Allow certain commands to inhibit an immediately following
+         ;; undo-in-region.
+         (inhibit-region (and (symbolp last-command)
+                              (get last-command 'undo-inhibit-region)))
 	 message)
     ;; If we get an error in undo-start,
     ;; the next command should not be a "consecutive undo".
@@ -2525,7 +2529,8 @@ as an argument limits undo to changes within the current region."
 		       ;; it shows nothing else happened in between.
 		       (gethash list undo-equiv-table))))
       (setq undo-in-region
-	    (or (region-active-p) (and arg (not (numberp arg)))))
+	    (and (or (region-active-p) (and arg (not (numberp arg))))
+                 (not inhibit-region)))
       (if undo-in-region
 	  (undo-start (region-beginning) (region-end))
 	(undo-start))

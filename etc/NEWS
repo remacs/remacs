@@ -3102,6 +3102,12 @@ in other packages are now obsolete aliases of 'xor'.
 Setting this on the first character of a help string disables
 conversions via 'substitute-command-keys'.
 
++++
+** 'undo' can be made to ignore the active region for a command
+by setting 'undo-inhibit-region' symbol property of that command to
+non-nil.  This is used by 'mouse-drag-region' to make the effect
+easier to undo immediately afterwards.
+
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems
 

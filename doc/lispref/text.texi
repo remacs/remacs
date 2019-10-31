@@ -1451,6 +1451,12 @@ continuing to undo.
 This function does not bind @code{undo-in-progress}.
 @end defun
 
+Some commands leave the region active after execution in such a way that
+it interferes with selective undo of that command.  To make @code{undo}
+ignore the active region when invoked immediately after such a command,
+set the property @code{undo-inhibit-region} of the command's function
+symbol to a non-nil value.  @xref{Standard Properties}.
+
 @node Maintaining Undo
 @section Maintaining Undo Lists
 
