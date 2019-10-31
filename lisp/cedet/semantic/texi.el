@@ -408,7 +408,7 @@ Optional argument POINT is where to look for the environment."
   "List of commands that we might bother completing.")
 
 (define-mode-local-override semantic-analyze-possible-completions
-  texinfo-mode (context)
+  texinfo-mode (context &rest flags)
   "List smart completions at point.
 Since texinfo is not a programming language the default version is not
 useful.  Instead, look at the current symbol.  If it is a command

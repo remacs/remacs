@@ -627,7 +627,7 @@ section or ? for an ask variable."
 	context-return)))
 
 (define-mode-local-override semantic-analyze-possible-completions
-  srecode-template-mode (context)
+  srecode-template-mode (context &rest flags)
   "Return a list of possible completions based on NONTEXT."
   (with-current-buffer (oref context buffer)
     (let* ((prefix (car (last (oref context prefix))))

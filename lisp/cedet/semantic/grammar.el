@@ -1777,7 +1777,7 @@ Only tags of type 'nonterminal will be so marked."
     (if (semantic-grammar-in-lisp-p)
         (with-mode-local emacs-lisp-mode
           (semantic-ctxt-current-class-list))
-      '(nonterminal keyword))))
+      '(nonterminal token keyword))))
 
 (define-mode-local-override semantic-ctxt-current-mode
   semantic-grammar-mode (&optional point)
@@ -1915,14 +1915,14 @@ Optional argument COLOR determines if color is added to the text."
       context-return)))
 
 (define-mode-local-override semantic-analyze-possible-completions
-  semantic-grammar-mode (context)
+  semantic-grammar-mode (context &rest flags)
   "Return a list of possible completions based on CONTEXT."
   (require 'semantic/analyze/complete)
   (if (semantic-grammar-in-lisp-p)
       (with-mode-local emacs-lisp-mode
 	(semantic-analyze-possible-completions context))
     (with-current-buffer (oref context buffer)
-      (let* ((prefix (car (oref context prefix)))
+      (let* ((prefix (car (reverse (oref context prefix))))
 	     (completetext (cond ((semantic-tag-p prefix)
 				  (semantic-tag-name prefix))
 				 ((stringp prefix)
