@@ -64,6 +64,7 @@
 (require 'cl-lib)
 (declare-function netrc-parse "netrc")
 (defvar auto-save-file-name-transforms)
+(defvar outline-regexp)
 
 ;;; User Customizable Internal Variables:
 
@@ -1650,7 +1651,8 @@ The outline level is equal to the verbosity of the Tramp message."
       ;; Furthermore, `outline-regexp' must have the correct value
       ;; already, because it is used by `font-lock-compile-keywords'.
       (let ((default-directory (tramp-compat-temporary-file-directory))
-	    (outline-regexp tramp-debug-outline-regexp))
+	    (outline-regexp tramp-debug-outline-regexp)
+	    signal-hook-function)
 	(outline-mode))
       (set (make-local-variable 'outline-regexp) tramp-debug-outline-regexp)
       (set (make-local-variable 'outline-level) 'tramp-debug-outline-level)

@@ -946,29 +946,31 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (unless (file-directory-p filename)
       (setq filename (file-name-directory filename)))
     (with-parsed-tramp-file-name (expand-file-name filename) nil
-      (tramp-message v 5 "file system info: %s" localname)
-      (tramp-smb-send-command v (format "du %s/*" (tramp-smb-get-localname v)))
-      (with-current-buffer (tramp-get-connection-buffer v)
-	(let (total avail blocksize)
-	  (goto-char (point-min))
-	  (forward-line)
-	  (when (looking-at
-		 (eval-when-compile
-		   (concat "[[:space:]]*\\([[:digit:]]+\\)"
-			   " blocks of size \\([[:digit:]]+\\)"
-			   "\\. \\([[:digit:]]+\\) blocks available")))
-	    (setq blocksize (string-to-number (match-string 2))
-		  total (* blocksize (string-to-number (match-string 1)))
-		  avail (* blocksize (string-to-number (match-string 3)))))
-	  (forward-line)
-	  (when (looking-at "Total number of bytes: \\([[:digit:]]+\\)")
-	    ;; The used number of bytes is not part of the result.  As
-	    ;; side effect, we store it as file property.
-	    (tramp-set-file-property
-	     v localname "used-bytes" (string-to-number (match-string 1))))
-	  ;; Result.
-	  (when (and total avail)
-	    (list total (- total avail) avail)))))))
+      (when (tramp-smb-get-share v)
+	(tramp-message v 5 "file system info: %s" localname)
+	(tramp-smb-send-command
+	 v (format "du %s/*" (tramp-smb-get-localname v)))
+	(with-current-buffer (tramp-get-connection-buffer v)
+	  (let (total avail blocksize)
+	    (goto-char (point-min))
+	    (forward-line)
+	    (when (looking-at
+		   (eval-when-compile
+		     (concat "[[:space:]]*\\([[:digit:]]+\\)"
+			     " blocks of size \\([[:digit:]]+\\)"
+			     "\\. \\([[:digit:]]+\\) blocks available")))
+	      (setq blocksize (string-to-number (match-string 2))
+		    total (* blocksize (string-to-number (match-string 1)))
+		    avail (* blocksize (string-to-number (match-string 3)))))
+	    (forward-line)
+	    (when (looking-at "Total number of bytes: \\([[:digit:]]+\\)")
+	      ;; The used number of bytes is not part of the result.
+	      ;; As side effect, we store it as file property.
+	      (tramp-set-file-property
+	       v localname "used-bytes" (string-to-number (match-string 1))))
+	    ;; Result.
+	    (when (and total avail)
+	      (list total (- total avail) avail))))))))
 
 (defun tramp-smb-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files."
