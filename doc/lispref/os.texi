@@ -1307,7 +1307,14 @@ format, which can be a Lisp timestamp, @code{nil} for the current
 time, a single floating-point number for seconds, or a list
 @code{(@var{high} @var{low} @var{micro})} or @code{(@var{high}
 @var{low})} that is a truncated list timestamp with missing elements
-taken to be zero.  You can convert a time value into
+taken to be zero.
+
+Time values can be converted to and from calendrical and other forms.
+Some of these conversions rely on operating system functions that
+limit the range of possible time values, and signal an error if the
+limits are exceeded.  For instance, a system may not support years
+before 1970, or years before 1901, or years far in the future.
+You can convert a time value into
 a human-readable string using @code{format-time-string}, into a Lisp
 timestamp using @code{time-convert}, and into other forms using
 @code{decode-time} and @code{float-time}.  These functions are
@@ -1328,11 +1335,12 @@ information may some day be added at the end.
 The argument @var{time}, if given, specifies a time to format,
 instead of the current time.  The optional argument @var{zone}
 defaults to the current time zone rule.  @xref{Time Zone Rules}.
+The operating system limits the range of time and zone values.
 
 @example
 @group
 (current-time-string)
-     @result{} "Wed Oct 14 22:21:05 1987"
+     @result{} "Fri Nov @ 1 15:59:49 2019"
 @end group
 @end example
 @end defun
@@ -1416,6 +1424,7 @@ compute the value, the unknown elements of the list are @code{nil}.
 The argument @var{time}, if given, specifies a time value to
 analyze instead of the current time.  The optional argument @var{zone}
 defaults to the current time zone rule.
+The operating system limits the range of time and zone values.
 @end defun
 
 @node Time Conversion
@@ -1498,6 +1507,8 @@ Although @code{(time-convert nil nil)} is equivalent to
 This function converts a time value into calendrical information.  If
 you don't specify @var{time}, it decodes the current time, and similarly
 @var{zone} defaults to the current time zone rule.  @xref{Time Zone Rules}.
+The operating system limits the range of time and zone values.
+
 The @var{form} argument controls the form of the returned
 @var{seconds} element, as described below.
 The return value is a list of nine elements, as follows:
@@ -1631,6 +1642,7 @@ convention, @var{zone} defaults to the current time zone rule
 Year numbers less than 100 are not treated specially.  If you want them
 to stand for years above 1900, or years above 2000, you must alter them
 yourself before you call @code{encode-time}.
+The operating system limits the range of time values.
 
 The @code{encode-time} function acts as a rough inverse to
 @code{decode-time}.  For example, you can pass the output of
@@ -1643,11 +1655,6 @@ the latter to the former as follows:
 You can perform simple date arithmetic by using out-of-range values for
 @var{seconds}, @var{minutes}, @var{hour}, @var{day}, and @var{month};
 for example, day 0 means the day preceding the given month.
-
-The operating system puts limits on the range of possible time values;
-if the limits are exceeded while encoding the time, an error results.
-For instance, years before 1970 do not work on some systems;
-on others, years as early as 1901 do work.
 @end defun
 
 @node Time Parsing
@@ -1666,6 +1673,7 @@ corresponding Lisp timestamp.  The argument @var{string} should represent
 a date-time, and should be in one of the forms recognized by
 @code{parse-time-string} (see below).  This function assumes the GMT
 timezone if @var{string} lacks an explicit timezone information.
+The operating system limits the range of time values.
 @end defun
 
 @defun parse-time-string string
@@ -1847,10 +1855,12 @@ behavior, as future versions of Emacs may recognize new
 This function uses the C library function @code{strftime}
 (@pxref{Formatting Calendar Time,,, libc, The GNU C Library Reference
 Manual}) to do most of the work.  In order to communicate with that
-function, it first encodes its argument using the coding system
+function, it first converts @var{time} and @var{zone} to internal form;
+the operating system limits the range of time and zone values.
+This function also encodes @var{format-string} using the coding system
 specified by @code{locale-coding-system} (@pxref{Locales}); after
 @code{strftime} returns the resulting string,
-@code{format-time-string} decodes the string using that same coding
+this function decodes the string using that same coding
 system.
 @end defun
 
@@ -1990,10 +2000,12 @@ Here is how to add a number of seconds to a time value:
 @defun time-to-days time-value
 This function returns the number of days between the beginning of year
 1 and @var{time-value}.
+The operating system limits the range of time values.
 @end defun
 
 @defun time-to-day-in-year time-value
 This returns the day number within the year corresponding to @var{time-value}.
+The operating system limits the range of time values.
 @end defun
 
 @defun date-leap-year-p year
@@ -2002,7 +2014,7 @@ This function returns @code{t} if @var{year} is a leap year.
 
 @defun date-days-in-month year month
 Return the number of days in @var{month} in @var{year}.  For instance,
-there's 29 days in February 2004.
+February 2020 has 29 days.
 @end defun
 
 @defun date-ordinal-to-time year ordinal
