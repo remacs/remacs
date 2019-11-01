@@ -4806,10 +4806,9 @@ by calling `format-decode', which see.  */)
       unbind_to (count1, Qnil);
     }
 
-  if (!NILP (visit)
-      && current_buffer->modtime.tv_nsec == NONEXISTENT_MODTIME_NSECS)
+  if (!NILP (visit) && current_buffer->modtime.tv_nsec < 0)
     {
-      /* If visiting nonexistent file, return nil.  */
+      /* Signal an error if visiting a file that could not be opened.  */
       report_file_errno ("Opening input file", orig_filename, save_errno);
     }
 
