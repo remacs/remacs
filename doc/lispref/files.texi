@@ -2683,6 +2683,7 @@ the file, which in some cases may cause a security hole.
 Sometimes, it is necessary to create a temporary file on a remote host
 or a mounted directory.  The following two functions support this.
 
+@cindex temporary file on a remote host
 @defun make-nearby-temp-file prefix &optional dir-flag suffix
 This function is similar to @code{make-temp-file}, but it creates a
 temporary file as close as possible to @code{default-directory}.  If
