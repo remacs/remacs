@@ -3276,7 +3276,9 @@ With prefix argument, make it a temporary breakpoint."
   (interactive "P")
   ;; If the form hasn't been instrumented yet, do it now.
   (when (and (not edebug-active)
-	     (let ((data (get (edebug-form-data-symbol) 'edebug)))
+	     (let ((data (get (edebug--form-data-name
+                               (edebug-get-form-data-entry (point)))
+                              'edebug)))
 	       (or (null data) (markerp data))))
     (edebug-defun))
   (edebug-modify-breakpoint t nil arg))
