@@ -2833,7 +2833,11 @@ This sets the @code{:stipple} attribute of @var{face} to
 @end deffn
 
 @deffn Command set-face-font face font &optional frame
-This sets the @code{:font} attribute of @var{face} to @var{font}.
+Change the font-related attributes of @var{face} to those of
+@var{font} (a string).  This sets the attributes @code{:family},
+@code{:foundry}, @code{:width}, @code{:height}, @code{:weight}, and
+@code{:slant}.  If @var{frame} is non-@code{nil}, only change the
+attributes on the specified frame.
 @end deffn
 
 @defun set-face-bold face bold-p &optional frame
