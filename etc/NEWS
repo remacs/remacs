@@ -179,7 +179,7 @@ into the init file when Emacs was started.  This call can now safely
 be removed.  Alternatively, if you want to ensure that your init file
 is still compatible with earlier versions of Emacs, change it to:
 
-(when (version< emacs-version "27.1")
+(when (< emacs-major-version 27)
   (package-initialize))
 
 However, if your init file changes the values of 'package-load-list'
