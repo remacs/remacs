@@ -399,8 +399,6 @@ Should be run via minibuffer `post-command-hook'.
 See `icomplete-mode' and `minibuffer-setup-hook'."
   (when (and icomplete-mode
              (icomplete-simple-completing-p)) ;Shouldn't be necessary.
-    (redisplay)     ; FIXME: why is this sometimes needed when moving
-                    ; up dirs in a file-finding table?
     (save-excursion
       (goto-char (point-max))
                                         ; Insert the match-status information:
@@ -420,6 +418,11 @@ See `icomplete-mode' and `minibuffer-setup-hook'."
 		;; embarking on computing completions:
 		(sit-for icomplete-compute-delay)))
 	  (let* ((field-string (icomplete--field-string))
+                 ;; Not sure why, but such requests seem to come
+                 ;; every once in a while.  It's not fully
+                 ;; deterministic but `C-x C-f M-DEL M-DEL ...'
+                 ;; seems to trigger it fairly often!
+                 (while-no-input-ignore-events '(selection-request))
                  (text (while-no-input
                          (icomplete-completions
                           field-string
