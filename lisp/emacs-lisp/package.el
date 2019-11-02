@@ -1082,10 +1082,13 @@ boundaries."
   (let ((file-name (match-string-no-properties 1))
         (desc      (match-string-no-properties 2))
         (start     (line-beginning-position)))
-    ;; The terminating comment format could be extended to accept a
-    ;; generic string that is not in English.
+    ;; This warning was added in Emacs 27.1, and should be removed at
+    ;; the earliest in version 31.1.  The idea is to phase out the
+    ;; requirement for a "footer line" without unduly impacting users
+    ;; on earlier Emacs versions.  See Bug#26490 for more details.
     (unless (search-forward (concat ";;; " file-name ".el ends here"))
-      (error "Package lacks a terminating comment"))
+      (lwarn '(package package-format) :warning
+             "Package lacks a terminating comment"))
     ;; Try to include a trailing newline.
     (forward-line)
     (narrow-to-region start (point))

@@ -1075,6 +1075,20 @@ it can't find the config file.
 
 ** Package
 
+*** Warn if "footer line" is missing, but still install package.
+package.el used to refuse to install a package without the so-called
+"footer line", which appears at the very end of the file:
+
+;;; FILENAME ends here
+
+package.el will now install packages without this line, but it will
+issue a warning.  To avoid this warning, packages should keep the
+"footer line".
+
+Note that versions of Emacs older than 27.1 will not only refuse to
+install packages without such a line -- they will be unable to parse
+package data.  It is therefore recommended to keep this line.
+
 *** Change of 'package-check-signature' for packages with multiple sigs
 In previous Emacsen, 't' checked that all signatures are valid.
 Now 't' only checks that at least one signature is valid and the new 'all'
