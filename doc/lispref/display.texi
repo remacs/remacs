@@ -2248,10 +2248,9 @@ is equivalent to a Lisp symbol with the same name.}.  Named faces are
 defined using the @code{defface} macro (@pxref{Defining Faces}).
 Emacs comes with several standard named faces (@pxref{Basic Faces}).
 
-  Many parts of Emacs require named faces, but some do not accept
-anonymous faces (e.g., the functions documented in @ref{Attribute
-Functions}).  Unless otherwise stated, we will use the term @dfn{face}
-to refer only to named faces.
+  Some parts of Emacs require named faces (e.g., the functions
+documented in @ref{Attribute Functions}).  Unless otherwise stated, we
+will use the term @dfn{face} to refer only to named faces.
 
 @defun facep object
 This function returns a non-@code{nil} value if @var{object} is a
