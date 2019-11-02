@@ -2307,7 +2307,8 @@ This command replaces the minibuffer contents with the value of the
 
 @deffn Command next-history-element n
 This command replaces the minibuffer contents with the value of the
-@var{n}th more recent history element.
+@var{n}th more recent history element.  The position in the history
+can go beyond the current position and invoke ``future history.''
 @end deffn
 
 @deffn Command previous-matching-history-element pattern n
@@ -2338,7 +2339,9 @@ contents of the minibuffer before the point.
 This function puts element of the minibuffer history in the
 minibuffer.  The argument @var{nabs} specifies the absolute history
 position in descending order, where 0 means the current element and a
-positive number @var{n} means the @var{n}th previous element.
+positive number @var{n} means the @var{n}th previous element.  NABS
+being a negative number -@var{n} means the @var{n}th entry of ``future
+history.''
 @end deffn
 
 @node Minibuffer Windows

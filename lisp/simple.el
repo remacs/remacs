@@ -2130,7 +2130,8 @@ the end of the list of defaults just after the default value."
   "Puts element of the minibuffer history in the minibuffer.
 The argument NABS specifies the absolute history position in
 descending order, where 0 means the current element and a
-positive number N means the Nth previous element."
+positive number N means the Nth previous element.  NABS being a
+negative number -N means the Nth entry of ``future history.''"
   (interactive "p")
   (when (and (not minibuffer-default-add-done)
 	     (functionp minibuffer-default-add-function)
@@ -2187,7 +2188,9 @@ positive number N means the Nth previous element."
 
 (defun next-history-element (n)
   "Puts next element of the minibuffer history in the minibuffer.
-With argument N, it uses the Nth following element."
+With argument N, it uses the Nth following element.  The position
+in the history can go beyond the current position and invoke
+``future history.''"
   (interactive "p")
   (or (zerop n)
       (goto-history-element (- minibuffer-history-position n))))
