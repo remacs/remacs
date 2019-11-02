@@ -85,16 +85,23 @@ The following commands are available in the package menu:
 
 @table @kbd
 @item h
+@kindex h @r{(Package Menu)}
+@findex package-menu-quick-help
 Print a short message summarizing how to use the package menu
 (@code{package-menu-quick-help}).
 
 @item ?
 @itemx @key{RET}
+@kindex ? @r{(Package Menu)}
+@kindex RET @r{(Package Menu)}
+@findex package-menu-describe-package
 Display a help buffer for the package on the current line
 (@code{package-menu-describe-package}), similar to the help window
 displayed by the @kbd{C-h P} command (@pxref{Packages}).
 
 @item i
+@kindex i @r{(Package Menu)}
+@findex package-menu-mark-install
 Mark the package on the current line for installation
 (@code{package-menu-mark-install}).  If the package status is
 @samp{available}, this adds an @samp{I} character to the start of the
@@ -102,6 +109,8 @@ line; typing @kbd{x} (see below) will download and install the
 package.
 
 @item d
+@kindex d @r{(Package Menu)}
+@findex package-menu-mark-delete
 Mark the package on the current line for deletion
 (@code{package-menu-mark-delete}).  If the package status is
 @samp{installed}, this adds a @samp{D} character to the start of the
@@ -110,52 +119,73 @@ line; typing @kbd{x} (see below) will delete the package.
 entails.
 
 @item ~
+@kindex ~ @r{(Package Menu)}
+@findex package-menu-mark-obsolete-for-deletion
 Mark all obsolete packages for deletion
 (@code{package-menu-mark-obsolete-for-deletion}).  This marks for
 deletion all the packages whose status is @samp{obsolete}.
 
 @item u
 @itemx @key{DEL}
+@kindex u @r{(Package Menu)}
+@findex package-menu-mark-unmark
 Remove any installation or deletion mark previously added to the
-current line by an @kbd{i} or @kbd{d} command.
+current line by an @kbd{i} or @kbd{d} command
+(@code{package-menu-mark-unmark}).
 
 @item U
+@kindex U @r{(Package Menu)}
+@findex package-menu-mark-upgrades
 Mark all package with a newer available version for upgrading
 (@code{package-menu-mark-upgrades}).  This places an installation mark
 on the new available versions, and a deletion mark on the old
 installed versions.
 
 @item x
+@kindex x @r{(Package Menu)}
 @vindex package-menu-async
+@findex package-menu-execute
 Download and install all packages marked with @kbd{i}, and their
 dependencies; also, delete all packages marked with @kbd{d}
 (@code{package-menu-execute}).  This also removes the marks.
 
 @item r
+@kindex r @r{(Package Menu)}
+@findex package-menu-refresh
 Refresh the package list (@code{package-menu-refresh}).  This fetches
 the list of available packages from the package archive again, and
 recomputes the package list.
 
 @item / k
+@kindex / k @r{(Package Menu)}
+@findex package-menu-filter-by-keyword
 Filter the package list by keyword
 (@code{package-menu-filter-by-keyword}).  This prompts for a keyword
 (e.g., @samp{games}), then shows only the packages that relate to that
 keyword.
 
 @item / n
+@kindex / n @r{(Package Menu)}
+@findex package-menu-filter-by-name
 Filter the package list by name (@code{package-menu-filter-by-name}).
 This prompts for a string, then shows only the packages whose names
 match a regexp with that value.
 
 @item / /
+@kindex / / @r{(Package Menu)}
+@findex package-menu-clear-filter
 Clear filter currently applied to the package list
 (@code{package-menu-clear-filter}).
 
 @item H
+@kindex H @r{(Package Menu)}
+@findex package-menu-hide-package
 Permanently hide packages that match a regexp
 (@code{package-menu-hide-package}).
 
 @item (
+@kindex ( @r{(Package Menu)}
+@findex package-menu-toggle-hiding
 Toggle visibility of old versions of packages and also of versions
 from lower-priority archives (@code{package-menu-toggle-hiding}).
 @end table
