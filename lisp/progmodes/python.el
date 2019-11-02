@@ -2785,7 +2785,6 @@ variable.
   (set (make-local-variable 'comint-output-filter-functions)
        '(ansi-color-process-output
          python-shell-comint-watch-for-first-prompt-output-filter
-         python-pdbtrack-comint-output-filter-function
          python-comint-postoutput-scroll-to-bottom
          comint-watch-for-password-prompt))
   (set (make-local-variable 'compilation-error-regexp-alist)
@@ -2794,12 +2793,11 @@ variable.
             #'python-shell-completion-at-point nil 'local)
   (define-key inferior-python-mode-map "\t"
     'python-shell-completion-complete-or-indent)
-  (make-local-variable 'python-pdbtrack-buffers-to-kill)
-  (make-local-variable 'python-pdbtrack-tracked-buffer)
   (make-local-variable 'python-shell-internal-last-output)
   (when python-shell-font-lock-enable
     (python-shell-font-lock-turn-on))
-  (compilation-shell-minor-mode 1))
+  (compilation-shell-minor-mode 1)
+  (python-pdbtrack-setup-tracking))
 
 (defun python-shell-make-comint (cmd proc-name &optional show internal)
   "Create a Python shell comint buffer.
@@ -3728,18 +3726,71 @@ If not try to complete."
 ;;; PDB Track integration
 
 (defcustom python-pdbtrack-activate t
-  "Non-nil makes Python shell enable pdbtracking."
+  "Non-nil makes Python shell enable pdbtracking.
+Pdbtracking would open the file for current stack frame found in pdb output by
+`python-pdbtrack-stacktrace-info-regexp' and add overlay arrow in currently
+inspected line in that file.
+
+After command listed in `python-pdbtrack-continue-command' or
+`python-pdbtrack-exit-command' is sent to pdb, pdbtracking session is
+considered over.  Overlay arrow will be removed from currentry tracked
+buffer.  Additionally, if `python-pdbtrack-kill-buffers' is non-nil, all
+files opened by pdbtracking will be killed."
   :type 'boolean
   :group 'python
   :safe 'booleanp)
 
 (defcustom python-pdbtrack-stacktrace-info-regexp
-  "> \\([^\"(<]+\\)(\\([0-9]+\\))\\([?a-zA-Z0-9_<>]+\\)()"
+  "> \\([^\"(]+\\)(\\([0-9]+\\))\\([?a-zA-Z0-9_<>]+\\)()"
   "Regular expression matching stacktrace information.
-Used to extract the current line and module being inspected."
+Used to extract the current line and module being inspected.
+
+Must match lines with real filename, like
+ > /path/to/file.py(42)<module>()->None
+and lines in which filename starts with '<', e.g.
+ > <stdin>(1)<module>()->None
+
+In the first case /path/to/file.py file will be visited and overlay icon
+will be placed in line 42.
+In the second case pdbtracking session will be considered over because
+the top stack frame has been reached.
+
+Filename is expected in the first parenthesized expression.
+Line number is expected in the second parenthesized expression."
   :type 'string
-  :group 'python
+  :version "27.1"
   :safe 'stringp)
+
+(defcustom python-pdbtrack-continue-command '("c" "cont" "continue")
+  "Pdb 'continue' command aliases.
+After one of this commands is sent to pdb, pdbtracking session is
+considered over.
+
+This command is remembered by pdbtracking.  If next command sent to pdb
+is empty string, it considered 'continue' command if previous command
+was 'continue'.  This behavior slightly differentiate 'continue' command
+from 'exit' commands listed in `python-pdbtrack-exit-command'.
+
+See `python-pdbtrack-activate' for pdbtracking session overview."
+  :type 'list
+  :version "27.1")
+
+(defcustom python-pdbtrack-exit-command '("q" "quit" "exit")
+  "Pdb 'exit' command aliases.
+After one of this commands is sent to pdb, pdbtracking session is
+considered over.
+
+See `python-pdbtrack-activate' for pdbtracking session overview."
+  :type 'list
+  :version "27.1")
+
+(defcustom python-pdbtrack-kill-buffers t
+  "If non-nil, kill buffers when pdbtracking session is over.
+Only buffers opened by pdbtracking will be killed.
+
+See `python-pdbtrack-activate' for pdbtracking session overview."
+  :type 'boolean
+  :version "27.1")
 
 (defvar python-pdbtrack-tracked-buffer nil
   "Variable containing the value of the current tracked buffer.
@@ -3749,6 +3800,9 @@ Never set this variable directly, use
 (defvar python-pdbtrack-buffers-to-kill nil
   "List of buffers to be deleted after tracking finishes.")
 
+(defvar python-pdbtrack-prev-command-continue nil
+  "Is t if previous pdb command was 'continue'.")
+
 (defun python-pdbtrack-set-tracked-buffer (file-name)
   "Set the buffer for FILE-NAME as the tracked buffer.
 Internally it uses the `python-pdbtrack-tracked-buffer' variable.
@@ -3756,8 +3810,7 @@ Returns the tracked buffer."
   (let* ((file-name-prospect (concat (file-remote-p default-directory)
                               file-name))
          (file-buffer (get-file-buffer file-name-prospect)))
-    (if file-buffer
-        (setq python-pdbtrack-tracked-buffer file-buffer)
+    (unless file-buffer
       (cond
        ((file-exists-p file-name-prospect)
         (setq file-buffer (find-file-noselect file-name-prospect)))
@@ -3765,9 +3818,54 @@ Returns the tracked buffer."
              (file-exists-p file-name))
         ;; Fallback to a locally available copy of the file.
         (setq file-buffer (find-file-noselect file-name-prospect))))
-      (when (not (member file-buffer python-pdbtrack-buffers-to-kill))
+      (when (and python-pdbtrack-kill-buffers
+                 (not (member file-buffer python-pdbtrack-buffers-to-kill)))
         (add-to-list 'python-pdbtrack-buffers-to-kill file-buffer)))
+    (setq python-pdbtrack-tracked-buffer file-buffer)
     file-buffer))
+
+(defun python-pdbtrack-unset-tracked-buffer ()
+  "Untrack currently tracked buffer."
+  (when python-pdbtrack-tracked-buffer
+    (with-current-buffer python-pdbtrack-tracked-buffer
+      (set-marker overlay-arrow-position nil))
+    (setq python-pdbtrack-tracked-buffer nil)))
+
+(defun python-pdbtrack-tracking-finish ()
+  "Finish tracking."
+  (python-pdbtrack-unset-tracked-buffer)
+  (when python-pdbtrack-kill-buffers
+      (mapc #'(lambda (buffer)
+                (ignore-errors (kill-buffer buffer)))
+            python-pdbtrack-buffers-to-kill))
+  (setq python-pdbtrack-buffers-to-kill nil))
+
+(defun python-pdbtrack-process-sentinel (process _event)
+  "Untrack buffers when PROCESS is killed."
+  (unless (process-live-p process)
+    (let ((buffer (process-buffer process)))
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer
+          (python-pdbtrack-tracking-finish))))))
+
+(defun python-pdbtrack-comint-input-filter-function (input)
+  "Finish tracking session depending on command in INPUT.
+Commands that must finish tracking session is listed in
+`python-pdbtrack-untracking-commands'."
+  (when (and python-pdbtrack-tracked-buffer
+             ;; Empty input is sent by C-d or `comint-send-eof'
+             (or (string-empty-p input)
+                 ;; "n some text" is "n" command for pdb. Split input and get firs part
+                 (let* ((command (car (split-string (string-trim input) " "))))
+                   (setq python-pdbtrack-prev-command-continue
+                         (or (member command python-pdbtrack-continue-command)
+                             ;; if command is empty and previous command was 'continue'
+                             ;; then current command is 'continue' too.
+                             (and (string-empty-p command)
+                                  python-pdbtrack-prev-command-continue)))
+                   (or python-pdbtrack-prev-command-continue
+                       (member command python-pdbtrack-exit-command)))))
+    (python-pdbtrack-tracking-finish)))
 
 (defun python-pdbtrack-comint-output-filter-function (output)
   "Move overlay arrow to current pdb line in tracked buffer.
@@ -3788,19 +3886,27 @@ Argument OUTPUT is a string with the output from the comint process."
               ;; the _last_ stack frame printed in the most recent
               ;; batch of output, then jump to the corresponding
               ;; file/line number.
+              ;; Parse output only if at pdb prompt to avoid double code
+              ;; run in situation when output and pdb prompt received in
+              ;; different hunks
               (goto-char (point-max))
-              (when (re-search-backward python-pdbtrack-stacktrace-info-regexp nil t)
+              (goto-char (line-beginning-position))
+              (when (and (looking-at python-shell-prompt-pdb-regexp)
+                         (re-search-backward python-pdbtrack-stacktrace-info-regexp nil t))
                 (setq line-number (string-to-number
                                    (match-string-no-properties 2)))
                 (match-string-no-properties 1)))))
-      (if (and file-name line-number)
-          (let* ((tracked-buffer
-                  (python-pdbtrack-set-tracked-buffer file-name))
+      (when (and file-name line-number)
+        (if (string-prefix-p "<" file-name)
+            ;; Finish tracking session if stacktrace info is like
+            ;; "> <stdin>(1)<module>()->None"
+            (python-pdbtrack-tracking-finish)
+          (python-pdbtrack-unset-tracked-buffer)
+          (let* ((tracked-buffer (python-pdbtrack-set-tracked-buffer file-name))
                  (shell-buffer (current-buffer))
                  (tracked-buffer-window (get-buffer-window tracked-buffer))
                  (tracked-buffer-line-pos))
             (with-current-buffer tracked-buffer
-              (set (make-local-variable 'overlay-arrow-string) "=>")
               (set (make-local-variable 'overlay-arrow-position) (make-marker))
               (setq tracked-buffer-line-pos (progn
                                               (goto-char (point-min))
@@ -3811,16 +3917,20 @@ Argument OUTPUT is a string with the output from the comint process."
                  tracked-buffer-window tracked-buffer-line-pos))
               (set-marker overlay-arrow-position tracked-buffer-line-pos))
             (pop-to-buffer tracked-buffer)
-            (switch-to-buffer-other-window shell-buffer))
-        (when python-pdbtrack-tracked-buffer
-          (with-current-buffer python-pdbtrack-tracked-buffer
-            (set-marker overlay-arrow-position nil))
-          (mapc #'(lambda (buffer)
-                    (ignore-errors (kill-buffer buffer)))
-                python-pdbtrack-buffers-to-kill)
-          (setq python-pdbtrack-tracked-buffer nil
-                python-pdbtrack-buffers-to-kill nil)))))
+            (switch-to-buffer-other-window shell-buffer))))))
   output)
+
+(defun python-pdbtrack-setup-tracking ()
+  "Setup pdb tracking in current buffer."
+  (make-local-variable 'python-pdbtrack-buffers-to-kill)
+  (make-local-variable 'python-pdbtrack-tracked-buffer)
+  (add-to-list (make-local-variable 'comint-input-filter-functions)
+               #'python-pdbtrack-comint-input-filter-function)
+  (add-to-list (make-local-variable 'comint-output-filter-functions)
+               #'python-pdbtrack-comint-output-filter-function)
+  (add-function :before (process-sentinel (get-buffer-process (current-buffer)))
+                #'python-pdbtrack-process-sentinel)
+  (add-hook 'kill-buffer-hook #'python-pdbtrack-tracking-finish nil t))
 
 
 ;;; Symbol completion

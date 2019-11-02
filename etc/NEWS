@@ -1445,6 +1445,11 @@ unescaping text.
 The maximum level is used by default; customize
 'font-lock-maximum-decoration' to tone down the decoration.
 
+---
+*** New user option 'python-pdbtrack-kill-buffers'.
+If nil, buffers opened during pdbtracking session are not killed when
+pdbtracking session is finished.
+
 ** Help
 
 ---
