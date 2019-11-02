@@ -77,6 +77,17 @@
   :version "27.1"
   :group 'tab-line-faces)
 
+(defface tab-line-tab-selected
+  '((default
+      :inherit tab-line-tab)
+    (((class color) (min-colors 88))
+     :background "grey85")
+    (t
+     :inverse-video t))
+  "Tab line face for tab in the selected window."
+  :version "27.1"
+  :group 'tab-line-faces)
+
 (defface tab-line-highlight
   '((default :inherit tab-line-tab))
   "Tab line face for highlighting."
@@ -335,7 +346,9 @@ variable `tab-line-tabs-function'."
                      `(
                        tab ,tab
                        face ,(if (eq tab selected-buffer)
-                                 'tab-line-tab
+                                 (if (eq (selected-window) (old-selected-window))
+                                     'tab-line-tab-selected
+                                   'tab-line-tab)
                                'tab-line-tab-inactive)
                        mouse-face tab-line-highlight))))
            tabs)))
@@ -517,10 +530,10 @@ from the tab line."
 (global-set-key [tab-line wheel-up]   'tab-line-hscroll-left)
 (global-set-key [tab-line wheel-down] 'tab-line-hscroll-right)
 
-(global-set-key [tab-line C-mouse-4]    'tab-line-switch-to-prev-tab)
-(global-set-key [tab-line C-mouse-5]    'tab-line-switch-to-next-tab)
-(global-set-key [tab-line C-wheel-up]   'tab-line-switch-to-prev-tab)
-(global-set-key [tab-line C-wheel-down] 'tab-line-switch-to-next-tab)
+(global-set-key [tab-line S-mouse-4]    'tab-line-switch-to-prev-tab)
+(global-set-key [tab-line S-mouse-5]    'tab-line-switch-to-next-tab)
+(global-set-key [tab-line S-wheel-up]   'tab-line-switch-to-prev-tab)
+(global-set-key [tab-line S-wheel-down] 'tab-line-switch-to-next-tab)
 
 
 (provide 'tab-line)
