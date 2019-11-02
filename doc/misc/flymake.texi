@@ -337,6 +337,11 @@ error.  If the overlay property @code{priority} is not specified in
 it and help sort overlapping overlays.
 
 @item
+@vindex flymake-type-name
+@code{flymake-type-name} is a string used to succinctly name the error
+type, in case the name of the symbol associated with it is very long.
+
+@item
 @vindex flymake-category
 @code{flymake-category} is a symbol whose property list is considered
 the default for missing values of any other properties.

@@ -553,16 +553,19 @@ Node `(Flymake)Flymake error types'"
 (put 'flymake-error 'flymake-bitmap 'flymake-error-bitmap)
 (put 'flymake-error 'severity (warning-numeric-level :error))
 (put 'flymake-error 'mode-line-face 'compilation-error)
+(put 'flymake-error 'flymake-type-name "error")
 
 (put 'flymake-warning 'face 'flymake-warning)
 (put 'flymake-warning 'flymake-bitmap 'flymake-warning-bitmap)
 (put 'flymake-warning 'severity (warning-numeric-level :warning))
 (put 'flymake-warning 'mode-line-face 'compilation-warning)
+(put 'flymake-warning 'flymake-type-name "warning")
 
 (put 'flymake-note 'face 'flymake-note)
 (put 'flymake-note 'flymake-bitmap 'flymake-note-bitmap)
 (put 'flymake-note 'severity (warning-numeric-level :debug))
 (put 'flymake-note 'mode-line-face 'compilation-info)
+(put 'flymake-note 'flymake-type-name "note")
 
 (defun flymake--lookup-type-property (type prop &optional default)
   "Look up PROP for diagnostic TYPE.
@@ -1336,7 +1339,9 @@ POS can be a buffer position or a button"
                                     'severity (warning-numeric-level :error)))
                    `[,(format "%s" line)
                      ,(format "%s" col)
-                     ,(propertize (format "%s" type)
+                     ,(propertize (format "%s"
+                                          (flymake--lookup-type-property
+                                           type 'flymake-type-name type))
                                   'face (flymake--lookup-type-property
                                          type 'mode-line-face 'flymake-error))
                      (,(format "%s" (flymake--diag-text diag))
