@@ -1133,6 +1133,15 @@ file.  (If the function returns @code{nil}, you have no fonts
 installed that can display characters from the scripts which need this
 facility.)
 
+@vindex w32-use-w32-font-dialog
+@vindex w32-fixed-font-alist
+The variable @code{w32-use-w32-font-dialog} controls the way fonts can
+be selected via @kbd{S-mouse-1} (@code{mouse-appearance-menu}).  If
+the value is @code{t}, the default, Emacs uses the standard Windows
+font selection dialog.  If the value is @code{nil}, Emacs instead pops
+a menu of a fixed set of fonts.  The fonts to appear in the menu are
+determined by @code{w32-fixed-font-alist}.
+
 @node Windows Misc
 @section Miscellaneous Windows-specific features
 
