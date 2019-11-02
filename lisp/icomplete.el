@@ -443,11 +443,7 @@ See `icomplete-mode' and `minibuffer-setup-hook'."
                   ;; Don't delay if the completions are known.
                   completion-all-sorted-completions
                   ;; Don't delay if alternatives number is small enough:
-             ;; Not sure why, but such requests seem to come
-               ;; every once in a while.  It's not fully
-               ;; deterministic but `C-x C-f M-DEL M-DEL ...'
-               ;; seems to trigger it fairly often!
-               (while-no-input-ignore-events '(selection-request))     (and (sequencep (icomplete--completion-table))
+                  (and (sequencep (icomplete--completion-table))
                        (< (length (icomplete--completion-table))
                           icomplete-delay-completions-threshold))
                   ;; Delay - give some grace time for next keystroke, before
