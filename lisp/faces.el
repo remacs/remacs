@@ -887,10 +887,13 @@ Use `set-face-attribute' for finer control of font weight and slant."
 
 
 (defun set-face-font (face font &optional frame)
-  "Change font-related attributes of FACE to those of FONT (a string).
-The format of the font varies based on the font system in used,
-but it can commonly be an X logical font description (XLFD)
-string, or a simpler XFD string like \"courier:size=10\".
+  "Change font-related attributes of FACE to those of FONT.
+FONT can be a string, a font spec, a font entity, a font object,
+or a fontset.  However, interactively, only strings are accepted.
+The format of the font string specification varies based on the font
+system in use, but it can commonly be an X Logical Font
+Description (XLFD) string, or a simpler string like \"Courier-10\"
+or \"courier:size=10\".
 
 FRAME nil or not specified means change face on all frames.
 This sets the attributes `:family', `:foundry', `:width',

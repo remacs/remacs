@@ -592,9 +592,9 @@ command can be helpful.  It describes the character at point, and
 names the font that it's rendered in.
 
 @cindex fontconfig
-  On X, there are four different ways to express a font name.  The
-first is to use a @dfn{Fontconfig pattern}.  Fontconfig patterns have
-the following form:
+  There are four different ways to express a font name.  The first is
+to use a @dfn{Fontconfig pattern}.  Fontconfig patterns have the
+following form:
 
 @example
 @var{fontname}[-@var{fontsize}][:@var{name1}=@var{values1}][:@var{name2}=@var{values2}]...
@@ -650,6 +650,10 @@ For a more detailed description of Fontconfig patterns, see the
 Fontconfig manual, which is distributed with Fontconfig and available
 online at @url{https://fontconfig.org/fontconfig-user.html}.
 
+On MS-Windows, only the subset of the form
+@var{fontname}[-@var{fontsize}] is supported for all fonts; the full
+Fontconfig pattern might not work for all of them.
+
 @cindex GTK font pattern
   The second way to specify a font is to use a @dfn{GTK font pattern}.
 These have the syntax
@@ -685,12 +689,15 @@ Monospace 12
 Monospace Bold Italic 12
 @end example
 
+On MS-Windows, only the subset @var{fontname} is supported.
+
 @cindex XLFD
 @cindex X Logical Font Description
   The third way to specify a font is to use an @dfn{XLFD} (@dfn{X
 Logical Font Description}).  This is the traditional method for
-specifying fonts under X@.  Each XLFD consists of fourteen words or
-numbers, separated by dashes, like this:
+specifying fonts under X, and is also supported on MS-Windows.  Each
+XLFD consists of fourteen words or numbers, separated by dashes, like
+this:
 
 @example
 -misc-fixed-medium-r-semicondensed--13-*-*-*-c-60-iso8859-1
@@ -773,6 +780,8 @@ equivalent to
 @example
 -misc-fixed-medium-r-semicondensed--13-*-*-*-c-60-iso8859-1
 @end example
+
+This form is not supported on MS-Windows.
 
 @cindex client-side fonts
 @cindex server-side fonts

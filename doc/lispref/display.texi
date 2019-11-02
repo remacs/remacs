@@ -2466,16 +2466,18 @@ or a fontset.  @xref{Low-Level Font}, for information about font
 objects, font specs, and font entities.  @xref{Fontsets}, for
 information about fontsets.
 
-When specifying this attribute using @code{set-face-attribute}
-(@pxref{Attribute Functions}), you may also supply a font spec, a font
-entity, or a string.  Emacs converts such values to an appropriate
-font object, and stores that font object as the actual attribute
-value.  If you specify a string, the contents of the string should be
-a font name (@pxref{Fonts,,, emacs, The GNU Emacs Manual}); if the
-font name is an XLFD containing wildcards, Emacs chooses the first
-font matching those wildcards.  Specifying this attribute also changes
-the values of the @code{:family}, @code{:foundry}, @code{:width},
-@code{:height}, @code{:weight}, and @code{:slant} attributes.
+@anchor{face-font-attribute}
+When specifying this attribute using @code{set-face-attribute} or
+@code{set-face-font} (@pxref{Attribute Functions}), you may also
+supply a font spec, a font entity, or a string.  Emacs converts such
+values to an appropriate font object, and stores that font object as
+the actual attribute value.  If you specify a string, the contents of
+the string should be a font name (@pxref{Fonts,,, emacs, The GNU Emacs
+Manual}); if the font name is an XLFD containing wildcards, Emacs
+chooses the first font matching those wildcards.  Specifying this
+attribute also changes the values of the @code{:family},
+@code{:foundry}, @code{:width}, @code{:height}, @code{:weight}, and
+@code{:slant} attributes.
 
 @cindex inheritance, for faces
 @item :inherit
@@ -2834,10 +2836,13 @@ This sets the @code{:stipple} attribute of @var{face} to
 
 @deffn Command set-face-font face font &optional frame
 Change the font-related attributes of @var{face} to those of
-@var{font} (a string).  This sets the attributes @code{:family},
-@code{:foundry}, @code{:width}, @code{:height}, @code{:weight}, and
-@code{:slant}.  If @var{frame} is non-@code{nil}, only change the
-attributes on the specified frame.
+@var{font} (a string or a font object).  @xref{face-font-attribute},
+for the supported formats of the @var{font} argument.  This function
+sets the attribute @code{:font} of the face, and indirectly also the
+@code{:family}, @code{:foundry}, @code{:width}, @code{:height},
+@code{:weight}, and @code{:slant} attributes, as defined by the font.
+If @var{frame} is non-@code{nil}, only change the attributes on the
+specified frame.
 @end deffn
 
 @defun set-face-bold face bold-p &optional frame
