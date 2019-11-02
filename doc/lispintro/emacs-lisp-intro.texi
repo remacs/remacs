@@ -63,10 +63,6 @@
 \global\hbadness=6666 % don't worry about not-too-underfull boxes
 @end tex
 
-@c These refer to the printed book sold by the FSF.
-@set edition-number 3.10
-@set update-date 28 October 2009
-
 @c For next or subsequent edition:
 @c   create function using with-output-to-temp-buffer
 @c   create a major mode, with keymaps
@@ -106,9 +102,6 @@
 This is @cite{An Introduction to Programming in Emacs Lisp}, for
 people who are not programmers.
 @sp 1
-@iftex
-Edition @value{edition-number}, @value{update-date}
-@end iftex
 @ifnottex
 Distributed with Emacs version @value{EMACSVER}.
 @end ifnottex

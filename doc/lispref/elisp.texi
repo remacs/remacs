@@ -52,12 +52,7 @@
 @end ifset
 @end tex
 
-
-@c Version of the manual and of Emacs.
-@c (See comments for EDITION in emacs.texi)
-@set VERSION  3.1
 @include emacsver.texi
-@set DATE October 2014
 
 @c in general, keep the following line commented out, unless doing a
 @c copy of this manual that will be published.  The manual should go
@@ -91,12 +86,7 @@
 @c @syncodeindex tp fn
 
 @copying
-@iftex
-This is edition @value{VERSION} of the @cite{GNU Emacs Lisp Reference Manual},@*
-@end iftex
-@ifnottex
-This is the @cite{GNU Emacs Lisp Reference Manual}
-@end ifnottex
+This is the @cite{GNU Emacs Lisp Reference Manual},
 corresponding to Emacs version @value{EMACSVER}.
 
 Copyright @copyright{} 1990--1996, 1998--2019 Free Software Foundation, Inc.
@@ -127,7 +117,6 @@ developing GNU and promoting software freedom.''
 @subtitle @value{voltitle}
 @end ifset
 @subtitle For Emacs Version @value{EMACSVER}
-@subtitle Revision @value{VERSION}, @value{DATE}
 
 @author by Bil Lewis, Dan LaLiberte, Richard Stallman,
 @author the GNU Manual Group, et al.
