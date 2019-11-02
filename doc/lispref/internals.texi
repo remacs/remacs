@@ -1475,6 +1475,42 @@ the widest integral data type supported by the C compiler, typically
 @code{overflow-error}.
 @end deftypefn
 
+@deftypefn Function bool extract_big_integer (emacs_env *@var{env}, emacs_value @var{arg}, int *@var{sign}, ptrdiff_t *@var{count}, emacs_limb_t *@var{magnitude})
+This function, which is available since Emacs 27, extracts the
+integral value of @var{arg}.  The value of @var{arg} must be an
+integer (fixnum or bignum).  If @var{sign} is not @code{NULL}, it
+stores the sign of @var{arg} (-1, 0, or +1) into @code{*sign}.  The
+magnitude is stored into @var{magnitude} as follows.  If @var{count}
+and @var{magnitude} are bot non-@code{NULL}, then @var{magnitude} must
+point to an array of at least @code{*count} @code{unsigned long}
+elements.  If @var{magnitude} is large enough to hold the magnitude of
+@var{arg}, then this function writes the magnitude into the
+@var{magnitude} array in little-endian form, stores the number of
+array elements written into @code{*count}, and returns @code{true}.
+If @var{magnitude} is not large enough, it stores the required array
+size into @code{*count}, signals an error, and returns @code{false}.
+If @var{count} is not @code{NULL} and @var{magnitude} is @code{NULL},
+then the function stores the required array size into @code{*count}
+and returns @code{true}.
+
+Emacs guarantees that the maximum required value of @code{*count}
+never exceeds @code{min (PTRDIFF_MAX, SIZE_MAX) / sizeof
+(emacs_limb_t)}.  This implies that you can use e.g. @code{malloc
+((size_t) (*count * sizeof (emacs_limb_t)))} to allocate the
+@code{magnitude} array without integer overflow.
+@end deftypefn
+
+@deftp {Type alias} emacs_limb_t
+This type is an alias to an otherwise unspecified unsigned integral
+type.  It is used as element type for the magnitude arrays for the big
+integer conversion functions.
+@end deftp
+
+@defvr Macro EMACS_LIMB_MAX
+This macro expands to an integer literal specifying the maximum
+possible value for an @code{emacs_limb_t} object.
+@end defvr
+
 @deftypefn Function double extract_float (emacs_env *@var{env}, emacs_value @var{arg})
 This function returns the value of a Lisp float specified by
 @var{arg}, as a C @code{double} value.
@@ -1572,6 +1608,128 @@ limits set by @code{most-negative-fixnum} and
 @code{most-positive-fixnum} (@pxref{Integer Basics}).
 @end deftypefn
 
+@deftypefn Function emacs_value make_big_integer (emacs_env *@var{env}, int sign, ptrdiff_t count, const emacs_limb_t *magnitude)
+This function, which is available since Emacs 27, takes an
+arbitrary-sized integer argument and returns a corresponding
+@code{emacs_value} object.  The @var{sign} argument gives the sign of
+the return value.  If @var{sign} is nonzero, then @var{magnitude} must
+point to an array of at least @var{count} elements specifying the
+little-endian magnitude of the return value.
+@end deftypefn
+
+The following example uses the GNU Multiprecision Library (GMP) to
+calculate the next probable prime after a given integer.
+@xref{Top,,,gmp} for a general overview of GMP, and @pxref{Integer
+Import and Export,,,gmp} for how to convert the @code{magnitude} array
+to and from GMP @code{mpz_t} values.
+
+@example
+#include <assert.h>
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <gmp.h>
+
+#include <emacs-module.h>
+
+static void
+memory_full (emacs_env *env)
+@{
+  const char *message = "Memory exhausted";
+  emacs_value data = env->make_string (env, message, strlen (message));
+  env->non_local_exit_signal (env, env->intern (env, "error"),
+                              env->funcall (env, env->intern (env, "list"), 1,
+                                            &data));
+@}
+
+enum
+@{
+  max_count = ((SIZE_MAX < PTRDIFF_MAX ? SIZE_MAX : PTRDIFF_MAX)
+               / sizeof (emacs_limb_t))
+@};
+
+static bool
+extract_big_integer (emacs_env *env, emacs_value arg, mpz_t result)
+@{
+  int sign;
+  ptrdiff_t count;
+  bool success = env->extract_big_integer (env, arg, &sign, &count, NULL);
+  if (!success)
+    return false;
+  if (sign == 0)
+    @{
+      mpz_set_ui (result, 0);
+      return true;
+    @}
+  enum @{ order = -1, size = sizeof (emacs_limb_t), endian = 0, nails = 0 @};
+  assert (0 < count && count <= max_count);
+  emacs_limb_t *magnitude = malloc ((size_t) (count * size));
+  if (magnitude == NULL)
+    @{
+      memory_full (env);
+      return false;
+    @}
+  success = env->extract_big_integer (env, arg, NULL, &count, magnitude);
+  assert (success);
+  mpz_import (result, count, order, size, endian, nails, magnitude);
+  free (magnitude);
+  if (sign < 0)
+    mpz_neg (result, result);
+  return true;
+@}
+
+static emacs_value
+make_big_integer (emacs_env *env, const mpz_t value)
+@{
+  if (mpz_sgn (value) == 0)
+    return env->make_integer (env, 0);
+  enum
+  @{
+    order = -1,
+    size = sizeof (emacs_limb_t),
+    endian = 0,
+    nails = 0,
+    numb = 8 * size - nails
+  @};
+  size_t count = (mpz_sizeinbase (value, 2) + numb - 1) / numb;
+  if (max_count < count)
+    @{
+      memory_full (env);
+      return NULL;
+    @}
+  emacs_limb_t *magnitude = malloc (count * size);
+  if (magnitude == NULL)
+    @{
+      memory_full (env);
+      return NULL;
+    @}
+  size_t written;
+  mpz_export (magnitude, &written, order, size, endian, nails, value);
+  assert (written == count);
+  assert (count <= PTRDIFF_MAX);
+  emacs_value result = env->make_big_integer (env, mpz_sgn (value),
+                                              (ptrdiff_t) count, magnitude);
+  free (magnitude);
+  return result;
+@}
+
+static emacs_value
+next_prime (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
+            void *data)
+@{
+  assert (nargs == 1);
+  emacs_mpz p;
+  mpz_init (p);
+  extract_big_integer (env, args[0], p);
+  mpz_nextprime (p, p);
+  emacs_value result = make_big_integer (env, p);
+  mpz_clear (p);
+  return result;
+@}
+@end example
+
 @deftypefn Function emacs_value make_float (emacs_env *@var{env}, double @var{d})
 This function takes a @code{double} argument @var{d} and returns the
 corresponding Emacs floating-point value.
@@ -1600,66 +1758,6 @@ function raises the @code{overflow-error} error condition if
 @var{strlen} is negative or exceeds the maximum length of an Emacs
 string.
 @end deftypefn
-
-If you define the preprocessor macro @code{EMACS_MODULE_GMP} before
-including the header @file{emacs-module.h}, you can also convert
-between Emacs integers and GMP @code{mpz_t} values.  @xref{GMP
-Basics,,,gmp}.  If @code{EMACS_MODULE_GMP} is defined,
-@file{emacs-module.h} wraps @code{mpz_t} in the following structure:
-
-@deftp struct emacs_mpz value
-struct emacs_mpz @{ mpz_t value; @};
-@end deftp
-
-@noindent
-Then you can use the following additional functions:
-
-@deftypefn Function bool extract_big_integer (emacs_env *@var{env}, emacs_value @var{arg}, struct emacs_mpz *@var{result})
-This function, which is available since Emacs 27, extracts the
-integral value of @var{arg} into @var{result}.  @var{result} must not
-be @code{NULL}.  @code{@var{result}->value} must be an initialized
-@code{mpz_t} object.  @xref{Initializing Integers,,,gmp}.  If
-@var{arg} is an integer, Emacs will store its value into
-@code{@var{result}->value}.  After you have finished using
-@code{@var{result}->value}, you should free it using @code{mpz_clear}
-or similar.
-@end deftypefn
-
-@deftypefn Function emacs_value make_big_integer (emacs_env *@var{env}, const struct emacs_mpz *@var{value})
-This function, which is available since Emacs 27, takes an
-arbitrary-sized integer argument and returns a corresponding
-@code{emacs_value} object.  @var{value} must not be @code{NULL}.
-@code{@var{value}->value} must be an initialized @code{mpz_t} object.
-@xref{Initializing Integers,,,gmp}.  Emacs will return a corresponding
-integral object.  After you have finished using
-@code{@var{value}->value}, you should free it using @code{mpz_clear}
-or similar.
-@end deftypefn
-
-The following example uses GMP to calculate the next probable prime
-after a given integer:
-
-@example
-#include <assert.h>
-#include <gmp.h>
-
-#define EMACS_MODULE_GMP
-#include <emacs-module.h>
-
-static emacs_value
-next_prime (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
-            void *data)
-@{
-  assert (nargs == 1);
-  emacs_mpz p;
-  mpz_init (p.value);
-  env->extract_big_integer (env, args[0], &p);
-  mpz_nextprime (p.value, p.value);
-  emacs_value result = env->make_big_integer (env, &p);
-  mpz_clear (p.value);
-  return result;
-@}
-@end example
 
 The @acronym{API} does not provide functions to manipulate Lisp data
 structures, for example, create lists with @code{cons} and @code{list}

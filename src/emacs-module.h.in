@@ -20,16 +20,13 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifndef EMACS_MODULE_H
 #define EMACS_MODULE_H
 
+#include <limits.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <time.h>
 
 #ifndef __cplusplus
 #include <stdbool.h>
-#endif
-
-#if defined EMACS_MODULE_GMP && !defined EMACS_MODULE_HAVE_MPZ_T
-#include <gmp.h>
 #endif
 
 #define EMACS_MAJOR_VERSION @emacs_major_version@
@@ -100,10 +97,21 @@ enum emacs_process_input_result
   emacs_process_input_quit = 1
 };
 
-#ifdef EMACS_MODULE_GMP
-struct emacs_mpz { mpz_t value; };
+/*
+Implementation note: We define emacs_limb_t so that it is likely to
+match the GMP mp_limb_t type.  If the types match, GMP can use an
+optimization for mpz_import and mpz_export that boils down to a
+memcpy.  According to https://gmplib.org/manual/ABI-and-ISA.html GMP
+will prefer a 64-bit limb and will default to unsigned long if that is
+wide enough.  Note that this is an internal micro-optimization.  Users
+shouldn't rely on the exact size of emacs_limb_t.
+*/
+#if ULONG_MAX == 0xFFFFFFFF
+typedef unsigned long long emacs_limb_t;
+# define EMACS_LIMB_MAX ULLONG_MAX
 #else
-struct emacs_mpz;  /* no definition */
+typedef unsigned long emacs_limb_t;
+# define EMACS_LIMB_MAX ULONG_MAX
 #endif
 
 struct emacs_env_25

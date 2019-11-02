@@ -70,12 +70,6 @@ To add a new module function, proceed as follows:
 
 #include <config.h>
 
-#ifndef HAVE_GMP
-#include "mini-gmp.h"
-#define EMACS_MODULE_HAVE_MPZ_T
-#endif
-
-#define EMACS_MODULE_GMP
 #include "emacs-module.h"
 
 #include <stdarg.h>
@@ -772,21 +766,143 @@ module_make_time (emacs_env *env, struct timespec time)
   return lisp_to_value (env, timespec_to_lisp (time));
 }
 
-static void
-module_extract_big_integer (emacs_env *env, emacs_value value,
-                            struct emacs_mpz *result)
+/*
+Big integer support.
+
+There are two possible ways to support big integers in the module API
+that have been discussed:
+
+1. Exposing GMP numbers (mpz_t) directly in the API.
+
+2. Isolating the API from GMP by converting to/from a custom
+   sign-magnitude representation.
+
+Approach (1) has the advantage of being faster (no import/export
+required) and requiring less code in Emacs and in modules that would
+use GMP anyway.  However, (1) also couples big integer support
+directly to the current implementation in Emacs (GMP).  Also (1)
+requires each module author to ensure that their module is linked to
+the same GMP library as Emacs itself; in particular, module authors
+can't link GMP statically.  (1) also requires conditional compilation
+and workarounds to ensure the module interface still works if GMP
+isn't available while including emacs-module.h.  It also means that
+modules written in languages such as Go and Java that support big
+integers without GMP now have to carry an otherwise unnecessary GMP
+dependency.  Approach (2), on the other hand, neatly decouples the
+module interface from the GMP-based implementation.  It's not
+significantly more complex than (1) either: the additional code is
+mostly straightforward.  Over all, the benefits of (2) over (1) are
+large enough to prefer it here.
+
+We use a simple sign-magnitude representation for the big integers.
+For the magnitude we pick an array of an unsigned integer type similar
+to mp_limb_t instead of e.g. unsigned char.  This matches in most
+cases the representation of a GMP limb.  In such cases GMP picks an
+optimized algorithm for mpz_import and mpz_export that boils down to a
+single memcpy to convert the magnitude.  This way we largely avoid the
+import/export overhead on most platforms.
+*/
+
+enum
 {
-  MODULE_FUNCTION_BEGIN ();
-  Lisp_Object o = value_to_lisp (value);
+  /* Documented maximum count of magnitude elements. */
+  module_bignum_count_max = min (SIZE_MAX, PTRDIFF_MAX) / sizeof (emacs_limb_t)
+};
+
+static bool
+module_extract_big_integer (emacs_env *env, emacs_value arg, int *sign,
+                            ptrdiff_t *count, emacs_limb_t *magnitude)
+{
+  MODULE_FUNCTION_BEGIN (false);
+  Lisp_Object o = value_to_lisp (arg);
   CHECK_INTEGER (o);
-  mpz_set_integer (result->value, o);
+  int dummy;
+  if (sign == NULL)
+    sign = &dummy;
+  /* See
+     https://gmplib.org/manual/Integer-Import-and-Export.html#index-Export. */
+  enum
+  {
+    order = -1,
+    size = sizeof *magnitude,
+    bits = size * CHAR_BIT,
+    endian = 0,
+    nails = 0,
+    numb = 8 * size - nails
+  };
+  if (FIXNUMP (o))
+    {
+      EMACS_INT x = XFIXNUM (o);
+      *sign = (0 < x) - (x < 0);
+      if (x == 0 || count == NULL)
+        return true;
+      /* As a simplification we don't check how many array elements
+         are exactly required, but use a reasonable static upper
+         bound.  For most architectures exactly one element should
+         suffice.  */
+      EMACS_UINT u;
+      enum { required = (sizeof u + size - 1) / size };
+      verify (0 < required && required <= module_bignum_count_max);
+      if (magnitude == NULL)
+        {
+          *count = required;
+          return true;
+        }
+      if (*count < required)
+        {
+          ptrdiff_t actual = *count;
+          *count = required;
+          args_out_of_range_3 (INT_TO_INTEGER (actual),
+                               INT_TO_INTEGER (required),
+                               INT_TO_INTEGER (module_bignum_count_max));
+        }
+      /* Set u = abs(x).  See https://stackoverflow.com/a/17313717. */
+      if (0 < x)
+        u = (EMACS_UINT) x;
+      else
+        u = -(EMACS_UINT) x;
+      verify (required * bits < PTRDIFF_MAX);
+      for (ptrdiff_t i = 0; i < required; ++i)
+        magnitude[i] = (emacs_limb_t) (u >> (i * bits));
+      return true;
+    }
+  const mpz_t *x = xbignum_val (o);
+  *sign = mpz_sgn (*x);
+  if (count == NULL)
+    return true;
+  size_t required_size = (mpz_sizeinbase (*x, 2) + numb - 1) / numb;
+  eassert (required_size <= PTRDIFF_MAX);
+  ptrdiff_t required = (ptrdiff_t) required_size;
+  eassert (required <= module_bignum_count_max);
+  if (magnitude == NULL)
+    {
+      *count = required;
+      return true;
+    }
+  if (*count < required)
+    {
+      ptrdiff_t actual = *count;
+      *count = required;
+      args_out_of_range_3 (INT_TO_INTEGER (actual), INT_TO_INTEGER (required),
+                           INT_TO_INTEGER (module_bignum_count_max));
+    }
+  size_t written;
+  mpz_export (magnitude, &written, order, size, endian, nails, *x);
+  eassert (written == required_size);
+  return true;
 }
 
 static emacs_value
-module_make_big_integer (emacs_env *env, const struct emacs_mpz *value)
+module_make_big_integer (emacs_env *env, int sign,
+                         ptrdiff_t count, const unsigned long *magnitude)
 {
   MODULE_FUNCTION_BEGIN (NULL);
-  mpz_set (mpz[0], value->value);
+  if (sign == 0)
+    return lisp_to_value (env, make_fixed_natnum (0));
+  enum { order = -1, size = sizeof *magnitude, endian = 0, nails = 0 };
+  mpz_import (mpz[0], count, order, size, endian, nails, magnitude);
+  if (sign < 0)
+    mpz_neg (mpz[0], mpz[0]);
   return lisp_to_value (env, make_integer_mpz ());
 }
 

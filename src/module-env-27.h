@@ -9,10 +9,10 @@
   emacs_value (*make_time) (emacs_env *env, struct timespec time)
     EMACS_ATTRIBUTE_NONNULL (1);
 
-  void (*extract_big_integer) (emacs_env *env, emacs_value value,
-                               struct emacs_mpz *result)
-    EMACS_ATTRIBUTE_NONNULL (1, 3);
+  bool (*extract_big_integer) (emacs_env *env, emacs_value arg, int *sign,
+                               ptrdiff_t *count, unsigned long *magnitude)
+    EMACS_ATTRIBUTE_NONNULL (1);
 
-  emacs_value (*make_big_integer) (emacs_env *env,
-                                   const struct emacs_mpz *value)
-    EMACS_ATTRIBUTE_NONNULL (1, 2);
+  emacs_value (*make_big_integer) (emacs_env *env, int sign, ptrdiff_t count,
+                                   const unsigned long *magnitude)
+    EMACS_ATTRIBUTE_NONNULL (1);

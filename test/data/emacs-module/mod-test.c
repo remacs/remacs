@@ -33,10 +33,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <gmp.h>
 #else
 #include "mini-gmp.h"
-#define EMACS_MODULE_HAVE_MPZ_T
 #endif
 
-#define EMACS_MODULE_GMP
 #include <emacs-module.h>
 
 #include "timespec.h"
@@ -66,6 +64,8 @@ int plugin_is_GPL_compatible;
 # error "INTPTR_MAX too large"
 #endif
 
+/* Smoke test to verify that EMACS_LIMB_MAX is defined. */
+_Static_assert (0 < EMACS_LIMB_MAX, "EMACS_LIMB_MAX missing or incorrect");
 
 /* Always return symbol 't'.  */
 static emacs_value
@@ -372,23 +372,106 @@ Fmod_test_add_nanosecond (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
   return env->make_time (env, time);
 }
 
+static void
+memory_full (emacs_env *env)
+{
+  const char *message = "Memory exhausted";
+  emacs_value data = env->make_string (env, message, strlen (message));
+  env->non_local_exit_signal (env, env->intern (env, "error"),
+                              env->funcall (env, env->intern (env, "list"), 1,
+                                            &data));
+}
+
+enum
+{
+  max_count = ((SIZE_MAX < PTRDIFF_MAX ? SIZE_MAX : PTRDIFF_MAX)
+               / sizeof (emacs_limb_t))
+};
+
+static bool
+extract_big_integer (emacs_env *env, emacs_value arg, mpz_t result)
+{
+  int sign;
+  ptrdiff_t count;
+  bool success = env->extract_big_integer (env, arg, &sign, &count, NULL);
+  if (!success)
+    return false;
+  if (sign == 0)
+    {
+      mpz_set_ui (result, 0);
+      return true;
+    }
+  enum { order = -1, size = sizeof (unsigned long), endian = 0, nails = 0 };
+  assert (0 < count && count <= max_count);
+  emacs_limb_t *magnitude = malloc (count * size);
+  if (magnitude == NULL)
+    {
+      memory_full (env);
+      return false;
+    }
+  success = env->extract_big_integer (env, arg, NULL, &count, magnitude);
+  assert (success);
+  mpz_import (result, count, order, size, endian, nails, magnitude);
+  free (magnitude);
+  if (sign < 0)
+    mpz_neg (result, result);
+  return true;
+}
+
+static emacs_value
+make_big_integer (emacs_env *env, const mpz_t value)
+{
+  if (mpz_sgn (value) == 0)
+    return env->make_integer (env, 0);
+  /* See
+     https://gmplib.org/manual/Integer-Import-and-Export.html#index-Export. */
+  enum
+  {
+    order = -1,
+    size = sizeof (emacs_limb_t),
+    endian = 0,
+    nails = 0,
+    numb = 8 * size - nails
+  };
+  size_t count = (mpz_sizeinbase (value, 2) + numb - 1) / numb;
+  if (max_count < count)
+    {
+      memory_full (env);
+      return NULL;
+    }
+  emacs_limb_t *magnitude = malloc (count * size);
+  if (magnitude == NULL)
+    {
+      memory_full (env);
+      return NULL;
+    }
+  size_t written;
+  mpz_export (magnitude, &written, order, size, endian, nails, value);
+  assert (written == count);
+  assert (count <= PTRDIFF_MAX);
+  emacs_value result = env->make_big_integer (env, mpz_sgn (value),
+                                              (ptrdiff_t) count, magnitude);
+  free (magnitude);
+  return result;
+}
+
 static emacs_value
 Fmod_test_nanoseconds (emacs_env *env, ptrdiff_t nargs, emacs_value *args, void *data) {
   assert (nargs == 1);
   struct timespec time = env->extract_time (env, args[0]);
-  struct emacs_mpz nanoseconds;
+  mpz_t nanoseconds;
   assert (LONG_MIN <= time.tv_sec && time.tv_sec <= LONG_MAX);
-  mpz_init_set_si (nanoseconds.value, time.tv_sec);
+  mpz_init_set_si (nanoseconds, time.tv_sec);
 #ifdef __MINGW32__
   _Static_assert (1000000000 <= ULONG_MAX, "unsupported architecture");
 #else
   static_assert (1000000000 <= ULONG_MAX, "unsupported architecture");
 #endif
-  mpz_mul_ui (nanoseconds.value, nanoseconds.value, 1000000000);
+  mpz_mul_ui (nanoseconds, nanoseconds, 1000000000);
   assert (0 <= time.tv_nsec && time.tv_nsec <= ULONG_MAX);
-  mpz_add_ui (nanoseconds.value, nanoseconds.value, time.tv_nsec);
-  emacs_value result = env->make_big_integer (env, &nanoseconds);
-  mpz_clear (nanoseconds.value);
+  mpz_add_ui (nanoseconds, nanoseconds, time.tv_nsec);
+  emacs_value result = make_big_integer (env, nanoseconds);
+  mpz_clear (nanoseconds);
   return result;
 }
 
@@ -398,12 +481,12 @@ Fmod_test_double (emacs_env *env, ptrdiff_t nargs, emacs_value *args,
 {
   assert (nargs == 1);
   emacs_value arg = args[0];
-  struct emacs_mpz value;
-  mpz_init (value.value);
-  env->extract_big_integer (env, arg, &value);
-  mpz_mul_ui (value.value, value.value, 2);
-  emacs_value result = env->make_big_integer (env, &value);
-  mpz_clear (value.value);
+  mpz_t value;
+  mpz_init (value);
+  extract_big_integer (env, arg, value);
+  mpz_mul_ui (value, value, 2);
+  emacs_value result = make_big_integer (env, value);
+  mpz_clear (value);
   return result;
 }
 
