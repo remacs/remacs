@@ -749,7 +749,10 @@ report applies to that region."
                                   (format "Unknown action %S" report-action))
         (flymake-error "Expected report, but got unknown key %s" report-action))
        (t
-        (setq new-diags report-action)
+        (setq new-diags
+              (cl-remove-if-not
+               (lambda (diag) (eq (flymake--diag-buffer diag) (current-buffer)))
+               report-action))
         (save-restriction
           (widen)
           ;; Before adding to backend's diagnostic list, decide if

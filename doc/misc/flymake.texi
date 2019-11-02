@@ -543,7 +543,9 @@ by calling the function @code{flymake-make-diagnostic}.
 Make a Flymake diagnostic for @var{buffer}'s region from @var{beg} to
 @var{end}.  @var{type} is a diagnostic symbol (@pxref{Flymake error
 types}), and @var{text} is a description of the problem detected in
-this region.
+this region.  Currently, it is unspecified behaviour to make
+diagnostics for buffers other than the buffer that the Flymake backend
+is responsible for.
 @end deffn
 
 @cindex access diagnostic object
