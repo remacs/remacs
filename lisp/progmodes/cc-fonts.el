@@ -1244,7 +1244,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   (if (save-excursion
 	(and
 	 (car (cddr decl-or-cast))	; maybe-expression flag.
-	 (c-go-up-list-backward)
+	 (c-go-up-list-backward nil (c-determine-limit 500))
 	 (eq (char-after) ?\()
 	 (progn (c-backward-syntactic-ws)
 		(c-simple-skip-symbol-backward))
