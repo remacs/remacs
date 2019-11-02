@@ -652,7 +652,9 @@ associated `flymake-category' return DEFAULT."
              (flymake-diagnostics pos)
              "\n"))))
       (default-maybe 'severity (warning-numeric-level :error))
-      (default-maybe 'priority (+ 100 (overlay-get ov 'severity))))
+      ;; Use (PRIMARY . SECONDARY) priority, to avoid clashing with
+      ;; `region' face, for example (bug#34022).
+      (default-maybe 'priority (cons nil (+ 40 (overlay-get ov 'severity)))))
     ;; Some properties can't be overridden.
     ;;
     (overlay-put ov 'evaporate t)
