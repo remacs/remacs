@@ -1567,7 +1567,7 @@ init_callproc (void)
 
       tem = Fexpand_file_name (build_string ("NEWS"), Vdata_directory);
       if (!NILP (Fequal (srcdir, Vinvocation_directory))
-	  || NILP (Ffile_exists_p (tem)))
+	  || NILP (Ffile_exists_p (tem)) || !NILP (Vinstallation_directory))
 	{
 	  Lisp_Object newdir;
 	  newdir = Fexpand_file_name (build_string ("../etc/"), lispdir);
