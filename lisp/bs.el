@@ -612,29 +612,43 @@ manipulating the buffer list and buffers.
 For faster navigation each digit key is a digit argument.
 
 \\[bs-select] or SPACE -- select current line's buffer and other marked buffers.
-\\[bs-toggle-show-all]  -- toggle between all buffers and a special subset.
+\\[bs-select-in-one-window] -- select current's line buffer in one \
+window, and delete other
+     windows in the same frame.
 \\[bs-select-other-window] -- select current line's buffer in other window.
-\\[bs-tmp-select-other-window] -- make another window display that buffer and
-    remain in Buffer Selection Menu.
+\\[bs-tmp-select-other-window] -- display current line's buffer in \
+other window, and remain in
+     Buffer Selection Menu.
+\\[bs-select-other-frame] -- select current's line buffer in a new frame.
+\\[bs-view] -- view current's line buffer in View mode.
+\\[bs-visit-tags-table] -- call `visit-tags-table' on current line's buffer.
 \\[bs-mouse-select] -- select current line's buffer and other marked buffers.
-\\[bs-save] -- save current line's buffer immediately.
-\\[bs-delete] -- kill current line's buffer immediately.
-\\[bs-toggle-readonly] -- toggle read-only status of current line's buffer.
-\\[bs-clear-modified] -- clear modified-flag on that buffer.
+\\[bs-mouse-select-other-frame] -- select current's line buffer in a new frame.
+
 \\[bs-mark-current] -- mark current line's buffer to be displayed.
 \\[bs-unmark-current] -- unmark current line's buffer to be displayed.
-\\[bs-unmark-all] -- unmark all buffer lines.
 \\[bs-unmark-previous] -- unmark previous line's buffer to be displayed.
-\\[bs-show-sorted] -- display buffer list sorted by next sort aspect.
-\\[bs-set-configuration-and-refresh] -- ask user for a configuration and \
-apply selected configuration.
-\\[bs-select-next-configuration] -- select and apply next \
-available Buffer Selection Menu configuration.
-\\[bs-kill] -- leave Buffer Selection Menu without a selection.
-\\[bs-toggle-current-to-show] -- toggle status of appearance.
+\\[bs-unmark-all] -- unmark all buffer lines.
+
+\\[bs-bury-buffer] -- bury current's line buffer.
+\\[bs-save] -- save current line's buffer immediately.
+\\[bs-delete] -- kill current line's buffer immediately.
+\\[bs-delete-backward] -- like \\[bs-delete], but then move to previous line.
+\\[bs-clear-modified] -- clear modified-flag on that buffer.
+\\[bs-toggle-readonly] -- toggle read-only status of current line's buffer.
 \\[bs-set-current-buffer-to-show-always] -- mark current line's buffer \
 to show always.
-\\[bs-visit-tags-table] -- call `visit-tags-table' on current line's buffer.
+\\[bs-toggle-current-to-show] -- toggle status of appearance.
+
+\\[bs-toggle-show-all] -- toggle between all buffers and a special subset.
+\\[bs-select-next-configuration] -- select and apply next available \
+configuration.
+\\[bs-set-configuration-and-refresh] -- ask user for a configuration and \
+apply it.
+\\[bs-show-sorted] -- display buffer list sorted by next sort aspect.
+
+\\[bs-kill] -- leave Buffer Selection Menu without a selection.
+\\[bs-refresh] -- refresh Buffer Selection Menu.
 \\[bs-help] -- display this help text."
   (buffer-disable-undo)
   (setq buffer-read-only t
