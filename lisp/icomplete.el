@@ -223,21 +223,7 @@ Last entry becomes the first and can be selected with
       (push (car last) comps)
       (completion--cache-all-sorted-completions beg end comps))))
 
-;;; `ido-mode' emulation
-;;;
-;;; The following "magic-ido" commands can be bound in
-;;; `icomplete-mode-map' to make `icomplete-mode' behave more like
-;;; `ido-mode'.  Evaluate this to try it out.
-;;;
-;;; (let ((imap icomplete-minibuffer-map))
-;;;   (define-key imap (kbd "C-k") 'icomplete-magic-ido-kill)
-;;;   (define-key imap (kbd "C-d") 'icomplete-magic-ido-delete-char)
-;;;   (define-key imap (kbd "RET") 'icomplete-magic-ido-ret)
-;;;   (define-key imap (kbd "DEL") 'icomplete-magic-ido-backward-updir))
-;;;
-;;; For more ido behaviour, you'll probably like this too:
-;;;
-;;;   (setq icomplete-tidy-shadowed-file-names t)
+;;; Helpers for `fido-mode' (or `ido-mode' emulation)
 ;;;
 (defun icomplete-magic-ido-kill ()
   "Kill line or current completion, like `ido-mode'.
@@ -311,6 +297,42 @@ require user confirmation."
     (if (and (eq (char-before) ?/) (eq category 'file))
         (backward-kill-sexp 1)
       (call-interactively 'backward-delete-char))))
+
+(defvar icomplete-fido-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-k") 'icomplete-magic-ido-kill)
+    (define-key map (kbd "C-d") 'icomplete-magic-ido-delete-char)
+    (define-key map (kbd "RET") 'icomplete-magic-ido-ret)
+    (define-key map (kbd "DEL") 'icomplete-magic-ido-backward-updir)
+    (define-key map (kbd "M-j") 'exit-minibuffer)
+    (define-key map (kbd "C-s") 'icomplete-forward-completions)
+    (define-key map (kbd "C-r") 'icomplete-backward-completions)
+    map)
+  "Keymap used by `fido-mode' in the minibuffer.")
+
+(defun icomplete--fido-mode-setup ()
+  "Setup `fido-mode''s minibuffer."
+  (use-local-map (make-composed-keymap icomplete-fido-mode-map
+                                       (current-local-map)))
+  (setq-local icomplete-tidy-shadowed-file-names t
+              icomplete-show-matches-on-no-input t
+              icomplete-hide-common-prefix nil
+              completion-styles '(flex)
+              completion-category-defaults nil))
+
+;;;###autoload
+(define-minor-mode fido-mode
+  "An enhanced `icomplete-mode' that emulates `ido-mode'.
+
+This global minor mode makes minibuffer completion behave
+more like `ido-mode' than regular `icomplete-mode'."
+  :global t :group 'icomplete
+  (remove-hook 'minibuffer-setup-hook #'icomplete-minibuffer-setup)
+  (remove-hook 'minibuffer-setup-hook #'icomplete--fido-mode-setup)
+  (when fido-mode
+    (setq icomplete-mode t)
+    (add-hook 'minibuffer-setup-hook #'icomplete-minibuffer-setup)
+    (add-hook 'minibuffer-setup-hook #'icomplete--fido-mode-setup)))
 
 ;;;_ > icomplete-mode (&optional prefix)
 ;;;###autoload
