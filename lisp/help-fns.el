@@ -1018,7 +1018,11 @@ it is displayed along with the global value."
                                (not (equal origval :help-eval-error)))
 		      (princ "\nOriginal value was \n")
 		      (setq from (point))
-                      (cl-prin1 origval)
+		      (if (and (symbolp origval) (not (booleanp origval)))
+			  (let* ((rep (cl-prin1-to-string origval))
+				 (print-rep (format-message "`%s'" rep)))
+			    (insert print-rep))
+			(cl-prin1 origval))
                       (save-restriction
                         (narrow-to-region from (point))
                         (save-excursion (pp-buffer)))
