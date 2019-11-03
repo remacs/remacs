@@ -3381,13 +3381,23 @@ Table Functions}).
 @defvar font-lock-syntactic-face-function
 If this variable is non-@code{nil}, it should be a function to determine
 which face to use for a given syntactic element (a string or a comment).
-The value is normally set through an @var{other-vars} element in
-@code{font-lock-defaults}.
 
 The function is called with one argument, the parse state at point
 returned by @code{parse-partial-sexp}, and should return a face.  The
 default value returns @code{font-lock-comment-face} for comments and
-@code{font-lock-string-face} for strings (@pxref{Faces for Font Lock}).
+@code{font-lock-string-face} for strings (@pxref{Faces for Font
+Lock}).
+
+This variable is normally set through the ``other'' elements in
+@code{font-lock-defaults}:
+
+@lisp
+(setq-local font-lock-defaults
+            `(,python-font-lock-keywords
+              nil nil nil nil
+              (font-lock-syntactic-face-function
+               . python-font-lock-syntactic-face-function)))
+@end lisp
 @end defvar
 
 @node Multiline Font Lock
