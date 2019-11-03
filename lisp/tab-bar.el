@@ -345,6 +345,7 @@ Also add the number of windows in the window configuration."
                                                  'nomini)))
              ", "))
 
+
 (defvar tab-bar-tabs-function #'tab-bar-tabs
   "Function to get a list of tabs to display in the tab bar.
 This function should return a list of alists with parameters
@@ -372,6 +373,7 @@ Return its existing value or a new value."
       (set-frame-parameter nil 'tabs tabs))
     tabs))
 
+
 (defun tab-bar-make-keymap-1 ()
   "Generate an actual keymap from `tab-bar-map', without caching."
   (let* ((separator (or tab-bar-separator (if window-system " " "|")))
@@ -628,7 +630,7 @@ FROM-INDEX and TO-INDEX count from 1."
   (let* ((tabs (funcall tab-bar-tabs-function))
          (from-index (or from-index (1+ (tab-bar--current-tab-index tabs))))
          (from-tab (nth (1- from-index) tabs))
-         (to-index (max 0 (min (1- to-index) (1- (length tabs))))))
+         (to-index (max 0 (min (1- (or to-index 1)) (1- (length tabs))))))
     (setq tabs (delq from-tab tabs))
     (cl-pushnew from-tab (nthcdr to-index tabs))
     (set-frame-parameter nil 'tabs tabs)
@@ -909,7 +911,7 @@ function `tab-bar-tab-name-function'."
 
 ;;; Tab history mode
 
-(defvar tab-bar-history-limit 3
+(defvar tab-bar-history-limit 10
   "The number of history elements to keep.")
 
 (defvar tab-bar-history-omit nil
@@ -928,18 +930,18 @@ function `tab-bar-tab-name-function'."
   "Minibuffer depth before the current command.")
 
 (defun tab-bar-history--pre-change ()
-  (setq tab-bar-history--minibuffer-depth (minibuffer-depth)
-        tab-bar-history-current
-        `((wc . ,(current-window-configuration))
-          (wc-point . ,(point-marker)))))
+  (setq tab-bar-history--minibuffer-depth (minibuffer-depth))
+  ;; Store wc before possibly entering the minibuffer
+  (when (zerop tab-bar-history--minibuffer-depth)
+    (setq tab-bar-history-current
+          `((wc . ,(current-window-configuration))
+            (wc-point . ,(point-marker))))))
 
 (defun tab-bar--history-change ()
   (when (and (not tab-bar-history-omit)
              tab-bar-history-current
-             ;; Entering the minibuffer
-             (zerop tab-bar-history--minibuffer-depth)
-             ;; Exiting the minibuffer
-             (zerop (minibuffer-depth)))
+             ;; Store wc before possibly entering the minibuffer
+             (zerop tab-bar-history--minibuffer-depth))
     (puthash (selected-frame)
              (seq-take (cons tab-bar-history-current
                              (gethash (selected-frame) tab-bar-history-back))
