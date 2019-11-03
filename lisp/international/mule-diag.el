@@ -835,9 +835,16 @@ The IGNORED argument is ignored."
 
 ;;;###autoload
 (defun describe-font (fontname)
-  "Display information about a font whose name is FONTNAME.
-The font must be already used by Emacs."
-  (interactive "sFont name (default current choice for ASCII chars): ")
+  "Display information about a font whose name is FONTNAME."
+  (interactive
+   (list (completing-read
+          "Font name (default current choice for ASCII chars): "
+          (and window-system
+               (fboundp 'fontset-list)
+               ;; The final element in `fontset-list' is a default
+               ;; (generic) one, so don't include that.
+               (nconc (butlast (fontset-list))
+                      (x-list-fonts "*"))))))
   (or (and window-system (fboundp 'fontset-list))
       (error "No fonts being used"))
   (let ((xref-item (list #'describe-font fontname))
@@ -847,9 +854,8 @@ The font must be already used by Emacs."
     (setq font-info (font-info fontname))
     (if (null font-info)
 	(if (fontp fontname 'font-object)
-	    ;; The font should be surely used.  So, there's some
-	    ;; problem about getting information about it.  It is
-	    ;; better to print the fontname to show which font has
+	    ;; If there's some problem with getting information about
+	    ;; the font, print the font name to show which font has
 	    ;; this problem.
 	    (message "No information about \"%s\"" (font-xlfd-name fontname))
 	  (message "No matching font found"))

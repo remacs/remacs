@@ -5127,9 +5127,7 @@ where
         FEATURE is a symbol representing OpenType feature tag.
 
       If the font is not an OpenType font, there are no elements
-      in CAPABILITY except the font format symbol.
-
-If the named font is not yet loaded, return nil.  */)
+      in CAPABILITY except the font format symbol.  */)
   (Lisp_Object name, Lisp_Object frame)
 {
   struct frame *f;
