@@ -4062,6 +4062,22 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 	  (push entry members)))
       (nreverse members))))
 
+(defun custom-group--draw-horizontal-line ()
+  "Draw a horizontal line at point.
+This works for both graphical and text displays."
+  (let ((p (point)))
+    (insert "\n")
+    (put-text-property p (1+ p) 'face '(:underline t))
+    (overlay-put (make-overlay p (1+ p))
+		 'before-string
+		 (propertize "\n" 'face '(:underline t)
+		             'display
+                             (list 'space :align-to
+                                   `(+ (0 . right)
+                                       ,(min (window-hscroll)
+                                             (- (line-end-position)
+                                                (line-beginning-position)))))))))
+
 (defun custom-group-value-create (widget)
   "Insert a customize group for WIDGET in the current buffer."
   (unless (eq (widget-get widget :custom-state) 'hidden)
@@ -4188,15 +4204,7 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 
 	  ;; Nested style.
 	  (t				;Visible.
-	   ;; Draw a horizontal line (this works for both graphical
-	   ;; and text displays):
-	   (let ((p (point)))
-	     (insert "\n")
-	     (put-text-property p (1+ p) 'face '(:underline t))
-	     (overlay-put (make-overlay p (1+ p))
-			  'before-string
-			  (propertize "\n" 'face '(:underline t)
-				      'display '(space :align-to 999))))
+           (custom-group--draw-horizontal-line)
 
 	   ;; Add parent groups references above the group.
 	   (when (eq level 1)
@@ -4287,13 +4295,7 @@ If GROUPS-ONLY is non-nil, return only those members that are groups."
 	     (widget-put widget :children children)
 	     (custom-group-state-update widget))
 	   ;; End line
-	   (let ((p (1+ (point))))
-	     (insert "\n\n")
-	     (put-text-property p (1+ p) 'face '(:underline t))
-	     (overlay-put (make-overlay p (1+ p))
-			  'before-string
-			  (propertize "\n" 'face '(:underline t)
-				      'display '(space :align-to 999))))))))
+           (custom-group--draw-horizontal-line)))))
 
 (defvar custom-group-menu
   `(("Set for Current Session" custom-group-set
