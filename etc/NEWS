@@ -575,6 +575,11 @@ current and the previous or the next line, as before.
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
+---
+** New HTML mode skeleton 'html-id-anchor'.
+This new command (which inserts an <a id="foo">_</a> skeleton) is
+bound to 'C-c C-c #'.
+
 +++
 ** New command 'font-lock-refontify'.
 This is an interactive convenience function to be used when developing

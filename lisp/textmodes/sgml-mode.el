@@ -1801,6 +1801,7 @@ This takes effect when first loading the library.")
     (define-key map "\C-c\C-cl" 'html-list-item)
     (define-key map "\C-c\C-ch" 'html-href-anchor)
     (define-key map "\C-c\C-cn" 'html-name-anchor)
+    (define-key map "\C-c\C-c#" 'html-id-anchor)
     (define-key map "\C-c\C-ci" 'html-image)
     (when html-quick-keys
       (define-key map "\C-c-" 'html-horizontal-rule)
@@ -1812,6 +1813,7 @@ This takes effect when first loading the library.")
       (define-key map "\C-cl" 'html-list-item)
       (define-key map "\C-ch" 'html-href-anchor)
       (define-key map "\C-cn" 'html-name-anchor)
+      (define-key map "\C-c#" 'html-id-anchor)
       (define-key map "\C-ci" 'html-image)
       (define-key map "\C-cs" 'html-span))
     (define-key map "\C-c\C-s" 'html-autoview-mode)
@@ -1839,6 +1841,7 @@ This takes effect when first loading the library.")
     (define-key menu-map "i" '("Image" . html-image))
     (define-key menu-map "h" '("Href Anchor" . html-href-anchor))
     (define-key menu-map "n" '("Name Anchor" . html-name-anchor))
+    (define-key menu-map "#" '("ID Anchor" . html-id-anchor))
     map)
   "Keymap for commands for use in HTML mode.")
 
@@ -2450,6 +2453,11 @@ HTML Autoview mode is a buffer-local minor mode for use with
   "<a name=\"" str "\""
   (if sgml-xml-mode (concat " id=\"" str "\""))
   ">" _ "</a>")
+
+(define-skeleton html-id-anchor
+  "HTML anchor tag with id attribute."
+  "ID: "
+  "<a id=\"" str "\">" _ "</a>")
 
 (define-skeleton html-headline-1
   "HTML level 1 headline tags."
