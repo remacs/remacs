@@ -481,17 +481,31 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
   record_unwind_protect_ptr (directory_files_internal_unwind, d);
 
   /* Loop reading directory entries.  */
+  Lisp_Object zero = make_fixnum (0);
+  ptrdiff_t enc_file_len = SCHARS (encoded_file);
+  Lisp_Object file_len = make_fixnum (SCHARS (file));
   for (struct dirent *dp; (dp = read_dirent (d, dirname)); )
     {
       ptrdiff_t len = dirent_namelen (dp);
       bool canexclude = 0;
 
       maybe_quit ();
-      if (len < SCHARS (encoded_file)
-	  || (scmp (dp->d_name, SSDATA (encoded_file),
-		    SCHARS (encoded_file))
-	      >= 0))
+
+      if (len < enc_file_len
+	  /* scmp cannot reliably compare non-ASCII strings while
+	     ignoring letter-case.  */
+	  || (!completion_ignore_case
+	      && scmp (dp->d_name, SSDATA (encoded_file), enc_file_len) >= 0))
 	continue;
+
+      name = make_unibyte_string (dp->d_name, len);
+      name = DECODE_FILE (name);
+      ptrdiff_t name_blen = SBYTES (name), name_len = SCHARS (name);
+      if (completion_ignore_case
+	  && !EQ (Fcompare_strings (name, zero, file_len, file, zero, file_len,
+				    Qt),
+		  Qt))
+	    continue;
 
       switch (dirent_type (dp))
 	{
@@ -515,6 +529,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
       if (!all_flag)
 	{
 	  ptrdiff_t skip;
+	  Lisp_Object cmp_len = make_fixnum (name_len);
 
 #if 0 /* FIXME: The `scmp' call compares an encoded and a decoded string. */
 	  /* If this entry matches the current bestmatch, the only
@@ -538,7 +553,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 		 actually in the way in a directory with only one file.  */
 	      if (TRIVIAL_DIRECTORY_ENTRY (dp->d_name))
 		canexclude = 1;
-	      else if (len > SCHARS (encoded_file))
+	      else if (len > enc_file_len)
 		/* Ignore directories if they match an element of
 		   completion-ignored-extensions which ends in a slash.  */
 		for (tem = Vcompletion_ignored_extensions;
@@ -550,21 +565,31 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 		    elt = XCAR (tem);
 		    if (!STRINGP (elt))
 		      continue;
-		    /* Need to encode ELT, since scmp compares unibyte
-		       strings only.  */
-		    elt = ENCODE_FILE (elt);
-		    elt_len = SCHARS (elt) - 1; /* -1 for trailing / */
+		    elt_len = SBYTES (elt) - 1; /* -1 for trailing / */
 		    if (elt_len <= 0)
 		      continue;
 		    p1 = SSDATA (elt);
 		    if (p1[elt_len] != '/')
 		      continue;
-		    skip = len - elt_len;
+		    skip = name_blen - elt_len;
 		    if (skip < 0)
 		      continue;
 
-		    if (scmp (dp->d_name + skip, p1, elt_len) >= 0)
+		    if (!completion_ignore_case
+			&& scmp (SSDATA (name) + skip, p1, elt_len) >= 0)
 		      continue;
+		    if (completion_ignore_case)
+		      {
+			elt_len = SCHARS (elt) - 1;
+			skip = name_len - elt_len;
+			cmp_len = make_fixnum (elt_len);
+			if (skip < 0
+			    || !EQ (Fcompare_strings (name, make_fixnum (skip),
+						      cmp_len,
+						      elt, zero, cmp_len, Qt),
+				    Qt))
+			  continue;
+		      }
 		    break;
 		  }
 	    }
@@ -572,22 +597,33 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 	    {
 	      /* Compare extensions-to-be-ignored against end of this file name */
 	      /* if name is not an exact match against specified string */
-	      if (len > SCHARS (encoded_file))
+	      if (len > enc_file_len)
 		/* and exit this for loop if a match is found */
 		for (tem = Vcompletion_ignored_extensions;
 		     CONSP (tem); tem = XCDR (tem))
 		  {
 		    elt = XCAR (tem);
 		    if (!STRINGP (elt)) continue;
-		    /* Need to encode ELT, since scmp compares unibyte
-		       strings only.  */
-		    elt = ENCODE_FILE (elt);
-		    skip = len - SCHARS (elt);
+		    ptrdiff_t elt_len = SBYTES (elt);
+		    skip = len - elt_len;
 		    if (skip < 0) continue;
 
-		    if (scmp (dp->d_name + skip, SSDATA (elt), SCHARS (elt))
-			>= 0)
+		    if (!completion_ignore_case
+			&& (scmp (SSDATA (name) + skip, SSDATA (elt), elt_len)
+			    >= 0))
 		      continue;
+		    if (completion_ignore_case)
+		      {
+			elt_len = SCHARS (elt);
+			skip = name_len - elt_len;
+			cmp_len = make_fixnum (elt_len);
+			if (skip < 0
+			    || !EQ (Fcompare_strings (name, make_fixnum (skip),
+						      cmp_len,
+						      elt, zero, cmp_len, Qt),
+				    Qt))
+			  continue;
+		      }
 		    break;
 		  }
 	    }
@@ -611,24 +647,18 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 	      matchcount = 0;
 	    }
 	}
-      /* FIXME: If we move this `decode' earlier we can eliminate
-	 the repeated ENCODE_FILE on Vcompletion_ignored_extensions.  */
-      name = make_unibyte_string (dp->d_name, len);
-      name = DECODE_FILE (name);
 
-      {
-	Lisp_Object regexps, table = (completion_ignore_case
-				      ? Vascii_canon_table : Qnil);
+      Lisp_Object regexps, table = (completion_ignore_case
+				    ? Vascii_canon_table : Qnil);
 
-	/* Ignore this element if it fails to match all the regexps.  */
-	for (regexps = Vcompletion_regexp_list; CONSP (regexps);
-	     regexps = XCDR (regexps))
-	  if (fast_string_match_internal (XCAR (regexps), name, table) < 0)
-	    break;
+      /* Ignore this element if it fails to match all the regexps.  */
+      for (regexps = Vcompletion_regexp_list; CONSP (regexps);
+	   regexps = XCDR (regexps))
+	if (fast_string_match_internal (XCAR (regexps), name, table) < 0)
+	  break;
 
-	if (CONSP (regexps))
-	  continue;
-      }
+      if (CONSP (regexps))
+	continue;
 
       /* This is a possible completion */
       if (directoryp)
@@ -642,8 +672,6 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
       /* Reject entries where the encoded strings match, but the
          decoded don't.  For example, "a" should not match "a-ring" on
          file systems that store decomposed characters. */
-      Lisp_Object zero = make_fixnum (0);
-
       if (check_decoded && SCHARS (file) <= SCHARS (name))
 	{
 	  /* FIXME: This is a copy of the code below.  */
@@ -757,6 +785,9 @@ scmp (const char *s1, const char *s2, ptrdiff_t len)
 
   if (completion_ignore_case)
     {
+      /* WARNING: This only works for pure ASCII strings, as we
+	 compare bytes, not characters!  Use Fcompare_strings for
+	 comparing non-ASCII strings case-insensitively.  */
       while (l
 	     && (downcase ((unsigned char) *s1++)
 		 == downcase ((unsigned char) *s2++)))
