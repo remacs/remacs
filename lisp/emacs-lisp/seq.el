@@ -323,6 +323,7 @@ list."
   (seq-filter (lambda (elt) (not (funcall pred elt)))
               sequence))
 
+;;;###autoload
 (cl-defgeneric seq-reduce (function sequence initial-value)
   "Reduce the function FUNCTION across SEQUENCE, starting with INITIAL-VALUE.
 
