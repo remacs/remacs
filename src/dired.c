@@ -585,7 +585,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 			cmp_len = make_fixnum (elt_len);
 			if (skip < 0
 			    || !EQ (Fcompare_strings (name, make_fixnum (skip),
-						      cmp_len,
+						      Qnil,
 						      elt, zero, cmp_len, Qt),
 				    Qt))
 			  continue;
@@ -619,7 +619,7 @@ file_name_completion (Lisp_Object file, Lisp_Object dirname, bool all_flag,
 			cmp_len = make_fixnum (elt_len);
 			if (skip < 0
 			    || !EQ (Fcompare_strings (name, make_fixnum (skip),
-						      cmp_len,
+						      Qnil,
 						      elt, zero, cmp_len, Qt),
 				    Qt))
 			  continue;
