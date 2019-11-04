@@ -1716,8 +1716,8 @@ syms_of_fringe (void)
 
   DEFVAR_LISP ("overflow-newline-into-fringe", Voverflow_newline_into_fringe,
     doc: /* Non-nil means that newline may flow into the right fringe.
-This means that display lines which are exactly as wide as the window
-\(not counting the final newline) will only occupy one screen line, by
+This means that display lines that are exactly as wide as the window
+\(not counting the final newline) will occupy only one screen line, by
 showing (or hiding) the final newline in the right fringe; when point
 is at the final newline, the cursor is shown in the right fringe.
 If nil, also continue lines which are exactly as wide as the window.  */);

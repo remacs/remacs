@@ -67,7 +67,7 @@ FROM and TO should be equivalent names, which refer to the
 same directory.  TO should be an absolute directory name.
 Do not use `~' in the TO strings.
 
-Use this feature when you have directories which you normally refer to
+Use this feature when you have directories that you normally refer to
 via absolute symbolic links.  Make TO the name of the link, and FROM
 a regexp matching the name it is linked to."
   :type '(repeat (cons :format "%v"
@@ -123,7 +123,7 @@ This variable is relevant only if `backup-by-copying' is nil."
   "Non-nil means create backups by copying if this preserves owner or group.
 Renaming may still be used (subject to control of other variables)
 when it would not result in changing the owner or group of the file;
-that is, for files which are owned by you and whose group matches
+that is, for files that are owned by you and whose group matches
 the default for a new file created there by you.
 This variable is relevant only if `backup-by-copying' is nil."
   :version "24.1"
@@ -239,7 +239,7 @@ have fast storage with limited space, such as a RAM disk."
 	 (concat "^\\([^A-Z[-`a-z]\\|..+\\)?:\\|" ; colon except after drive
 		 "[|<>\"?*\000-\037]")))		  ; invalid characters
 	(t (purecopy "[\000]")))
-  "Regexp recognizing file names which aren't allowed by the filesystem.")
+  "Regexp recognizing file names that aren't allowed by the filesystem.")
 
 (defcustom file-precious-flag nil
   "Non-nil means protect against I/O errors while saving files.
@@ -338,7 +338,7 @@ A value of nil means don't add newlines.
 Certain major modes set this locally to the value obtained
 from `mode-require-final-newline'.
 
-This variable is only heeded when visiting files (or saving
+This variable is heeded only when visiting files (or saving
 buffers into files they visit).  Writing data to the file system
 with `write-region' and the like is not influenced by this variable."
   :safe #'symbolp
@@ -504,7 +504,7 @@ for the file's directory."
 (define-obsolete-variable-alias 'write-file-hooks 'write-file-functions "22.1")
 (defvar write-file-functions nil
   "List of functions to be called before saving a buffer to a file.
-Only used by `save-buffer'.
+Used only by `save-buffer'.
 If one of them returns non-nil, the file is considered already written
 and the rest are not called.
 These hooks are considered to pertain to the visited file.
@@ -532,7 +532,7 @@ updates before the buffer is saved, use `before-save-hook'.")
 (defvar write-contents-functions nil
   "List of functions to be called before writing out a buffer to a file.
 
-Only used by `save-buffer'.  If one of them returns non-nil, the
+Used only by `save-buffer'.  If one of them returns non-nil, the
 file is considered already written and the rest are not called
 and neither are the functions in `write-file-functions'.  This
 hook can thus be used to create save behavior for buffers that
@@ -707,7 +707,7 @@ non-empty string that was inserted by this function.
  (If DEFAULT-DIRNAME is omitted, DIR combined with INITIAL is used,
   or just DIR if INITIAL is nil.)
 If the user exits with an empty minibuffer, this function returns
-an empty string.  (This can only happen if the user erased the
+an empty string.  (This can happen only if the user erased the
 pre-inserted contents or if `insert-default-directory' is nil.)
 Fourth arg MUSTMATCH non-nil means require existing directory's name.
  Non-nil and non-t means also require confirmation after completion.
@@ -934,7 +934,7 @@ one or more of those symbols."
           ;; entries for the poor soul looking just for "foo".  OTOH, sometimes
           ;; the user does want to pay attention to the extension.  We try to
           ;; diffuse this tension by stripping the suffix, except when the
-          ;; result is a single element (i.e. usually we only list "foo" unless
+          ;; result is a single element (i.e. usually we list only "foo" unless
           ;; it's the only remaining element in the list, in which case we do
           ;; list "foo", "foo.elc" and "foo.el").
           (fullnames '())
@@ -956,11 +956,11 @@ one or more of those symbols."
       ;; which can cause problems with things like partial-completion.
       ;; To minimize the problem, filter out completion-regexp-list, so that
       ;; M-x load-library RET t/x.e TAB finds some files.  Also remove elements
-      ;; from `names' which only matched `string' when they still had
+      ;; from `names' that matched `string' only when they still had
       ;; their suffix.
       (setq names (all-completions string names))
       ;; Remove duplicates of the first element, so that we can easily check
-      ;; if `names' really only contains a single element.
+      ;; if `names' really contains only a single element.
       (when (cdr names) (setcdr names (delete (car names) (cdr names))))
       (unless (cdr names)
         ;; There's no more than one matching non-suffixed element, so expand
@@ -979,10 +979,10 @@ PATH-AND-SUFFIXES is a pair of lists, (DIRECTORIES . SUFFIXES)."
 
 (defvar locate-dominating-stop-dir-regexp
   (purecopy "\\`\\(?:[\\/][\\/][^\\/]+[\\/]\\|/\\(?:net\\|afs\\|\\.\\.\\.\\)/\\)\\'")
-  "Regexp of directory names which stop the search in `locate-dominating-file'.
+  "Regexp of directory names that stop the search in `locate-dominating-file'.
 Any directory whose name matches this regexp will be treated like
-a kind of root directory by `locate-dominating-file' which will stop its search
-when it bumps into it.
+a kind of root directory by `locate-dominating-file', which will stop its
+search when it bumps into it.
 The default regexp prevents fruitless and time-consuming attempts to find
 special files in directories in which filenames are interpreted as hostnames,
 or mount points potentially requiring authentication as a different user.")
@@ -1051,7 +1051,7 @@ directory if it does not exist."
 	     (when (and errtype
 			user-emacs-directory-warning
 			(not (get 'user-emacs-directory-warning 'this-session)))
-	       ;; Only warn once per Emacs session.
+	       ;; Warn only once per Emacs session.
 	       (put 'user-emacs-directory-warning 'this-session t)
 	       (display-warning 'initialization
 				(format "\
@@ -1065,7 +1065,7 @@ customize the variable `user-emacs-directory-warning'."
 (defun exec-path ()
   "Return list of directories to search programs to run in remote subprocesses.
 The remote host is identified by `default-directory'.  For remote
-hosts which do not support subprocesses, this returns `nil'.
+hosts that do not support subprocesses, this returns `nil'.
 If `default-directory' is a local directory, this function returns
 the value of the variable `exec-path'."
   (let ((handler (find-file-name-handler default-directory 'exec-path)))
@@ -1114,7 +1114,7 @@ A file is considered remote if accessing it is likely to
 be slower or less reliable than accessing local files.
 
 `file-remote-p' never opens a new remote connection.  It can
-only reuse a connection that is already open.
+reuse only a connection that is already open.
 
 Return nil or a string identifying the remote connection
 \(ideally a prefix of FILE).  Return nil if FILE is a relative
@@ -1254,7 +1254,7 @@ both at the level of the file and at the level of the directories
 containing it, until no links are left at any level.
 
 \(fn FILENAME)"  ;; Don't document the optional arguments.
-  ;; COUNTER and PREV-DIRS are only used in recursive calls.
+  ;; COUNTER and PREV-DIRS are used only in recursive calls.
   ;; COUNTER can be a cons cell whose car is the count of how many
   ;; more links to chase before getting an error.
   ;; PREV-DIRS can be a cons cell whose car is an alist
@@ -1452,7 +1452,7 @@ constraints do not force a specific format."
     ;;(concat
     ;; "^" (regexp-opt '("/afs/" "/media/" "/mnt" "/net/" "/tmp_mnt/"))))
     "^\\(?:/\\(?:afs/\\|m\\(?:edia/\\|nt\\)\\|\\(?:ne\\|tmp_mn\\)t/\\)\\)")
-  "File systems which ought to be mounted."
+  "File systems that ought to be mounted."
   :group 'files
   :version "26.1"
   :require 'regexp-opt
@@ -1592,8 +1592,8 @@ use with M-x."
 (defcustom confirm-nonexistent-file-or-buffer 'after-completion
   "Whether confirmation is requested before visiting a new file or buffer.
 If nil, confirmation is not requested.
-If the value is `after-completion', confirmation is only
- requested if the user called `minibuffer-complete' right before
+If the value is `after-completion', confirmation is requested
+ only if the user called `minibuffer-complete' right before
  `minibuffer-complete-and-exit'.
 Any other non-nil value means to request confirmation.
 
@@ -1755,7 +1755,7 @@ expand wildcards (if any) and visit multiple files."
 
 (defun find-file-existing (filename)
    "Edit the existing file FILENAME.
-Like \\[find-file], but only allow a file that exists, and do not allow
+Like \\[find-file], but allow only a file that exists, and do not allow
 file names with wildcards."
    (interactive (nbutlast (find-file-read-args "Find existing file: " t)))
    (if (and (not (called-interactively-p 'interactive))
@@ -2208,7 +2208,7 @@ the various files."
 	     (truename (abbreviate-file-name (file-truename filename)))
 	     (attributes (file-attributes truename))
 	     (number (nthcdr 10 attributes))
-	     ;; Find any buffer for a file which has same truename.
+	     ;; Find any buffer for a file that has same truename.
 	     (other (and (not buf) (find-buffer-visiting filename))))
 	;; Let user know if there is a buffer with the same truename.
 	(if other
@@ -2299,13 +2299,13 @@ the various files."
 				"The file %s is already visited normally,
 and you have edited the buffer.  Now you have asked to visit it literally,
 meaning no coding system handling, format conversion, or local variables.
-Emacs can only visit a file in one way at a time.
+Emacs can visit a file in only one way at a time.
 
 Do you want to save the file, and visit it literally instead? "
 				"The file %s is already visited literally,
 meaning no coding system handling, format conversion, or local variables.
 You have edited the buffer.  Now you have asked to visit the file normally,
-but Emacs can only visit a file in one way at a time.
+but Emacs can visit a file in only one way at a time.
 
 Do you want to save the file, and visit it normally instead? ")
 			    (file-name-nondirectory filename)))
@@ -2330,13 +2330,13 @@ Do you want to discard your changes, and visit the file normally now? ")))
 			      "The file %s is already visited normally.
 You have asked to visit it literally,
 meaning no coding system decoding, format conversion, or local variables.
-But Emacs can only visit a file in one way at a time.
+But Emacs can visit a file in only one way at a time.
 
 Do you want to revisit the file literally now? "
 			    "The file %s is already visited literally,
 meaning no coding system decoding, format conversion, or local variables.
 You have asked to visit it normally,
-but Emacs can only visit a file in one way at a time.
+but Emacs can visit a file in only one way at a time.
 
 Do you want to revisit the file normally now? ")
 			  (file-name-nondirectory filename)))
@@ -2476,7 +2476,7 @@ and local variable specifications in the file are ignored.
 Automatic uncompression and adding a newline at the end of the
 file due to `require-final-newline' is also disabled.
 
-If Emacs already has a buffer which is visiting the file,
+If Emacs already has a buffer that is visiting the file,
 this command asks you whether to visit it literally instead.
 
 In non-interactive use, the value is the buffer where the file is
@@ -3678,7 +3678,7 @@ except that any settings of `mode' are ignored.
 
 If HANDLE-MODE is t, all we do is check whether a \"mode:\"
 is specified, and return the corresponding mode symbol, or nil.
-In this case, we try to ignore minor-modes, and only return a
+In this case, we try to ignore minor-modes, and return only a
 major-mode.
 
 If `enable-local-variables' or `local-enable-local-variables' is nil,
@@ -3908,12 +3908,12 @@ It is dangerous if either of these conditions are met:
 	     (cond ((memq prop '(lisp-indent-hook
 				 lisp-indent-function
 				 scheme-indent-function))
-		    ;; Only allow safe values (not functions).
+		    ;; Allow only safe values (not functions).
 		    (or (numberp val)
 			(and (hack-one-local-variable-quotep val)
 			     (eq (nth 1 val) 'defun))))
 		   ((eq prop 'edebug-form-spec)
-		    ;; Only allow indirect form specs.
+		    ;; Allow only indirect form specs.
 		    ;; During bootstrapping, edebug-basic-spec might not be
 		    ;; defined yet.
                     (and (fboundp 'edebug-basic-spec)
@@ -4008,7 +4008,7 @@ Returns the new list."
     (let* ((variable (car pair))
 	   (value (cdr pair))
 	   (slot (assq variable variables)))
-      ;; If variables are specified more than once, only use the last.  (Why?)
+      ;; If variables are specified more than once, use only the last.  (Why?)
       ;; The pseudo-variables mode and eval are different (bug#3430).
       (if (and slot (not (memq variable '(mode eval))))
 	  (setcdr slot value)
@@ -4264,7 +4264,7 @@ criteria."
 
 (defun dir-locals-read-from-dir (dir)
   "Load all variables files in DIR and register a new class and instance.
-DIR is the absolute name of a directory which must contain at
+DIR is the absolute name of a directory, which must contain at
 least one dir-local file (which is a file holding variables to
 apply).
 Return the new class name, which is a symbol named DIR."
@@ -5042,7 +5042,7 @@ Uses `backup-directory-alist' in the same way as
 
 (defun file-relative-name (filename &optional directory)
   "Convert FILENAME to be relative to DIRECTORY (default: `default-directory').
-This function returns a relative file name which is equivalent to FILENAME
+This function returns a relative file name that is equivalent to FILENAME
 when used with that default directory as the default.
 If FILENAME is a relative file name, it will be interpreted as existing in
 `default-directory'.
@@ -5183,14 +5183,14 @@ the last real save, but optional arg FORCE non-nil means delete anyway."
 
 (defcustom before-save-hook nil
   "Normal hook that is run before a buffer is saved to its file.
-Only used by `save-buffer'."
+Used only by `save-buffer'."
   :options '(copyright-update time-stamp)
   :type 'hook
   :group 'files)
 
 (defcustom after-save-hook nil
   "Normal hook that is run after a buffer is saved to its file.
-Only used by `save-buffer'."
+Used only by `save-buffer'."
   :options '(executable-make-buffer-file-executable-if-script-p)
   :type 'hook
   :group 'files)
@@ -5350,7 +5350,7 @@ Before and after saving the buffer, this function runs
 		    (file-name-nondirectory
 		     buffer-file-name)))
 		  (setq tempsetmodes t)
-		(error "Attempt to save to a file which you aren't allowed to write"))))))
+		(error "Attempt to save to a file that you aren't allowed to write"))))))
     (or buffer-backed-up
 	(setq setmodes (backup-buffer)))
     (let* ((dir (file-name-directory buffer-file-name))
@@ -5800,7 +5800,7 @@ RECURSIVE if DIRECTORY is nonempty."
      (handler
       (funcall handler 'delete-directory directory recursive trash))
      ((and delete-by-moving-to-trash trash)
-      ;; Only move non-empty dir to trash if recursive deletion was
+      ;; Move non-empty dir to trash only if recursive deletion was
       ;; requested.  This mimics the non-`delete-by-moving-to-trash'
       ;; case, where the operation fails in delete-directory-internal.
       ;; As `move-file-to-trash' trashes directories (empty or
@@ -5994,7 +5994,7 @@ This function ignores its argument.
 This returns non-nil if the current buffer is visiting a readable file
 whose modification time does not match that of the buffer.
 
-This function only handles buffers that are visiting files.
+This function handles only buffers that are visiting files.
 Non-file buffers need a custom function."
   (and buffer-file-name
        (file-readable-p buffer-file-name)
@@ -6028,7 +6028,7 @@ buffer is sufficient for knowing when that buffer needs to be
 updated in Auto Revert Mode.  Such notification does not include
 changes to files in that directory, only to the directory itself.
 
-This variable only applies to buffers where `buffer-file-name' is
+This variable applies only to buffers where `buffer-file-name' is
 nil; other buffers are tracked by their files.")
 
 (defvar before-revert-hook nil
@@ -6062,14 +6062,14 @@ With a prefix argument, offer to revert from latest auto-save file, if
 that is more recent than the visited file.
 
 This command also implements an interface for special buffers
-that contain text which doesn't come from a file, but reflects
+that contain text that doesn't come from a file, but reflects
 some other data instead (e.g. Dired buffers, `buffer-list'
 buffers).  This is done via the variable `revert-buffer-function'.
 In these cases, it should reconstruct the buffer contents from the
 appropriate data.
 
-When called from Lisp, the first argument is IGNORE-AUTO; only offer
-to revert from the auto-save file when this is nil.  Note that the
+When called from Lisp, the first argument is IGNORE-AUTO; offer to
+revert from the auto-save file only when this is nil.  Note that the
 sense of this argument is the reverse of the prefix argument, for the
 sake of backward compatibility.  IGNORE-AUTO is optional, defaulting
 to nil.
@@ -6088,7 +6088,7 @@ to do the work, with arguments IGNORE-AUTO and NOCONFIRM.
 The default function runs the hooks `before-revert-hook' and
 `after-revert-hook'."
   ;; I admit it's odd to reverse the sense of the prefix argument, but
-  ;; there is a lot of code out there which assumes that the first
+  ;; there is a lot of code out there that assumes that the first
   ;; argument should be t to avoid consulting the auto-save file, and
   ;; there's no straightforward way to encourage authors to notice a
   ;; reversal of the argument sense.  So I'm just changing the user
@@ -6109,7 +6109,7 @@ Calls `revert-buffer-insert-file-contents-function' to reread the
 contents of the visited file, with two arguments: the first is the file
 name, the second is non-nil if reading an auto-save file.
 
-This function only handles buffers that are visiting files.
+This function handles only buffers that are visiting files.
 Non-file buffers need a custom function."
   (with-current-buffer (or (buffer-base-buffer (current-buffer))
                            (current-buffer))
@@ -6507,7 +6507,7 @@ See also `auto-save-file-name-p'."
     (let ((buffer-name (buffer-name))
 	  (limit 0)
 	  file-name)
-      ;; Restrict the characters used in the file name to those which
+      ;; Restrict the characters used in the file name to those that
       ;; are known to be safe on all filesystems, url-encoding the
       ;; rest.
       ;; We do this on all platforms, because even if we are not
@@ -6641,7 +6641,7 @@ by `sh' are supported."
 
 (defun file-expand-wildcards (pattern &optional full)
   "Expand wildcard pattern PATTERN.
-This returns a list of file names which match the pattern.
+This returns a list of file names that match the pattern.
 Files are sorted in `string<' order.
 
 If PATTERN is written as an absolute file name,
@@ -6725,7 +6725,7 @@ and `list-directory-verbose-switches'."
 PATTERN is assumed to represent a file-name wildcard suitable for the
 underlying filesystem.  For Unix and GNU/Linux, each character from the
 set [ \\t\\n;<>&|()\\=`\\='\"#$] is quoted with a backslash; for DOS/Windows, all
-the parts of the pattern which don't include wildcard characters are
+the parts of the pattern that don't include wildcard characters are
 quoted with double quotes.
 
 This function leaves alone existing quote characters (\\ on Unix and \"
@@ -7290,7 +7290,7 @@ only these files will be asked to be saved."
 	    file-name-handler-alist))
 
 ;; We depend on being the last handler on the list,
-;; so that anything else which does need handling
+;; so that anything else that does need handling
 ;; has been handled already.
 ;; So it is safe for us to inhibit *all* magic file name handlers for
 ;; operations, which return a file name.  See Bug#29579.
@@ -7318,7 +7318,7 @@ only these files will be asked to be saved."
 	       (expand-file-name
 		(unhandled-file-name-directory default-directory)))
 	    default-directory))
-	;; Get a list of the indices of the args which are file names.
+	;; Get a list of the indices of the args that are file names.
 	(file-arg-indices
 	 (cdr (or (assq operation
 			'(;; The first seven are special because they
@@ -7349,7 +7349,7 @@ only these files will be asked to be saved."
 			  (copy-file local-copy)
 			  (rename-file local-copy)
                           (copy-directory local-copy)
-			  ;; List the arguments which are filenames.
+			  ;; List the arguments that are filenames.
 			  (file-name-completion 0 1)
 			  (file-name-all-completions 0 1)
                           (file-equal-p 0 1)
@@ -7399,7 +7399,7 @@ only these files will be asked to be saved."
        ;; We can't use `cl-letf' with `(buffer-local-value)' here
        ;; because it wouldn't work during bootstrapping.
        (let ((buffer (current-buffer)))
-         ;; `unquote-then-quote' is only used for the
+         ;; `unquote-then-quote' is used only for the
          ;; `verify-visited-file-modtime' action, which takes a buffer
          ;; as only optional argument.
          (with-current-buffer (or (car arguments) buffer)
@@ -7593,7 +7593,7 @@ based on existing mode bits, as in \"og+rX-w\"."
 ;; Trashcan handling.
 (defcustom trash-directory nil
   "Directory for `move-file-to-trash' to move files and directories to.
-This directory is only used when the function `system-move-file-to-trash'
+This directory is used only when the function `system-move-file-to-trash'
 is not defined.
 Relative paths are interpreted relative to `default-directory'.
 If the value is nil, Emacs uses a freedesktop.org-style trashcan."
@@ -7616,8 +7616,8 @@ If the function `system-move-file-to-trash' is defined, call it
 Otherwise, if `trash-directory' is non-nil, move FILENAME to that
  directory.
 Otherwise, trash FILENAME using the freedesktop.org conventions,
- like the GNOME, KDE and XFCE desktop environments.  Emacs only
- moves files to \"home trash\", ignoring per-volume trashcans."
+ like the GNOME, KDE and XFCE desktop environments.  Emacs moves
+ files only to \"home trash\", ignoring per-volume trashcans."
   (interactive "fMove file to trash: ")
   ;; If `system-move-file-to-trash' is defined, use it.
   (cond ((fboundp 'system-move-file-to-trash)

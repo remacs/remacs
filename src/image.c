@@ -1758,7 +1758,7 @@ DEFUN ("clear-image-cache", Fclear_image_cache, Sclear_image_cache,
        doc: /* Clear the image cache.
 FILTER nil or a frame means clear all images in the selected frame.
 FILTER t means clear the image caches of all frames.
-Anything else, means only clear those images which refer to FILTER,
+Anything else means clear only those images that refer to FILTER,
 which is then usually a filename.  */)
   (Lisp_Object filter)
 {
@@ -10055,7 +10055,7 @@ DEFUN ("init-image-library", Finit_image_library, Sinit_image_library, 1, 1, 0,
        doc: /* Initialize image library implementing image type TYPE.
 Return t if TYPE is a supported image type.
 
-If image libraries are loaded dynamically (currently only the case on
+If image libraries are loaded dynamically (currently the case only on
 MS-Windows), load the library for TYPE if it is not yet loaded, using
 the library file(s) specified by `dynamic-library-alist'.  */)
   (Lisp_Object type)

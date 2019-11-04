@@ -185,7 +185,7 @@ buffer-local wherever it is set."
 (defmacro push (newelt place)
   "Add NEWELT to the list stored in the generalized variable PLACE.
 This is morally equivalent to (setf PLACE (cons NEWELT PLACE)),
-except that PLACE is only evaluated once (after NEWELT)."
+except that PLACE is evaluated only once (after NEWELT)."
   (declare (debug (form gv-place)))
   (if (symbolp place)
       ;; Important special case, to avoid triggering GV too early in
@@ -696,7 +696,7 @@ non-nil."
   "Return a sequence of numbers from FROM to TO (both inclusive) as a list.
 INC is the increment used between numbers in the sequence and defaults to 1.
 So, the Nth element of the list is (+ FROM (* N INC)) where N counts from
-zero.  TO is only included if there is an N for which TO = FROM + N * INC.
+zero.  TO is included only if there is an N for which TO = FROM + N * INC.
 If TO is nil or numerically equal to FROM, return (FROM).
 If INC is positive and TO is less than FROM, or INC is negative
 and TO is larger than FROM, return nil.
@@ -892,7 +892,7 @@ This is the same format used for saving keyboard macros (see
 `edmacro-mode').
 
 For an approximate inverse of this, see `key-description'."
-  ;; Don't use a defalias, since the `pure' property is only true for
+  ;; Don't use a defalias, since the `pure' property is true only for
   ;; the calling convention of `kbd'.
   (read-kbd-macro keys))
 (put 'kbd 'pure t)
@@ -955,7 +955,7 @@ AFTER should be a single event type--a symbol or a character, not a sequence.
 
 Bindings are always added before any inherited map.
 
-The order of bindings in a keymap only matters when it is used as
+The order of bindings in a keymap matters only when it is used as
 a menu, so this function is not useful for non-menu keymaps."
   (unless after (setq after t))
   (or (keymapp keymap)
@@ -1169,7 +1169,7 @@ KEY is a string or vector representing a sequence of keystrokes."
   "Replace OLDDEF with NEWDEF for any keys in KEYMAP now defined as OLDDEF.
 In other words, OLDDEF is replaced with NEWDEF wherever it appears.
 Alternatively, if optional fourth argument OLDMAP is specified, we redefine
-in KEYMAP as NEWDEF those keys which are defined as OLDDEF in OLDMAP.
+in KEYMAP as NEWDEF those keys that are defined as OLDDEF in OLDMAP.
 
 If you don't specify OLDMAP, you can usually get the same results
 in a cleaner way with command remapping, like this:
@@ -1241,7 +1241,7 @@ in a cleaner way with command remapping, like this:
 
 (defvar global-map nil
   "Default global keymap mapping Emacs keyboard input into commands.
-The value is a keymap which is usually (but not necessarily) Emacs's
+The value is a keymap that is usually (but not necessarily) Emacs's
 global map.")
 
 (defvar esc-map nil
@@ -1611,7 +1611,7 @@ be a list of the form returned by `event-start' and `event-end'."
                         "expect it to be removed in a future version." "25.2")
 
 ;; This was introduced in 21.4 for pre-unicode unification.  That
-;; usage was rendered obsolete in 23.1 which uses Unicode internally.
+;; usage was rendered obsolete in 23.1, which uses Unicode internally.
 ;; Other uses are possible, so this variable is not _really_ obsolete,
 ;; but Stefan insists to mark it so.
 (make-obsolete-variable 'translation-table-for-input nil "23.1")
@@ -1761,12 +1761,12 @@ the hook's buffer-local value rather than its default value."
 (defmacro letrec (binders &rest body)
   "Bind variables according to BINDERS then eval BODY.
 The value of the last form in BODY is returned.
-Each element of BINDERS is a list (SYMBOL VALUEFORM) which binds
+Each element of BINDERS is a list (SYMBOL VALUEFORM) that binds
 SYMBOL to the value of VALUEFORM.
 
 The main difference between this macro and `let'/`let*' is that
 all symbols are bound before any of the VALUEFORMs are evalled."
-  ;; Only useful in lexical-binding mode.
+  ;; Useful only in lexical-binding mode.
   ;; As a special-form, we could implement it more efficiently (and cleanly,
   ;; making the vars actually unbound during evaluation of the binders).
   (declare (debug let) (indent 1))
@@ -1871,7 +1871,7 @@ can do the job."
                (msg (format-message
                      "`add-to-list' can't use lexical var `%s'; use `push' or `cl-pushnew'"
                      sym))
-               ;; Big ugly hack so we only output a warning during
+               ;; Big ugly hack, so we output a warning only during
                ;; byte-compilation, and so we can use
                ;; byte-compile-not-lexical-var-p to silence the warning
                ;; when a defvar has been seen but not yet executed.
@@ -2046,7 +2046,7 @@ running their FOO-mode-hook."
   "Execute BODY, but delay any `run-mode-hooks'.
 These hooks will be executed by the first following call to
 `run-mode-hooks' that occurs outside any `delay-mode-hooks' form.
-Only affects hooks run in the current buffer."
+Affects only hooks run in the current buffer."
   (declare (debug t) (indent 0))
   `(progn
      (make-local-variable 'delay-mode-hooks)
@@ -2118,7 +2118,7 @@ tho trying to avoid AVOIDED-MODES."
 
 This is an XEmacs-compatibility function.  Use `define-minor-mode' instead.
 
-TOGGLE is a symbol which is the name of a buffer-local variable that
+TOGGLE is a symbol that is the name of a buffer-local variable that
 is toggled on or off to say whether the minor mode is active or not.
 
 NAME specifies what will appear in the mode line when the minor mode
@@ -2405,9 +2405,9 @@ some sort of escape sequence, the ambiguity is resolved via `read-key-delay'."
                 ;; Wait long enough that Emacs has the time to receive and
                 ;; process all the raw events associated with the single-key.
                 ;; But don't wait too long, or the user may find the delay
-                ;; annoying (or keep hitting more keys which may then get
+                ;; annoying (or keep hitting more keys, which may then get
                 ;; lost or misinterpreted).
-                ;; This is only relevant for keys which Emacs perceives as
+                ;; This is relevant only for keys that Emacs perceives as
                 ;; "prefixes", such as C-x (because of the C-x 8 map in
                 ;; key-translate-table and the C-x @ map in function-key-map)
                 ;; or ESC (because of terminal escape sequences in
@@ -3168,7 +3168,7 @@ alternatives."
 (defun function-get (f prop &optional autoload)
   "Return the value of property PROP of function F.
 If AUTOLOAD is non-nil and F is autoloaded, try to autoload it
-in the hope that it will set PROP.  If AUTOLOAD is `macro', only do it
+in the hope that it will set PROP.  If AUTOLOAD is `macro', do it only
 if it's an autoloaded macro."
   (let ((val nil))
     (while (and (symbolp f)
@@ -3664,7 +3664,7 @@ See also `with-temp-file' and `with-output-to-string'."
 (defmacro with-silent-modifications (&rest body)
   "Execute BODY, pretending it does not modify the buffer.
 This macro is typically used around modifications of
-text properties which do not really affect the buffer's content.
+text properties that do not really affect the buffer's content.
 If BODY performs real modifications to the buffer's text, other
 than cosmetic ones, undo data may become corrupted.
 
@@ -3776,8 +3776,8 @@ FORMAT is a string passed to `message' to format any error message.
 It should contain a single %-sequence; e.g., \"Error: %S\".
 
 If `debug-on-error' is non-nil, run BODY without catching its errors.
-This is to be used around code which is not expected to signal an error
-but which should be robust in the unexpected case that an error is signaled.
+This is to be used around code that is not expected to signal an error
+but that should be robust in the unexpected case that an error is signaled.
 
 For backward compatibility, if FORMAT is not a constant string, it
 is assumed to be part of BODY, in which case the message format
@@ -4139,7 +4139,7 @@ the substrings between the splitting points are collected as a list,
 which is returned.
 
 If SEPARATORS is non-nil, it should be a regular expression matching text
-which separates, but is not part of, the substrings.  If nil it defaults to
+that separates, but is not part of, the substrings.  If nil it defaults to
 `split-string-default-separators', normally \"[ \\f\\t\\n\\r\\v]+\", and
 OMIT-NULLS is forced to t.
 
@@ -4282,7 +4282,7 @@ and replace a sub-expression, e.g.
   ;; To avoid excessive consing from multiple matches in long strings,
   ;; don't just call `replace-match' continually.  Walk down the
   ;; string looking for matches of REGEXP and building up a (reversed)
-  ;; list MATCHES.  This comprises segments of STRING which weren't
+  ;; list MATCHES.  This comprises segments of STRING that weren't
   ;; matched interspersed with replacements for segments that were.
   ;; [For a `large' number of replacements it's more efficient to
   ;; operate in a temporary buffer; we can't tell from the function's
@@ -4298,7 +4298,7 @@ and replace a sub-expression, e.g.
 	;; If we matched the empty string, make sure we advance by one char
 	(when (= me mb) (setq me (min l (1+ mb))))
 	;; Generate a replacement for the matched substring.
-	;; Operate only on the substring to minimize string consing.
+	;; Operate on only the substring to minimize string consing.
 	;; Set up match data for the substring for replacement;
 	;; presumably this is likely to be faster than munging the
 	;; match data directly in Lisp.
@@ -4339,7 +4339,7 @@ attention to case differences."
 Normally, inserting a string with right-to-left (RTL) script into
 a buffer may cause some subsequent text to be displayed as part
 of the RTL segment (usually this affects punctuation characters).
-This function returns a string which displays as STR but forces
+This function returns a string that displays as STR but forces
 subsequent text to be displayed as left-to-right.
 
 If STR contains any RTL character, this function returns a string
@@ -4555,7 +4555,7 @@ Used from `delayed-warnings-hook' (which see)."
         (push warning collapsed)))
     (setq delayed-warnings-list (nreverse collapsed))))
 
-;; At present this is only used for Emacs internals.
+;; At present this is used only for Emacs internals.
 ;; Ref https://lists.gnu.org/r/emacs-devel/2012-02/msg00085.html
 (defvar delayed-warnings-hook '(collapse-delayed-warnings
                                 display-delayed-warnings)
@@ -4621,7 +4621,7 @@ Value is what BODY returns."
 
 (defun make-syntax-table (&optional oldtable)
   "Return a new syntax table.
-Create a syntax table which inherits from OLDTABLE (if non-nil) or
+Create a syntax table that inherits from OLDTABLE (if non-nil) or
 from `standard-syntax-table' otherwise."
   (let ((table (make-char-table 'syntax-table nil)))
     (set-char-table-parent table (or oldtable (standard-syntax-table)))
@@ -4640,7 +4640,7 @@ If POS is outside the buffer's accessible portion, return nil."
   "Return the code for the syntax class described by SYNTAX.
 
 SYNTAX should be a raw syntax descriptor; the return value is a
-integer which encodes the corresponding syntax class.  See Info
+integer that encodes the corresponding syntax class.  See Info
 node `(elisp)Syntax Table Internals' for a list of codes.
 
 If SYNTAX is nil, return nil."
@@ -4911,7 +4911,7 @@ the number of frames to skip (minus 1).")
 
 (defun called-interactively-p (&optional kind)
   "Return t if the containing function was called by `call-interactively'.
-If KIND is `interactive', then only return t if the call was made
+If KIND is `interactive', then return t only if the call was made
 interactively by the user, i.e. not in `noninteractive' mode nor
 when `executing-kbd-macro'.
 If KIND is `any', on the other hand, it will return t for any kind of
@@ -5044,9 +5044,9 @@ if it returns non-nil, then MAP stays active.
 Optional arg ON-EXIT, if non-nil, specifies a function that is
 called, with no arguments, after MAP is deactivated.
 
-This uses `overriding-terminal-local-map' which takes precedence over all other
-keymaps.  As usual, if no match for a key is found in MAP, the normal key
-lookup sequence then continues.
+This uses `overriding-terminal-local-map', which takes precedence over all
+other keymaps.  As usual, if no match for a key is found in MAP, the normal
+key lookup sequence then continues.
 
 This returns an \"exit function\", which can be called with no argument
 to deactivate this transient map, regardless of KEEP-PRED."
@@ -5224,7 +5224,7 @@ NEW-MESSAGE, if non-nil, sets a new message for the reporter."
 			  max-value))
 	     (when (integerp value)
 	       (setcar reporter (ceiling (car reporter))))
-	     ;; Only print message if enough time has passed
+	     ;; Print message only if enough time has passed
 	     (when enough-time-passed
                (if suffix
                    (aset parameters 6 suffix)

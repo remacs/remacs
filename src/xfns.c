@@ -1,4 +1,4 @@
-/* Functions for the X window system.
+/* Functions for the X Window System.
 
 Copyright (C) 1989, 1992-2019 Free Software Foundation, Inc.
 
@@ -5351,8 +5351,8 @@ and width values are in pixels.
   FRAME.
 
 `outer-border-width' is the width of the X border of FRAME.  The X
-  border is usually only shown for frames without window manager
-  decorations like child and tooltip frames.  */)
+  border is usually shown only for frames without window manager
+  decorations, such as child and tooltip frames.  */)
   (Lisp_Object frame)
 {
   return frame_geometry (frame, Qnil);
@@ -5787,7 +5787,7 @@ DEFUN ("x-display-list", Fx_display_list, Sx_display_list, 0, 0, 0,
 
 DEFUN ("x-synchronize", Fx_synchronize, Sx_synchronize, 1, 2, 0,
        doc: /* If ON is non-nil, report X errors as soon as the erring request is made.
-This function only has an effect on X Windows.  With MS Windows, it is
+This function has an effect only on X Windows.  With MS Windows, it is
 defined but does nothing.
 
 If ON is nil, allow buffering of requests.
@@ -7365,9 +7365,9 @@ Use a file selection dialog.  Select DEFAULT-FILENAME in the dialog's file
 selection box, if specified.  If MUSTMATCH is non-nil, the returned file
 or directory must exist.
 
-This function is only defined on NS, MS Windows, and X Windows with the
+This function is defined only on NS, MS Windows, and X Windows with the
 Motif or Gtk toolkits.  With the Motif toolkit, ONLY-DIR-P is ignored.
-Otherwise, if ONLY-DIR-P is non-nil, the user can only select directories.
+Otherwise, if ONLY-DIR-P is non-nil, the user can select only directories.
 On MS Windows 7 and later, the file selection dialog "remembers" the last
 directory where the user selected a file, and will open that directory
 instead of DIR on subsequent invocations of this function with the same

@@ -6120,7 +6120,7 @@ which need to do mouse handling at the Lisp level.  */);
 
   DEFVAR_LISP ("mouse-highlight", Vmouse_highlight,
 	       doc: /* If non-nil, clickable text is highlighted when mouse is over it.
-If the value is an integer, highlighting is only shown after moving the
+If the value is an integer, highlighting is shown only after moving the
 mouse, while keyboard input turns off the highlight even when the mouse
 is over the clickable text.  However, the mouse shape still indicates
 when the mouse is over clickable text.  */);
