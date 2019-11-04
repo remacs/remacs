@@ -1283,20 +1283,20 @@ warnings are intended to be removed in a future Emacs version.}
 
 @item
 A list of four integers @code{(@var{high} @var{low} @var{micro}
-@var{pico})}, where 0 @leq{} @var{low} < 65536, 0 @leq{} @var{micro} <
-1000000, and 0 @leq{} @var{pico} < 1000000.
+@var{pico})}, where 0@leq{}@var{low}<65536,
+0@leq{}@var{micro}<1000000, and 0@leq{}@var{pico}<1000000.
 This represents the number of seconds using the formula:
 @ifnottex
 @var{high} * 2**16 + @var{low} + @var{micro} * 10**@minus{}6 +
 @var{pico} * 10**@minus{}12.
 @end ifnottex
 @tex
-$high*2^{16} + low + micro*10^{-6} + pico*10^{-12}$.
+$high \times 2^{16} + low + micro \times 10^{-6} + pico \times 10^{-12}$.
 @end tex
 In some cases, functions may default to returning two- or
-three-element lists, with omitted @var{microsec} and @var{picosec}
+three-element lists, with omitted @var{micro} and @var{pico}
 components defaulting to zero.
-On all current machines @var{picosec} is a multiple of 1000, but this
+On all current machines @var{pico} is a multiple of 1000, but this
 may change as higher-resolution clocks become available.
 @end itemize
 
@@ -1309,9 +1309,11 @@ time, a single floating-point number for seconds, or a list
 @var{low})} that is a truncated list timestamp with missing elements
 taken to be zero.
 
+@cindex Specified time is not representable
 Time values can be converted to and from calendrical and other forms.
 Some of these conversions rely on operating system functions that
-limit the range of possible time values, and signal an error if the
+limit the range of possible time values, and signal an error such as
+@samp{"Specified time is not representable"} if the
 limits are exceeded.  For instance, a system may not support years
 before 1970, or years before 1901, or years far in the future.
 You can convert a time value into
@@ -1642,7 +1644,7 @@ convention, @var{zone} defaults to the current time zone rule
 Year numbers less than 100 are not treated specially.  If you want them
 to stand for years above 1900, or years above 2000, you must alter them
 yourself before you call @code{encode-time}.
-The operating system limits the range of time values.
+The operating system limits the range of time and zone values.
 
 The @code{encode-time} function acts as a rough inverse to
 @code{decode-time}.  For example, you can pass the output of
@@ -1671,9 +1673,9 @@ Time values include @code{nil}, numbers, and Lisp timestamps
 This function parses the time-string @var{string} and returns the
 corresponding Lisp timestamp.  The argument @var{string} should represent
 a date-time, and should be in one of the forms recognized by
-@code{parse-time-string} (see below).  This function assumes the GMT
-timezone if @var{string} lacks an explicit timezone information.
-The operating system limits the range of time values.
+@code{parse-time-string} (see below).  This function assumes Universal
+Time if @var{string} lacks explicit time zone information.
+The operating system limits the range of time and zone values.
 @end defun
 
 @defun parse-time-string string
@@ -1697,7 +1699,7 @@ less well-formed time strings as well.
 @vindex ISO 8601 date/time strings
 @defun iso8601-parse string
 For a more strict function (that will error out upon invalid input),
-this function can be used instead.  It's able to parse all variants of
+this function can be used instead.  It can parse all variants of
 the ISO 8601 standard, so in addition to the formats mentioned above,
 it also parses things like ``1998W45-3'' (week number) and
 ``1998-245'' (ordinal day number).  To parse durations, there's
@@ -1999,13 +2001,14 @@ Here is how to add a number of seconds to a time value:
 
 @defun time-to-days time-value
 This function returns the number of days between the beginning of year
-1 and @var{time-value}.
-The operating system limits the range of time values.
+1 and @var{time-value}, assuming the default time zone.
+The operating system limits the range of time and zone values.
 @end defun
 
 @defun time-to-day-in-year time-value
-This returns the day number within the year corresponding to @var{time-value}.
-The operating system limits the range of time values.
+This returns the day number within the year corresponding to @var{time-value},
+assuming the default time zone.
+The operating system limits the range of time and zone values.
 @end defun
 
 @defun date-leap-year-p year
