@@ -415,6 +415,10 @@ pass to the OPERATION."
       (with-parsed-tramp-file-name (if t1 dirname newname) nil
 	(with-tramp-progress-reporter
 	    v 0 (format "Copying %s to %s" dirname newname)
+	  (unless (file-exists-p dirname)
+	    (tramp-error
+	     v tramp-file-missing
+	     "Copying directory" "No such file or directory" dirname))
 	  (when (and (file-directory-p newname)
 		     (not (tramp-compat-directory-name-p newname)))
 	    (tramp-error v 'file-already-exists newname))
@@ -570,6 +574,13 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
     (if (file-directory-p filename)
 	(copy-directory filename newname keep-date 'parents 'copy-contents)
 
+      (unless (file-exists-p filename)
+	(tramp-error
+	 (tramp-dissect-file-name
+	  (if (tramp-tramp-file-p filename) filename newname))
+	 tramp-file-missing
+	 "Copying file" "No such file or directory" filename))
+
       (let ((tmpfile (file-local-copy filename)))
 	(if tmpfile
 	    ;; Remote filename.
@@ -669,6 +680,10 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 (defun tramp-smb-handle-directory-files
   (directory &optional full match nosort)
   "Like `directory-files' for Tramp files."
+  (unless (file-exists-p directory)
+    (tramp-error
+     (tramp-dissect-file-name directory) tramp-file-missing
+     "No such file or directory" directory))
   (let ((result (mapcar #'directory-file-name
 			(file-name-all-completions "" directory))))
     ;; Discriminate with regexp.
@@ -1333,6 +1348,10 @@ component is used as the target of the symlink."
 
   (with-parsed-tramp-file-name
       (if (tramp-tramp-file-p filename) filename newname) nil
+    (unless (file-exists-p filename)
+      (tramp-error
+       v tramp-file-missing
+       "Renaming file" "No such file or directory" filename))
     (when (and (not ok-if-already-exists) (file-exists-p newname))
       (tramp-error v 'file-already-exists newname))
     (when (and (file-directory-p newname)

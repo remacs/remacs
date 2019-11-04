@@ -1713,6 +1713,10 @@ of."
   (directory &optional full match nosort id-format)
   "Like `directory-files-and-attributes' for Tramp files."
   (unless id-format (setq id-format 'integer))
+  (unless (file-exists-p directory)
+    (tramp-error
+     (tramp-dissect-file-name directory) tramp-file-missing
+     "No such file or directory" directory))
   (when (file-directory-p directory)
     (setq directory (expand-file-name directory))
     (let* ((temp
@@ -1923,6 +1927,10 @@ tramp-sh-handle-file-name-all-completions: internal error accessing `%s': `%s'"
   (let ((t1 (tramp-tramp-file-p dirname))
 	(t2 (tramp-tramp-file-p newname)))
     (with-parsed-tramp-file-name (if t1 dirname newname) nil
+      (unless (file-exists-p dirname)
+	(tramp-error
+	 v tramp-file-missing
+	 "Copying directory" "No such file or directory" dirname))
       (if (and (not copy-contents)
 	       (tramp-get-method-parameter v 'tramp-copy-recursive)
 	       ;; When DIRNAME and NEWNAME are remote, they must have
@@ -2011,6 +2019,9 @@ file names."
 			   (apply #'file-extended-attributes (list filename)))))
 
       (with-parsed-tramp-file-name (if t1 filename newname) nil
+	(unless (file-exists-p filename)
+	  (tramp-error
+	   v tramp-file-missing "No such file or directory" filename))
 	(when (and (not ok-if-already-exists) (file-exists-p newname))
 	  (tramp-error v 'file-already-exists newname))
 	(when (and (file-directory-p newname)

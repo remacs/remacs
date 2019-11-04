@@ -2370,6 +2370,9 @@ This checks also `file-name-as-directory', `file-name-directory',
 	  ;; Copy simple file.
 	  (unwind-protect
 	      (progn
+		(should-error
+		 (copy-file source target)
+		 :type tramp-file-missing)
 		(write-region "foo" nil source)
 		(should (file-exists-p source))
 		(copy-file source target)
@@ -2482,6 +2485,9 @@ This checks also `file-name-as-directory', `file-name-directory',
 	  ;; Rename simple file.
 	  (unwind-protect
 	      (progn
+		(should-error
+		 (rename-file source target)
+		 :type tramp-file-missing)
 		(write-region "foo" nil source)
 		(should (file-exists-p source))
 		(rename-file source target)
@@ -2605,20 +2611,25 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
   (skip-unless (tramp--test-enabled))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
-    (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
+    (let* ((tmp-name1 (tramp--test-make-temp-name nil quoted))
+	   (tmp-name2 (expand-file-name "foo" tmp-name1)))
       ;; Delete empty directory.
-      (make-directory tmp-name)
-      (should (file-directory-p tmp-name))
-      (delete-directory tmp-name)
-      (should-not (file-directory-p tmp-name))
+      (make-directory tmp-name1)
+      (should (file-directory-p tmp-name1))
+      (delete-directory tmp-name1)
+      (should-not (file-directory-p tmp-name1))
       ;; Delete non-empty directory.
-      (make-directory tmp-name)
-      (should (file-directory-p tmp-name))
-      (write-region "foo" nil (expand-file-name "bla" tmp-name))
-      (should (file-exists-p (expand-file-name "bla" tmp-name)))
-      (should-error (delete-directory tmp-name) :type 'file-error)
-      (delete-directory tmp-name 'recursive)
-      (should-not (file-directory-p tmp-name)))))
+      (make-directory tmp-name1)
+      (should (file-directory-p tmp-name1))
+      (write-region "foo" nil (expand-file-name "bla" tmp-name1))
+      (should (file-exists-p (expand-file-name "bla" tmp-name1)))
+      (make-directory tmp-name2)
+      (should (file-directory-p tmp-name2))
+      (write-region "foo" nil (expand-file-name "bla" tmp-name2))
+      (should (file-exists-p (expand-file-name "bla" tmp-name2)))
+      (should-error (delete-directory tmp-name1) :type 'file-error)
+      (delete-directory tmp-name1 'recursive)
+      (should-not (file-directory-p tmp-name1)))))
 
 (ert-deftest tramp-test15-copy-directory ()
   "Check `copy-directory'."
@@ -2636,6 +2647,9 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
       ;; Copy complete directory.
       (unwind-protect
 	  (progn
+	    (should-error
+	     (copy-directory tmp-name1 tmp-name2)
+	     :type tramp-file-missing)
 	    ;; Copy empty directory.
 	    (make-directory tmp-name1)
 	    (write-region "foo" nil tmp-name4)
@@ -2696,6 +2710,9 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	   (tmp-name3 (expand-file-name "foo" tmp-name1)))
       (unwind-protect
 	  (progn
+	    (should-error
+	     (directory-files tmp-name1)
+	     :type tramp-file-missing)
 	    (make-directory tmp-name1)
 	    (write-region "foo" nil tmp-name2)
 	    (write-region "bla" nil tmp-name3)
@@ -3174,6 +3191,9 @@ They might differ only in time attributes or directory size."
 	   attr)
       (unwind-protect
 	  (progn
+	    (should-error
+	     (directory-files-and-attributes tmp-name1)
+	     :type tramp-file-missing)
 	    (make-directory tmp-name1)
 	    (should (file-directory-p tmp-name1))
 	    (setq tramp--test-start-time
