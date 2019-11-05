@@ -1458,6 +1458,8 @@ commands repeat the search for the specified occurrence of the search string.
 A negative argument repeats the search in the opposite direction.
 This makes possible also to use a prefix argument for 'M-s .'
 ('isearch-forward-symbol-at-point') to find the next Nth symbol.
+Also a prefix argument is supported for 'isearch-yank-until-char',
+'isearch-yank-word-or-char', 'isearch-yank-symbol-or-char'.
 
 *** To go to the first/last occurrence of the current search string
 is possible now with new commands 'isearch-beginning-of-buffer' and
