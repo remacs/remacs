@@ -102,7 +102,7 @@ The properties returned may include `top', `left', `height', and `width'."
 
 ;; Here are some Nextstep-like bindings for command key sequences.
 (define-key global-map [?\s-,] 'customize)
-(define-key global-map [?\s-'] 'next-multiframe-window)
+(define-key global-map [?\s-'] 'next-window-any-frame)
 (define-key global-map [?\s-`] 'other-frame)
 (define-key global-map [?\s-~] 'ns-prev-frame)
 (define-key global-map [?\s--] 'center-line)

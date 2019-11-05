@@ -202,6 +202,16 @@ the new version of the file again.)
 
 * Changes in Emacs 27.1
 
++++
+** 'next/previous-multiframe-window' have been renamed.
+The new names are as follows:
+
+ 'next-multiframe-window'     -> 'next-window-any-frame'
+ 'previous-multiframe-window' -> 'previous-window-any-frame'
+
+The old function names are maintained as aliases for backward
+compatibility.
+
 ** emacsclient
 
 +++

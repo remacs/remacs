@@ -673,7 +673,7 @@ Create one if necessary.  Note that the minibuffer frame, if separate,
 is not considered (see `next-frame')."
   (if (equal (next-frame) (selected-frame)) (make-frame) (next-frame)))
 
-(defun next-multiframe-window ()
+(defun next-window-any-frame ()
   "Select the next window, regardless of which frame it is on."
   (interactive)
   (select-window (next-window (selected-window)
@@ -681,13 +681,16 @@ is not considered (see `next-frame')."
 			      0))
   (select-frame-set-input-focus (selected-frame)))
 
-(defun previous-multiframe-window ()
+(defun previous-window-any-frame ()
   "Select the previous window, regardless of which frame it is on."
   (interactive)
   (select-window (previous-window (selected-window)
 				  (> (minibuffer-depth) 0)
 				  0))
   (select-frame-set-input-focus (selected-frame)))
+
+(defalias 'next-multiframe-window 'next-window-any-frame)
+(defalias 'previous-multiframe-window 'previous-window-any-frame)
 
 (defun window-system-for-display (display)
   "Return the window system for DISPLAY.
