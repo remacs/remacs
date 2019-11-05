@@ -3016,6 +3016,20 @@ User is always nil."
      filename newname 'ok-if-already-exists 'keep-time
      'preserve-uid-gid 'preserve-permissions)))
 
+(defun tramp-handle-copy-directory
+  (directory newname &optional keep-date parents copy-contents)
+  "Like `copy-directory' for Tramp files."
+  ;; `directory-files' creates `newname' before running this check.
+  ;; So we do it ourselves.
+  (unless (file-exists-p directory)
+    (tramp-error
+     (tramp-dissect-file-name directory) tramp-file-missing
+     "No such file or directory" directory))
+  ;; We must do it file-wise.
+  (tramp-run-real-handler
+   'copy-directory
+   (list directory newname keep-date parents copy-contents)))
+
 (defun tramp-handle-directory-file-name (directory)
   "Like `directory-file-name' for Tramp files."
   ;; If localname component of filename is "/", leave it unchanged.

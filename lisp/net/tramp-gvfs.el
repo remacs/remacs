@@ -535,7 +535,7 @@ It has been changed in GVFS 1.14.")
   '((access-file . tramp-handle-access-file)
     (add-name-to-file . tramp-handle-add-name-to-file)
     ;; `byte-compiler-base-file-name' performed by default handler.
-    ;; `copy-directory' performed by default handler.
+    (copy-directory . tramp-handle-copy-directory)
     (copy-file . tramp-gvfs-handle-copy-file)
     (delete-directory . tramp-gvfs-handle-delete-directory)
     (delete-file . tramp-gvfs-handle-delete-file)

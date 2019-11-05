@@ -94,7 +94,7 @@ It is used for TCP/IP devices."
   '((access-file . tramp-handle-access-file)
     (add-name-to-file . tramp-handle-add-name-to-file)
     ;; `byte-compiler-base-file-name' performed by default handler.
-    ;; `copy-directory' performed by default handler.
+    (copy-directory . tramp-handle-copy-directory)
     (copy-file . tramp-adb-handle-copy-file)
     (delete-directory . tramp-adb-handle-delete-directory)
     (delete-file . tramp-adb-handle-delete-file)

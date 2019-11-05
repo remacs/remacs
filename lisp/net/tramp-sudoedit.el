@@ -66,7 +66,7 @@ See `tramp-actions-before-shell' for more info.")
   '((access-file . tramp-handle-access-file)
     (add-name-to-file . tramp-sudoedit-handle-add-name-to-file)
     (byte-compiler-base-file-name . ignore)
-    ;; `copy-directory' performed by default handler.
+    (copy-directory . tramp-handle-copy-directory)
     (copy-file . tramp-sudoedit-handle-copy-file)
     (delete-directory . tramp-sudoedit-handle-delete-directory)
     (delete-file . tramp-sudoedit-handle-delete-file)
