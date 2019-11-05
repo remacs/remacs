@@ -5,7 +5,7 @@
 ;; Author: João Távora <joaotavora@gmail.com>
 ;; Keywords: processes, languages, extensions
 ;; Package-Requires: ((emacs "25.2"))
-;; Version: 1.0.7
+;; Version: 1.0.8
 
 ;; This is an Elpa :core package.  Don't use functionality that is not
 ;; compatible with Emacs 25.2.
@@ -460,9 +460,13 @@ With optional CLEANUP, kill any associated buffers."
                                          (json-null nil))
                                      (json-encode object)))))
 
-(cl-defun jsonrpc--reply (connection id &key (result nil result-supplied-p) error)
+(cl-defun jsonrpc--reply
+    (connection id &key (result nil result-supplied-p) (error nil error-supplied-p))
   "Reply to CONNECTION's request ID with RESULT or ERROR."
-  (jsonrpc-connection-send connection :id id :result result :error error))
+  (apply #'jsonrpc-connection-send connection
+         `(:id ,id
+               ,@(and result-supplied-p `(:result ,result))
+               ,@(and error-supplied-p `(:error ,error)))))
 
 (defun jsonrpc--call-deferred (connection)
   "Call CONNECTION's deferred actions, who may again defer themselves."
