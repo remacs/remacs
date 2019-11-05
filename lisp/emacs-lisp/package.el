@@ -2773,6 +2773,7 @@ Letters do not insert themselves; instead, they are commands.
   "Convenience macro for `package-menu--generate'.
 If the alist stored in the symbol LISTNAME lacks an entry for a
 package PKG-DESC, add one.  The alist is keyed with PKG-DESC."
+  (declare (obsolete nil "27.1"))
   `(unless (assoc ,pkg-desc ,listname)
      ;; FIXME: Should we move status into pkg-desc?
      (push (cons ,pkg-desc ,status) ,listname)))
