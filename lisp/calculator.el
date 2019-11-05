@@ -1620,7 +1620,9 @@ To use this, apply a binary operator (evaluate it), then call this."
   (condition-case nil
       (expt x y)
     (overflow-error
-     (if (or (natnump x) (cl-evenp y))
+     ;; X and Y must be integers, as expt silently returns floating-point
+     ;; infinity on floating-point overflow.
+     (if (or (natnump x) (zerop (logand x 1)))
 	 1.0e+INF
        -1.0e+INF))))
 
