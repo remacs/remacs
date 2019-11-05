@@ -77,14 +77,14 @@
   :version "27.1"
   :group 'tab-line-faces)
 
-(defface tab-line-tab-selected
+(defface tab-line-tab-current
   '((default
       :inherit tab-line-tab)
     (((class color) (min-colors 88))
      :background "grey85")
     (t
      :inverse-video t))
-  "Tab line face for tab in the selected window."
+  "Tab line face for tab with current buffer in selected window."
   :version "27.1"
   :group 'tab-line-faces)
 
@@ -254,6 +254,7 @@ Reduce tab width proportionally to space taken by other tabs."
                                             tab-line-tab-name-ellipsis)
                   'help-echo tab-name))))
 
+
 (defvar tab-line-tabs-limit nil
   "Maximum number of buffer tabs displayed in the tab line.
 If nil, no limit.")
@@ -270,6 +271,8 @@ with the same major mode as the current buffer."
                         tab-line-tabs-window-buffers)
                  (const :tag "Same mode buffers"
                         tab-line-tabs-mode-buffers)
+                 (const :tag "Grouped buffers"
+                        tab-line-tabs-buffer-groups)
                  (function :tag "Function"))
   :initialize 'custom-initialize-default
   :set (lambda (sym val)
@@ -280,13 +283,77 @@ with the same major mode as the current buffer."
 
 (defun tab-line-tabs-mode-buffers ()
   "Return a list of buffers with the same major mode with current buffer."
-  (let* ((window (selected-window))
-         (buffer (window-buffer window))
-         (mode (with-current-buffer buffer major-mode)))
+  (let ((mode major-mode))
     (seq-sort-by #'buffer-name #'string<
                  (seq-filter (lambda (b) (with-current-buffer b
                                            (derived-mode-p mode)))
                              (buffer-list)))))
+
+(defvar tab-line-tabs-buffer-groups mouse-buffer-menu-mode-groups
+  "How to group various major modes together in the tab line.
+Each element has the form (REGEXP . GROUPNAME).
+If the major mode's name string matches REGEXP, use GROUPNAME instead.")
+
+(defun tab-line-tabs-buffer-groups--name (&optional buffer)
+  (let* ((buffer (or buffer (current-buffer)))
+         (mode (with-current-buffer buffer
+                 (format-mode-line mode-name))))
+    (or (cdr (seq-find (lambda (group)
+                         (string-match-p (car group) mode))
+                       tab-line-tabs-buffer-groups))
+        mode)))
+
+(defun tab-line-tabs-buffer-groups ()
+  (if (window-parameter nil 'tab-line-groups)
+      (let* ((buffers (seq-filter (lambda (b)
+                                    (not (= (elt (buffer-name b) 0) ?\s)))
+                                  (buffer-list)))
+             (groups
+              (seq-sort #'string<
+                        (seq-map #'car
+                                 (seq-group-by
+                                  (lambda (buffer)
+                                    (tab-line-tabs-buffer-groups--name
+                                     buffer))
+                                  buffers))))
+             (selected-group (window-parameter nil 'tab-line-group))
+             (tabs
+              (mapcar (lambda (group)
+                        `(tab
+                          (name . ,group)
+                          (selected . ,(equal group selected-group))
+                          (select . ,(lambda ()
+                                       (set-window-parameter nil 'tab-line-groups nil)
+                                       (set-window-parameter nil 'tab-line-group group)))))
+                      groups)))
+        tabs)
+
+    (let* ((window-parameter (window-parameter nil 'tab-line-group))
+           (group-name (tab-line-tabs-buffer-groups--name))
+           (group (prog1 (or window-parameter group-name)
+                    (when (equal window-parameter group-name)
+                      (set-window-parameter nil 'tab-line-group nil))))
+           (group-tab `(tab
+                        (name . ,group)
+                        ;; Just to highlight the current group name
+                        (selected . t)
+                        (select . ,(lambda ()
+                                    (set-window-parameter nil 'tab-line-groups t)
+                                    (set-window-parameter nil 'tab-line-group group)))))
+           (buffers
+            (seq-sort-by #'buffer-name #'string<
+                         (seq-filter (lambda (b)
+                                       (and (not (= (elt (buffer-name b) 0) ?\s))
+                                            (equal (tab-line-tabs-buffer-groups--name b)
+                                                   group)))
+                                     (buffer-list))))
+           (tabs (mapcar (lambda (buffer)
+                           `(tab
+                             (name . ,(funcall tab-line-tab-name-function buffer))
+                             (selected . ,(eq buffer (current-buffer)))
+                             (buffer . ,buffer)))
+                         buffers)))
+      (cons group-tab tabs))))
 
 (defun tab-line-tabs-window-buffers ()
   "Return a list of tabs that should be displayed in the tab line.
@@ -321,6 +388,7 @@ variable `tab-line-tabs-function'."
               (list buffer)
               next-buffers))))
 
+
 (defun tab-line-format ()
   "Template for displaying tab line for selected window."
   (let* ((window (selected-window))
@@ -331,26 +399,29 @@ variable `tab-line-tabs-function'."
          (strings
           (mapcar
            (lambda (tab)
-             (concat
-              separator
-              (apply 'propertize
-                     (concat (propertize
+             (let* ((buffer-p (bufferp tab))
+                    (selected-p (if buffer-p
+                                    (eq tab selected-buffer)
+                                  (cdr (assq 'selected tab))))
+                    (name (if buffer-p
                               (funcall tab-line-tab-name-function tab tabs)
-                              'keymap tab-line-tab-map)
-                             (or (and tab-line-close-button-show
-                                      (not (eq tab-line-close-button-show
-                                               (if (eq tab selected-buffer)
-                                                   'non-selected
-                                                 'selected)))
-                                      tab-line-close-button) ""))
-                     `(
-                       tab ,tab
-                       face ,(if (eq tab selected-buffer)
-                                 (if (eq (selected-window) (old-selected-window))
-                                     'tab-line-tab-selected
-                                   'tab-line-tab)
-                               'tab-line-tab-inactive)
-                       mouse-face tab-line-highlight))))
+                            (cdr (assq 'name tab)))))
+               (concat
+                separator
+                (apply 'propertize
+                       (concat (propertize name 'keymap tab-line-tab-map)
+                               (or (and tab-line-close-button-show
+                                        (not (eq tab-line-close-button-show
+                                                 (if selected-p 'non-selected 'selected)))
+                                        tab-line-close-button) ""))
+                       `(
+                         tab ,tab
+                         face ,(if selected-p
+                                   (if (eq (selected-window) (old-selected-window))
+                                       'tab-line-tab-current
+                                     'tab-line-tab)
+                                 'tab-line-tab-inactive)
+                         mouse-face tab-line-highlight)))))
            tabs)))
     (append
      (list separator
@@ -361,8 +432,9 @@ variable `tab-line-tabs-function'."
                    (> (length strings) 1))
                tab-line-right-button))
      (if hscroll (nthcdr hscroll strings) strings)
-     (list (concat separator (when tab-line-new-tab-choice
-                               tab-line-new-button))))))
+     (when (eq tab-line-tabs-function #'tab-line-tabs-window-buffers)
+       (list (concat separator (when tab-line-new-tab-choice
+                                 tab-line-new-button)))))))
 
 
 (defun tab-line-hscroll (&optional arg window)
@@ -410,9 +482,17 @@ So for example, switching to a previous tab is equivalent to
 using the `previous-buffer' command."
   (interactive "e")
   (let* ((posnp (event-start e))
-         (window (posn-window posnp))
-         (buffer (get-pos-property 1 'tab (car (posn-string posnp))))
-         (window-buffer (window-buffer window))
+         (tab (get-pos-property 1 'tab (car (posn-string posnp))))
+         (buffer (if (bufferp tab) tab (cdr (assq 'buffer tab)))))
+    (if buffer
+        (tab-line-select-tab-buffer buffer (posn-window posnp))
+      (let ((select (cdr (assq 'select tab))))
+        (when (functionp select)
+          (funcall select)
+          (force-mode-line-update))))))
+
+(defun tab-line-select-tab-buffer (buffer &optional window)
+  (let* ((window-buffer (window-buffer window))
          (next-buffers (seq-remove (lambda (b) (eq b window-buffer))
                                    (window-next-buffers window)))
          (prev-buffers (seq-remove (lambda (b) (eq b window-buffer))
