@@ -2690,7 +2690,7 @@ either a full name or nil, and EMAIL is a valid email address."
     (define-key map "d" 'package-menu-mark-delete)
     (define-key map "i" 'package-menu-mark-install)
     (define-key map "U" 'package-menu-mark-upgrades)
-    (define-key map "r" 'package-menu-refresh)
+    (define-key map "r" 'revert-buffer)
     (define-key map (kbd "/ k") 'package-menu-filter-by-keyword)
     (define-key map (kbd "/ n") 'package-menu-filter-by-name)
     (define-key map (kbd "/ /") 'package-menu-clear-filter)
@@ -2709,7 +2709,7 @@ either a full name or nil, and EMAIL is a valid email address."
     ["Describe Package" package-menu-describe-package :help "Display information about this package"]
     ["Help" package-menu-quick-help :help "Show short key binding help for package-menu-mode"]
     "--"
-    ["Refresh Package List" package-menu-refresh
+    ["Refresh Package List" revert-buffer
      :help "Redownload the ELPA archive"
      :active (not package--downloads-in-progress)]
     ["Redisplay buffer" revert-buffer :help "Update the buffer with current list of packages"]
@@ -2764,6 +2764,7 @@ Letters do not insert themselves; instead, they are commands.
   (setq tabulated-list-sort-key (cons "Status" nil))
   (add-hook 'tabulated-list-revert-hook #'package-menu--refresh nil t)
   (tabulated-list-init-header)
+  (setq revert-buffer-function 'package-menu--refresh)
   (setf imenu-prev-index-position-function
         #'package--imenu-prev-index-position-function)
   (setf imenu-extract-index-name-function
@@ -3162,12 +3163,15 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
 (defvar package-menu--old-archive-contents nil
   "`package-archive-contents' before the latest refresh.")
 
-(defun package-menu-refresh ()
+(defun package-menu--refresh (&optional _arg _noconfirm)
   "In Package Menu, download the Emacs Lisp package archive.
 Fetch the contents of each archive specified in
 `package-archives', and then refresh the package menu.  Signal a
-user-error if there is already a refresh running asynchronously."
-  (interactive)
+user-error if there is already a refresh running asynchronously.
+
+`package-menu-mode' sets `revert-buffer-function' to this
+function.  The args ARG and NOCONFIRM, passed from
+`revert-buffer', are ignored."
   (unless (derived-mode-p 'package-menu-mode)
     (user-error "The current buffer is not a Package Menu"))
   (when (and package-menu-async package--downloads-in-progress)
@@ -3175,6 +3179,7 @@ user-error if there is already a refresh running asynchronously."
   (setq package-menu--old-archive-contents package-archive-contents)
   (setq package-menu--new-package-list nil)
   (package-refresh-contents package-menu-async))
+(define-obsolete-function-alias 'package-menu-refresh 'revert-buffer "27.1")
 
 (defun package-menu-hide-package ()
   "Hide a package under point in Package Menu.
@@ -3638,7 +3643,7 @@ short description."
       (package-menu-mode)
 
       ;; Fetch the remote list of packages.
-      (unless no-fetch (package-menu-refresh))
+      (unless no-fetch (package-menu--refresh))
 
       ;; If we're not async, this would be redundant.
       (when package-menu-async

@@ -1152,6 +1152,14 @@ the 'package-menu-clear-filter' function, bound to '/ /' by default.
 ---
 *** The package list can now be sorted by version or description.
 
++++
+*** In Package Menu, 'g' now updates package data from archives.
+Previously, 'g' invoked 'tabulated-list-revert' which did not update
+the cached archive data.  It is now bound to 'revert-buffer', which
+will now update the data.
+
+'package-menu-refresh' is an obsolete alias for 'revert-buffer'.
+
 ** Info
 
 +++

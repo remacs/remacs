@@ -149,12 +149,13 @@ Download and install all packages marked with @kbd{i}, and their
 dependencies; also, delete all packages marked with @kbd{d}
 (@code{package-menu-execute}).  This also removes the marks.
 
+@item g
 @item r
+@kindex g @r{(Package Menu)}
 @kindex r @r{(Package Menu)}
-@findex package-menu-refresh
-Refresh the package list (@code{package-menu-refresh}).  This fetches
-the list of available packages from the package archive again, and
-recomputes the package list.
+Refresh the package list (@code{revert-buffer}).  This fetches the
+list of available packages from the package archive again, and
+redisplays the package list.
 
 @item / k
 @kindex / k @r{(Package Menu)}
