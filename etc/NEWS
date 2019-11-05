@@ -2617,6 +2617,11 @@ like 'file-attributes' that compute file sizes and other attributes,
 functions like 'process-id' that compute process IDs, and functions like
 'user-uid' and 'group-gid' that compute user and group IDs.
 
++++
+** overflow-error is now documented as a subcategory of range-error.
+Formerly it was undocumented, and was (incorrectly) a subcategory
+of domain-error.
+
 ** Time values
 
 +++

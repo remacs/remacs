@@ -163,6 +163,10 @@ The message is @samp{Attempt to modify a protected file}.
 
 @item range-error
 The message is @code{Arithmetic range error}.
+
+@item overflow-error
+The message is @samp{Arithmetic overflow error}.  This is a subcategory
+of @code{range-error}.
 This can happen with integers exceeding the @code{integer-width} limit.
 @xref{Integer Basics}.
 
@@ -228,10 +232,6 @@ mathematical functions.  @xref{Math Functions}.
 @table @code
 @item domain-error
 The message is @samp{Arithmetic domain error}.
-
-@item overflow-error
-The message is @samp{Arithmetic overflow error}.  This is a subcategory
-of @code{domain-error}.
 
 @item singularity-error
 The message is @samp{Arithmetic singularity error}.  This is a
