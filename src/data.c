@@ -3290,14 +3290,29 @@ In this case, the sign bit is duplicated.  */)
 Lisp_Object
 expt_integer (Lisp_Object x, Lisp_Object y)
 {
+  /* Special cases for -1 <= x <= 1, which never overflow.  */
+  if (EQ (x, make_fixnum (1)))
+    return x;
+  if (EQ (x, make_fixnum (0)))
+    return EQ (x, y) ? make_fixnum (1) : x;
+  if (EQ (x, make_fixnum (-1)))
+    return ((FIXNUMP (y) ? XFIXNUM (y) & 1 : mpz_odd_p (*xbignum_val (y)))
+	    ? x : make_fixnum (1));
+
   unsigned long exp;
-  if (TYPE_RANGED_FIXNUMP (unsigned long, y))
-    exp = XFIXNUM (y);
-  else if (MOST_POSITIVE_FIXNUM < ULONG_MAX && BIGNUMP (y)
-	   && mpz_fits_ulong_p (*xbignum_val (y)))
-    exp = mpz_get_ui (*xbignum_val (y));
+  if (FIXNUMP (y))
+    {
+      if (ULONG_MAX < XFIXNUM (y))
+	overflow_error ();
+      exp = XFIXNUM (y);
+    }
   else
-    overflow_error ();
+    {
+      if (ULONG_MAX <= MOST_POSITIVE_FIXNUM
+	  || !mpz_fits_ulong_p (*xbignum_val (y)))
+	overflow_error ();
+      exp = mpz_get_ui (*xbignum_val (y));
+    }
 
   emacs_mpz_pow_ui (mpz[0], *bignum_integer (&mpz[0], x), exp);
   return make_integer_mpz ();
