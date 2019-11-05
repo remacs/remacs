@@ -273,20 +273,22 @@ require user confirmation."
       (exit-minibuffer))))
 
 (defun icomplete-magic-ido-ret ()
-  "Exit forcing completion or enter directory, like `ido-mode'."
+  "Exit minibuffer or enter directory, like `ido-mode'."
   (interactive)
   (let* ((beg (icomplete--field-beg))
          (md (completion--field-metadata beg))
          (category (alist-get 'category (cdr md)))
          (dir (and (eq category 'file)
                    (file-name-directory (icomplete--field-string))))
-         (current (and dir
-                       (car (completion-all-sorted-completions))))
-         (probe (and current
+         (current (car (completion-all-sorted-completions)))
+         (probe (and dir current
                      (expand-file-name (directory-file-name current) dir))))
-    (if (and probe (file-directory-p probe) (not (string= current "./")))
-        (icomplete-force-complete)
-      (icomplete-force-complete-and-exit))))
+    (cond ((and probe (file-directory-p probe) (not (string= current "./")))
+           (icomplete-force-complete))
+          (current
+           (icomplete-force-complete-and-exit))
+          (t
+           (exit-minibuffer)))))
 
 (defun icomplete-magic-ido-backward-updir ()
   "Delete char before or go up directory, like `ido-mode'."
@@ -330,6 +332,7 @@ more like `ido-mode' than regular `icomplete-mode'."
   (remove-hook 'minibuffer-setup-hook #'icomplete-minibuffer-setup)
   (remove-hook 'minibuffer-setup-hook #'icomplete--fido-mode-setup)
   (when fido-mode
+    (icomplete-mode -1)
     (setq icomplete-mode t)
     (add-hook 'minibuffer-setup-hook #'icomplete-minibuffer-setup)
     (add-hook 'minibuffer-setup-hook #'icomplete--fido-mode-setup)))
@@ -355,6 +358,7 @@ completions:
   (remove-hook 'minibuffer-setup-hook #'icomplete-minibuffer-setup)
   (remove-hook 'completion-in-region-mode-hook #'icomplete--in-region-setup)
   (when icomplete-mode
+    (fido-mode -1)
     (when icomplete-in-buffer
       (add-hook 'completion-in-region-mode-hook #'icomplete--in-region-setup))
     (add-hook 'minibuffer-setup-hook #'icomplete-minibuffer-setup)))

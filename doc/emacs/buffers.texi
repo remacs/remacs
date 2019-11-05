@@ -725,6 +725,22 @@ of directories.
 the variable @code{icomplete-mode} to @code{t} (@pxref{Easy
 Customization}).
 
+@findex fido-mode
+@cindex fido mode
+
+  An alternative to Icomplete mode is Fido mode.  This is very similar
+to Icomplete mode, but retains some functionality from a popular
+extension called Ido mode (in fact the name is derived from ``Fake
+Ido'').  Among other things, in Fido mode, @kbd{C-s} and @kbd{C-r} are
+also used to rotate the completions list, @kbd{C-k} can be used to
+delete files and kill buffers in-list.  Another noteworthy aspect is
+that @code{flex} is used as the default completion style
+(@pxref{Completion Styles}).
+
+  To enable Fido mode, type @kbd{M-x fido-mode}, or customize
+the variable @code{fido-mode} to @code{t} (@pxref{Easy
+Customization}).
+
 @node Buffer Menus
 @subsection Customizing Buffer Menus
 

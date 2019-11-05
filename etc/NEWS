@@ -1192,6 +1192,15 @@ A new command 'xref-revert-buffer' is bound to 'g'.
 ---
 *** Imenu support has been added to 'xref--xref-buffer-mode'.
 
+** Icomplete
+
++++
+*** A new minor mode based on Icomplete, Fido mode, is made available.
+The point of this mode, named after "Fake Ido", is to recover much of
+the functionality that still separated the popular ido-mode from
+Icomplete, while still cooperating fully with all of Emacs's
+completion facilities.
+
 ** Ecomplete
 
 *** The ecomplete sorting has changed to a decay-based algorithm.
