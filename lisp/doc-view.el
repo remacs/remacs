@@ -451,9 +451,13 @@ Typically \"page-%s.png\".")
                         (apply orig-fun args)
                         ;; Update the cached version of the pdf file,
                         ;; too.  This is the one that's used when
-                        ;; rendering.
-                        (doc-view-make-safe-dir doc-view-cache-directory)
-                        (write-region nil nil doc-view--buffer-file-name))))
+                        ;; rendering (bug#26996).
+                        (unless (equal buffer-file-name
+                                       doc-view--buffer-file-name)
+                          ;; FIXME: Lars says he needed to recreate
+                          ;; the dir, we should figure out why.
+                          (doc-view-make-safe-dir doc-view-cache-directory)
+                          (write-region nil nil doc-view--buffer-file-name)))))
     (if (and (eq 'pdf doc-view-doc-type)
              (executable-find "pdfinfo"))
         ;; We don't want to revert if the PDF file is corrupted which
