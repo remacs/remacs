@@ -2944,7 +2944,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
 	/* Set ACCUM to the next operation's result if it fits,
 	   else exit the loop.  */
 	bool overflow = false;
-	intmax_t a UNINIT;
+	intmax_t a;
 	switch (code)
 	  {
 	  case Aadd : overflow = INT_ADD_WRAPV (accum, next, &a); break;
@@ -2953,9 +2953,8 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
 	  case Adiv:
 	    if (next == 0)
 	      xsignal0 (Qarith_error);
-	    overflow = INT_DIVIDE_OVERFLOW (accum, next);
-	    if (!overflow)
-	      a = accum / next;
+	    eassert (! INT_DIVIDE_OVERFLOW (accum, next));
+	    a = accum / next;
 	    break;
 	  case Alogand: accum &= next; continue;
 	  case Alogior: accum |= next; continue;
