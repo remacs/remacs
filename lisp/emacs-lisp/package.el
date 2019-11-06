@@ -2767,7 +2767,7 @@ Letters do not insert themselves; instead, they are commands.
   (setq tabulated-list-sort-key (cons "Status" nil))
   (add-hook 'tabulated-list-revert-hook #'package-menu--refresh nil t)
   (tabulated-list-init-header)
-  (setq revert-buffer-function 'package-menu--refresh)
+  (setq revert-buffer-function 'package-menu--refresh-contents)
   (setf imenu-prev-index-position-function
         #'package--imenu-prev-index-position-function)
   (setf imenu-extract-index-name-function
@@ -3166,7 +3166,7 @@ Return (PKG-DESC [NAME VERSION STATUS DOC])."
 (defvar package-menu--old-archive-contents nil
   "`package-archive-contents' before the latest refresh.")
 
-(defun package-menu--refresh (&optional _arg _noconfirm)
+(defun package-menu--refresh-contents (&optional _arg _noconfirm)
   "In Package Menu, download the Emacs Lisp package archive.
 Fetch the contents of each archive specified in
 `package-archives', and then refresh the package menu.  Signal a
@@ -3646,7 +3646,7 @@ short description."
       (package-menu-mode)
 
       ;; Fetch the remote list of packages.
-      (unless no-fetch (package-menu--refresh))
+      (unless no-fetch (package-menu--refresh-contents))
 
       ;; If we're not async, this would be redundant.
       (when package-menu-async
