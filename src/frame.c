@@ -50,11 +50,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 Lisp_Object selected_frame;
 
-/* A frame which is not just a mini-buffer, or NULL if there are no such
-   frames.  This is usually the most recent such frame that was selected.  */
-
-static struct frame *last_nonminibuf_frame;
-
 /* False means there are no visible garbaged frames.  */
 bool frame_garbaged;
 
@@ -996,7 +991,7 @@ make_initial_frame (void)
   if (!noninteractive)
     init_frame_faces (f);
 
-  last_nonminibuf_frame = f;
+  set_last_nonminibuffer_frame(f);
 
   f->can_x_set_window_size = true;
   f->after_make_frame = true;
@@ -1298,7 +1293,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
 
   selected_frame = frame;
   if (! FRAME_MINIBUF_ONLY_P (XFRAME (selected_frame)))
-    last_nonminibuf_frame = XFRAME (selected_frame);
+    set_last_nonminibuffer_frame(XFRAME (selected_frame));
 
   Fselect_window (f->selected_window, norecord);
 
@@ -1481,6 +1476,7 @@ DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
   (void)
 {
   Lisp_Object frame = Qnil;
+  struct frame *last_nonminibuf_frame = (struct frame *) get_last_nonminibuffer_frame();
 
   if (last_nonminibuf_frame)
     XSETFRAME (frame, last_nonminibuf_frame);
@@ -1850,9 +1846,10 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
   /* If we've deleted the last_nonminibuf_frame, then try to find
      another one.  */
+  struct frame *last_nonminibuf_frame = (struct frame *) get_last_nonminibuffer_frame();
   if (f == last_nonminibuf_frame)
     {
-      last_nonminibuf_frame = 0;
+      set_last_nonminibuffer_frame(0);
 
       FOR_EACH_FRAME (frames, frame1)
 	{
@@ -1860,7 +1857,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
 	  if (!FRAME_MINIBUF_ONLY_P (f1))
 	    {
-	      last_nonminibuf_frame = f1;
+	      set_last_nonminibuffer_frame(f1);
 	      break;
 	    }
 	}
