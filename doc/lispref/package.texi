@@ -117,10 +117,7 @@ init file.
 This function makes the packages available to the current session.
 The user option @code{package-load-list} specifies which packages to
 make available; by default, all installed packages are made available.
-If called during startup, this function also sets
-@code{package-enable-at-startup} to @code{nil}, to avoid accidentally
-evaluating package autoloads more than once.  @xref{Package
-Installation,,, emacs, The GNU Emacs Manual}.
+@xref{Package Installation,,, emacs, The GNU Emacs Manual}.
 
 In most cases, you should not need to call @code{package-activate-all},
 as this is done automatically during startup.  Simply make sure to put

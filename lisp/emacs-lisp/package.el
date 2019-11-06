@@ -1543,20 +1543,24 @@ If successful, set or update `package-archive-contents'."
   (dolist (archive package-archives)
     (package-read-archive-contents (car archive))))
 
+
 ;;;; Package Initialize
 ;; A bit of a milestone.  This brings together some of the above
 ;; sections and populates all relevant lists of packages from contents
 ;; available on disk.
-(defvar package--initialized nil)
+
+(defvar package--initialized nil
+  "Non-nil if `package-initialize' has been run.")
+
+;;;###autoload
+(defvar package--activated nil
+  "Non-nil if `package-activate-all' has been run.")
 
 ;;;###autoload
 (defun package-initialize (&optional no-activate)
   "Load Emacs Lisp packages, and activate them.
 The variable `package-load-list' controls which packages to load.
 If optional arg NO-ACTIVATE is non-nil, don't activate packages.
-If called as part of loading `user-init-file', set
-`package-enable-at-startup' to nil, to prevent accidentally
-loading packages twice.
 
 It is not necessary to adjust `load-path' or `require' the
 individual packages after calling `package-initialize' -- this is
@@ -1573,7 +1577,6 @@ that code in the early init-file."
     (lwarn '(package reinitialization) :warning
            "Unnecessary call to `package-initialize' in init file"))
   (setq package-alist nil)
-  (setq package-enable-at-startup nil)
   (package-load-all-descriptors)
   (package-read-all-archive-contents)
   (setq package--initialized t)
@@ -1589,7 +1592,7 @@ that code in the early init-file."
 (defun package-activate-all ()
   "Activate all installed packages.
 The variable `package-load-list' controls which packages to load."
-  (setq package-enable-at-startup nil)
+  (setq package--activated t)
   (if (file-readable-p package-quickstart-file)
       ;; Skip load-source-file-function which would slow us down by a factor
       ;; 2 (this assumes we were careful to save this file so it doesn't need
