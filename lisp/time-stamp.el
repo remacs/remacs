@@ -570,11 +570,13 @@ and all `time-stamp-format' compatibility."
               (string-to-number (time-stamp--format "%Y" time)))))
 	 ((eq cur-char ?Y)		;4-digit year
 	  (string-to-number (time-stamp--format "%Y" time)))
-	 ((eq cur-char ?z)		;time zone lower case
+	 ((eq cur-char ?z)		;time zone offset
 	  (if change-case
 	      ""			;discourage %z variations
-	    (time-stamp--format "%#Z" time)))
-	 ((eq cur-char ?Z)
+            (if alt-form
+                (time-stamp--format "%z" time)
+              (time-stamp--format "%#Z" time)))) ;backward compat, will change
+	 ((eq cur-char ?Z)              ;time zone name
 	  (if change-case
 	      (time-stamp--format "%#Z" time)
 	    (time-stamp--format "%Z" time)))
