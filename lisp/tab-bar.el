@@ -923,27 +923,27 @@ function `tab-bar-tab-name-function'."
 (defvar tab-bar-history-forward (make-hash-table)
   "History of forward changes in every tab per frame.")
 
-(defvar tab-bar-history-current nil
+(defvar tab-bar-history-old nil
   "Window configuration before the current command.")
 
-(defvar tab-bar-history--minibuffer-depth 0
+(defvar tab-bar-history-old-minibuffer-depth 0
   "Minibuffer depth before the current command.")
 
 (defun tab-bar-history--pre-change ()
-  (setq tab-bar-history--minibuffer-depth (minibuffer-depth))
+  (setq tab-bar-history-old-minibuffer-depth (minibuffer-depth))
   ;; Store wc before possibly entering the minibuffer
-  (when (zerop tab-bar-history--minibuffer-depth)
-    (setq tab-bar-history-current
+  (when (zerop tab-bar-history-old-minibuffer-depth)
+    (setq tab-bar-history-old
           `((wc . ,(current-window-configuration))
             (wc-point . ,(point-marker))))))
 
 (defun tab-bar--history-change ()
   (when (and (not tab-bar-history-omit)
-             tab-bar-history-current
+             tab-bar-history-old
              ;; Store wc before possibly entering the minibuffer
-             (zerop tab-bar-history--minibuffer-depth))
+             (zerop tab-bar-history-old-minibuffer-depth))
     (puthash (selected-frame)
-             (seq-take (cons tab-bar-history-current
+             (seq-take (cons tab-bar-history-old
                              (gethash (selected-frame) tab-bar-history-back))
                        tab-bar-history-limit)
              tab-bar-history-back))
@@ -959,7 +959,7 @@ function `tab-bar-tab-name-function'."
     (if (window-configuration-p wc)
         (progn
           (puthash (selected-frame)
-                   (cons tab-bar-history-current
+                   (cons tab-bar-history-old
                          (gethash (selected-frame) tab-bar-history-forward))
                    tab-bar-history-forward)
           (set-window-configuration wc)
@@ -976,7 +976,7 @@ function `tab-bar-tab-name-function'."
     (if (window-configuration-p wc)
         (progn
           (puthash (selected-frame)
-                   (cons tab-bar-history-current
+                   (cons tab-bar-history-old
                          (gethash (selected-frame) tab-bar-history-back))
                    tab-bar-history-back)
           (set-window-configuration wc)
