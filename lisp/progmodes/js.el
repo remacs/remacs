@@ -46,6 +46,9 @@
 ;;; Code:
 
 (require 'cc-mode)
+(eval-when-compile
+  (require 'cc-langs)
+  (require 'cc-fonts))
 (require 'newcomment)
 (require 'imenu)
 (require 'moz nil t)
@@ -4529,12 +4532,22 @@ This function is intended for use in `after-change-functions'."
         (when (js-jsx--detect-and-enable 'arbitrarily)
           (remove-hook 'after-change-functions #'js-jsx--detect-after-change t))))))
 
+;; Ensure all CC Mode "lang variables" are set to valid values.
+;; js-mode, however, currently uses only those needed for filling.
+(eval-and-compile
+  (c-add-language 'js-mode 'java-mode))
+
+(c-lang-defconst c-paragraph-start
+  js-mode "\\(@[[:alpha:]]+\\>\\|$\\)")
+
 ;;; Main Function
 
 ;;;###autoload
 (define-derived-mode js-mode prog-mode "JavaScript"
   "Major mode for editing JavaScript."
   :group 'js
+  ;; Ensure all CC Mode "lang variables" are set to valid values.
+  (c-init-language-vars js-mode)
   (setq-local indent-line-function #'js-indent-line)
   (setq-local beginning-of-defun-function #'js-beginning-of-defun)
   (setq-local end-of-defun-function #'js-end-of-defun)
@@ -4576,16 +4589,9 @@ This function is intended for use in `after-change-functions'."
   (setq imenu-create-index-function #'js--imenu-create-index)
 
   ;; for filling, pretend we're cc-mode
-  (setq c-comment-prefix-regexp "//+\\|\\**"
-        c-paragraph-start "\\(@[[:alpha:]]+\\>\\|$\\)"
-        c-paragraph-separate "$"
-        c-block-comment-prefix "* "
-        c-line-comment-starter "//"
-        c-comment-start-regexp "/[*/]\\|\\s!")
+  (c-init-language-vars js-mode)
   (setq-local comment-line-break-function #'c-indent-new-comment-line)
-  (setq-local c-block-comment-start-regexp "/\\*")
   (setq-local comment-multi-line t)
-
   (setq-local electric-indent-chars
 	      (append "{}():;," electric-indent-chars)) ;FIXME: js2-mode adds "[]*".
   (setq-local electric-layout-rules
@@ -4599,6 +4605,13 @@ This function is intended for use in `after-change-functions'."
     (make-local-variable 'paragraph-ignore-fill-prefix)
     (make-local-variable 'adaptive-fill-mode)
     (make-local-variable 'adaptive-fill-regexp)
+    ;; While the full CC Mode style system is not yet in use, set the
+    ;; pertinent style variables manually.
+    (c-initialize-builtin-style)
+    (let ((style (cc-choose-style-for-mode 'js-mode c-default-style)))
+      (c-set-style style))
+    (setq c-block-comment-prefix "* "
+          c-comment-prefix-regexp "//+\\|\\**")
     (c-setup-paragraph-variables))
 
   ;; Important to fontify the whole buffer syntactically! If we don't,
