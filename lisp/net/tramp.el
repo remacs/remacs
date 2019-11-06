@@ -3019,8 +3019,8 @@ User is always nil."
 (defun tramp-handle-copy-directory
   (directory newname &optional keep-date parents copy-contents)
   "Like `copy-directory' for Tramp files."
-  ;; `directory-files' creates `newname' before running this check.
-  ;; So we do it ourselves.
+  ;; `copy-directory' creates NEWNAME before running this check.  So
+  ;; we do it ourselves.
   (unless (file-exists-p directory)
     (tramp-error
      (tramp-dissect-file-name directory) tramp-file-missing

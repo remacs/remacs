@@ -514,6 +514,8 @@ Emacs dired can't find files."
   "Like `make-directory' for Tramp files."
   (setq dir (expand-file-name dir))
   (with-parsed-tramp-file-name dir nil
+    (when (and (null parents) (file-exists-p dir))
+      (tramp-error v 'file-already-exists "Directory already exists %s" dir))
     (when parents
       (let ((par (expand-file-name ".." dir)))
 	(unless (file-directory-p par)

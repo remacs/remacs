@@ -1139,6 +1139,8 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
   (unless (file-name-absolute-p dir)
     (setq dir (expand-file-name dir default-directory)))
   (with-parsed-tramp-file-name dir nil
+    (when (and (null parents) (file-exists-p dir))
+      (tramp-error v 'file-already-exists "Directory already exists %s" dir))
     (let* ((ldir (file-name-directory dir)))
       ;; Make missing directory parts.
       (when (and parents

@@ -1958,7 +1958,7 @@ properly.  BODY shall not contain a timeout."
 
     ;; Forwhatever reasons, the following tests let Emacs crash for
     ;; Emacs 24 and Emacs 25, occasionally. No idea what's up.
-    (when (or (tramp--test-emacs26-p) (tramp--test-emacs27-p))
+    (when (tramp--test-emacs26-p)
       (should
        (string-equal (substitute-in-file-name "/method:host://~foo") "/~foo"))
       (should
@@ -2593,9 +2593,14 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
       (unwind-protect
 	  (progn
 	    (make-directory tmp-name1)
+	    (should-error
+	     (make-directory tmp-name1)
+	     :type 'file-already-exists)
 	    (should (file-directory-p tmp-name1))
 	    (should (file-accessible-directory-p tmp-name1))
-	    (should-error (make-directory tmp-name2) :type 'file-error)
+	    (should-error
+	     (make-directory tmp-name2)
+	     :type 'file-error)
 	    (make-directory tmp-name2 'parents)
 	    (should (file-directory-p tmp-name2))
 	    (should (file-accessible-directory-p tmp-name2))
@@ -2627,7 +2632,9 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
       (should (file-directory-p tmp-name2))
       (write-region "foo" nil (expand-file-name "bla" tmp-name2))
       (should (file-exists-p (expand-file-name "bla" tmp-name2)))
-      (should-error (delete-directory tmp-name1) :type 'file-error)
+      (should-error
+       (delete-directory tmp-name1)
+       :type 'file-error)
       (delete-directory tmp-name1 'recursive)
       (should-not (file-directory-p tmp-name1)))))
 
@@ -2663,7 +2670,7 @@ This tests also `file-directory-p' and `file-accessible-directory-p'."
 	    (when (tramp--test-emacs26-p)
 	      (should-error
 	       (copy-directory tmp-name1 tmp-name2)
-	       :type 'file-error))
+	       :type 'file-already-exists))
 	    (copy-directory tmp-name1 (file-name-as-directory tmp-name2))
 	    (should (file-directory-p tmp-name3))
 	    (should (file-exists-p tmp-name6)))
@@ -3523,7 +3530,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 		  :type 'file-error)
 	       (make-symbolic-link tmp-name1 tmp-name2)
 	       (should (file-symlink-p tmp-name2))
-	       (should-error (file-truename tmp-name1) :type 'file-error))))
+	       (should-error
+		(file-truename tmp-name1)
+		:type 'file-error))))
 
 	;; Cleanup.
 	(ignore-errors
@@ -4276,7 +4285,9 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	    (while (accept-process-output proc nil nil 0)))
 	  (should-not (process-live-p proc))
 	  ;; An interrupted process cannot be interrupted, again.
-	  (should-error (interrupt-process proc) :type 'error))
+	  (should-error
+	   (interrupt-process proc)
+	   :type 'error))
 
       ;; Cleanup.
       (ignore-errors (delete-process proc)))))
