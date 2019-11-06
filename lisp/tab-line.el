@@ -289,33 +289,44 @@ with the same major mode as the current buffer."
                                            (derived-mode-p mode)))
                              (buffer-list)))))
 
+(defvar tab-line-tabs-buffer-group-function nil
+  "Function to put a buffer to the group.
+Takes a buffer as arg and should return a group name as string.
+When the return value is nil, filter out the buffer.")
+
+(defvar tab-line-tabs-buffer-group-sort-function nil
+  "Function to sort buffers in group.")
+
+(defvar tab-line-tabs-buffer-groups-sort-function #'string<
+  "Function to sort group names.")
+
 (defvar tab-line-tabs-buffer-groups mouse-buffer-menu-mode-groups
   "How to group various major modes together in the tab line.
 Each element has the form (REGEXP . GROUPNAME).
 If the major mode's name string matches REGEXP, use GROUPNAME instead.")
 
-(defun tab-line-tabs-buffer-groups--name (&optional buffer)
-  (let* ((buffer (or buffer (current-buffer)))
-         (mode (with-current-buffer buffer
-                 (format-mode-line mode-name))))
-    (or (cdr (seq-find (lambda (group)
-                         (string-match-p (car group) mode))
-                       tab-line-tabs-buffer-groups))
-        mode)))
+(defun tab-line-tabs-buffer-group-name (&optional buffer)
+  (if (functionp tab-line-tabs-buffer-group-function)
+      (funcall tab-line-tabs-buffer-group-function buffer)
+    (unless (= (elt (buffer-name buffer) 0) ?\s)
+      (let ((mode (if buffer (with-current-buffer buffer
+                               (format-mode-line mode-name))
+                    (format-mode-line mode-name))))
+        (or (cdr (seq-find (lambda (group)
+                             (string-match-p (car group) mode))
+                           tab-line-tabs-buffer-groups))
+            mode)))))
 
 (defun tab-line-tabs-buffer-groups ()
   (if (window-parameter nil 'tab-line-groups)
-      (let* ((buffers (seq-filter (lambda (b)
-                                    (not (= (elt (buffer-name b) 0) ?\s)))
-                                  (buffer-list)))
+      (let* ((buffers (buffer-list))
              (groups
-              (seq-sort #'string<
-                        (seq-map #'car
-                                 (seq-group-by
-                                  (lambda (buffer)
-                                    (tab-line-tabs-buffer-groups--name
-                                     buffer))
-                                  buffers))))
+              (seq-sort tab-line-tabs-buffer-groups-sort-function
+                        (delq nil (mapcar #'car (seq-group-by
+                                                 (lambda (buffer)
+                                                   (tab-line-tabs-buffer-group-name
+                                                    buffer))
+                                                 buffers)))))
              (selected-group (window-parameter nil 'tab-line-group))
              (tabs
               (mapcar (lambda (group)
@@ -324,12 +335,13 @@ If the major mode's name string matches REGEXP, use GROUPNAME instead.")
                           (selected . ,(equal group selected-group))
                           (select . ,(lambda ()
                                        (set-window-parameter nil 'tab-line-groups nil)
-                                       (set-window-parameter nil 'tab-line-group group)))))
+                                       (set-window-parameter nil 'tab-line-group group)
+                                       (set-window-parameter nil 'tab-line-hscroll nil)))))
                       groups)))
         tabs)
 
     (let* ((window-parameter (window-parameter nil 'tab-line-group))
-           (group-name (tab-line-tabs-buffer-groups--name))
+           (group-name (tab-line-tabs-buffer-group-name))
            (group (prog1 (or window-parameter group-name)
                     (when (equal window-parameter group-name)
                       (set-window-parameter nil 'tab-line-group nil))))
@@ -338,21 +350,26 @@ If the major mode's name string matches REGEXP, use GROUPNAME instead.")
                         ;; Just to highlight the current group name
                         (selected . t)
                         (select . ,(lambda ()
-                                    (set-window-parameter nil 'tab-line-groups t)
-                                    (set-window-parameter nil 'tab-line-group group)))))
+                                     (set-window-parameter nil 'tab-line-groups t)
+                                     (set-window-parameter nil 'tab-line-group group)
+                                     (set-window-parameter nil 'tab-line-hscroll nil)))))
            (buffers
-            (seq-sort-by #'buffer-name #'string<
-                         (seq-filter (lambda (b)
-                                       (and (not (= (elt (buffer-name b) 0) ?\s))
-                                            (equal (tab-line-tabs-buffer-groups--name b)
-                                                   group)))
-                                     (buffer-list))))
+            (seq-filter (lambda (b)
+                          (equal (tab-line-tabs-buffer-group-name b)
+                                 group))
+                        (seq-uniq (append (list (current-buffer))
+                                          (reverse (mapcar #'car (window-prev-buffers)))
+                                          (buffer-list)))))
+           (sorted-buffers (if (functionp tab-line-tabs-buffer-group-sort-function)
+                               (seq-sort tab-line-tabs-buffer-group-sort-function
+                                         buffers)
+                             buffers))
            (tabs (mapcar (lambda (buffer)
                            `(tab
                              (name . ,(funcall tab-line-tab-name-function buffer))
                              (selected . ,(eq buffer (current-buffer)))
                              (buffer . ,buffer)))
-                         buffers)))
+                         sorted-buffers)))
       (cons group-tab tabs))))
 
 (defun tab-line-tabs-window-buffers ()
@@ -470,10 +487,11 @@ corresponding to the switched buffer."
   (interactive (list last-nonmenu-event))
   (if (functionp tab-line-new-tab-choice)
       (funcall tab-line-new-tab-choice)
-    (if (and (listp mouse-event) window-system) ; (display-popup-menus-p)
-        (mouse-buffer-menu mouse-event) ; like (buffer-menu-open)
-      ;; tty menu doesn't support mouse clicks, so use tmm
-      (tmm-prompt (mouse-buffer-menu-keymap)))))
+    (let ((tab-line-tabs-buffer-groups mouse-buffer-menu-mode-groups))
+      (if (and (listp mouse-event) window-system) ; (display-popup-menus-p)
+          (mouse-buffer-menu mouse-event) ; like (buffer-menu-open)
+        ;; tty menu doesn't support mouse clicks, so use tmm
+        (tmm-prompt (mouse-buffer-menu-keymap))))))
 
 (defun tab-line-select-tab (&optional e)
   "Switch to the selected tab.
