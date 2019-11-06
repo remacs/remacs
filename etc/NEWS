@@ -846,6 +846,9 @@ directories in the destination.
 *** The non-nil value of 'dired-dwim-target' uses one of the most recently
 visited windows with a Dired buffer instead of the next window.
 
+*** When the new user option 'dired-vc-rename-file' is non-nil,
+Dired performs file renaming using underlying version control system.
+
 ** Find-Dired
 
 *** New user option 'find-dired-refine-function'.
