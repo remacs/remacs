@@ -2943,7 +2943,7 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
 
 	/* Set ACCUM to the next operation's result if it fits,
 	   else exit the loop.  */
-	bool overflow = false;
+	bool overflow;
 	intmax_t a;
 	switch (code)
 	  {
@@ -2953,9 +2953,11 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
 	  case Adiv:
 	    if (next == 0)
 	      xsignal0 (Qarith_error);
-	    eassert (! INT_DIVIDE_OVERFLOW (accum, next));
-	    a = accum / next;
-	    break;
+	    /* This cannot overflow, as integer overflow can
+	       occur only if the dividend is INTMAX_MIN, but
+	       INTMAX_MIN < MOST_NEGATIVE_FIXNUM <= accum.  */
+	    accum /= next;
+	    continue;
 	  case Alogand: accum &= next; continue;
 	  case Alogior: accum |= next; continue;
 	  case Alogxor: accum ^= next; continue;
