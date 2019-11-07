@@ -2791,6 +2791,11 @@ package PKG-DESC, add one.  The alist is keyed with PKG-DESC."
 (defvar package--emacs-version-list (version-to-list emacs-version)
   "The value of variable `emacs-version' as a list.")
 
+(defun package--ensure-package-menu-mode ()
+  "Signal a user-error if major mode is not `package-menu-mode'."
+  (unless (derived-mode-p 'package-menu-mode)
+    (user-error "The current buffer is not a Package Menu")))
+
 (defun package--incompatible-p (pkg &optional shallow)
   "Return non-nil if PKG has no chance of being installable.
 PKG is a `package-desc' object.
@@ -2866,8 +2871,7 @@ Installed obsolete packages are always displayed.")
 (defun package-menu-toggle-hiding ()
   "In Package Menu, toggle visibility of obsolete available packages."
   (interactive)
-  (unless (derived-mode-p 'package-menu-mode)
-    (user-error "The current buffer is not a Package Menu"))
+  (package--ensure-package-menu-mode)
   (setq package-menu--hide-packages
         (not package-menu--hide-packages))
   (if package-menu--hide-packages
@@ -3175,8 +3179,7 @@ user-error if there is already a refresh running asynchronously.
 `package-menu-mode' sets `revert-buffer-function' to this
 function.  The args ARG and NOCONFIRM, passed from
 `revert-buffer', are ignored."
-  (unless (derived-mode-p 'package-menu-mode)
-    (user-error "The current buffer is not a Package Menu"))
+  (package--ensure-package-menu-mode)
   (when (and package-menu-async package--downloads-in-progress)
     (user-error "Package refresh is already in progress, please wait..."))
   (setq package-menu--old-archive-contents package-archive-contents)
@@ -3188,6 +3191,7 @@ function.  The args ARG and NOCONFIRM, passed from
   "Hide a package under point in Package Menu.
 If optional arg BUTTON is non-nil, describe its associated package."
   (interactive)
+  (package--ensure-package-menu-mode)
   (declare (interactive-only "change `package-hidden-regexps' instead."))
   (let* ((name (when (derived-mode-p 'package-menu-mode)
                  (concat "\\`" (regexp-quote (symbol-name (package-desc-name
@@ -3221,6 +3225,7 @@ If optional arg BUTTON is non-nil, describe its associated package."
 (defun package-menu-mark-delete (&optional _num)
   "Mark a package for deletion and move to the next line."
   (interactive "p")
+  (package--ensure-package-menu-mode)
   (if (member (package-menu-get-status)
               '("installed" "dependency" "obsolete" "unsigned"))
       (tabulated-list-put-tag "D" t)
@@ -3229,6 +3234,7 @@ If optional arg BUTTON is non-nil, describe its associated package."
 (defun package-menu-mark-install (&optional _num)
   "Mark a package for installation and move to the next line."
   (interactive "p")
+  (package--ensure-package-menu-mode)
   (if (member (package-menu-get-status) '("available" "avail-obso" "new" "dependency"))
       (tabulated-list-put-tag "I" t)
     (forward-line)))
@@ -3236,17 +3242,20 @@ If optional arg BUTTON is non-nil, describe its associated package."
 (defun package-menu-mark-unmark (&optional _num)
   "Clear any marks on a package and move to the next line."
   (interactive "p")
+  (package--ensure-package-menu-mode)
   (tabulated-list-put-tag " " t))
 
 (defun package-menu-backup-unmark ()
   "Back up one line and clear any marks on that package."
   (interactive)
+  (package--ensure-package-menu-mode)
   (forward-line -1)
   (tabulated-list-put-tag " "))
 
 (defun package-menu-mark-obsolete-for-deletion ()
   "Mark all obsolete packages for deletion."
   (interactive)
+  (package--ensure-package-menu-mode)
   (save-excursion
     (goto-char (point-min))
     (while (not (eobp))
@@ -3277,6 +3286,7 @@ If optional arg BUTTON is non-nil, describe its associated package."
   "Show short key binding help for `package-menu-mode'.
 The full list of keys can be viewed with \\[describe-mode]."
   (interactive)
+  (package--ensure-package-menu-mode)
   (message (mapconcat #'package--prettify-quick-help-key
                       package--quick-help-keys "\n")))
 
@@ -3285,6 +3295,7 @@ The full list of keys can be viewed with \\[describe-mode]."
 
 (defun package-menu-get-status ()
   "Return status text of package at point in Package Menu."
+  (package--ensure-package-menu-mode)
   (let* ((id (tabulated-list-get-id))
          (entry (and id (assoc id tabulated-list-entries))))
     (if entry
@@ -3340,8 +3351,6 @@ corresponding to the newer version."
 (defun package-menu--mark-upgrades-1 ()
   "Mark all upgradable packages in the Package Menu.
 Implementation of `package-menu-mark-upgrades'."
-  (unless (derived-mode-p 'package-menu-mode)
-    (error "The current buffer is not a Package Menu"))
   (setq package-menu--mark-upgrades-pending nil)
   (let ((upgrades (package-menu--find-upgrades)))
     (if (null upgrades)
@@ -3373,6 +3382,7 @@ If there's an async refresh operation in progress, the flags will
 be placed as part of `package-menu--post-refresh' instead of
 immediately."
   (interactive)
+  (package--ensure-package-menu-mode)
   (if (not package--downloads-in-progress)
       (package-menu--mark-upgrades-1)
     (setq package-menu--mark-upgrades-pending t)
@@ -3466,8 +3476,7 @@ Packages marked for installation are downloaded and installed;
 packages marked for deletion are removed.
 Optional argument NOQUERY non-nil means do not ask the user to confirm."
   (interactive)
-  (unless (derived-mode-p 'package-menu-mode)
-    (error "The current buffer is not in Package Menu mode"))
+  (package--ensure-package-menu-mode)
   (let (install-list delete-list cmd pkg-desc)
     (save-excursion
       (goto-char (point-min))
@@ -3693,6 +3702,7 @@ Statuses available include \"incompat\", \"available\",
   (interactive
    (list (completing-read-multiple
           "Keywords (comma separated): " (package-all-keywords))))
+  (package--ensure-package-menu-mode)
   (package-show-package-list t (if (stringp keyword)
                                    (list keyword)
                                  keyword)))
@@ -3702,6 +3712,7 @@ Statuses available include \"incompat\", \"available\",
 Show only those items whose name matches the regular expression
 NAME.  If NAME is nil or the empty string, show all packages."
   (interactive (list (read-from-minibuffer "Filter by name (regexp): ")))
+  (package--ensure-package-menu-mode)
   (if (or (not name) (string-empty-p name))
       (package-show-package-list t nil)
     ;; Update `tabulated-list-entries' so that it contains all
@@ -3719,6 +3730,7 @@ NAME.  If NAME is nil or the empty string, show all packages."
 (defun package-menu-clear-filter ()
   "Clear any filter currently applied to the \"*Packages*\" buffer."
   (interactive)
+  (package--ensure-package-menu-mode)
   (package-menu--generate t t))
 
 (defun package-list-packages-no-fetch ()
