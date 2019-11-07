@@ -1447,8 +1447,8 @@ The maximum level is used by default; customize
 
 ---
 *** New user option 'python-pdbtrack-kill-buffers'.
-If nil, buffers opened during pdbtracking session are not killed when
-pdbtracking session is finished.
+If non-nil, the default, buffers opened during pdbtracking session are
+killed when pdbtracking session is finished.
 
 ** Help
 
