@@ -29,6 +29,7 @@
 (defvar comint-testsuite-password-strings
   '("foo@example.net's password: " ; ssh
     "Password for foo@example.org: " ; kinit
+    "Password for 'https://foo@example.org':"           ; git push Bug#20910
     "Please enter the password for foo@example.org: "   ; kinit
     "Kerberos password for devnull/root <at> GNU.ORG: " ; ksu
     "Enter passphrase: " ; ssh-add
