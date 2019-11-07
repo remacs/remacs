@@ -458,15 +458,20 @@ interpreted as a regular expression which always matches."
   :version "24.3"
   :type 'boolean)
 
+;; For some obscure technical reasons, `system-name' on w32 returns
+;; either lower case or upper case letters.  See
+;; <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=38079#20>.
 (defcustom tramp-restricted-shell-hosts-alist
   (when (memq system-type '(windows-nt))
-    (list (concat "\\`" (regexp-quote (system-name)) "\\'")))
+    (list (format "\\`\\(%s\\|%s\\)\\'"
+		  (regexp-quote (downcase (system-name)))
+		  (regexp-quote (upcase (system-name))))))
   "List of hosts, which run a restricted shell.
 This is a list of regular expressions, which denote hosts running
-a registered shell like \"rbash\".  Those hosts can be used as
+a restricted shell like \"rbash\".  Those hosts can be used as
 proxies only, see `tramp-default-proxies-alist'.  If the local
-host runs a registered shell, it shall be added to this list, too."
-  :version "24.3"
+host runs a restricted shell, it shall be added to this list, too."
+  :version "27.1"
   :type '(repeat (regexp :tag "Host regexp")))
 
 (defcustom tramp-local-host-regexp
