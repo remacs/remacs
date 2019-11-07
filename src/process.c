@@ -3794,6 +3794,8 @@ process, the FAMILY, HOST, and SERVICE args are ignored.
 The format of ADDRESS depends on the address family:
 - An IPv4 address is represented as a vector of integers [A B C D P]
 corresponding to numeric IP address A.B.C.D and port number P.
+- An IPv6 address has the same format as an IPv4 address but with 9
+elements rather than 5.
 - A local address is represented as a string with the address in the
 local address space.
 - An "unsupported family" address is represented by a cons (F . AV)
