@@ -3145,16 +3145,16 @@ one-letter-long matches).")
            (while md
              (funcall update-score start (car md))
              (put-text-property start (pop md)
-                                'font-lock-face 'completions-common-part
+                                'face 'completions-common-part
                                 str)
              (setq start (pop md)))
            (funcall update-score len len)
            (put-text-property start end
-                              'font-lock-face 'completions-common-part
+                              'face 'completions-common-part
                               str)
            (if (> (length str) pos)
                (put-text-property pos (1+ pos)
-                                  'font-lock-face 'completions-first-difference
+                                  'face 'completions-first-difference
                                   str))
            (unless (zerop (length str))
              (put-text-property
