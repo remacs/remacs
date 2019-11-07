@@ -1216,10 +1216,11 @@ A new command 'xref-revert-buffer' is bound to 'g'.
 ** Icomplete
 
 +++
-*** A new minor mode based on Icomplete, Fido mode, is made available.
-The point of this mode, named after "Fake Ido", is to recover much of
-the functionality that still separated the popular ido-mode from
-Icomplete, while still cooperating fully with all of Emacs's
+*** New minor mode Fido mode.
+This mode is based on Icomplete, and its name stands for "Fake Ido".
+The point of this mode is to be an ido-mode workalike, but provide
+most of the functionality present in Icomplete that is not in
+ido-mode, while being much more compatible with all of Emacs's
 completion facilities.
 
 ** Ecomplete
