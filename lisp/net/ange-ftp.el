@@ -1463,7 +1463,7 @@ only return the directory part of FILE."
 
 (defun ange-ftp-repaint-minibuffer ()
   "Clear any existing minibuffer message; let the minibuffer contents show."
-  (message nil))
+  (message ""))
 
 ;; Return the name of the buffer that collects output from the ftp process
 ;; connected to the given HOST and USER pair.
@@ -1512,8 +1512,10 @@ then kill the related FTP process."
   ;; and that by doubling it.  But experiment says UNIX-style kind of
   ;; quoting is correct when talking to ftp on GNU/Linux systems, and
   ;; W32-style kind of quoting on, yes, W32 systems.
+  ;; STRING could be a quoted file name, we unquote it.  It is
+  ;; unlikely, that other strings but file names look alike.
   (if (stringp string)
-      (shell-quote-argument string)
+      (shell-quote-argument (file-name-unquote string))
     ""))
 
 (defun ange-ftp-barf-if-not-directory (directory)
@@ -3144,6 +3146,12 @@ logged in as user USER and cd'd to directory DIR."
       (ange-ftp-real-expand-file-name name "/"))
      ((ange-ftp-canonize-filename
        (concat (file-name-as-directory default) name))))))
+
+(defun ange-ftp-substitute-in-file-name (filename)
+  "Documented as `substitute-in-file-name'."
+  (if (file-name-quoted-p filename)
+      filename
+    (ange-ftp-real-substitute-in-file-name filename)))
 
 ;;; These are problems--they are currently not enabled.
 
@@ -3156,7 +3164,7 @@ system TYPE.")
   "Documented as `file-name-as-directory'."
   (let ((parsed (ange-ftp-ftp-name name)))
     (if parsed
-	(if (string-equal (nth 2 parsed) "")
+	(if (and non-essential (string-equal (nth 2 parsed) ""))
 	    name
 	  (funcall (or (cdr (assq
 			     (ange-ftp-host-type (car parsed))
@@ -3392,6 +3400,11 @@ system TYPE.")
 	      t)))
     (ange-ftp-real-file-exists-p name)))
 
+(defun ange-ftp-access-file (filename string)
+  (unless (file-readable-p (file-truename filename))
+    (signal
+     'file-missing (list "%s: No such file or directory %s" string filename))))
+
 (defun ange-ftp-file-directory-p (name)
   (setq name (expand-file-name name))
   (if (ange-ftp-ftp-name name)
@@ -3465,8 +3478,10 @@ system TYPE.")
 						   (file-name-directory file))
 			dirp)		;0 file type
 		      -1		;1 link count
-		      -1		;2 uid
-		      -1		;3 gid
+		      (if (eq id-format 'string)
+                          "nobody" -1)	;2 uid
+		      (if (eq id-format 'string)
+                          "nobody" -1)	;3 gid
 		      '(0 0)		;4 atime
 		      (ange-ftp-file-modtime file) ;5 mtime
 		      '(0 0)		;6 ctime
@@ -3613,6 +3628,16 @@ so return the size on the remote host exactly. See RFC 3659."
 				      absname querystring)))
 	    (signal 'file-already-exists (list absname))))))
 
+(defun ange-ftp-copy-directory
+  (directory newname &optional keep-date parents copy-contents)
+  ;; `copy-directory' creates `newname' before running this check.  So
+  ;; we do it ourselves.
+  (unless (file-exists-p directory)
+    (signal 'file-missing (list "No such file or directory" directory)))
+  ;; We must do it file-wise.
+  (ange-ftp-real-copy-directory
+   directory newname keep-date parents copy-contents))
+
 ;; async local copy commented out for now since I don't seem to get
 ;; the process sentinel called for some processes.
 ;;
@@ -3661,6 +3686,12 @@ so return the size on the remote host exactly. See RFC 3659."
   (or (file-exists-p filename)
       (signal 'file-missing
 	      (list "Copy file" "No such file or directory" filename)))
+
+  (and (not ok-if-already-exists) (file-exists-p newname)
+       (signal 'file-already-exists (list newname)))
+
+  (and (file-directory-p newname) (not (directory-name-p newname))
+       (signal 'file-error (list "File is a directory %s" newname)))
 
   ;; canonicalize newname if a directory.
   (if (file-directory-p newname)
@@ -3929,6 +3960,11 @@ E.g.,
 
 (defun ange-ftp-rename-file (filename newname &optional ok-if-already-exists)
   (interactive "fRename file: \nFRename %s to file: \np")
+
+  (or (file-exists-p filename)
+      (signal 'file-missing
+	      (list "Copy file" "No such file or directory" filename)))
+
   (setq filename (expand-file-name filename))
   (setq newname (expand-file-name newname))
   (let* ((f-parsed (ange-ftp-ftp-name filename))
@@ -4093,7 +4129,9 @@ directory, so that Emacs will know its current contents."
 	    (ange-ftp-make-directory parent parents))))
   (if (file-exists-p dir)
       (unless parents
-	(error "Cannot make directory %s: file already exists" dir))
+	(signal
+         'file-already-exists
+         (list "Cannot make directory: file already exists" dir)))
     (let ((parsed (ange-ftp-ftp-name dir)))
       (if parsed
 	  (let* ((host (nth 0 parsed))
@@ -4206,7 +4244,7 @@ directory, so that Emacs will know its current contents."
 	(while (and tryfiles (not copy))
 	  (catch 'ftp-error
 	    (let ((ange-ftp-waiting-flag t))
-	      (condition-case _error
+	      (condition-case nil
 		  (setq copy (ange-ftp-file-local-copy (car tryfiles)))
 		(ftp-error nil))))
 	  (setq tryfiles (cdr tryfiles)))
@@ -4389,6 +4427,7 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
 (put 'file-name-as-directory 'ange-ftp 'ange-ftp-file-name-as-directory)
 (put 'directory-file-name 'ange-ftp 'ange-ftp-directory-file-name)
 (put 'expand-file-name 'ange-ftp 'ange-ftp-expand-file-name)
+(put 'substitute-in-file-name 'ange-ftp 'ange-ftp-substitute-in-file-name)
 (put 'make-directory 'ange-ftp 'ange-ftp-make-directory)
 (put 'delete-directory 'ange-ftp 'ange-ftp-delete-directory)
 (put 'insert-file-contents 'ange-ftp 'ange-ftp-insert-file-contents)
@@ -4403,11 +4442,13 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
 (put 'file-executable-p 'ange-ftp 'ange-ftp-file-executable-p)
 (put 'file-symlink-p 'ange-ftp 'ange-ftp-file-symlink-p)
 (put 'file-regular-p 'ange-ftp 'ange-ftp-file-regular-p)
+(put 'access-file 'ange-ftp 'ange-ftp-access-file)
 (put 'delete-file 'ange-ftp 'ange-ftp-delete-file)
 (put 'verify-visited-file-modtime 'ange-ftp
      'ange-ftp-verify-visited-file-modtime)
 (put 'file-exists-p 'ange-ftp 'ange-ftp-file-exists-p)
 (put 'write-region 'ange-ftp 'ange-ftp-write-region)
+(put 'copy-directory 'ange-ftp 'ange-ftp-copy-directory)
 (put 'copy-file 'ange-ftp 'ange-ftp-copy-file)
 (put 'rename-file 'ange-ftp 'ange-ftp-rename-file)
 (put 'file-attributes 'ange-ftp 'ange-ftp-file-attributes)
@@ -4425,6 +4466,8 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
 (put 'load 'ange-ftp 'ange-ftp-load)
 (put 'find-backup-file-name 'ange-ftp 'ange-ftp-find-backup-file-name)
 (put 'set-file-modes 'ange-ftp 'ange-ftp-set-file-modes)
+(put 'make-symbolic-link 'ange-ftp 'ange-ftp-make-symbolic-link)
+(put 'add-name-to-file 'ange-ftp 'ange-ftp-add-name-to-file)
 
 ;; Turn off truename processing to save time.
 ;; Treat each name as its own truename.
@@ -4439,7 +4482,7 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
 ;; This returns nil for any file name as argument.
 (put 'vc-registered 'ange-ftp 'null)
 
-;; We can handle process-file in a restricted way (just for chown).
+;; We can handle `process-file' in a restricted way (just for chown).
 ;; Nothing possible for `start-file-process'.
 (put 'exec-path 'ange-ftp 'ignore)
 (put 'make-process 'ange-ftp 'ignore)
@@ -4473,6 +4516,8 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
   (ange-ftp-run-real-handler 'directory-file-name args))
 (defun ange-ftp-real-expand-file-name (&rest args)
   (ange-ftp-run-real-handler 'expand-file-name args))
+(defun ange-ftp-real-substitute-in-file-name (&rest args)
+  (ange-ftp-run-real-handler 'substitute-in-file-name args))
 (defun ange-ftp-real-make-directory (&rest args)
   (ange-ftp-run-real-handler 'make-directory args))
 (defun ange-ftp-real-delete-directory (&rest args)
@@ -4507,6 +4552,8 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
   (ange-ftp-run-real-handler 'write-region args))
 (defun ange-ftp-real-backup-buffer (&rest args)
   (ange-ftp-run-real-handler 'backup-buffer args))
+(defun ange-ftp-real-copy-directory (&rest args)
+  (ange-ftp-run-real-handler 'copy-directory args))
 (defun ange-ftp-real-copy-file (&rest args)
   (ange-ftp-run-real-handler 'copy-file args))
 (defun ange-ftp-real-rename-file (&rest args)
@@ -4552,6 +4599,8 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
     ;; because some FTP servers react to "ls foo" by listing the symlink foo
     ;; rather than the directory it points to.  Now that ange-ftp-ls uses
     ;; "cd foo; ls" instead, this is not necessary any more.
+    ;; SWITCHES cannot be nil or the empty string.
+    (unless switches (setq switches "--"))
     (let ((beg (point))
 	  (end (point-marker)))
       (set-marker-insertion-type end t)
@@ -4693,6 +4742,33 @@ NEWNAME should be the name to give the new compressed or uncompressed file.")
 
 (defun ange-ftp-set-file-modes (filename mode)
   (ange-ftp-call-chmod (list (format "%o" mode) filename)))
+
+(defun ange-ftp-make-symbolic-link (&rest _arguments)
+  (signal 'file-error (list "make-symbolic-link not supported")))
+
+(defun ange-ftp-add-name-to-file
+    (filename newname &optional ok-if-already-exists)
+  (let ((f-parsed (ange-ftp-ftp-name filename))
+        (n-parsed (ange-ftp-ftp-name newname)))
+    (unless (and (string-equal (nth 0 f-parsed) (nth 0 n-parsed))
+                 (string-equal (nth 1 f-parsed) (nth 1 n-parsed)))
+      (signal
+       'file-error
+       (list "add-name-to-file: only implemented for same user, same host")))
+    ;; Do the 'confirm if exists' thing.
+    (when (file-exists-p newname)
+      ;; What to do?
+      (if (or (null ok-if-already-exists) ; not allowed to exist
+	      (and (numberp ok-if-already-exists)
+		   (not (yes-or-no-p
+			 (format
+			  "File %s already exists; make it a link anyway? "
+			  (nth 2 n-parsed))))))
+	  (signal 'file-already-exists (list newname))
+	(delete-file newname)))
+    (copy-file
+     filename newname 'ok-if-already-exists 'keep-time
+     'preserve-uid-gid 'preserve-permissions)))
 
 ;; This is turned off because it has nothing properly to do
 ;; with dired.  It could be reasonable to adapt this to
