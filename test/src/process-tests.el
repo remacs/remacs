@@ -337,7 +337,8 @@ See Bug#30460."
   (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (should-error (network-lookup-address-info "google.com" 'both))
   (should (network-lookup-address-info "google.com" 'ipv4))
-  (should (network-lookup-address-info "google.com" 'ipv6)))
+  (when (featurep 'make-network-process '(:family ipv6))
+    (should (network-lookup-address-info "google.com" 'ipv6))))
 
 (ert-deftest lookup-unicode-domains ()
   "Unicode domains should fail"
@@ -354,11 +355,11 @@ See Bug#30460."
   "Check that we can look up google IP addresses"
   (skip-unless (not (getenv "EMACS_HYDRA_CI")))
   (let ((addresses-both (network-lookup-address-info "google.com"))
-        (addresses-v4 (network-lookup-address-info "google.com" 'ipv4))
-        (addresses-v6 (network-lookup-address-info "google.com" 'ipv6)))
+        (addresses-v4 (network-lookup-address-info "google.com" 'ipv4)))
     (should addresses-both)
-    (should addresses-v4)
-    (should addresses-v6)))
+    (should addresses-v4))
+  (when (featurep 'make-network-process '(:family ipv6))
+    (should (network-lookup-address-info "google.com" 'ipv6))))
 
 (ert-deftest non-existent-lookup-failure ()
   (skip-unless (not (getenv "EMACS_HYDRA_CI")))
