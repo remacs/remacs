@@ -2062,8 +2062,13 @@ merge_face_vectors (struct window *w, struct frame *f,
 
   eassert (attr_filter <  LFACE_VECTOR_SIZE);
 
-  /* When FROM sets attr_filter to nil explicitly we don't merge it.  */
-  if (attr_filter > 0 && NILP(from[attr_filter]))
+  /* When FROM sets attr_filter explicitly to nil or unspecified
+     without inheriting don't merge it.  */
+  if (attr_filter > 0
+      && (NILP(from[attr_filter])
+	  || (UNSPECIFIEDP(from[attr_filter])
+	      && (NILP (from[LFACE_INHERIT_INDEX])
+		  || UNSPECIFIEDP (from[LFACE_INHERIT_INDEX])))))
     return;
 
   /* If FROM inherits from some other faces, merge their attributes into
@@ -2082,7 +2087,7 @@ merge_face_vectors (struct window *w, struct frame *f,
       else if (UNSPECIFIEDP (from[attr_filter])) /* FROM don't specify filter */
 	{
 	  Lisp_Object tmp[LFACE_VECTOR_SIZE];
-	  memcpy (tmp, to, LFACE_VECTOR_SIZE * sizeof *tmp);
+	  memcpy (tmp, to, LFACE_VECTOR_SIZE * sizeof(*tmp));
 
 	  merge_face_ref (w, f, from[LFACE_INHERIT_INDEX],
 	                  tmp, false, named_merge_points, attr_filter);
@@ -2177,7 +2182,8 @@ merge_named_face (struct window *w,
 		     && !UNSPECIFIEDP(from[attr_filter]))
                  || (!NILP(from[attr_filter])  /* Filter, unspecified, but inherited.  */
 		     && UNSPECIFIEDP(from[attr_filter])
-		     && !NILP (from[LFACE_INHERIT_INDEX]))))
+		     && !NILP (from[LFACE_INHERIT_INDEX])
+		     && !UNSPECIFIEDP (from[LFACE_INHERIT_INDEX]))))
         merge_face_vectors (w, f, from, to, named_merge_points, attr_filter);
 
       return ok;
