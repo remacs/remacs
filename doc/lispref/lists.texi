@@ -1212,9 +1212,8 @@ functions for sets include @code{memq} and @code{delq}, and their
 @quotation
 @b{Common Lisp note:} Common Lisp has functions @code{union} (which
 avoids duplicate elements) and @code{intersection} for set operations.
-Although standard GNU Emacs Lisp does not have them, the @file{cl-lib}
-library provides versions.
-@xref{Lists as Sets,,, cl, Common Lisp Extensions}.
+In Emacs Lisp, variants of these facilities are provided by the
+@file{cl-lib} library.  @xref{Lists as Sets,,,cl,Common Lisp Extensions}.
 @end quotation
 
 @defun memq object list
