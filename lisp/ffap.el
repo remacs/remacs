@@ -1409,20 +1409,30 @@ which may actually result in an URL rather than a filename."
               (ffap-file-remote-p guess))
     (setq guess
 	  (abbreviate-file-name (expand-file-name guess))))
-  (let ((fnh-elem (cons ffap-url-regexp #'url-file-handler)))
-    ;; Explain to `rfn-eshadow' that we can use URLs here.
-    (push fnh-elem file-name-handler-alist)
-    (unwind-protect
-        (setq guess
-              (read-file-name prompt (file-name-directory guess) nil nil
-                              (file-name-nondirectory guess)))
-      ;; Remove the special handler manually.  We used to just let-bind
-      ;; file-name-handler-alist to preserve its value, but that caused
-      ;; other modifications to be lost (e.g. when Tramp gets loaded
-      ;; during the completing-read call).
-      (setq file-name-handler-alist (delq fnh-elem file-name-handler-alist))))
-  (or (ffap-url-p guess)
-      (substitute-in-file-name guess)))
+  (if (and (ffap-url-p guess)
+           ;; Exclude non-filename-like URLs like "mailto:..."
+           (not (string-match "\\`[a-z]+://" guess)))
+      (read-string prompt guess nil nil t)
+    (let ((fnh-elem (cons ffap-url-regexp #'url-file-handler)))
+      ;; Explain to `rfn-eshadow' that we can use URLs here.
+      (push fnh-elem file-name-handler-alist)
+      (unwind-protect
+          (let* ((dir (file-name-directory guess))
+                 ;; FIXME: If `guess' is "http://a" url-handler
+                 ;; somehow returns "https://a/" for the directory and
+                 ;; "a" for the non-directory!
+                 (broken-dir (> (length dir) (length guess))))
+            (setq guess
+                  (read-file-name prompt (if broken-dir guess dir) nil nil
+                                  (unless broken-dir
+                                    (file-name-nondirectory guess)))))
+        ;; Remove the special handler manually.  We used to just let-bind
+        ;; file-name-handler-alist to preserve its value, but that caused
+        ;; other modifications to be lost (e.g. when Tramp gets loaded
+        ;; during the completing-read call).
+        (setq file-name-handler-alist (delq fnh-elem file-name-handler-alist))))
+    (or (ffap-url-p guess)
+        (substitute-in-file-name guess))))
 
 ;; The rest of this page is just to work with package complete.el.
 ;; This code assumes that you load ffap.el after complete.el.
