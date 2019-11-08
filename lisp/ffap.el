@@ -1397,9 +1397,8 @@ which may actually result in an URL rather than a filename."
 ;;
 ;; We want to complete filenames as in read-file-name, but also url's
 ;; which read-file-name-internal would truncate at the "//" string.
-;; The solution here is to replace read-file-name-internal with
-;; `ffap-read-file-or-url-internal', which checks the minibuffer
-;; contents before attempting to complete filenames.
+;; The solution here is to forcefully activate url-handler-mode, which
+;; takes care of it for us.
 
 (defun ffap-read-file-or-url (prompt guess)
   "Read file or URL from minibuffer, with PROMPT and initial GUESS."
@@ -1414,22 +1413,17 @@ which may actually result in an URL rather than a filename."
       (setq dir (file-name-directory guess)))
     (let ((minibuffer-completing-file-name t)
 	  (completion-ignore-case read-file-name-completion-ignore-case)
-          (fnh-elem (cons ffap-url-regexp 'url-file-handler)))
+          (fnh-elem (cons ffap-url-regexp #'url-file-handler)))
       ;; Explain to `rfn-eshadow' that we can use URLs here.
       (push fnh-elem file-name-handler-alist)
       (unwind-protect
           (setq guess
                 (let ((default-directory (if dir (expand-file-name dir)
                                            default-directory)))
-                  (completing-read
-                   prompt
-                   'ffap-read-file-or-url-internal
-                   nil
-                   nil
-                   (if dir (cons guess (length dir)) guess)
-                   'file-name-history
-                   (and buffer-file-name
-                        (abbreviate-file-name buffer-file-name)))))
+                  (read-file-name prompt default-directory
+                                  (and buffer-file-name
+                                       (abbreviate-file-name buffer-file-name))
+                                  nil)))
         ;; Remove the special handler manually.  We used to just let-bind
         ;; file-name-handler-alist to preserve its value, but that caused
         ;; other modifications to be lost (e.g. when Tramp gets loaded
@@ -1437,24 +1431,6 @@ which may actually result in an URL rather than a filename."
         (setq file-name-handler-alist (delq fnh-elem file-name-handler-alist))))
     (or (ffap-url-p guess)
 	(substitute-in-file-name guess))))
-
-(defun ffap-read-url-internal (string pred action)
-  "Complete URLs from history, treating given string as valid."
-  (let ((hist (ffap-symbol-value 'url-global-history-hash-table)))
-    (cond
-     ((not action)
-      (or (try-completion string hist pred) string))
-     ((eq action t)
-      (or (all-completions string hist pred) (list string)))
-     ;; action == lambda, documented where?  Tests whether string is a
-     ;; valid "match".  Let us always say yes.
-     (t t))))
-
-(defun ffap-read-file-or-url-internal (string pred action)
-  (let ((url (ffap-url-p string)))
-    (if url
-	(ffap-read-url-internal url pred action)
-      (read-file-name-internal (or string default-directory) pred action))))
 
 ;; The rest of this page is just to work with package complete.el.
 ;; This code assumes that you load ffap.el after complete.el.
