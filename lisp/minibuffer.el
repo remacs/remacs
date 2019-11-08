@@ -3496,8 +3496,9 @@ that is non-nil."
                   res
                   (lambda (c1 c2)
                     (or (equal c1 minibuffer-default)
-                        (> (get-text-property 0 'completion-score c1)
-                           (get-text-property 0 'completion-score c2)))))))))
+                        (let ((s1 (get-text-property 0 'completion-score c1))
+                              (s2 (get-text-property 0 'completion-score c2)))
+                          (> (or s1 0) (or s2 0))))))))))
     `(metadata
       (display-sort-function
        . ,(compose-flex-sort-fn
