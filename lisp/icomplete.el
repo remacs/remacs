@@ -225,7 +225,7 @@ Last entry becomes the first and can be selected with
 
 ;;; Helpers for `fido-mode' (or `ido-mode' emulation)
 ;;;
-(defun icomplete-magic-ido-kill ()
+(defun icomplete-fido-kill ()
   "Kill line or current completion, like `ido-mode'.
 If killing to the end of line make sense, call `kill-line',
 otherwise kill the currently selected completion candidate.
@@ -260,7 +260,7 @@ require user confirmation."
            (cdr all)))
         (message nil)))))
 
-(defun icomplete-magic-ido-delete-char ()
+(defun icomplete-fido-delete-char ()
   "Delete char or maybe call `dired', like `ido-mode'."
   (interactive)
   (let* ((beg (icomplete--field-beg))
@@ -272,7 +272,7 @@ require user confirmation."
       (dired (file-name-directory (icomplete--field-string)))
       (exit-minibuffer))))
 
-(defun icomplete-magic-ido-ret ()
+(defun icomplete-fido-ret ()
   "Exit minibuffer or enter directory, like `ido-mode'."
   (interactive)
   (let* ((beg (icomplete--field-beg))
@@ -290,7 +290,7 @@ require user confirmation."
           (t
            (exit-minibuffer)))))
 
-(defun icomplete-magic-ido-backward-updir ()
+(defun icomplete-fido-backward-updir ()
   "Delete char before or go up directory, like `ido-mode'."
   (interactive)
   (let* ((beg (icomplete--field-beg))
@@ -302,10 +302,10 @@ require user confirmation."
 
 (defvar icomplete-fido-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-k") 'icomplete-magic-ido-kill)
-    (define-key map (kbd "C-d") 'icomplete-magic-ido-delete-char)
-    (define-key map (kbd "RET") 'icomplete-magic-ido-ret)
-    (define-key map (kbd "DEL") 'icomplete-magic-ido-backward-updir)
+    (define-key map (kbd "C-k") 'icomplete-fido-kill)
+    (define-key map (kbd "C-d") 'icomplete-fido-delete-char)
+    (define-key map (kbd "RET") 'icomplete-fido-ret)
+    (define-key map (kbd "DEL") 'icomplete-fido-backward-updir)
     (define-key map (kbd "M-j") 'exit-minibuffer)
     (define-key map (kbd "C-s") 'icomplete-forward-completions)
     (define-key map (kbd "C-r") 'icomplete-backward-completions)
