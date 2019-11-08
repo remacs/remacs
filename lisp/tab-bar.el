@@ -692,6 +692,15 @@ If `rightmost', create as the last tab."
   :group 'tab-bar
   :version "27.1")
 
+(defcustom tab-bar-tab-post-open-functions nil
+  "List of functions to call after creating a new tab.
+The current tab is supplied as an argument. Any modifications
+made to the tab argument will be applied after all functions are
+called."
+  :type '(repeat function)
+  :group 'tab-bar
+  :version "27.1")
+
 (defun tab-bar-new-tab-to (&optional to-index)
   "Add a new tab at the absolute position TO-INDEX.
 TO-INDEX counts from 1.  If no TO-INDEX is specified, then add
@@ -726,9 +735,13 @@ a new tab at the position specified by `tab-bar-new-tab-to'."
                           ('right (1+ (or from-index 0)))))))
       (setq to-index (max 0 (min (or to-index 0) (length tabs))))
       (cl-pushnew to-tab (nthcdr to-index tabs))
+
       (when (eq to-index 0)
         ;; pushnew handles the head of tabs but not frame-parameter
-        (set-frame-parameter nil 'tabs tabs)))
+        (set-frame-parameter nil 'tabs tabs))
+
+      (run-hook-with-args 'tab-bar-tab-post-open-functions
+                          (nth to-index tabs)))
 
     (when (and (not tab-bar-mode)
                (or (eq tab-bar-show t)
@@ -780,6 +793,24 @@ If the value is a function, call that function with the tab to be closed as an a
   :group 'tab-bar
   :version "27.1")
 
+(defcustom tab-bar-tab-prevent-close-functions nil
+  "List of functions to call to determine whether to close a tab.
+The tab to be closed and a boolean indicating whether or not it
+is the only tab in the frame are supplied as arguments. If any
+function returns a non-nil value, the tab will not be closed."
+  :type '(repeat function)
+  :group 'tab-bar
+  :version "27.1")
+
+(defcustom tab-bar-tab-pre-close-functions nil
+  "List of functions to call before closing a tab.
+The tab to be closed and a boolean indicating whether or not it
+is the only tab in the frame are supplied as arguments,
+respectively."
+  :type '(repeat function)
+  :group 'tab-bar
+  :version "27.1")
+
 (defun tab-bar-close-tab (&optional arg to-index)
   "Close the tab specified by its absolute position ARG.
 If no ARG is specified, then close the current tab and switch
@@ -792,52 +823,63 @@ TO-INDEX counts from 1."
   (interactive "P")
   (let* ((tabs (funcall tab-bar-tabs-function))
          (current-index (tab-bar--current-tab-index tabs))
-         (close-index (if (integerp arg) (1- arg) current-index)))
-    (if (= 1 (length tabs))
-        (pcase tab-bar-close-last-tab-choice
-          ('nil
-           (signal 'user-error '("Attempt to delete the sole tab in a frame")))
-          ('delete-frame
-           (delete-frame))
-          ('tab-bar-mode-disable
-           (tab-bar-mode -1))
-          ((pred functionp)
-           ;; Give the handler function the full extent of the tab's
-           ;; data, not just it's name and explicit-name flag.
-           (funcall tab-bar-close-last-tab-choice (tab-bar--tab))))
+         (close-index (if (integerp arg) (1- arg) current-index))
+         (last-tab-p (= 1 (length tabs)))
+         (prevent-close (run-hook-with-args-until-success
+                         'tab-bar-tab-prevent-close-functions
+                         (nth close-index tabs)
+                         last-tab-p)))
 
-      ;; More than one tab still open
-      (when (eq current-index close-index)
-        ;; Select another tab before deleting the current tab
-        (let ((to-index (or (if to-index (1- to-index))
-                            (pcase tab-bar-close-tab-select
-                              ('left (1- current-index))
-                              ('right (if (> (length tabs) (1+ current-index))
-                                          (1+ current-index)
-                                        (1- current-index)))
-                              ('recent (tab-bar--tab-index-recent 1 tabs))))))
-          (setq to-index (max 0 (min (or to-index 0) (1- (length tabs)))))
-          (tab-bar-select-tab (1+ to-index))
-          ;; Re-read tabs after selecting another tab
-          (setq tabs (funcall tab-bar-tabs-function))))
+    (unless prevent-close
+      (run-hook-with-args 'tab-bar-tab-pre-close-functions
+                          (nth close-index tabs)
+                          last-tab-p)
 
-      (let ((close-tab (nth close-index tabs)))
-        (push `((frame . ,(selected-frame))
-                (index . ,close-index)
-                (tab . ,(if (eq (car close-tab) 'current-tab)
-                            (tab-bar--tab)
-                          close-tab)))
-              tab-bar-closed-tabs)
-        (set-frame-parameter nil 'tabs (delq close-tab tabs)))
+      (if last-tab-p
+          (pcase tab-bar-close-last-tab-choice
+            ('nil
+             (user-error "Attempt to delete the sole tab in a frame"))
+            ('delete-frame
+             (delete-frame))
+            ('tab-bar-mode-disable
+             (tab-bar-mode -1))
+            ((pred functionp)
+             ;; Give the handler function the full extent of the tab's
+             ;; data, not just it's name and explicit-name flag.
+             (funcall tab-bar-close-last-tab-choice (tab-bar--tab))))
 
-      (when (and tab-bar-mode
-                 (and (natnump tab-bar-show)
-                      (<= (length tabs) tab-bar-show)))
-        (tab-bar-mode -1))
+        ;; More than one tab still open
+        (when (eq current-index close-index)
+          ;; Select another tab before deleting the current tab
+          (let ((to-index (or (if to-index (1- to-index))
+                              (pcase tab-bar-close-tab-select
+                                ('left (1- current-index))
+                                ('right (if (> (length tabs) (1+ current-index))
+                                            (1+ current-index)
+                                          (1- current-index)))
+                                ('recent (tab-bar--tab-index-recent 1 tabs))))))
+            (setq to-index (max 0 (min (or to-index 0) (1- (length tabs)))))
+            (tab-bar-select-tab (1+ to-index))
+            ;; Re-read tabs after selecting another tab
+            (setq tabs (funcall tab-bar-tabs-function))))
 
-      (force-mode-line-update)
-      (unless tab-bar-mode
-        (message "Deleted tab and switched to %s" tab-bar-close-tab-select)))))
+        (let ((close-tab (nth close-index tabs)))
+          (push `((frame . ,(selected-frame))
+                  (index . ,close-index)
+                  (tab . ,(if (eq (car close-tab) 'current-tab)
+                              (tab-bar--tab)
+                            close-tab)))
+                tab-bar-closed-tabs)
+          (set-frame-parameter nil 'tabs (delq close-tab tabs)))
+
+        (when (and tab-bar-mode
+                   (and (natnump tab-bar-show)
+                        (<= (length tabs) tab-bar-show)))
+          (tab-bar-mode -1))
+
+        (force-mode-line-update)
+        (unless tab-bar-mode
+          (message "Deleted tab and switched to %s" tab-bar-close-tab-select))))))
 
 (defun tab-bar-close-tab-by-name (name)
   "Close the tab by NAME."
