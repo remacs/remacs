@@ -125,10 +125,12 @@ systems.
 @cindex Windows, versions
 @cindex supported versions of Windows
 
-Emacs @value{EMACSVER} is known to run on all versions of Windows from
-Windows 98 and Windows NT 4.0 through to Windows 8.1.  The Windows
-port is built using the Win32 API and supports most features of the X
-version, including variable width fonts, images and tooltips.
+Emacs @value{EMACSVER} is known to run on all versions of Windows 9X
+from Windows 98 onward, and all versions of the NT family starting
+from NT 4.0; this includes all the modern versions from Windows XP and
+on.  The Windows port is built using the Win32 API and supports most
+features of the X version, including variable width fonts, images and
+tooltips.
 
 Emacs on Windows can be compiled as either a 32-bit or a 64-bit
 executable, using the MinGW GCC compiler and development tools.
