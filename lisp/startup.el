@@ -1013,7 +1013,7 @@ the `--debug-init' option to view a complete error backtrace."
     (when debug-on-error-should-be-set
       (setq debug-on-error debug-on-error-from-init-file))))
 
-(defvar package--activated nil)
+(defvar package--activated)
 
 (defun command-line ()
   "A subroutine of `normal-top-level'.
