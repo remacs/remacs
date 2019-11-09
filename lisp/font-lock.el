@@ -392,7 +392,7 @@ MATCH-HIGHLIGHT should be of the form:
 SUBEXP is the number of the subexpression of MATCHER to be
 highlighted.
 
-FACENAME is an expression whose value is the face name to use.
+FACENAME is an expression whose value is the face to use.
 Instead of a face, FACENAME can evaluate to a property list of
 the form (face FACE PROP1 VAL1 PROP2 VAL2 ...)  in which case all
 the listed text-properties will be set rather than just FACE.  In
