@@ -2264,6 +2264,14 @@ file-local variable, you may need to update the value.
 *** Declare 'define-overload' and 'define-child-mode' as obsolete
 *** Rename several internal functions to use a ''mode-local-' prefix
 
+** CC Mode
+
++++
+*** You can now flag "wrong style" comments with font-lock-warning-face.
+To do this, use c-toggle-comment-style, if needed, to set the desired
+default comment style (block or line); then set the option
+c-mark-wrong-style-of-comment to non-nil.
+
 
 * New Modes and Packages in Emacs 27.1
 

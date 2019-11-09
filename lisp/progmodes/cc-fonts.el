@@ -95,6 +95,7 @@
 ;; during compilation.
 (cc-bytecomp-defvar c-preprocessor-face-name)
 (cc-bytecomp-defvar c-reference-face-name)
+(cc-bytecomp-defvar c-block-comment-flag)
 (cc-bytecomp-defun c-fontify-recorded-types-and-refs)
 (cc-bytecomp-defun c-font-lock-declarators)
 (cc-bytecomp-defun c-font-lock-objc-method)
@@ -532,7 +533,12 @@ stuff.  Used on level 1 and higher."
 		 (sws-depth (c-lang-const c-syntactic-ws-depth))
 		 (nsws-depth (c-lang-const c-nonempty-syntactic-ws-depth)))
 
-	    `(;; The stuff after #error and #warning is a message, so
+	    `(;; Fontify "invalid" comment delimiters
+	      ,@(when (and (c-lang-const c-block-comment-starter)
+			   (c-lang-const c-line-comment-starter))
+		  `(c-maybe-font-lock-wrong-style-comments))
+
+	      ;; The stuff after #error and #warning is a message, so
 	      ;; fontify it as a string.
 	      ,@(when (c-lang-const c-cpp-message-directives)
 		  (let* ((re (c-make-keywords-re 'appendable ; nil
@@ -714,6 +720,59 @@ stuff.  Used on level 1 and higher."
 	(forward-char))
       (parse-partial-sexp end limit nil nil state 'syntax-table)))
     nil)
+
+(defun c-maybe-font-lock-wrong-style-comments (limit)
+  ;; This function will be called from font-lock-for a region bounded by POINT
+  ;; and LIMIT, as though it were to identify a keyword for
+  ;; font-lock-keyword-face.  It always returns NIL to inhibit this and
+  ;; prevent a repeat invocation.  See elisp/lispref page "Search-based
+  ;; Fontification".
+  ;;
+  ;; This function fontifies "invalid" comment delimiters with
+  ;; `font-lock-warning-face'.  A delimiter is "invalid" when
+  ;; `c-mark-wrong-style-of-comment' is non-nil, and the delimiter style is
+  ;; not the default specified by `c-block-comment-flag'.
+  (when c-mark-wrong-style-of-comment
+    (let* ((lit (c-semi-pp-to-literal (point)))
+	   (s (car lit))		; parse-partial-sexp state.
+	   )
+      ;; First, deal with and move out of any literal we start in.
+      (cond
+       ((null (cadr lit)))		; Not in a literal
+       ((eq (cadr lit) 'string)
+	(setq s (parse-partial-sexp (point) limit nil nil s 'syntax-table)))
+       ((and (not c-block-comment-flag) ; In an "invalid" block comment
+	     (eq (cadr lit) 'c))
+	(setq s (parse-partial-sexp (point) limit nil nil s 'syntax-table))
+	;; Font lock the block comment ender with warning face.
+	(when (not (nth 4 s))
+	  (c-put-font-lock-face (- (point) (length c-block-comment-ender))
+				(point) font-lock-warning-face)))
+       (t ; In a line comment, or a "valid" block comment
+	(setq s (parse-partial-sexp (point) limit nil nil s 'syntax-table))))
+
+      (while (< (point) limit)
+	(setq s (parse-partial-sexp (point) limit nil nil s 'syntax-table))
+	(cond
+	 ((or (nth 3 s)			; In a string
+	      (and (nth 4 s)		; In a comment
+		   (eq (nth 7 s)	; Comment style
+		       (if c-block-comment-flag
+			   nil		; Block comment
+			 1))))	; Line comment
+	    ;; Move over a "valid" literal.
+	  (setq s (parse-partial-sexp (point) limit nil nil s 'syntax-table)))
+	 ((nth 4 s)			; In an invalid comment
+	 ;; Fontify the invalid comment opener.
+	  (c-put-font-lock-face (nth 8 s) (point) font-lock-warning-face)
+	  ;; Move to end of comment or LIMIT.
+	  (setq s (parse-partial-sexp (point) limit nil nil s 'syntax-table))
+	  ;; Fontify an invalid block comment ender, if that's what we have.
+	  (when (and (not c-block-comment-flag)
+		     (not (nth 4 s)))	; We're outside the comment
+	    (c-put-font-lock-face (- (point) (length c-block-comment-ender))
+				  (point) font-lock-warning-face)))))))
+  nil)
 
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various

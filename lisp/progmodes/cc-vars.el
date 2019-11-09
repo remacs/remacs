@@ -1751,6 +1751,14 @@ variables.")
 c-macro-names-with-semicolon: %s"
 		    c-macro-names-with-semicolon))))))
 
+(defcustom c-mark-wrong-style-of-comment nil
+  "Fontify \"invalid\" comment delims with `font-lock-warning-face' if non-nil.
+\"Invalid\" means a line comment when the default comment style (set by
+`c-toggle-comment-style') is block, or a block comment otherwise."
+  :type 'boolean
+  :group 'c
+  :version 27.1)
+
 (defvar c-file-style nil
   "Variable interface for setting style via File Local Variables.
 In a file's Local Variable section, you can set this variable to a

@@ -669,7 +669,7 @@ expression, to some statements, or perhaps to whole functions, the
 syntactic recognition can be wrong.  @ccmode{} manages to figure it
 out correctly most of the time, though.
 
-Some macros, when invoked, ''have their own semicolon''.  To get the
+Some macros, when invoked, ``have their own semicolon''.  To get the
 next line indented correctly, rather than as a continuation line,
 @xref{Macros with ;}.
 
@@ -1149,7 +1149,9 @@ find useful while writing new code or editing old code:
 @table @asis
 @item comment style
 This specifies whether comment commands (such as @kbd{M-;}) insert
-block comments or line comments.
+block comments or line comments@footnote{You can emphasize
+non-default style comments in your code by giving their delimiters
+@code{font-lock-warning-face}.  @xref{Wrong Comment Style}.}.
 @item electric mode
 When this is enabled, certain visible characters cause reformatting as
 they are typed.  This is normally helpful, but can be a nuisance when
@@ -1866,6 +1868,7 @@ sections apply to the other languages.
 * Font Locking Preliminaries::
 * Faces::
 * Doc Comments::
+* Wrong Comment Style::
 * Misc Font Locking::
 * AWK Mode Font Locking::
 @end menu
@@ -2069,7 +2072,7 @@ since those aren't syntactic errors in themselves.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Doc Comments, Misc Font Locking, Faces, Font Locking
+@node    Doc Comments, Wrong Comment Style, Faces, Font Locking
 @comment node-name, next, previous, up
 @section Documentation Comments
 @cindex documentation comments
@@ -2149,7 +2152,29 @@ If you add support for another doc comment style, please consider
 contributing it: send a note to @email{bug-cc-mode@@gnu.org}.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Misc Font Locking, AWK Mode Font Locking, Doc Comments, Font Locking
+@node    Wrong Comment Style, Misc Font Locking, Doc Comments, Font Locking
+@comment  node-name,  next,  previous,  up
+@section Marking ``Wrong'' style comments
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Most languages supported by @ccmode{} have two styles of comments,
+namely block comments and line comments.  Your project may have such a
+strong preference for one of them, that you wish ``wrong'' style
+comments to be clearly marked.
+
+You can get @ccmode{} to do this by setting the default comment style,
+if necessary, (@pxref{Minor Modes}) and setting the customizable
+option @code{c-mark-wrong-style-of-comment} to non-@code{nil}.
+
+@defvar c-mark-wrong-style-of-comment
+@vindex mark-wrong-style-of-comment (c-)
+When this customizable option is non-@code{nil}, comment delimiters
+which aren't of the default style will be fontified with
+@code{font-lock-warning-face}.
+@end defvar
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Misc Font Locking, AWK Mode Font Locking, Wrong Comment Style, Font Locking
 @comment  node-name,  next,  previous,  up
 @section Miscellaneous Font Locking
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2885,11 +2910,11 @@ should not be changed directly; use @code{c-add-style} instead.
 
 Instead of specifying a style, you can get @ccmode{} to @dfn{guess}
 your style by examining an already formatted code buffer.  @ccmode{}
-then determines the ''most frequent'' offset (@pxref{c-offsets-alist})
+then determines the ``most frequent'' offset (@pxref{c-offsets-alist})
 for each of the syntactic symbols (@pxref{Indentation Engine Basics})
-encountered in the buffer, and the ''most frequent'' value of
+encountered in the buffer, and the ``most frequent'' value of
 c-basic-offset (@pxref{Customizing Indentation}), then merges the
-current style with these ''guesses'' to form a new style.  This
+current style with these ``guesses'' to form a new style.  This
 combined style is known as the @dfn{guessed style}.
 
 To do this, call @code{c-guess} (or one of the other 5 guessing
@@ -6927,7 +6952,7 @@ is @code{nil}, all lines inside macro definitions are analyzed as
 Because a macro can expand into anything at all, near where one is
 invoked @ccmode{} can only indent and fontify code heuristically.
 Sometimes it gets it wrong.  Usually you should try to design your
-macros so that they ''look like ordinary code'' when you invoke them.
+macros so that they ``look like ordinary code'' when you invoke them.
 However, two situations are so common that @ccmode{} handles them
 specially: that is when certain macros needn't (or mustn't) be
 followed by a @samp{;}, and when certain macros (or compiler

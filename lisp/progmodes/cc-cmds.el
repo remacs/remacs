@@ -391,6 +391,16 @@ This action does nothing when the mode only has one comment style."
 	(if c-block-comment-flag
 	    (concat " " c-block-comment-ender)
 	  ""))
+  ;; If necessary, invert the sense of fontification of wrong style comments.
+  (when (and c-mark-wrong-style-of-comment
+	     font-lock-mode
+	     c-block-comment-starter
+	     c-block-comment-ender)
+    (save-excursion
+      (save-restriction
+	(widen)
+	(goto-char (point-min))
+	(c-font-lock-flush (point-min) (point-max)))))
   (c-update-modeline)
   (c-keep-region-active))
 

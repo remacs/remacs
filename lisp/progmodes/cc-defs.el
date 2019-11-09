@@ -219,6 +219,13 @@ This variant works around bugs in `eval-when-compile' in various
 	`(cl-delete-duplicates ,cl-seq ,@cl-keys)
       `(delete-duplicates ,cl-seq ,@cl-keys))))
 
+(defmacro c-font-lock-flush (beg end)
+  "Declare the region BEG...END's fontification as out-of-date.
+On XEmacs and older Emacsen, this refontifies that region immediately."
+  (if (fboundp 'font-lock-flush)
+      `(font-lock-flush ,beg ,end)
+    `(font-lock-fontify-region ,beg ,end)))
+
 (defmacro c-point (position &optional point)
   "Return the value of certain commonly referenced POSITIONs relative to POINT.
 The current point is used if POINT isn't specified.  POSITION can be
