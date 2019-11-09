@@ -21,13 +21,13 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <stdlib.h>
 #include <stdio.h>
 
-HDDEDATA CALLBACK DdeCallback (UINT, UINT, HCONV, HSZ, HSZ, HDDEDATA, DWORD,
-			       DWORD);
+HDDEDATA CALLBACK DdeCallback (UINT, UINT, HCONV, HSZ, HSZ, HDDEDATA, DWORD_PTR,
+			       DWORD_PTR);
 
 HDDEDATA CALLBACK
 DdeCallback (UINT uType, UINT uFmt, HCONV hconv,
 	     HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
-	     DWORD dwData1, DWORD dwData2)
+	     DWORD_PTR dwData1, DWORD_PTR dwData2)
 {
   return ((HDDEDATA) NULL);
 }
