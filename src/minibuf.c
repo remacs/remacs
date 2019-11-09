@@ -1323,13 +1323,13 @@ is used to further constrain the set of candidates.  */)
 	  else
 	    {
 	      compare = min (bestmatchsize, SCHARS (eltstring));
-	      tem = Fcompare_strings (bestmatch, zero,
-				      make_fixnum (compare),
-				      eltstring, zero,
-				      make_fixnum (compare),
+	      Lisp_Object lcompare = make_fixnum (compare);
+	      tem = Fcompare_strings (bestmatch, zero, lcompare,
+				      eltstring, zero, lcompare,
 				      completion_ignore_case ? Qt : Qnil);
 	      matchsize = EQ (tem, Qt) ? compare : eabs (XFIXNUM (tem)) - 1;
 
+	      Lisp_Object old_bestmatch = bestmatch;
 	      if (completion_ignore_case)
 		{
 		  /* If this is an exact match except for case,
@@ -1363,7 +1363,12 @@ is used to further constrain the set of candidates.  */)
 		    bestmatch = eltstring;
 		}
 	      if (bestmatchsize != SCHARS (eltstring)
-		  || bestmatchsize != matchsize)
+		  || bestmatchsize != matchsize
+		  || (completion_ignore_case
+		      && !EQ (Fcompare_strings (old_bestmatch, zero, lcompare,
+						eltstring, zero, lcompare,
+						Qnil),
+			      Qt)))
 		/* Don't count the same string multiple times.  */
 		matchcount += matchcount <= 1;
 	      bestmatchsize = matchsize;
