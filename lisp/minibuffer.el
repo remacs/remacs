@@ -715,6 +715,11 @@ If ARGS are provided, then pass MESSAGE through `format-message'."
           (message "%s" message))
         (prog1 (sit-for (or minibuffer-message-timeout 1000000))
           (message nil)))
+    ;; Record message in the *Messages* buffer
+    (let ((inhibit-message t))
+      (if args
+          (apply #'message message args)
+        (message "%s" message)))
     ;; Clear out any old echo-area message to make way for our new thing.
     (message nil)
     (setq message (if (and (null args)

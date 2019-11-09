@@ -4552,8 +4552,8 @@ This function is called directly from the C code."
 	      (byte-compile-warn "%s" msg))
 	  (run-with-timer 0 nil
 			  (lambda (msg)
-			    (message "%s" msg))
-                          msg)))))
+			    (minibuffer-message "%s" msg))
+			  msg)))))
 
   ;; Finally, run any other hook.
   (run-hook-with-args 'after-load-functions abs-file))
