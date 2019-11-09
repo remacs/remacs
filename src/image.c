@@ -2244,6 +2244,14 @@ image_set_transform (struct frame *f, struct image *img)
       XRenderSetPictureFilter (FRAME_X_DISPLAY (f), img->picture, FilterBest,
 			       0, 0);
       XRenderSetPictureTransform (FRAME_X_DISPLAY (f), img->picture, &tmat);
+
+      if (img->mask_picture)
+        {
+          XRenderSetPictureFilter (FRAME_X_DISPLAY (f), img->mask_picture,
+                                   FilterBest, 0, 0);
+          XRenderSetPictureTransform (FRAME_X_DISPLAY (f), img->mask_picture,
+                                      &tmat);
+        }
     }
 # elif defined HAVE_NTGUI
   /* Store the transform matrix for application at draw time.  */
@@ -2313,10 +2321,6 @@ lookup_image (struct frame *f, Lisp_Object spec)
 	  Lisp_Object ascent, margin, relief, bg;
 	  int relief_bound;
 
-#ifdef HAVE_NATIVE_TRANSFORMS
-          image_set_transform (f, img);
-#endif
-
 	  ascent = image_spec_value (spec, QCascent, NULL);
 	  if (FIXNUMP (ascent))
 	    img->ascent = XFIXNUM (ascent);
@@ -2357,6 +2361,13 @@ lookup_image (struct frame *f, Lisp_Object spec)
 	     don't have the image yet.  */
 	  if (!EQ (builtin_lisp_symbol (img->type->type), Qpostscript))
 	    postprocess_image (f, img);
+
+          /* postprocess_image above may modify the image or the mask,
+             relying on the image's real width and height, so
+             image_set_transform must be called after it.  */
+#ifdef HAVE_NATIVE_TRANSFORMS
+          image_set_transform (f, img);
+#endif
 	}
 
       unblock_input ();
@@ -2527,6 +2538,61 @@ x_destroy_x_image (XImage *ximg)
     }
 }
 
+# if !defined USE_CAIRO && defined HAVE_XRENDER
+/* Create and return an XRender Picture for XRender transforms.  */
+static Picture
+x_create_xrender_picture (struct frame *f, Emacs_Pixmap pixmap, int depth)
+{
+  Picture p;
+  Display *display = FRAME_X_DISPLAY (f);
+  int event_basep, error_basep;
+
+  if (XRenderQueryExtension (display, &event_basep, &error_basep))
+    {
+      if (depth <= 0)
+	depth = DefaultDepthOfScreen (FRAME_X_SCREEN (f));
+      if (depth == 32 || depth == 24 || depth == 8 || depth == 4 || depth == 1)
+        {
+          /* FIXME: Do we need to handle all possible bit depths?
+             XRenderFindStandardFormat supports PictStandardARGB32,
+             PictStandardRGB24, PictStandardA8, PictStandardA4,
+             PictStandardA1, and PictStandardNUM (what is this?!).
+
+             XRenderFindFormat may support more, but I don't
+             understand the documentation.  */
+          XRenderPictFormat *format;
+          format = XRenderFindStandardFormat (display,
+                                              depth == 32 ? PictStandardARGB32
+                                              : depth == 24 ? PictStandardRGB24
+                                              : depth == 8 ? PictStandardA8
+                                              : depth == 4 ? PictStandardA4
+                                              : PictStandardA1);
+
+          /* Set the Picture repeat to "pad".  This means when
+             operations look at pixels outside the image area they
+             will use the value of the nearest real pixel instead of
+             using a transparent black pixel.  */
+          XRenderPictureAttributes attr;
+          unsigned long attr_mask = CPRepeat;
+          attr.repeat = RepeatPad;
+
+          p = XRenderCreatePicture (display, pixmap, format, attr_mask, &attr);
+        }
+      else
+        {
+          image_error ("Specified image bit depth is not supported by XRender");
+          return 0;
+        }
+    }
+  else
+    {
+      /* XRender not supported on this display.  */
+      return 0;
+    }
+
+  return p;
+}
+# endif /* !defined USE_CAIRO && defined HAVE_XRENDER */
 #endif	/* HAVE_X_WINDOWS */
 
 /* Return true if XIMG's size WIDTH x HEIGHT doesn't break the
@@ -2579,36 +2645,8 @@ image_create_x_image_and_pixmap_1 (struct frame *f, int width, int height, int d
   if (!x_create_x_image_and_pixmap (f, width, height, depth, pimg, pixmap))
     return 0;
 # ifdef HAVE_XRENDER
-  Display *display = FRAME_X_DISPLAY (f);
-  int event_basep, error_basep;
-  if (picture && XRenderQueryExtension (display, &event_basep, &error_basep))
-    {
-      if (depth <= 0)
-	depth = DefaultDepthOfScreen (FRAME_X_SCREEN (f));
-      if (depth == 32 || depth == 24 || depth == 8)
-        {
-          XRenderPictFormat *format;
-          XRenderPictureAttributes attr;
-
-          /* FIXME: Do we need to handle all possible bit depths?
-             XRenderFindStandardFormat supports PictStandardARGB32,
-             PictStandardRGB24, PictStandardA8, PictStandardA4,
-             PictStandardA1, and PictStandardNUM (what is this?!).
-
-             XRenderFindFormat may support more, but I don't
-             understand the documentation.  */
-          format = XRenderFindStandardFormat (display,
-                                              depth == 32 ? PictStandardARGB32
-                                              : depth == 24 ? PictStandardRGB24
-                                              : PictStandardA8);
-          *picture = XRenderCreatePicture (display, *pixmap, format, 0, &attr);
-        }
-      else
-        {
-          image_error ("Specified image bit depth is not supported by XRender");
-          *picture = 0;
-        }
-    }
+  if (picture)
+    *picture = x_create_xrender_picture (f, *pixmap, depth);
 # endif
 
   return 1;
@@ -3387,6 +3425,11 @@ Create_Pixmap_From_Bitmap_Data (struct frame *f, struct image *img, char *data,
 				   img->width, img->height,
 				   fg, bg,
 				   DefaultDepthOfScreen (FRAME_X_SCREEN (f)));
+# if !defined USE_CAIRO && defined HAVE_XRENDER
+  if (img->pixmap)
+    img->picture = x_create_xrender_picture (f, img->pixmap, 0);
+# endif
+
 #elif defined HAVE_NTGUI
   img->pixmap
     = w32_create_pixmap_from_bitmap_data (img->width, img->height, data);
@@ -4359,18 +4402,30 @@ xpm_load (struct frame *f, struct image *img)
 	  image_clear_image (f, img);
 	  rc = XpmNoMemory;
 	}
-      else if (img->mask_img)
-	{
-          img->mask = XCreatePixmap (FRAME_X_DISPLAY (f), FRAME_X_DRAWABLE (f),
-				     img->mask_img->width,
-				     img->mask_img->height,
-				     img->mask_img->depth);
-	  if (img->mask == NO_PIXMAP)
-	    {
-	      image_clear_image (f, img);
-	      rc = XpmNoMemory;
-	    }
-	}
+      else
+        {
+# if !defined USE_CAIRO && defined HAVE_XRENDER
+          img->picture = x_create_xrender_picture (f, img->pixmap,
+                                                   img->ximg->depth);
+# endif
+          if (img->mask_img)
+            {
+              img->mask = XCreatePixmap (FRAME_X_DISPLAY (f), FRAME_X_DRAWABLE (f),
+                                         img->mask_img->width,
+                                         img->mask_img->height,
+                                         img->mask_img->depth);
+              if (img->mask == NO_PIXMAP)
+                {
+                  image_clear_image (f, img);
+                  rc = XpmNoMemory;
+                }
+# if !defined USE_CAIRO && defined HAVE_XRENDER
+              else
+                img->mask_picture = x_create_xrender_picture
+                  (f, img->mask, img->mask_img->depth);
+# endif
+            }
+        }
     }
 #endif
 

@@ -3049,14 +3049,12 @@ x_composite_image (struct glyph_string *s, Pixmap dest,
       XRenderPictFormat *default_format;
       XRenderPictureAttributes attr;
 
-      /* FIXME: Should we do this each time or would it make sense to
-         store destination in the frame struct?  */
       default_format = XRenderFindVisualFormat (display,
                                                 DefaultVisual (display, 0));
       destination = XRenderCreatePicture (display, dest,
                                           default_format, 0, &attr);
 
-      XRenderComposite (display, PictOpSrc,
+      XRenderComposite (display, s->img->mask_picture ? PictOpOver : PictOpSrc,
                         s->img->picture, s->img->mask_picture, destination,
                         srcX, srcY,
                         srcX, srcY,
@@ -3315,6 +3313,7 @@ x_draw_image_foreground_1 (struct glyph_string *s, Pixmap pixmap)
 	     trust on the shape extension to be available
 	     (XShapeCombineRegion).  So, compute the rectangle to draw
 	     manually.  */
+          /* FIXME: Do we need to do this when using XRender compositing?  */
 	  unsigned long mask = (GCClipMask | GCClipXOrigin | GCClipYOrigin
 				| GCFunction);
 	  XGCValues xgcv;
@@ -3325,9 +3324,9 @@ x_draw_image_foreground_1 (struct glyph_string *s, Pixmap pixmap)
 	  xgcv.function = GXcopy;
 	  XChangeGC (display, s->gc, mask, &xgcv);
 
-	  XCopyArea (display, s->img->pixmap, pixmap, s->gc,
-		     s->slice.x, s->slice.y,
-		     s->slice.width, s->slice.height, x, y);
+	  x_composite_image (s, pixmap,
+                             s->slice.x, s->slice.y,
+                             x, y, s->slice.width, s->slice.height);
 	  XSetClipMask (display, s->gc, None);
 	}
       else
