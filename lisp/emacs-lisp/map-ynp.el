@@ -341,7 +341,7 @@ When `use-dialog-box' is t, pop up a dialog window to get user input."
                                (delete-minibuffer-contents)
                                (beep)
                                (message message)
-                               (sleep-for 2)))
+                               (sit-for 2)))
                            map)
                          read-answer-map--memoize))))
          answer)
@@ -361,7 +361,7 @@ When `use-dialog-box' is t, pop up a dialog window to get user input."
                                       (short
                                        (read-from-minibuffer
                                         prompt nil short-answer-map nil
-                                        'yes-or-no-p-history))
+                                        'read-char-history))
                                       (t
                                        (read-from-minibuffer
                                         prompt nil nil nil
@@ -381,7 +381,7 @@ When `use-dialog-box' is t, pop up a dialog window to get user input."
                       ".\n")))
         (beep)
         (message message)
-        (sleep-for 2)))
+        (sit-for 2)))
     answer))
 
 ;;; map-ynp.el ends here
