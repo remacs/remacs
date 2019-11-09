@@ -731,6 +731,8 @@ was established."
   '(font-lock-mode ;; (Generally the most important).
     ;; Other standard minor modes:
     display-line-numbers-mode
+    flymake-mode
+    flyspell-mode
     goto-address-mode
     goto-address-prog-mode
     hi-lock-mode
@@ -746,6 +748,7 @@ was established."
     diff-hl-flydiff-mode
     diff-hl-mode
     dtrt-indent-mode
+    flycheck-mode
     hl-sexp-mode
     idle-highlight-mode
     rainbow-delimiters-mode
