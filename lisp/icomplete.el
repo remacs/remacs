@@ -572,13 +572,6 @@ matches exist."
 	     (compare (compare-strings name nil nil
 				       most nil nil completion-ignore-case))
 	     (ellipsis (if (char-displayable-p ?…) "…" "..."))
-             ;; `determ' is what we "determined" to be the thing that
-             ;; TAB will complete to.  Also, if we're working with a
-             ;; large prefix (like when finding files), we want to
-             ;; truncate the common prefix away.  `determ-ellipsis'
-             ;; says if we should do it with an `ellipsis'.  Icomplete
-             ;; uses one, Ido doesn't.
-             (determ-ellipsis (if fido-mode "" ellipsis))
 	     (determ (unless (or (eq t compare) (eq t most-try)
 				 (= (setq compare (1- (abs compare)))
 				    (length most)))
@@ -589,10 +582,8 @@ matches exist."
 				 (substring most compare))
                                 ;; Don't bother truncating if it doesn't gain
                                 ;; us at least 2 columns.
-				((< compare (+ 2 (string-width determ-ellipsis)))
-				 most)
-				(t (concat determ-ellipsis
-					   (substring most compare))))
+				((< compare (+ 2 (string-width ellipsis))) most)
+				(t (concat ellipsis (substring most compare))))
 			       close-bracket)))
 	     ;;"-prospects" - more than one candidate
 	     (prospects-len (+ (string-width
@@ -673,8 +664,6 @@ matches exist."
 		    (mapconcat 'identity prospects icomplete-separator)
 		    (and limit (concat icomplete-separator ellipsis))
 		    "}")
-          (put-text-property 1 (1- (length determ))
-                             'face 'icomplete-first-match determ)
 	  (concat determ " [Matched]"))))))
 
 ;;; Iswitchb compatibility
