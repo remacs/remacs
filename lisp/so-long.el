@@ -1174,7 +1174,7 @@ enabled, and `so-long-predicate' has detected that the file contains long lines.
 Many Emacs modes struggle with buffers which contain excessively long lines,
 and may consequently cause unacceptable performance issues.
 
-This is commonly on account of 'minified' code (i.e. code has been compacted
+This is commonly on account of \"minified\" code (i.e., code compacted
 into the smallest file size possible, which often entails removing newlines
 should they not be strictly necessary).  These kinds of files are typically
 not intended to be edited, so not providing the usual editing mode in these
@@ -1626,9 +1626,9 @@ Equivalent to calling (global-so-long-mode 0)"
 Many Emacs modes struggle with buffers which contain excessively long lines,
 and may consequently cause unacceptable performance issues.
 
-This is commonly on account of 'minified' code (i.e. code that has been
-compacted into the smallest file size possible, which often entails removing
-newlines should they not be strictly necessary).
+This is commonly on account of \"minified\" code (i.e., code compacted into the
+smallest file size possible, which often entails removing newlines should they
+not be strictly necessary).
 
 When such files are detected by `so-long-predicate', we invoke the selected
 `so-long-action' to mitigate potential performance problems in the buffer.

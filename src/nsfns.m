@@ -1971,7 +1971,7 @@ the active application.  */)
 
 DEFUN ("ns-emacs-info-panel", Fns_emacs_info_panel, Sns_emacs_info_panel,
        0, 0, 0,
-       doc: /* Shows the 'Info' or 'About' panel for Emacs.  */)
+       doc: /* Shows the `Info' or `About' panel for Emacs.  */)
      (void)
 {
   check_window_system (NULL);

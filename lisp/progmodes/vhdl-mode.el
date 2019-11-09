@@ -4867,8 +4867,8 @@ Known problems:
 
 - XEmacs: Incorrect start-up when automatically opening speedbar.
 - XEmacs: Indentation in XEmacs 21.4 (and higher).
-- Indentation incorrect for new 'postponed' VHDL keyword.
-- Indentation incorrect for 'protected body' construct.
+- Indentation incorrect for new `postponed' VHDL keyword.
+- Indentation incorrect for `protected body' construct.
 
 
                                                 The VHDL Mode Authors

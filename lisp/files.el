@@ -6864,7 +6864,7 @@ regardless of the language.")
 The return value is a cons (DIR . WILDCARDS); DIR is the
 `default-directory' in the Dired buffer, and WILDCARDS are the wildcards.
 
-Valid wildcards are '*', '?', '[abc]' and '[a-z]'."
+Valid wildcards are `*', `?', `[abc]' and `[a-z]'."
   (let ((wildcards "[?*"))
     (when (and (or (not (featurep 'ls-lisp))
                    ls-lisp-support-shell-wildcards)

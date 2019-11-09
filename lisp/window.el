@@ -2292,14 +2292,14 @@ SIDE can be any of the symbols `left', `top', `right' or
   "Return window in DIRECTION as seen from WINDOW.
 More precisely, return the nearest window in direction DIRECTION
 as seen from the position of `window-point' in window WINDOW.
-DIRECTION should be one of 'above', 'below', 'left' or 'right'.
+DIRECTION should be one of `above', `below', `left' or `right'.
 WINDOW must be a live window and defaults to the selected one.
 
-Do not return a window whose 'no-other-window' parameter is
-non-nil.  If the nearest window's 'no-other-window' parameter is
+Do not return a window whose `no-other-window' parameter is
+non-nil.  If the nearest window's `no-other-window' parameter is
 non-nil, try to find another window in the indicated direction.
 If, however, the optional argument IGNORE is non-nil, return that
-window even if its 'no-other-window' parameter is non-nil.
+window even if its `no-other-window' parameter is non-nil.
 
 Optional argument SIGN a negative number means to use the right
 or bottom edge of WINDOW as reference position instead of
@@ -2308,7 +2308,7 @@ top edge of WINDOW as reference position.
 
 Optional argument WRAP non-nil means to wrap DIRECTION around
 frame borders.  This means to return for WINDOW at the top of the
-frame and DIRECTION 'above' the minibuffer window if the frame
+frame and DIRECTION `above' the minibuffer window if the frame
 has one, and a window at the bottom of the frame otherwise.
 
 Optional argument MINI nil means to return the minibuffer window
@@ -5058,29 +5058,29 @@ absolute value can be less than `window-min-height' or
 small as one line or two columns.  SIZE defaults to half of
 WINDOW's size.
 
-Optional third argument SIDE nil (or 'below') specifies that the
-new window shall be located below WINDOW.  SIDE 'above' means the
+Optional third argument SIDE nil (or `below') specifies that the
+new window shall be located below WINDOW.  SIDE `above' means the
 new window shall be located above WINDOW.  In both cases SIZE
 specifies the new number of lines for WINDOW (or the new window
 if SIZE is negative) including space reserved for the mode and/or
 header line.
 
-SIDE t (or 'right') specifies that the new window shall be
-located on the right side of WINDOW.  SIDE 'left' means the new
+SIDE t (or `right') specifies that the new window shall be
+located on the right side of WINDOW.  SIDE `left' means the new
 window shall be located on the left of WINDOW.  In both cases
 SIZE specifies the new number of columns for WINDOW (or the new
 window provided SIZE is negative) including space reserved for
 fringes and the scrollbar or a divider column.
 
-For compatibility reasons, SIDE 'up' and 'down' are interpreted
-as 'above' and 'below'.  Any other non-nil value for SIDE is
-currently handled like t (or 'right').
+For compatibility reasons, SIDE `up' and `down' are interpreted
+as `above' and `below'.  Any other non-nil value for SIDE is
+currently handled like t (or `right').
 
 PIXELWISE, if non-nil, means to interpret SIZE pixelwise.
 
 If the variable `ignore-window-parameters' is non-nil or the
-'split-window' parameter of WINDOW equals t, do not process any
-parameters of WINDOW.  Otherwise, if the 'split-window' parameter
+`split-window' parameter of WINDOW equals t, do not process any
+parameters of WINDOW.  Otherwise, if the `split-window' parameter
 of WINDOW specifies a function, call that function with all three
 arguments and return the value returned by that function.
 
@@ -6896,18 +6896,18 @@ already before that action function was called or is a new window
 created by that function.  ALIST is a buffer display action alist
 as compiled by `display-buffer'.
 
-TYPE must be one of the following symbols: 'reuse' (which means
+TYPE must be one of the following symbols: `reuse' (which means
 WINDOW existed before the call of `display-buffer' and may
-already show BUFFER or not), 'window' (WINDOW was created on an
-existing frame) or 'frame' (WINDOW was created on a new frame).
+already show BUFFER or not), `window' (WINDOW was created on an
+existing frame) or `frame' (WINDOW was created on a new frame).
 TYPE is passed unaltered to `display-buffer-record-window'.
 
 Handle WINDOW's dedicated flag as follows: If WINDOW already
 shows BUFFER, leave it alone.  Otherwise, if ALIST contains a
-'dedicated' entry and WINDOW is either new or that entry's value
-equals 'side', set WINDOW's dedicated flag to the value of that
+`dedicated' entry and WINDOW is either new or that entry's value
+equals `side', set WINDOW's dedicated flag to the value of that
 entry.  Otherwise, if WINDOW is new and the value of
-'display-buffer-mark-dedicated' is non-nil, set WINDOW's
+`display-buffer-mark-dedicated' is non-nil, set WINDOW's
 dedicated flag to that value.  In any other case, reset WINDOW's
 dedicated flag to nil.
 
@@ -7227,18 +7227,18 @@ Action functions and the action they try to perform are:
     have `display-buffer' return nil immediately.
 
 Action alist entries are:
- 'inhibit-same-window' -- A non-nil value prevents the same
+ `inhibit-same-window' -- A non-nil value prevents the same
     window from being used for display.
- 'inhibit-switch-frame' -- A non-nil value prevents any frame
+ `inhibit-switch-frame' -- A non-nil value prevents any frame
     used for showing the buffer from being raised or selected.
- 'reusable-frames' -- The value specifies the set of frames to
+ `reusable-frames' -- The value specifies the set of frames to
     search for a window that already displays the buffer.
     Possible values are nil (the selected frame), t (any live
     frame), visible (any visible frame), 0 (any visible or
     iconified frame) or an existing live frame.
- 'pop-up-frame-parameters' -- The value specifies an alist of
+ `pop-up-frame-parameters' -- The value specifies an alist of
     frame parameters to give a new frame, if one is created.
- 'window-height' -- The value specifies the desired height of the
+ `window-height' -- The value specifies the desired height of the
     window chosen and is either an integer (the total height of
     the window), a floating point number (the fraction of its
     total height with respect to the total height of the frame's
@@ -7247,23 +7247,23 @@ Action alist entries are:
     height of the window; its return value is ignored.  Suitable
     functions are `shrink-window-if-larger-than-buffer' and
     `fit-window-to-buffer'.
- 'window-width' -- The value specifies the desired width of the
+ `window-width' -- The value specifies the desired width of the
     window chosen and is either an integer (the total width of
     the window), a floating point number (the fraction of its
     total width with respect to the width of the frame's root
     window) or a function to be called with one argument - the
     chosen window.  The function is supposed to adjust the width
     of the window; its return value is ignored.
- 'preserve-size' -- The value should be either (t . nil) to
+ `preserve-size' -- The value should be either (t . nil) to
     preserve the width of the chosen window, (nil . t) to
     preserve its height or (t . t) to preserve its height and
     width in future changes of the window configuration.
- 'window-parameters' -- The value specifies an alist of window
+ `window-parameters' -- The value specifies an alist of window
     parameters to give the chosen window.
- 'allow-no-window' -- A non-nil value means that `display-buffer'
+ `allow-no-window' -- A non-nil value means that `display-buffer'
     may not display the buffer and return nil immediately.
 
-The entries 'window-height', 'window-width' and 'preserve-size'
+The entries `window-height', `window-width' and `preserve-size'
 are applied only when the window used for displaying the buffer
 never showed another buffer before.
 
@@ -7710,16 +7710,16 @@ indirectly called by the latter."
 (defun windows-sharing-edge (&optional window edge within)
   "Return list of live windows sharing the same edge with WINDOW.
 WINDOW must be a valid window and defaults to the selected one.
-EDGE stands for the edge to share and must be either 'left',
-'above', 'right' or 'below'.  Omitted or nil, EDGE defaults to
-'left'.
+EDGE stands for the edge to share and must be either `left',
+`above', `right' or `below'.  Omitted or nil, EDGE defaults to
+`left'.
 
 WITHIN nil means to find a live window that shares the opposite
-EDGE with WINDOW.  For example, if EDGE equals 'left', WINDOW has
+EDGE with WINDOW.  For example, if EDGE equals `left', WINDOW has
 to share (part of) the right edge of any window returned.  WITHIN
 non-nil means to find all live windows that share the same EDGE
 with WINDOW (Window must be internal in this case).  So if EDGE
-equals 'left', WINDOW's left edge has to fully encompass the left
+equals `left', WINDOW's left edge has to fully encompass the left
 edge of any window returned."
   (setq window (window-normalize-window window))
   (setq edge (or edge 'left))

@@ -622,9 +622,9 @@ START-EVENT is the starting mouse event of the drag action.  Its
 position window denotes the frame that will be dragged.
 
 PART specifies the part that has been dragged and must be one of
-the symbols 'left', 'top', 'right', 'bottom', 'top-left',
-'top-right', 'bottom-left', 'bottom-right' to drag an internal
-border or edge.  If PART equals 'move', this means to move the
+the symbols `left', `top', `right', `bottom', `top-left',
+`top-right', `bottom-left', `bottom-right' to drag an internal
+border or edge.  If PART equals `move', this means to move the
 frame with the mouse."
   ;; Give temporary modes such as isearch a chance to turn off.
   (run-hooks 'mouse-leave-buffer-hook)

@@ -350,7 +350,7 @@ Also add the number of windows in the window configuration."
   "Function to get a list of tabs to display in the tab bar.
 This function should return a list of alists with parameters
 that include at least the element (name . TAB-NAME).
-For example, '((tab (name . \"Tab 1\")) (current-tab (name . \"Tab 2\")))
+For example, \\='((tab (name . \"Tab 1\")) (current-tab (name . \"Tab 2\")))
 By default, use function `tab-bar-tabs'.")
 
 (defun tab-bar-tabs ()

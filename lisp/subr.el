@@ -838,9 +838,9 @@ destructively modifying the list stored in ALIST.
 
 Example:
 
-   (setq foo '((a . 0)))
-   (setf (alist-get 'a foo) 1
-         (alist-get 'b foo) 2)
+   (setq foo \\='((a . 0)))
+   (setf (alist-get \\='a foo) 1
+         (alist-get \\='b foo) 2)
 
    foo => ((b . 2) (a . 1))
 
@@ -852,8 +852,8 @@ deleted from the alist).
 
 Example:
 
-  (setq foo '((a . 1) (b . 2)))
-  (setf (alist-get 'b foo nil 'remove) nil)
+  (setq foo \\='((a . 1) (b . 2)))
+  (setf (alist-get \\='b foo nil \\='remove) nil)
 
   foo => ((a . 1))"
   (ignore remove) ;;Silence byte-compiler.

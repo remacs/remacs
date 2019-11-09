@@ -5418,7 +5418,7 @@ The default comes from `process-coding-system-alist' and
 your might try undecided-dos as a coding system.  If this doesn't help,
 Try to set `comint-output-filter-functions' like this:
 
-\(add-hook 'comint-output-filter-functions #\\='comint-strip-ctrl-m 'append)
+\(add-hook \\='comint-output-filter-functions #\\='comint-strip-ctrl-m \\='append)
 
 \(Type \\[describe-mode] in the SQL buffer for a list of commands.)"
   (interactive "P")
