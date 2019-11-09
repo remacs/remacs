@@ -1757,7 +1757,7 @@ c-macro-names-with-semicolon: %s"
 `c-toggle-comment-style') is block, or a block comment otherwise."
   :type 'boolean
   :group 'c
-  :version 27.1)
+  :version "27.1")
 
 (defvar c-file-style nil
   "Variable interface for setting style via File Local Variables.
