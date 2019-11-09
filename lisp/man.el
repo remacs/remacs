@@ -1389,7 +1389,7 @@ manpage command."
   (let ((Man-buffer (if (stringp process) (get-buffer process)
 		      (process-buffer process)))
 	(delete-buff nil)
-	(err-mess nil))
+	message)
 
     (if (null (buffer-name Man-buffer)) ;; deleted buffer
 	(or (stringp process)
@@ -1402,9 +1402,9 @@ manpage command."
 	    (goto-char (point-min))
 	    (cond ((or (looking-at "No \\(manual \\)*entry for")
 		       (looking-at "[^\n]*: nothing appropriate$"))
-		   (setq err-mess (buffer-substring (point)
-						    (progn
-						      (end-of-line) (point)))
+		   (setq message (buffer-substring (point)
+						   (progn
+						     (end-of-line) (point)))
 			 delete-buff t))
 
 		  ;; "-k foo", successful exit, but no output (from man-db)
@@ -1415,7 +1415,7 @@ manpage command."
 			(eq (process-status process) 'exit)
 			(= (process-exit-status process) 0)
 			(= (point-min) (point-max)))
-		   (setq err-mess (format "%s: no matches" Man-arguments)
+		   (setq message (format "%s: no matches" Man-arguments)
 			 delete-buff t))
 
 		  ((or (stringp process)
@@ -1423,7 +1423,7 @@ manpage command."
 				 (= (process-exit-status process) 0))))
 		   (or (zerop (length msg))
 		       (progn
-			 (setq err-mess
+			 (setq message
 			       (concat (buffer-name Man-buffer)
 				       ": process "
 				       (let ((eos (1- (length msg))))
@@ -1432,11 +1432,7 @@ manpage command."
 			 (goto-char (point-max))
 			 (insert (format "\nprocess %s" msg))))
 		   ))
-	    (if delete-buff
-		(if (window-live-p (get-buffer-window Man-buffer t))
-		    (quit-restore-window
-		     (get-buffer-window Man-buffer t) 'kill)
-		  (kill-buffer Man-buffer))
+	    (unless delete-buff
 
 	      (run-hooks 'Man-cooked-hook)
 
@@ -1447,10 +1443,8 @@ manpage command."
 
 	      (if (not Man-page-list)
 		  (let ((args Man-arguments))
-		    (if (window-live-p (get-buffer-window (current-buffer) t))
-			(quit-restore-window
-			 (get-buffer-window (current-buffer) t) 'kill)
-		      (kill-buffer (current-buffer)))
+		    (setq delete-buff t)
+
                     ;; Entries hyphenated due to the window's width
                     ;; won't be found in the man database, so remove
                     ;; the hyphenation -- assuming Groff hyphenates
@@ -1460,22 +1454,27 @@ manpage command."
 		    (if (string-match "[-‐­]" args)
 			(let ((str (replace-match "" nil nil args)))
 			  (Man-getpage-in-background str))
-                      (message "Can't find the %s manpage"
-                               (Man-page-from-arguments args))))
+                      (setq message (format "Can't find the %s manpage"
+                                            (Man-page-from-arguments args)))))
 
 		(if Man-fontify-manpage-flag
-		    (message "%s man page formatted"
-			     (Man-page-from-arguments Man-arguments))
-		  (message "%s man page cleaned up"
-			   (Man-page-from-arguments Man-arguments)))
+		    (setq message (format "%s man page formatted"
+			                  (Man-page-from-arguments Man-arguments)))
+		  (setq message (format "%s man page cleaned up"
+			                (Man-page-from-arguments Man-arguments))))
 		(unless (and (processp process)
 			     (not (eq (process-status process) 'exit)))
 		  (setq mode-line-process nil))
-		(set-buffer-modified-p nil)))))
+		(set-buffer-modified-p nil))))))
 
-	(if err-mess
-	    (message "%s" err-mess))
-	))))
+      (when delete-buff
+        (if (window-live-p (get-buffer-window Man-buffer t))
+            (quit-restore-window
+             (get-buffer-window Man-buffer t) 'kill)
+          (kill-buffer Man-buffer)))
+
+      (when message
+        (minibuffer-message "%s" message)))))
 
 (defun Man-page-from-arguments (args)
   ;; Skip arguments and only print the page name.
