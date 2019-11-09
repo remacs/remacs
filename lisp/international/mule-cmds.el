@@ -896,6 +896,11 @@ It is highly recommended to fix it before writing to a file."
 	;; other setting.
 	(let ((base (coding-system-base auto-cs)))
 	  (unless (memq base '(nil undecided))
+            ;; For encoding, no-conversion-multibyte is the same as
+            ;; no-conversion.
+            (if (eq base 'no-conversion-multibyte)
+                (setq auto-cs 'no-conversion
+                      base 'no-conversion))
             (setq default-coding-system (list (cons auto-cs base)))
             (setq no-other-defaults t))))
 
