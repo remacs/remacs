@@ -141,6 +141,7 @@ However, if @var{read} is non-@code{nil}, @code{read-from-minibuffer}
 reads the text and returns the resulting Lisp object, unevaluated.
 (@xref{Input Functions}, for information about reading.)
 
+@cindex future history in minibuffer input
 The argument @var{default} specifies default values to make available
 through the history commands.  It should be a string, a list of
 strings, or @code{nil}.  The string or strings become the minibuffer's
@@ -2308,7 +2309,8 @@ This command replaces the minibuffer contents with the value of the
 @deffn Command next-history-element n
 This command replaces the minibuffer contents with the value of the
 @var{n}th more recent history element.  The position in the history
-can go beyond the current position and invoke ``future history.''
+can go beyond the current position and invoke ``future history''
+(@pxref{Text from Minibuffer}).
 @end deffn
 
 @deffn Command previous-matching-history-element pattern n
