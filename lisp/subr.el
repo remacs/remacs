@@ -2668,6 +2668,66 @@ floating point support."
 ;; Behind display-popup-menus-p test.
 (declare-function x-popup-dialog "menu.c" (position contents &optional header))
 
+(defvar y-or-n-p-history-variable nil
+  "History list symbol to add `y-or-n-p' answers to.")
+
+(defvar y-or-n-p-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map minibuffer-local-map)
+
+    (dolist (symbol '(act act-and-show act-and-exit automatic))
+      (define-key map (vector 'remap symbol) 'y-or-n-p-insert-y))
+
+    (define-key map [remap skip] 'y-or-n-p-insert-n)
+
+    (dolist (symbol '(help backup undo undo-all edit edit-replacement
+                      delete-and-edit ignore self-insert-command))
+      (define-key map (vector 'remap symbol) 'y-or-n-p-insert-other))
+
+    (define-key map [remap recenter] 'minibuffer-recenter-top-bottom)
+    (define-key map [remap scroll-up] 'minibuffer-scroll-up-command)
+    (define-key map [remap scroll-down] 'minibuffer-scroll-down-command)
+    (define-key map [remap scroll-other-window] 'minibuffer-scroll-other-window)
+    (define-key map [remap scroll-other-window-down] 'minibuffer-scroll-other-window-down)
+
+    (define-key map [escape] 'abort-recursive-edit)
+    (dolist (symbol '(quit exit exit-prefix))
+      (define-key map (vector 'remap symbol) 'abort-recursive-edit))
+
+    ;; FIXME: try catch-all instead of explicit bindings:
+    ;; (define-key map [remap t] 'y-or-n-p-insert-other)
+
+    map)
+  "Keymap that defines additional bindings for `y-or-n-p' answers.")
+
+(defun y-or-n-p-insert-y ()
+  "Insert the answer \"y\" and exit the minibuffer of `y-or-n-p'.
+Discard all previous input before inserting and exiting the minibuffer."
+  (interactive)
+  (delete-minibuffer-contents)
+  (insert "y")
+  (exit-minibuffer))
+
+(defun y-or-n-p-insert-n ()
+  "Insert the answer \"n\" and exit the minibuffer of `y-or-n-p'.
+Discard all previous input before inserting and exiting the minibuffer."
+  (interactive)
+  (delete-minibuffer-contents)
+  (insert "n")
+  (exit-minibuffer))
+
+(defun y-or-n-p-insert-other ()
+  "Handle inserting of other answers in the minibuffer of `y-or-n-p'.
+Display an error on trying to insert a disallowed character.
+Also discard all previous input in the minibuffer."
+  (interactive)
+  (delete-minibuffer-contents)
+  (ding)
+  (minibuffer-message "Please answer y or n")
+  (sit-for 2))
+
+(defvar empty-history)
+
 (defun y-or-n-p (prompt)
   "Ask user a \"y or n\" question.
 Return t if answer is \"y\" and nil if it is \"n\".
@@ -2683,16 +2743,13 @@ documentation of that variable for more information.  In this
 case, the useful bindings are `act', `skip', `recenter',
 `scroll-up', `scroll-down', and `quit'.
 An `act' response means yes, and a `skip' response means no.
-A `quit' response means to invoke `keyboard-quit'.
+A `quit' response means to invoke `abort-recursive-edit'.
 If the user enters `recenter', `scroll-up', or `scroll-down'
 responses, perform the requested window recentering or scrolling
 and ask again.
 
 Under a windowing system a dialog box will be used if `last-nonmenu-event'
 is nil and `use-dialog-box' is non-nil."
-  ;; ¡Beware! when I tried to edebug this code, Emacs got into a weird state
-  ;; where all the keys were unbound (i.e. it somehow got triggered
-  ;; within read-key, apparently).  I had to kill it.
   (let ((answer 'recenter)
 	(padded (lambda (prompt &optional dialog)
 		  (let ((l (length prompt)))
@@ -2718,36 +2775,14 @@ is nil and `use-dialog-box' is non-nil."
 	    answer (x-popup-dialog t `(,prompt ("Yes" . act) ("No" . skip)))))
      (t
       (setq prompt (funcall padded prompt))
-      (while
-          (let* ((scroll-actions '(recenter scroll-up scroll-down
-				   scroll-other-window scroll-other-window-down))
-		 (key
-                  (let ((cursor-in-echo-area t))
-                    (when minibuffer-auto-raise
-                      (raise-frame (window-frame (minibuffer-window))))
-                    (read-key (propertize (if (memq answer scroll-actions)
-                                              prompt
-                                            (concat "Please answer y or n.  "
-                                                    prompt))
-                                          'face 'minibuffer-prompt)))))
-            (setq answer (lookup-key query-replace-map (vector key) t))
-            (cond
-	     ((memq answer '(skip act)) nil)
-	     ((eq answer 'recenter)
-	      (recenter) t)
-	     ((eq answer 'scroll-up)
-	      (ignore-errors (scroll-up-command)) t)
-	     ((eq answer 'scroll-down)
-	      (ignore-errors (scroll-down-command)) t)
-	     ((eq answer 'scroll-other-window)
-	      (ignore-errors (scroll-other-window)) t)
-	     ((eq answer 'scroll-other-window-down)
-	      (ignore-errors (scroll-other-window-down)) t)
-	     ((or (memq answer '(exit-prefix quit)) (eq key ?\e))
-	      (signal 'quit nil) t)
-	     (t t)))
-        (ding)
-        (discard-input))))
+      (discard-input)
+      (let* ((empty-history '())
+             (str (read-from-minibuffer
+                   prompt nil
+                   (make-composed-keymap y-or-n-p-map query-replace-map)
+                   nil
+                   (or y-or-n-p-history-variable 'empty-history))))
+        (setq answer (if (member str '("y" "Y")) 'act 'skip)))))
     (let ((ret (eq answer 'act)))
       (unless noninteractive
         (message "%s%c" prompt (if ret ?y ?n)))

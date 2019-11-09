@@ -723,6 +723,9 @@ the minibuffer.  If non-nil, point will move to the end of the prompt
 *** Minibuffer now uses 'minibuffer-message' to display error messages
 at the end of the active minibuffer.
 
++++
+*** 'y-or-n-p' now uses the minibuffer to read 'y' or 'n' answer.
+
 ** map.el
 *** Now also understands plists.
 *** Now defined via generic functions that can be extended via 'cl-defmethod'.

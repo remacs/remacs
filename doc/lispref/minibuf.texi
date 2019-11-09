@@ -2020,29 +2020,27 @@ uses keyboard input.  You can force use either of the mouse or of keyboard
 input by binding @code{last-nonmenu-event} to a suitable value around
 the call.
 
-  Strictly speaking, @code{yes-or-no-p} uses the minibuffer and
-@code{y-or-n-p} does not; but it seems best to describe them together.
+  Both @code{yes-or-no-p} and @code{y-or-n-p} use the minibuffer.
 
 @defun y-or-n-p prompt
-This function asks the user a question, expecting input in the echo
-area.  It returns @code{t} if the user types @kbd{y}, @code{nil} if the
-user types @kbd{n}.  This function also accepts @key{SPC} to mean yes
-and @key{DEL} to mean no.  It accepts @kbd{C-]} to quit, like
-@kbd{C-g}, because the question might look like a minibuffer and for
-that reason the user might try to use @kbd{C-]} to get out.  The answer
-is a single character, with no @key{RET} needed to terminate it.  Upper
-and lower case are equivalent.
+This function asks the user a question, expecting input in the minibuffer.
+It returns @code{t} if the user types @kbd{y}, @code{nil} if the user
+types @kbd{n}.  This function also accepts @key{SPC} to mean yes and
+@key{DEL} to mean no.  It accepts @kbd{C-]} and @kbd{C-g} to quit,
+because the question uses the minibuffer and for that reason the user
+might try to use @kbd{C-]} to get out.  The answer is a single
+character, with no @key{RET} needed to terminate it.  Upper and lower
+case are equivalent.
 
-``Asking the question'' means printing @var{prompt} in the echo area,
+``Asking the question'' means printing @var{prompt} in the minibuffer,
 followed by the string @w{@samp{(y or n) }}.  If the input is not one of
 the expected answers (@kbd{y}, @kbd{n}, @kbd{@key{SPC}},
 @kbd{@key{DEL}}, or something that quits), the function responds
 @samp{Please answer y or n.}, and repeats the request.
 
-This function does not actually use the minibuffer, since it does not
-allow editing of the answer.  It actually uses the echo area (@pxref{The
-Echo Area}), which uses the same screen space as the minibuffer.  The
-cursor moves to the echo area while the question is being asked.
+This function actually uses the minibuffer, but does not allow editing
+of the answer.  The cursor moves to the minibuffer while the question
+is being asked.
 
 The answers and their meanings, even @samp{y} and @samp{n}, are not
 hardwired, and are specified by the keymap @code{query-replace-map}
@@ -2053,10 +2051,6 @@ special responses @code{recenter}, @code{scroll-up},
 @kbd{C-v}, @kbd{M-v}, @kbd{C-M-v} and @kbd{C-M-S-v} in
 @code{query-replace-map}), this function performs the specified window
 recentering or scrolling operation, and poses the question again.
-
-@noindent
-We show successive lines of echo area messages, but only one actually
-appears on the screen at a time.
 @end defun
 
 @defun y-or-n-p-with-timeout prompt seconds default
@@ -2072,7 +2066,7 @@ minibuffer.  It returns @code{t} if the user enters @samp{yes},
 @code{nil} if the user types @samp{no}.  The user must type @key{RET} to
 finalize the response.  Upper and lower case are equivalent.
 
-@code{yes-or-no-p} starts by displaying @var{prompt} in the echo area,
+@code{yes-or-no-p} starts by displaying @var{prompt} in the minibuffer,
 followed by @w{@samp{(yes or no) }}.  The user must type one of the
 expected responses; otherwise, the function responds @samp{Please answer
 yes or no.}, waits about two seconds and repeats the request.
