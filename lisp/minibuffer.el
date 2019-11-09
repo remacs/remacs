@@ -2236,6 +2236,13 @@ The completion method is determined by `completion-at-point-functions'."
 (let ((map minibuffer-local-map))
   (define-key map "\C-g" 'abort-recursive-edit)
   (define-key map "\M-<" 'minibuffer-beginning-of-buffer)
+
+  (define-key map [remap recenter-top-bottom] 'minibuffer-recenter-top-bottom)
+  (define-key map [remap scroll-up-command] 'minibuffer-scroll-up-command)
+  (define-key map [remap scroll-down-command] 'minibuffer-scroll-down-command)
+  (define-key map [remap scroll-other-window] 'minibuffer-scroll-other-window)
+  (define-key map [remap scroll-other-window-down] 'minibuffer-scroll-other-window-down)
+
   (define-key map "\r" 'exit-minibuffer)
   (define-key map "\n" 'exit-minibuffer))
 
@@ -3670,6 +3677,46 @@ Otherwise move to the start of the buffer."
                (minibuffer-prompt-end))))
   (when (and arg (not (consp arg)))
     (forward-line 1)))
+
+(defmacro with-minibuffer-selected-window (&rest body)
+  "Execute the forms in BODY from the minibuffer in its original window.
+When used in a minibuffer window, select the window selected just before
+the minibuffer was activated, and execute the forms."
+  (declare (indent 0) (debug t))
+  `(let ((window (minibuffer-selected-window)))
+     (when window
+       (with-selected-window window
+         ,@body))))
+
+(defun minibuffer-recenter-top-bottom (&optional arg)
+  "Run `recenter-top-bottom' from the minibuffer in its original window."
+  (interactive "P")
+  (with-minibuffer-selected-window
+    (recenter-top-bottom arg)))
+
+(defun minibuffer-scroll-up-command (&optional arg)
+  "Run `scroll-up-command' from the minibuffer in its original window."
+  (interactive "^P")
+  (with-minibuffer-selected-window
+    (scroll-up-command arg)))
+
+(defun minibuffer-scroll-down-command (&optional arg)
+  "Run `scroll-down-command' from the minibuffer in its original window."
+  (interactive "^P")
+  (with-minibuffer-selected-window
+    (scroll-down-command arg)))
+
+(defun minibuffer-scroll-other-window (&optional arg)
+  "Run `scroll-other-window' from the minibuffer in its original window."
+  (interactive "P")
+  (with-minibuffer-selected-window
+    (scroll-other-window arg)))
+
+(defun minibuffer-scroll-other-window-down (&optional arg)
+  "Run `scroll-other-window-down' from the minibuffer in its original window."
+  (interactive "^P")
+  (with-minibuffer-selected-window
+    (scroll-other-window-down arg)))
 
 (provide 'minibuffer)
 

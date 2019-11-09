@@ -6253,12 +6253,12 @@ followed by all visible frames on the current terminal.  */)
     {
       /* Nothing specified; look for a neighboring window on the same
 	 frame.  */
-      window = Fnext_window (selected_window, Qnil, Qnil);
+      window = Fnext_window (selected_window, Qlambda, Qnil);
 
       if (EQ (window, selected_window))
 	/* That didn't get us anywhere; look for a window on another
            visible frame on the current terminal.  */
-        window = Fnext_window (window, Qnil, Qvisible);
+        window = Fnext_window (window, Qlambda, Qvisible);
     }
 
   CHECK_LIVE_WINDOW (window);

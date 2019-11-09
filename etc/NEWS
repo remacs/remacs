@@ -710,6 +710,9 @@ list the contents of such directories when completing file names.
 
 ** Minibuffer
 
+*** Scrolling and recentering commands in the minibuffer are invoked
+on the original window (that was selected before activating the minibuffer).
+
 +++
 *** A new user option, 'minibuffer-beginning-of-buffer-movement', has
 been introduced to allow controlling how the 'M-<' command works in
