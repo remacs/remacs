@@ -1470,20 +1470,6 @@ candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
   return Qnil;
 }
 
-DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
-       Slast_nonminibuf_frame, 0, 0, 0,
-       doc: /* Return last non-minibuffer frame selected. */)
-  (void)
-{
-  Lisp_Object frame = Qnil;
-  struct frame *last_nonminibuf_frame = (struct frame *) get_last_nonminibuffer_frame();
-
-  if (last_nonminibuf_frame)
-    XSETFRAME (frame, last_nonminibuf_frame);
-
-  return frame;
-}
-
 /**
  * other_frames:
  *
@@ -1846,7 +1832,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
   /* If we've deleted the last_nonminibuf_frame, then try to find
      another one.  */
-  struct frame *last_nonminibuf_frame = (struct frame *) get_last_nonminibuffer_frame();
+  struct frame *last_nonminibuf_frame = get_last_nonminibuffer_frame();
   if (f == last_nonminibuf_frame)
     {
       set_last_nonminibuffer_frame(0);
@@ -5557,7 +5543,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sselect_frame);
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);
-  defsubr (&Slast_nonminibuf_frame);
   defsubr (&Smouse_position);
   defsubr (&Smouse_pixel_position);
   defsubr (&Sset_mouse_position);

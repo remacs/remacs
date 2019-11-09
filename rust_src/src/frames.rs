@@ -727,6 +727,17 @@ pub fn make_frame_invisible(frame: LispFrameLiveOrSelected, force: bool) {
     }
 }
 
+#[lisp_fn(min = "0")]
+pub fn last_nonminibuffer_frame() -> LispObject {
+    let frame = get_last_nonminibuffer_frame();
+
+    if frame.is_null() {
+        Qnil
+    } else {
+        frame.into()
+    }
+}
+
 /// A frame which is not just a mini-buffer, or NULL if there are no such
 /// frames. This is usually the most recent such frame that was selected.
 static mut last_non_minibuffer_frame: LispFrameRef = LispFrameRef::new(std::ptr::null_mut());

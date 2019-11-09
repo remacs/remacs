@@ -1552,6 +1552,9 @@ extern void x_free_frame_resources (struct frame *);
 extern bool frame_ancestor_p (struct frame *af, struct frame *df);
 extern enum internal_border_part frame_internal_border_part (struct frame *f, int x, int y);
 
+extern void set_last_nonminibuffer_frame(struct frame *);
+extern struct frame *get_last_nonminibuffer_frame(void);
+
 int fget_internal_border_width(const struct frame *);
 Lisp_Object fget_minibuffer_window(const struct frame *);
 Lisp_Object fget_root_window(const struct frame *);
