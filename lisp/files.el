@@ -2120,7 +2120,7 @@ think it does, because \"free\" is pretty hard to define in practice."
                                       ("Yes" . ?y)
                                       ("No" . ?n)
                                       ("Open literally" . ?l)))
-                (read-char-choice
+                (read-char-from-minibuffer
                  (concat prompt " (y)es or (n)o or (l)iterally ")
                  '(?y ?Y ?n ?N ?l ?L)))))
         (cond ((memq choice '(?y ?Y)) nil)
@@ -3503,24 +3503,16 @@ n  -- to ignore the local variables list.")
       ;; Display the buffer and read a choice.
       (save-window-excursion
 	(pop-to-buffer buf '(display-buffer--maybe-at-bottom))
-	(let* ((exit-chars '(?y ?n ?\s ?\C-g ?\C-v))
+	(let* ((exit-chars '(?y ?n ?\s))
 	       (prompt (format "Please type %s%s: "
 			       (if offer-save "y, n, or !" "y or n")
 			       (if (< (line-number-at-pos (point-max))
 				      (window-body-height))
 				   ""
-				 (push ?\C-v exit-chars)
-				 ", or C-v to scroll")))
+				 ", or C-v/M-v to scroll")))
 	       char)
 	  (if offer-save (push ?! exit-chars))
-	  (while (null char)
-	    (setq char (read-char-choice prompt exit-chars t))
-	    (when (eq char ?\C-v)
-	      (condition-case nil
-		  (scroll-up)
-		(error (goto-char (point-min))
-		       (recenter 1)))
-	      (setq char nil)))
+	  (setq char (read-char-from-minibuffer prompt exit-chars))
 	  (when (and offer-save (= char ?!) unsafe-vars)
 	    (customize-push-and-save 'safe-local-variable-values unsafe-vars))
 	  (prog1 (memq char '(?! ?\s ?y))

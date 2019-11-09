@@ -726,6 +726,9 @@ at the end of the active minibuffer.
 +++
 *** 'y-or-n-p' now uses the minibuffer to read 'y' or 'n' answer.
 
+*** Some commands that previously used read-char-choice now read
+a character using the minibuffer by read-char-from-minibuffer.
+
 ** map.el
 *** Now also understands plists.
 *** Now defined via generic functions that can be extended via 'cl-defmethod'.
