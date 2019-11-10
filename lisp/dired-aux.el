@@ -1728,7 +1728,7 @@ rename them using `vc-rename-file'."
     (let ((regexp (regexp-quote (directory-file-name dir)))
 	  (newtext (directory-file-name to))
 	  buffer-read-only)
-      (goto-char (dired-get-subdir-min elt))
+      (goto-char (cdr elt))
       ;; Update subdir headerline in buffer
       (if (not (looking-at dired-subdir-regexp))
 	  (error "%s not found where expected - dired-subdir-alist broken?"
@@ -2491,8 +2491,8 @@ This function takes some pains to conform to `ls -lR' output."
   (setq dired-subdir-alist
 	(sort dired-subdir-alist
 	      (lambda (elt1 elt2)
-		(> (dired-get-subdir-min elt1)
-		   (dired-get-subdir-min elt2))))))
+                (> (cdr elt1)
+                   (cdr elt2))))))
 
 (defun dired-kill-tree (dirname &optional remember-marks kill-root)
   "Kill all proper subdirs of DIRNAME, excluding DIRNAME itself.
@@ -2535,7 +2535,7 @@ of marked files.  If KILL-ROOT is non-nil, kill DIRNAME as well."
 (defun dired-insert-subdir-del (element)
   ;; Erase an already present subdir (given by ELEMENT) from buffer.
   ;; Move to that buffer position.  Return a mark-alist.
-  (let ((begin-marker (dired-get-subdir-min element)))
+  (let ((begin-marker (cdr element)))
     (goto-char begin-marker)
     ;; Are at beginning of subdir (and inside it!).  Now determine its end:
     (goto-char (dired-subdir-max))
@@ -2566,7 +2566,7 @@ of marked files.  If KILL-ROOT is non-nil, kill DIRNAME as well."
   ;; BEG-END is the subdir-region (as list of begin and end).
   (if elt				; subdir was already present
       ;; update its position (should actually be unchanged)
-      (set-marker (dired-get-subdir-min elt) (point-marker))
+      (set-marker (cdr elt) (point-marker))
     (dired-alist-add dirname (point-marker)))
   ;; The hook may depend on the subdir-alist containing the just
   ;; inserted subdir, so run it after dired-alist-add:
@@ -2680,7 +2680,7 @@ The next char is \\n."
   (setq dir (file-name-as-directory dir))
   (let ((elt (assoc dir dired-subdir-alist)))
     (and elt
-	 (goto-char (dired-get-subdir-min elt))
+         (goto-char (cdr elt))
 	 ;; dired-subdir-hidden-p and dired-add-entry depend on point being
 	 ;; at \n after this function succeeds.
 	 (progn (end-of-line)
@@ -2778,7 +2778,7 @@ Use \\[dired-hide-all] to (un)hide all directories."
 	     (end-pos (1- (dired-get-subdir-max elt)))
 	     buffer-read-only)
 	;; keep header line visible, hide rest
-	(goto-char (dired-get-subdir-min elt))
+	(goto-char (cdr elt))
 	(end-of-line)
 	(if hidden-p
 	    (dired--unhide (point) end-pos)
@@ -2797,14 +2797,14 @@ Use \\[dired-hide-subdir] to (un)hide a particular subdirectory."
       ;; hide
       (let ((pos (point-max)))		; pos of end of last directory
         (dolist (subdir dired-subdir-alist)
-	  (let ((start (dired-get-subdir-min subdir)) ; pos of prev dir
+          (let ((start (cdr subdir)) ; pos of prev dir
 		(end (save-excursion
 		       (goto-char pos) ; current dir
 		       ;; we're somewhere on current dir's line
 		       (forward-line -1)
 		       (point))))
             (dired--hide start end))
-	  (setq pos (dired-get-subdir-min subdir))))))) ; prev dir gets current dir
+          (setq pos (cdr subdir))))))) ; prev dir gets current dir
 
 ;;;###end dired-ins.el
 

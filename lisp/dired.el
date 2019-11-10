@@ -354,10 +354,14 @@ The directory name must be absolute, but need not be fully expanded.")
 
 ;; The subdirectory names in the next two lists are expanded.
 (defvar dired-subdir-alist nil
-  "Association list of subdirectories and their buffer positions.
-Each subdirectory has an element: (DIRNAME . STARTMARKER).
+  "Alist of listed directories and their buffer positions.
+Alist elements have the form (DIRNAME . STARTMARKER), where
+DIRNAME is the absolute name of the directory and STARTMARKER is
+a marker at the beginning of DIRNAME.
+
 The order of elements is the reverse of the order in the buffer.
-In simple cases, this list contains one element.")
+If no subdirectories are listed then the alist contains only one
+element, for the listed directory.")
 
 (defvar-local dired-switches-alist nil
   "Keeps track of which switches to use for inserted subdirectories.
@@ -2857,21 +2861,20 @@ You can then feed the file name(s) to other commands with \\[yank]."
     (let ((cur-dir (dired-current-directory)))
       (beginning-of-line)		; alist stores b-o-l positions
       (and (zerop (- (point)
-		     (dired-get-subdir-min (assoc cur-dir
+                     (cdr (assoc cur-dir
 						  dired-subdir-alist))))
 	   cur-dir))))
 
-;; can't use macro,  must be redefinable for other alist format in dired-nstd.
-(defalias 'dired-get-subdir-min 'cdr)
+(define-obsolete-function-alias 'dired-get-subdir-min 'cdr "27.1")
 
 (defun dired-get-subdir-max (elt)
   (save-excursion
-    (goto-char (dired-get-subdir-min elt))
+    (goto-char (cdr elt))
     (dired-subdir-max)))
 
 (defun dired-clear-alist ()
   (while dired-subdir-alist
-    (set-marker (dired-get-subdir-min (car dired-subdir-alist)) nil)
+    (set-marker (cdr (car dired-subdir-alist)) nil)
     (setq dired-subdir-alist (cdr dired-subdir-alist))))
 
 (defun dired-subdir-index (dir)
@@ -2895,7 +2898,7 @@ You can then feed the file name(s) to other commands with \\[yank]."
     ;; nth with negative arg does not return nil but the first element
     (setq index (- (dired-subdir-index this-dir) arg))
     (setq pos (if (>= index 0)
-		  (dired-get-subdir-min (nth index dired-subdir-alist))))
+                  (cdr (nth index dired-subdir-alist))))
     (if pos
 	(progn
 	  (goto-char pos)
@@ -3116,7 +3119,7 @@ is the directory where the file on this line resides."
       (setq elt (car alist)
 	    dir (car elt)
 	    ;; use `<=' (not `<') as subdir line is part of subdir
-	    alist (if (<= (dired-get-subdir-min elt) here)
+	    alist (if (<= (cdr elt) here)
 		      nil		; found
 		    (cdr alist))))
     (if localp
