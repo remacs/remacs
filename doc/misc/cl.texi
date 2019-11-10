@@ -3113,48 +3113,42 @@ function that must be called before the parameters can be used.
 @defun cl-float-limits
 This function makes sure that the Common Lisp floating-point parameters
 like @code{cl-most-positive-float} have been initialized.  Until it is
-called, these parameters will be @code{nil}.
-@c If this version of Emacs does not support floats, the parameters will
-@c remain @code{nil}.
+called, these parameters have unspecified values.
 If the parameters have already been initialized, the function returns
 immediately.
-
-The algorithm makes assumptions that will be valid for almost all
-machines, but will fail if the machine's arithmetic is extremely
-unusual, e.g., decimal.
 @end defun
 
 Since true Common Lisp supports up to four different kinds of floating-point
 numbers, it has families of constants like
 @code{most-positive-single-float}, @code{most-positive-double-float},
-@code{most-positive-long-float}, and so on.  Emacs has only one
-kind of floating-point number, so this package just uses single constants.
+@code{most-positive-long-float}, and so on.  This package uses just
+one set of constants because Emacs has only one kind of
+floating-point number, namely the IEEE binary64 floating-point format.
+@xref{Float Basics,,,elisp,GNU Emacs Lisp Reference Manual}.
 
 @defvar cl-most-positive-float
-This constant equals the largest value a Lisp float can hold.
-For those systems whose arithmetic supports infinities, this is
-the largest @emph{finite} value.  For IEEE machines, the value
-is approximately @code{1.79e+308}.
+This constant equals the largest finite value a Lisp float can hold.
+For IEEE binary64 format, this equals @code{(- (expt 2 1024) (- 2
+971))}, which equals @code{1.7976931348623157e+308}.
 @end defvar
 
 @defvar cl-most-negative-float
-This constant equals the most negative value a Lisp float can hold.
-(It is assumed to be equal to @code{(- cl-most-positive-float)}.)
+This constant equals the most negative finite value a Lisp float can hold.
+For IEEE binary64 format, this equals @code{(- cl-most-positive-float)}.
+@end defvar
+
+@defvar cl-least-positive-normalized-float
+This constant equals the smallest positive Lisp float that is
+@dfn{normalized}, i.e., that has full precision.
+For IEEE binary64 format, this equals @code{(expt 2 -1022)},
+which equals @code{2.2250738585072014e-308}.
 @end defvar
 
 @defvar cl-least-positive-float
 This constant equals the smallest Lisp float value greater than zero.
-For IEEE machines, it is about @code{4.94e-324} if denormals are
-supported or @code{2.22e-308} if not.
-@end defvar
-
-@defvar cl-least-positive-normalized-float
-This constant equals the smallest @emph{normalized} Lisp float greater
-than zero, i.e., the smallest value for which IEEE denormalization
-will not result in a loss of precision.  For IEEE machines, this
-value is about @code{2.22e-308}.  For machines that do not support
-the concept of denormalization and gradual underflow, this constant
-will always equal @code{cl-least-positive-float}.
+For IEEE binary64 format, this equals @code{5e-324} (which equals
+@code{(expt 2 -1074)}) if subnormal numbers are supported, and
+@code{cl-least-positive-normalized-float} otherwise.
 @end defvar
 
 @defvar cl-least-negative-float
@@ -3169,14 +3163,14 @@ This constant is the negative counterpart of
 @defvar cl-float-epsilon
 This constant is the smallest positive Lisp float that can be added
 to 1.0 to produce a distinct value.  Adding a smaller number to 1.0
-will yield 1.0 again due to roundoff.  For IEEE machines, epsilon
-is about @code{2.22e-16}.
+will yield 1.0 again due to roundoff.  For IEEE binary64 format, this
+equals @code{(expt 2 -52)}, which equals @code{2.220446049250313e-16}.
 @end defvar
 
 @defvar cl-float-negative-epsilon
 This is the smallest positive value that can be subtracted from
-1.0 to produce a distinct value.  For IEEE machines, it is about
-@code{1.11e-16}.
+1.0 to produce a distinct value.  For IEEE binary64 format, this
+equals @code{(expt 2 -53)}, which equals @code{1.1102230246251565e-16}.
 @end defvar
 
 @node Sequences

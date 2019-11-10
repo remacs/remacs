@@ -218,8 +218,12 @@ considered to be valid as a character.  @xref{Character Codes}.
   Floating-point numbers are useful for representing numbers that are
 not integral.  The range of floating-point numbers is
 the same as the range of the C data type @code{double} on the machine
-you are using.  On all computers currently supported by Emacs, this is
-double-precision @acronym{IEEE} floating point.
+you are using.  On all computers supported by Emacs, this is
+@acronym{IEEE} binary64 floating point format, which is standardized by
+@url{https://standards.ieee.org/standard/754-2019.html,,IEEE Std 754-2019}
+and is discussed further in David Goldberg's paper
+``@url{https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html,
+What Every Computer Scientist Should Know About Floating-Point Arithmetic}''.
 
   The read syntax for floating-point numbers requires either a decimal
 point, an exponent, or both.  Optional signs (@samp{+} or @samp{-})
