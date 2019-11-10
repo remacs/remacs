@@ -2573,6 +2573,7 @@ This macro works like 'progn', but messages how long it takes to
 evaluate the body forms.  The value of the last form is the return
 value.
 
++++
 ** New function 'read-char-from-minibuffer'.
 This function works like 'read-char', but uses 'read-from-minibuffer'
 to read a character, so it maintains a history that can be navigated
