@@ -321,7 +321,7 @@ code under test from the behavior of the *Messages* buffer."
 COLLECTOR will be called with the message before it is passed
 to the real `message'."
   (lambda (func &rest args)
-    (if (or (null args) (equal (car args) ""))
+    (if (or (null args) (member (car args) '("" nil)))
         (apply func args)
       (let ((msg (apply #'format-message args)))
         (funcall collector (concat msg "\n"))
