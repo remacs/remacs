@@ -406,26 +406,9 @@ decode_float_time (double t, struct lisp_time *result)
     }
   else
     {
-      int exponent = ilogb (t);
-      int scale;
-      if (exponent < DBL_MANT_DIG)
-	{
-	  if (exponent < DBL_MIN_EXP - 1)
-	    {
-	      if (exponent == FP_ILOGBNAN
-		  && (FP_ILOGBNAN != FP_ILOGB0 || isnan (t)))
-		return EINVAL;
-	      /* T is tiny.  SCALE must be less than FLT_RADIX_POWER_SIZE,
-		 as otherwise T would be scaled as if it were normalized.  */
-	      scale = flt_radix_power_size - 1;
-	    }
-	  else
-	    {
-	      /* The typical case.  */
-	      scale = DBL_MANT_DIG - 1 - exponent;
-	    }
-	}
-      else if (exponent < INT_MAX)
+      int scale = double_integer_scale (t);
+
+      if (scale < 0)
 	{
 	 /* T is finite but so large that HZ would be less than 1 if
 	    T's precision were represented exactly.  SCALE must be
@@ -435,8 +418,8 @@ decode_float_time (double t, struct lisp_time *result)
 	    which is typically better than signaling overflow.  */
 	  scale = 0;
 	}
-      else
-	return FP_ILOGBNAN == INT_MAX && isnan (t) ? EINVAL : EOVERFLOW;
+      else if (flt_radix_power_size <= scale)
+	return isnan (t) ? EDOM : EOVERFLOW;
 
       double scaled = scalbn (t, scale);
       eassert (trunc (scaled) == scaled);

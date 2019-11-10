@@ -348,6 +348,29 @@ integer_value (Lisp_Object a)
   return true;
 }
 
+/* Return the integer exponent E such that D * FLT_RADIX**E (i.e.,
+   scalbn (D, E)) is an integer that has precision equal to D and is
+   representable as a double.
+
+   Return DBL_MANT_DIG - DBL_MIN_EXP (the maximum possible valid
+   scale) if D is zero or tiny.  Return a value greater than
+   DBL_MANT_DIG - DBL_MIN_EXP if there is conversion trouble; on all
+   current platforms this can happen only if D is infinite or a NaN.  */
+
+int
+double_integer_scale (double d)
+{
+  int exponent = ilogb (d);
+  return (DBL_MIN_EXP - 1 <= exponent && exponent < INT_MAX
+	  ? DBL_MANT_DIG - 1 - exponent
+	  : (DBL_MANT_DIG - DBL_MIN_EXP
+	     + (exponent == INT_MAX
+		|| (exponent == FP_ILOGBNAN
+		    && (FP_ILOGBNAN != FP_ILOGB0 || isnan (d)))
+		|| (!IEEE_FLOATING_POINT && exponent == INT_MIN
+		    && (FP_ILOGB0 != INT_MIN || d != 0)))));
+}
+
 /* the rounding functions  */
 
 static Lisp_Object

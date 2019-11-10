@@ -3684,6 +3684,7 @@ extern Lisp_Object string_make_unibyte (Lisp_Object);
 extern void syms_of_fns (void);
 
 /* Defined in floatfns.c.  */
+int double_integer_scale (double);
 #ifndef HAVE_TRUNC
 extern double trunc (double);
 #endif
