@@ -1210,6 +1210,10 @@ Then move up one line.  Prefix arg means move that many lines."
 
 (defun tab-bar-list-delete-from-list (tab)
   "Delete the window configuration from both lists."
+  (push `((frame . ,(selected-frame))
+          (index . ,(tab-bar--tab-index tab))
+          (tab . ,tab))
+        tab-bar-closed-tabs)
   (set-frame-parameter nil 'tabs (delq tab (funcall tab-bar-tabs-function))))
 
 (defun tab-bar-list-execute ()
@@ -1238,8 +1242,10 @@ in the selected frame."
   (interactive)
   (let* ((to-tab (tab-bar-list-current-tab t)))
     (kill-buffer (current-buffer))
-    ;; Delete the current window configuration
-    (tab-bar-close-tab nil (1+ (tab-bar--tab-index to-tab)))))
+    ;; Delete the current window configuration of tab list
+    ;; without storing it in the undo list of closed tabs
+    (let (tab-bar-closed-tabs)
+      (tab-bar-close-tab nil (1+ (tab-bar--tab-index to-tab))))))
 
 (defun tab-bar-list-mouse-select (event)
   "Select the window configuration whose line you click on."
