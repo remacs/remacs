@@ -952,7 +952,7 @@ callable from a mouse button."
 (defun mh-insert-prefix-string (mh-ins-string)
   "Insert prefix string before each line in buffer.
 The inserted letter is cited using `sc-cite-original' if
-`mh-yank-behavior' is one of 'supercite or 'autosupercite.
+`mh-yank-behavior' is one of `supercite' or `autosupercite'.
 Otherwise, simply insert MH-INS-STRING before each line."
   (goto-char (point-min))
   (cond ((or (eq mh-yank-behavior 'supercite)

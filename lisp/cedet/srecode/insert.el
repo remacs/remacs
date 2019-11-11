@@ -373,8 +373,8 @@ Can't be blank, or it might be used by regular variable insertion.")
 	   :initarg :where
 	   :documentation
 	   "This should be `begin' or `end', indicating where to insert a CR.
-When `begin', insert a CR if not at 'bol'.
-When `end', insert a CR if not at 'eol'.")
+When `begin', insert a CR if not at `bol'.
+When `end', insert a CR if not at `eol'.")
     ;; @TODO - Add slot and control for the number of blank
     ;;         lines before and after point.
    )

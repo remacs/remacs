@@ -61,11 +61,11 @@ list and for correcting times of day in the solar and lunar calculations.
 For example, if daylight saving time is mandated to start on October 1,
 you would set `calendar-daylight-savings-starts' to
 
-      '(10 1 year)
+      (10 1 year)
 
 If it starts on the first Sunday in April, you would set it to
 
-      '(calendar-nth-named-day 1 0 4 year)
+      (calendar-nth-named-day 1 0 4 year)
 
 If the locale never uses daylight saving time, set this to nil."
   :type 'sexp

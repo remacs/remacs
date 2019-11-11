@@ -3512,7 +3512,7 @@ To use this type, you must define :match or :match-alternatives."
 The `lazy' widget will, when instantiated, contain a single inferior
 widget, of the widget type specified by the :type parameter.  The
 value of the `lazy' widget is the same as the value of the inferior
-widget.  When deriving a new widget from the 'lazy' widget, the :type
+widget.  When deriving a new widget from the `lazy' widget, the :type
 parameter is allowed to refer to the widget currently being defined,
 thus allowing recursive data structures to be described.
 

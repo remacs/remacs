@@ -60,7 +60,7 @@ bottom of the buffer stack."
 
 (defun device-class (&optional device)
   "Return the class (color behavior) of DEVICE.
-This will be one of 'color, 'grayscale, or 'mono.
+This will be one of `color', `grayscale', or `mono'.
 This function exists for compatibility with XEmacs."
   (cond
    ((display-color-p device) 'color)

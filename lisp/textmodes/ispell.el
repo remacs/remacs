@@ -2472,7 +2472,7 @@ SPC:   Accept word this time.
 	  (help-2 (concat "[l]ook a word up in alternate dictionary;  "
 			  "e[x/X]it;  [q]uit session"))
 	  (help-3 (concat "[u]ncapitalized insert into dict.  "
-			  "Type 'x C-h f ispell-help' for more help")))
+			  "Type `x C-h f ispell-help' for more help")))
       (save-window-excursion
 	(if ispell-help-in-bufferp
 	    (let ((buffer (get-buffer-create "*Ispell Help*")))
@@ -3603,7 +3603,7 @@ If APPEND is non-n il, append the info to previous buffer if exists."
   "Continue a halted spelling session beginning with the current word."
   (interactive)
   (if (not (marker-position ispell-region-end))
-      (message "No session to continue.  Use 'X' command when checking!")
+      (message "No session to continue.  Use `X' command when checking!")
     (if (not (equal (marker-buffer ispell-region-end) (current-buffer)))
 	(message "Must continue ispell from buffer %s"
 		 (buffer-name (marker-buffer ispell-region-end)))

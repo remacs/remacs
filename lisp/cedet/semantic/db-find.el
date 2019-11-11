@@ -434,7 +434,7 @@ Default action as described in `semanticdb-find-translate-path'."
   "All include tags scanned, plus action taken on the tag.
 Each entry is an alist:
   (ACTION . TAG)
-where ACTION is one of 'scanned, 'duplicate, 'lost
+where ACTION is one of `scanned', `duplicate', `lost'
 and TAG is a clone of the include tag that was found.")
 (make-variable-buffer-local 'semanticdb-find-scanned-include-tags)
 

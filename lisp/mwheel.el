@@ -151,7 +151,7 @@ face height."
   :version "26.1")
 
 (defcustom mouse-wheel-flip-direction nil
-  "Swap direction of 'wheel-right and 'wheel-left."
+  "Swap direction of `wheel-right' and `wheel-left'."
   :group 'mouse
   :type 'boolean
   :version "26.1")

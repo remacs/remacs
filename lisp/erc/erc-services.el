@@ -289,7 +289,7 @@ NICK is nickserv's nickname.  Use nick@server where necessary/possible.
 KEYWORD is the keyword to use in the reply message to identify yourself.
 USE-CURRENT indicates whether the current nickname must be used when
   identifying.
-ANSWER is the command to use for the answer.  The default is 'privmsg.
+ANSWER is the command to use for the answer.  The default is `privmsg'.
 SUCCESS-REGEXP is a regular expression matching the message nickserv
   sends when you've successfully identified.
 The last two elements are optional."

@@ -282,9 +282,9 @@ If VALUE is nil, use `mh-extract-from-attribution-verb'."
 
 (defun mh-identity-handler-default (field action top &optional value)
   "Process header FIELD.
-The ACTION is one of 'remove or 'add. If TOP is non-nil, add the
+The ACTION is one of `remove' or `add'. If TOP is non-nil, add the
 field and its VALUE at the top of the header, else add it at the
-bottom of the header. If action is 'add, the VALUE is added."
+bottom of the header. If action is `add', the VALUE is added."
   (let ((field-colon (if (string-match "^.*:$" field)
                          field
                        (concat field ":"))))

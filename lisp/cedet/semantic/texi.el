@@ -300,8 +300,8 @@ can handle the @menu environment.")
   texinfo-mode (&optional point)
   "Determine the class of tags that can be used at POINT.
 For texinfo, there two possibilities returned.
-1) 'function - for a call to a texinfo function
-2) 'word     - indicates an english word.
+1) `function' - for a call to a texinfo function
+2) `word'     - indicates an English word.
 It would be nice to know function arguments too, but not today."
   (let ((sym (semantic-ctxt-current-symbol)))
     (if (and sym (= (aref (car sym) 0) ?@))

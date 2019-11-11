@@ -3747,7 +3747,7 @@ Used to extract the current line and module being inspected.
 
 Must match lines with real filename, like
  > /path/to/file.py(42)<module>()->None
-and lines in which filename starts with '<', e.g.
+and lines in which filename starts with `<', e.g.
  > <stdin>(1)<module>()->None
 
 In the first case /path/to/file.py file will be visited and overlay icon
@@ -3762,21 +3762,21 @@ Line number is expected in the second parenthesized expression."
   :safe 'stringp)
 
 (defcustom python-pdbtrack-continue-command '("c" "cont" "continue")
-  "Pdb 'continue' command aliases.
-After one of this commands is sent to pdb, pdbtracking session is
+  "Pdb `continue' command aliases.
+After one of these commands is sent to pdb, the pdbtracking session is
 considered over.
 
-This command is remembered by pdbtracking.  If next command sent to pdb
-is empty string, it considered 'continue' command if previous command
-was 'continue'.  This behavior slightly differentiate 'continue' command
-from 'exit' commands listed in `python-pdbtrack-exit-command'.
+This command is remembered by pdbtracking.  If the next command sent to pdb
+is the empty string, it is treated as `continue' if the previous command
+was `continue'.  This behavior slightly differentiates the `continue' command
+from the `exit' command listed in `python-pdbtrack-exit-command'.
 
 See `python-pdbtrack-activate' for pdbtracking session overview."
   :type 'list
   :version "27.1")
 
 (defcustom python-pdbtrack-exit-command '("q" "quit" "exit")
-  "Pdb 'exit' command aliases.
+  "Pdb `exit' command aliases.
 After one of this commands is sent to pdb, pdbtracking session is
 considered over.
 
@@ -3801,7 +3801,7 @@ Never set this variable directly, use
   "List of buffers to be deleted after tracking finishes.")
 
 (defvar python-pdbtrack-prev-command-continue nil
-  "Is t if previous pdb command was 'continue'.")
+  "Is t if previous pdb command was `continue'.")
 
 (defun python-pdbtrack-set-tracked-buffer (file-name)
   "Set the buffer for FILE-NAME as the tracked buffer.

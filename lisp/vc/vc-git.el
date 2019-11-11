@@ -282,8 +282,8 @@ toggle display of the entire list."
   "Convert CODE-LIST to a VC status.
 
 Each element of CODE-LIST comes from the first two characters of
-a line returned by 'git status --porcelain' and should be passed
-in the order given by 'git status'."
+a line returned by `git status --porcelain' and should be passed
+in the order given by `git status'."
   ;; It is necessary to allow CODE-LIST to be a list because sometimes git
   ;; status returns multiple lines, e.g. for a file that is removed from
   ;; the index but is present in the HEAD and working tree.

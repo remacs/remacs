@@ -651,24 +651,24 @@ directory, like `default-directory'."
     (define-key-after map [menu-bar view filter filter-by-filename]
       '(menu-item "Add filter by full filename..." ibuffer-filter-by-filename
                   :help
-                  (concat "For a buffer associated with file '/a/b/c.d', "
-                          "list buffer if a given pattern matches '/a/b/c.d'")))
+                  (concat "For a buffer associated with file `/a/b/c.d', "
+                          "list buffer if a given pattern matches `/a/b/c.d'")))
     (define-key-after map [menu-bar view filter filter-by-basename]
       '(menu-item "Add filter by file basename..."
                   ibuffer-filter-by-basename
-                  :help (concat "For a buffer associated with file '/a/b/c.d', "
-                                "list buffer if a given pattern matches 'c.d'")))
+                  :help (concat "For a buffer associated with file `/a/b/c.d', "
+                                "list buffer if a given pattern matches `c.d'")))
     (define-key-after map [menu-bar view filter filter-by-file-extension]
       '(menu-item "Add filter by file name extension..."
                   ibuffer-filter-by-file-extension
-                  :help (concat "For a buffer associated with file '/a/b/c.d', "
-                                "list buffer if a given pattern matches 'd'")))
+                  :help (concat "For a buffer associated with file `/a/b/c.d', "
+                                "list buffer if a given pattern matches `d'")))
     (define-key-after map [menu-bar view filter filter-by-directory]
       '(menu-item "Add filter by filename's directory..."
                   ibuffer-filter-by-directory
                   :help
-                  (concat "For a buffer associated with file '/a/b/c.d', "
-                          "list buffer if a given pattern matches '/a/b'")))
+                  (concat "For a buffer associated with file `/a/b/c.d', "
+                          "list buffer if a given pattern matches `/a/b'")))
     (define-key-after map [menu-bar view filter filter-by-size-lt]
       '(menu-item "Add filter by size less than..." ibuffer-filter-by-size-lt))
     (define-key-after map [menu-bar view filter filter-by-size-gt]
@@ -1377,7 +1377,7 @@ Otherwise, toggle lock status."
   "Unmark all buffers with mark MARK."
   (interactive "cRemove marks (RET means all):")
   (if (= (ibuffer-count-marked-lines t) 0)
-      (message "No buffers marked; use 'm' to mark a buffer")
+      (message "No buffers marked; use `m' to mark a buffer")
     (let ((fn (lambda (_buf mk)
                 (unless (eq mk ?\s)
                   (ibuffer-set-mark-1 ?\s)) t)))

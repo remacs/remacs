@@ -698,7 +698,7 @@ and what valid VAL values are."
 
 (defun semantic-lex-spp-symbol-merge (txt)
   "Merge the tokens listed in TXT.
-TXT might contain further 'spp-symbol-merge, which will
+TXT might contain further `spp-symbol-merge', which will
 be merged recursively."
   ;; We need to merge the tokens in the 'text segment together,
   ;; and produce a single symbol from it.
@@ -1272,7 +1272,7 @@ VALFORM are forms that return the name of the thing being included, and the
 type of include.  The return value should be of the form:
   (NAME . TYPE)
 where NAME is the name of the include, and TYPE is the type of the include,
-where a valid symbol is 'system, or nil."
+where a valid symbol is `system', or nil."
   (let ((start (make-symbol "start"))
 	(end (make-symbol "end"))
 	(val (make-symbol "val"))

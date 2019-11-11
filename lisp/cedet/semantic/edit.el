@@ -464,7 +464,7 @@ See `semantic-edits-change-leaf-tag' for details on parents."
 (defun semantic-parse-changes-failed (&rest args)
   "Signal that Semantic failed to parse changes.
 That is, display a message by passing all ARGS to `format-message', then throw
-a 'semantic-parse-changes-failed exception with value t."
+a `semantic-parse-changes-failed' exception with value t."
   (when semantic-edits-verbose-flag
     (message "Semantic parse changes failed: %S"
 	     (apply #'format-message args)))
@@ -516,7 +516,7 @@ the semantic cache to see what needs to be changed."
 (defun semantic-edits-incremental-parser-1 ()
   "Incrementally reparse the current buffer.
 Return the list of tags that changed.
-If the incremental parse fails, throw a 'semantic-parse-changes-failed
+If the incremental parse fails, throw a `semantic-parse-changes-failed'
 exception with value t, that can be caught to schedule a full reparse.
 This function is for internal use by `semantic-edits-incremental-parser'."
   (let* ((changed-tags nil)

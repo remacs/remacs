@@ -425,7 +425,7 @@ FILENAME should be just a filename which occurs in a directory controlled
 by this project.
 Optional argument FORCE forces the default filename to be provided even if it
 doesn't exist.
-If FORCE equals 'newfile, then the cache is ignored and a new file in THIS
+If FORCE equals `newfile', then the cache is ignored and a new file in THIS
 is returned."
   (require 'ede/locate)
   (let* ((loc (ede-get-locator-object this))

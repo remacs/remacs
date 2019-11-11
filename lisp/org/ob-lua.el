@@ -56,7 +56,7 @@
 
 (defcustom org-babel-lua-mode 'lua-mode
   "Preferred lua mode for use in running lua interactively.
-This will typically be 'lua-mode."
+This will typically be `lua-mode'."
   :group 'org-babel
   :version "26.1"
   :package-version '(Org . "8.3")
@@ -70,7 +70,7 @@ This will typically be 'lua-mode."
   :type 'string)
 
 (defcustom org-babel-lua-None-to 'hline
-  "Replace 'None' in lua tables with this before returning."
+  "Replace `None' in lua tables with this before returning."
   :group 'org-babel
   :version "26.1"
   :package-version '(Org . "8.3")
@@ -285,8 +285,8 @@ fd:close()")
 (defun org-babel-lua-evaluate-external-process
     (body &optional result-type result-params preamble)
   "Evaluate BODY in external lua process.
-If RESULT-TYPE equals 'output then return standard output as a
-string.  If RESULT-TYPE equals 'value then return the value of the
+If RESULT-TYPE equals `output' then return standard output as a
+string.  If RESULT-TYPE equals `value' then return the value of the
 last statement in BODY, as elisp."
   (let ((raw
          (pcase result-type
@@ -317,8 +317,8 @@ last statement in BODY, as elisp."
 (defun org-babel-lua-evaluate-session
     (session body &optional result-type result-params)
   "Pass BODY to the Lua process in SESSION.
-If RESULT-TYPE equals 'output then return standard output as a
-string.  If RESULT-TYPE equals 'value then return the value of the
+If RESULT-TYPE equals `output' then return standard output as a
+string.  If RESULT-TYPE equals `value' then return the value of the
 last statement in BODY, as elisp."
   (let* ((send-wait (lambda () (comint-send-input nil t) (sleep-for 0 5)))
 	 (dump-last-value

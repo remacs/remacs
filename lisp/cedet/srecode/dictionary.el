@@ -560,7 +560,7 @@ where
 
 ENTRY_N = (NAME ENTRY_N_1 ENTRY_N_2 ...) | TAG
 
-where TAG is a semantic tag of class 'variable.  The (NAME ... )
+where TAG is a semantic tag of class `variable'.  The (NAME ... )
 form creates a child dictionary which is stored under the name
 NAME.  The TAG form creates a value entry or section dictionary
 entry whose name is the name of the tag.

@@ -666,7 +666,7 @@ according to the Thumbnail Managing Standard."
 
 (defun image-dired-thumb-size (dimension)
   "Return thumb size depending on `image-dired-thumbnail-storage'.
-DIMENSION should be either the symbol 'width or 'height."
+DIMENSION should be either the symbol `width' or `height'."
   (cond
    ((eq 'standard image-dired-thumbnail-storage) 128)
    ((eq 'standard-large image-dired-thumbnail-storage) 256)

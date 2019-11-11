@@ -281,7 +281,7 @@ Optional argument COLOR indicates that color should be mixed in."
 Java have documentation set in a comment preceding TAG's definition.
 Attempt to strip out comment syntactic sugar, unless optional argument
 NOSNARF is non-nil.
-If NOSNARF is 'lex, then return the semantic lex token."
+If NOSNARF is `lex', then return the semantic lex token."
   (when (or tag (setq tag (semantic-current-tag)))
     (with-current-buffer (semantic-tag-buffer tag)
       (save-excursion

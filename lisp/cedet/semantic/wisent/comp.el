@@ -2641,7 +2641,7 @@ Decide what to do for each type of token if seen as the lookahead
 token in specified state.  The value returned is used as the default
 action for the state.  In addition, ACTROW is filled with what to do
 for each kind of token, index by symbol number, with nil meaning do
-the default action.  The value 'error, means this situation is an
+the default action.  The value `error', means this situation is an
 error.  The parser recognizes this value specially.
 
 This is where conflicts are resolved.  The loop over lookahead rules

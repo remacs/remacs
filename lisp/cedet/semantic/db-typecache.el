@@ -412,7 +412,7 @@ found tag to be loaded."
 (defun semanticdb-typecache-find-by-name-helper (name table)
   "Find the tag with NAME in TABLE, which is from a typecache.
 If more than one tag has NAME in TABLE, we will prefer the tag that
-is of class 'type."
+is of class `type'."
   (let* ((names (semantic-find-tags-by-name name table))
 	 (nmerge (semanticdb-typecache-merge-streams names nil))
 	 (types (semantic-find-tags-by-class 'type nmerge)))

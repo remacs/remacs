@@ -62,12 +62,12 @@
   "Whether to use client certificates for network connections.
 
 When non-nil, `open-network-stream' will automatically look for
-matching client certificates (via 'auth-source') for a
+matching client certificates (via `auth-source') for a
 destination server, if it is called without a :client-certificate
 keyword.
 
 Set to nil to disable this lookup globally.  To disable on a
-per-connection basis, specify ':client-certificate nil' when
+per-connection basis, specify `:client-certificate nil' when
 calling `open-network-stream'."
   :group 'network
   :type 'boolean

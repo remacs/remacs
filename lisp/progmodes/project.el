@@ -110,7 +110,7 @@ is not a part of a detectable project either, return a
       (setq dir (read-directory-name "Choose the project directory: " dir nil t)
             pr (project--find-in-directory dir))
       (unless pr
-        (message "Using '%s' as a transient project root" dir)
+        (message "Using `%s' as a transient project root" dir)
         (setq pr (cons 'transient dir)))))
     pr))
 

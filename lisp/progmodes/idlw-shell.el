@@ -197,7 +197,7 @@ So by default setting a breakpoint will be on C-c C-d C-b."
 (defcustom idlwave-shell-automatic-electric-debug 'breakpoint
   "Enter the electric-debug minor mode automatically.
 This occurs at a breakpoint or any other halt.  The mode is exited
-upon return to the main level.  Can be set to 'breakpoint to enter
+upon return to the main level.  Can be set to `breakpoint' to enter
 electric debug mode only when breakpoints are tripped."
   :group 'idlwave-shell-general-setup
   :type '(choice
@@ -281,8 +281,8 @@ is non-nil."
 (defcustom idlwave-shell-show-commands
   '(run misc breakpoint)
   "A list of command types to show output from in the shell.
-Possibilities are 'run, 'debug, 'breakpoint, and 'misc.  Unselected
-types are not displayed in the shell.  The type 'everything causes all
+Possibilities are `run', `debug', `breakpoint', and `misc'.  Unselected
+types are not displayed in the shell.  The type `everything' causes all
 the copious shell traffic to be displayed."
   :group 'idlwave-shell-command-setup
   :type '(choice
@@ -571,7 +571,7 @@ before use by the shell.")
 (defun idlwave-shell-temp-file (type)
   "Return a temp file, creating it if necessary.
 
-TYPE is either 'pro' or 'rinfo', and `idlwave-shell-temp-pro-file' or
+TYPE is either `pro' or `rinfo', and `idlwave-shell-temp-pro-file' or
 `idlwave-shell-temp-rinfo-save-file' is set (respectively)."
   (cond
    ((eq type 'rinfo)
@@ -1195,7 +1195,7 @@ See also the variable `idlwave-shell-prompt-pattern'.
 
 (defun idlwave-shell-hide-p (type &optional list)
   "Whether to hide this type of command.
-Return either nil or 'hide."
+Return either nil or `hide'."
   (let ((list (or list idlwave-shell-show-commands)))
     (if (listp list)
       (if (not (memq type list)) 'hide))))
@@ -1222,13 +1222,13 @@ If optional second argument PCMD is non-nil it will be placed on
 `idlwave-shell-post-command-hook' when CMD is executed.
 
 If the optional third argument HIDE is non-nil, then hide output from
-CMD, unless it is the symbol 'mostly, in which case only output
+CMD, unless it is the symbol `mostly', in which case only output
 beginning with \"%\" is hidden, and all other output (i.e., the
 results of a PRINT command), is shown.  This helps with, e.g.,
 stepping through code with output.
 
 If optional fourth argument PREEMPT is non-nil CMD is put at front of
-`idlwave-shell-pending-commands'.  If PREEMPT is 'wait, wait for all
+`idlwave-shell-pending-commands'.  If PREEMPT is `wait', wait for all
 output to complete and the next prompt to arrive before returning
 \(useful if you need an answer now).  IDL is considered ready if the
 prompt is present and if `idlwave-shell-ready' is non-nil.
@@ -1639,8 +1639,8 @@ IDL has stopped.  The types of messages we are interested in are
 execution halted, stepped, breakpoint, interrupted at and trace
 messages.  For breakpoint messages process any attached count or
 command parameters.  Update the stop line if a message is found.
-The variable `idlwave-shell-current-state' is set to 'error, 'halt,
-or 'breakpoint, which describes the status, or nil for none of
+The variable `idlwave-shell-current-state' is set to `error', `halt',
+or `breakpoint', which describes the status, or nil for none of
 the above."
   (let (trace)
     (cond
@@ -2282,8 +2282,8 @@ is used.  Does nothing if the resulting frame is nil."
 FRAME is a list of file name, line number, and subroutine name.  If
 FRAME is nil then remove overlay.  If COL is set, move point to that
 column in the line.  If DEBUG is non-nil, enable the electric debug
-mode.  If it is 'disable, do not enable no matter what the setting of
-`idlwave-shell-automatic-electric-debug'.  If it is 'force, enable no
+mode.  If it is `disable', do not enable no matter what the setting of
+`idlwave-shell-automatic-electric-debug'.  If it is `force', enable no
 matter what the settings of that variable."
   (if (not frame)
       ;; remove stop-line overlay from old position
@@ -2560,7 +2560,7 @@ stopped at a breakpoint."
 (defun idlwave-shell-toggle-enable-current-bp (&optional bp force
 							 no-update)
   "Disable or enable current breakpoint or a breakpoint passed in BP.
-If FORCE is 'disable or 'enable, for that condition instead of
+If FORCE is `disable' or `enable', for that condition instead of
 toggling.  If NO-UPDATE is non-nil, don't update the breakpoint
 list after toggling."
   (interactive)
@@ -3114,7 +3114,7 @@ versions of IDL."
 (defun idlwave-shell-help-statement (help expr)
   "Construct a help statement for printing expression EXPR.
 
-HELP can be non-nil for `help,', nil for 'print,' or any string into which
+HELP can be non-nil for `help,', nil for `print,' or any string into which
 to insert expression in place of the marker ___, e.g.: print,
 size(___,/DIMENSIONS)"
   (cond
@@ -3287,9 +3287,9 @@ Queries IDL using the string in `idlwave-shell-bp-query'."
   "Get a value for a breakpoint.
 BP has the form of elements in `idlwave-shell-bp-alist'.
 Optional second arg ITEM is the particular value to retrieve.
-ITEM can be 'file, 'line, 'index, 'module, 'count, 'cmd,
-'condition, 'disabled, 'type, or 'data.  'data returns a list
-of 'count, 'cmd and 'condition.  Defaults to 'index."
+ITEM can be `file', `line', `index', `module', `count', `cmd',
+`condition', `disabled', `type', or `data'.  `data' returns a list
+of `count', `cmd' and `condition'.  Defaults to `index'."
   (cond
    ;; Frame
    ((eq item 'line) (nth 1 (car bp)))
@@ -3636,7 +3636,7 @@ Existing overlays are recycled, in order to minimize consumption."
   "Make a new overlay for highlighting breakpoints.
 
 This stuff is strongly dependent upon the version of Emacs.  If TYPE
-is passed, make an overlay of that type ('bp or 'bp-cond, currently
+is passed, make an overlay of that type (`bp' or `bp-cond', currently
 only for glyphs)."
   (let ((ov (make-overlay 1 1))
 	(use-glyph (and (memq idlwave-shell-mark-breakpoints '(t glyph))

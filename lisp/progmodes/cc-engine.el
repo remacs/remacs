@@ -5059,10 +5059,10 @@ that region is taken as syntactically significant text.
 
 NOERROR, in addition to the values nil, t, and <anything else>
 used in `re-search-forward' can also take the values
-'before-literal and 'after-literal.  In these cases, when BOUND
+`before-literal' and `after-literal'.  In these cases, when BOUND
 is also given and is inside a literal, and a search fails, point
 will be left, respectively before or after the literal.  Be aware
-that with 'after-literal, if a string or comment is unclosed at
+that with `after-literal', if a string or comment is unclosed at
 the end of the buffer, point may be left there, even though it is
 inside a literal there.
 

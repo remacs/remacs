@@ -317,7 +317,7 @@ If nil this will use `gnus-summary-line-format'."
 (defcustom nnir-retrieve-headers-override-function nil
   "If non-nil, a function that accepts an article list and group
 and populates the `nntp-server-buffer' with the retrieved
-headers.  Must return either 'nov or 'headers indicating the
+headers.  Must return either `nov' or `headers' indicating the
 retrieved header format.
 
 If this variable is nil, or if the provided function returns nil for

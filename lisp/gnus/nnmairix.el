@@ -301,7 +301,7 @@ The default chooses the largest window in the current frame."
 
 (defcustom nnmairix-propagate-marks-upon-close t
   "Flag if marks should be propagated upon closing a group.
-The default of this variable is t.  If set to 'ask, the
+The default of this variable is t.  If set to `ask', the
 user will be asked if the flags should be propagated when the
 group is closed.  If set to nil, the user will have to manually
 call `nnmairix-propagate-marks'."
@@ -1400,7 +1400,7 @@ nnmairix with nnml backends."
   "Replace folder names in Xref header and correct article numbers.
 Do this for all ARTICLES on BACKENDGROUP.  Replace using
 MAIRIXGROUP.  NUMC contains values for article number correction.
-TYPE is either 'nov or 'headers."
+TYPE is either `nov' or `headers'."
   (nnheader-message 7 "nnmairix: Rewriting headers...")
   (cond
    ((eq type 'nov)
@@ -1449,7 +1449,7 @@ TYPE is either 'nov or 'headers."
 (defun nnmairix-backend-to-server (server)
   "Return nnmairix server most probably responsible for back end SERVER.
 User will be asked if this cannot be determined.  Result is saved in
-parameter 'indexed-servers of corresponding default search
+parameter `indexed-servers' of corresponding default search
 group."
   (let ((allservers (nnmairix-get-nnmairix-servers))
 	mairixserver found defaultgroup)
@@ -1459,7 +1459,7 @@ group."
 	  (while (and allservers (not found))
 	    (setq mairixserver (gnus-server-to-method (car (pop allservers))))
 	    ;; First we look if SERVER is the backend of current nnmairix server
-	    (setq found (and (eq (cadr (assoc 'nnmairix-backend mairixserver))
+	    (setq found (and (eq (cadr (assoc `nnmairix-backend mairixserver))
 				 (car server))
 			     (string= (cadr (assoc 'nnmairix-backend-server mairixserver))
 				      (nth 1 server))))

@@ -1738,7 +1738,7 @@ Otherwise return nil."
 (define-mode-local-override semantic-tag-boundary-p
   semantic-grammar-mode (tag)
   "Return non-nil for tags that should have a boundary drawn.
-Only tags of type 'nonterminal will be so marked."
+Only tags of type `nonterminal' will be so marked."
   (let ((c (semantic-tag-class tag)))
     (eq c 'nonterminal)))
 

@@ -826,7 +826,7 @@ HEADER is the header being scored.
 MATCH is the string we are looking for.
 TYPE is the match type: substring, regexp, exact, fuzzy.
 SCORE is the score to add.
-DATE is the expire date, or nil for no expire, or 'now for immediate expire.
+DATE is the expire date, or nil for no expire, or `now' for immediate expire.
 If optional argument `PROMPT' is non-nil, allow user to edit match.
 If optional argument `SILENT' is nil, show effect of score entry.
 If optional argument `EXTRA' is non-nil, it's a non-standard overview header."

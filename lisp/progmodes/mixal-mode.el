@@ -330,7 +330,7 @@ part of the subfield. The default field for STJ is (0:2)."
          2)
 
     (STZ storing "store zero" 33 field
-         "Store in cell Nr. M '+ 0'.
+         "Store in cell Nr. M `+ 0'.
 The modification of the operation code represents the subfield of the
 memory cell that is to be overwritten with zeros."
          2)

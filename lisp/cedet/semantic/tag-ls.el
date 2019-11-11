@@ -199,7 +199,7 @@ Other languages qualify names within a Namespace (such as C++) which
 result in a different package like structure.
 
 Languages which do not override this function will just search the
-stream for a tag of class 'package, and return that."
+stream for a tag of class `package', and return that."
   (let ((stream (semantic-something-to-tag-table
                  (or stream-or-buffer tag))))
     (:override-with-args (tag stream))))

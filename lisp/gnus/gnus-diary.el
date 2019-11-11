@@ -64,7 +64,7 @@ Please refer to `format-time-string' for information on possible values."
   "Function called to format a diary delay string.
 It is passed two arguments.  The first one is non-nil if the delay is in
 the past.  The second one is of the form ((NUM . UNIT) ...) where NUM is
-an integer and UNIT is one of 'year 'month 'week 'day 'hour or 'minute.
+an integer and UNIT is one of `year' `month' `week' `day' `hour' or `minute'.
 It should return strings like \"In 2 months, 3 weeks\", \"3 hours,
 1 minute ago\" and so on.
 

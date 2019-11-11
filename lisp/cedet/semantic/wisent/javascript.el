@@ -88,8 +88,8 @@ is to return a symbol based on type modifiers."
 (define-mode-local-override semantic-analyze-scope-calculate-access js-mode (type scope)
   "Calculate the access class for TYPE as defined by the current SCOPE.
 Access is related to the :parents in SCOPE.  If type is a member of SCOPE
-then access would be 'private.  If TYPE is inherited by a member of SCOPE,
-the access would be 'protected.  Otherwise, access is 'public."
+then access would be `private'.  If TYPE is inherited by a member of SCOPE,
+the access would be `protected'.  Otherwise, access is `public'."
   nil)
 
 (define-mode-local-override semantic-ctxt-current-symbol js-mode (&optional point)

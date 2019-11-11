@@ -1329,7 +1329,7 @@ is used to search."
   "Read the next result.
 Parse it and return the message folder, message index and the
 match. If no other matches left then return nil. If the current
-record is invalid return 'error."
+record is invalid return `error'."
   (prog1
       (cl-block nil
         (when (eobp)

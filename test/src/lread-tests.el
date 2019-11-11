@@ -145,7 +145,7 @@ literals (Bug#20852)."
                            "expected!")))))
 
 (ert-deftest lread-tests--funny-quote-symbols ()
-  "Check that 'smart quotes' or similar trigger errors in symbol names."
+  "Check that `smart quotes' or similar trigger errors in symbol names."
   (dolist (quote-char
            '(#x2018 ;; LEFT SINGLE QUOTATION MARK
              #x2019 ;; RIGHT SINGLE QUOTATION MARK

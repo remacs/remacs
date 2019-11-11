@@ -1807,9 +1807,9 @@ If the result is do-end block, it will always be multiline."
 (defun ruby-find-library-file (&optional feature-name)
   "Visit a library file denoted by FEATURE-NAME.
 FEATURE-NAME is a relative file name, file extension is optional.
-This commands delegates to 'gem which', which searches both
+This commands delegates to `gem which', which searches both
 installed gems and the standard library.  When called
-interactively, defaults to the feature name in the 'require'
+interactively, defaults to the feature name in the `require'
 statement around point."
   (interactive)
   (unless feature-name

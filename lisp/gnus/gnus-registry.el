@@ -145,7 +145,7 @@ recipients."
   '("delayed$" "drafts$" "queue$" "INBOX$" "^nnmairix:" "archive")
   "List of groups that gnus-registry-split-fancy-with-parent won't return.
 The group names are matched, they don't have to be fully
-qualified.  This parameter tells the Gnus registry 'never split a
+qualified.  This parameter tells the Gnus registry `never split a
 message into a group that matches one of these, regardless of
 references.'
 
@@ -211,7 +211,7 @@ groups."
 
 (defcustom gnus-registry-extra-entries-precious '(mark)
   "What extra keys are precious, meaning entries with them won't get pruned.
-By default, 'mark is included, so articles with marks are
+By default, `mark' is included, so articles with marks are
 considered precious.
 
 Before you save the Gnus registry, it's pruned.  Any entries with

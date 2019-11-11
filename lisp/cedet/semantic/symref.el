@@ -78,7 +78,7 @@
 ;;; Code:
 (defcustom semantic-symref-tool 'detect
   "The active symbol reference tool name.
-The tool symbol can be 'detect, or a symbol that is the name of
+The tool symbol can be `detect', or a symbol that is the name of
 a tool that can be used for symbol referencing."
   :type 'symbol
   :group 'semantic)
@@ -309,9 +309,9 @@ Can be 'project, 'target, or 'file.")
 	       :type symbol
 	       :documentation
 	       "The kind of search results desired.
-Can be 'line, 'file, or 'tag.
-The type of result can be converted from 'line to 'file, or 'line to 'tag,
-but not from 'file to 'line or 'tag.")
+Can be `line', `file', or `tag'.
+The type of result can be converted from `line' to `file', or `line' to `tag',
+but not from `file' to `line' or `tag'.")
    )
   "Baseclass for all symbol references tools.
 A symbol reference tool supplies functionality to identify the locations of

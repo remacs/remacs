@@ -1134,7 +1134,7 @@ If LIMIT, first try to limit the search to the N last articles."
 	  (nnimap-command "UID EXPUNGE %s"
 			  (nnimap-article-ranges articles))
 	(nnheader-message
-	 3 (concat "nnimap-expunge set to 'immediately, but "
+	 3 (concat "nnimap-expunge set to `immediately', but "
 		   "server doesn't support UIDPLUS"))
 	nil))
 

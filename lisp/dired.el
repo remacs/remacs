@@ -107,7 +107,7 @@ Note that `ls-lisp' does not support as many options as GNU ls, though.
 For more details, see Info node `(emacs)ls in Lisp'."
   :group 'dired
   :type '(choice (const :tag
-                        "Use --dired only if 'ls' supports it" unspecified)
+                        "Use --dired only if `ls' supports it" unspecified)
                  (const :tag "Do not use --dired" nil)
                  (other :tag "Always use --dired" t)))
 

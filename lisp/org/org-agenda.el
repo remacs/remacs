@@ -3920,7 +3920,7 @@ dimming them."
 the header at `org-hd-marker' is blocked according to
 `org-entry-blocked-p', then if `org-agenda-dim-blocked-tasks' is
 'invisible and the header is not blocked by checkboxes, set the
-text property `org-todo-blocked' to 'invisible, otherwise set it
+text property `org-todo-blocked' to `invisible', otherwise set it
 to t."
   (when (get-text-property 0 'todo-state entry)
     (let ((entry-marker (get-text-property 0 'org-hd-marker entry))

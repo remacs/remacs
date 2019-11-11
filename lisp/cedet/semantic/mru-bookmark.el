@@ -77,7 +77,7 @@ Set this when the tag gets unlinked from the buffer it belongs to.")
 	   :initform t
 	   :documentation
 	   "The reason this tag is interesting.
-Nice values are 'edit, 'read, 'jump, and 'mark.
+Nice values include the following:
  edit - created because the tag text was edited.
  read - created because point lingered in tag text.
  jump - jumped to another tag from this tag.

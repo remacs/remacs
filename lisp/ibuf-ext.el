@@ -1321,8 +1321,8 @@ matches against '/a/b/c.d'."
 (define-ibuffer-filter basename
     "Limit current view to buffers with file basename matching QUALIFIER.
 
-For example, for a buffer associated with file '/a/b/c.d', this
-matches against 'c.d'."
+For example, for a buffer associated with file `/a/b/c.d', this
+matches against `c.d'."
   (:description "file basename"
    :reader (read-from-minibuffer
             "Filter by file name, without directory part (regex): "))
@@ -1335,7 +1335,7 @@ matches against 'c.d'."
 
 The separator character (typically `.') is not part of the
 pattern.  For example, for a buffer associated with file
-'/a/b/c.d', this matches against 'd'."
+`/a/b/c.d', this matches against `d'."
   (:description "filename extension"
    :reader (read-from-minibuffer
             "Filter by filename extension without separator (regex): "))
@@ -1596,7 +1596,7 @@ to move by.  The default is `ibuffer-marked-char'."
   "Hide all of the currently marked lines."
   (interactive)
   (if (= (ibuffer-count-marked-lines) 0)
-      (message "No buffers marked; use 'm' to mark a buffer")
+      (message "No buffers marked; use `m' to mark a buffer")
     (let ((count
 	   (ibuffer-map-marked-lines
 	    #'(lambda (_buf _mark)

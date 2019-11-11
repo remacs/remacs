@@ -1122,7 +1122,7 @@ If COUNT is negative, move backward instead."
 		   ((eq (following-char) ?\;)
 		    (if (zerop parlevel)
 			(throw 'simula-out nil)
-		      (error "Parenthesis mismatch or misplaced ';'")))
+		      (error "Parenthesis mismatch or misplaced `;'")))
 		   ((eq (following-char) ?\()
 		    (if (zerop parlevel)
 			(throw 'simula-out (1+ (current-column)))

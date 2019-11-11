@@ -433,7 +433,7 @@ default if it is available."
 Return value is a cons (STATUS . WARNING), where WARNING is a
 string or nil, and STATUS is one of the symbols: `added',
 `ignored', `kindchanged', `modified', `removed', `renamed', `unknown',
-which directly correspond to `bzr status' output, or 'unchanged
+which directly correspond to `bzr status' output, or `unchanged'
 for files whose copy in the working tree is identical to the one
 in the branch repository (or whose status not be determined)."
 ;; Doc used to also say the following, but AFAICS, it has never been true.

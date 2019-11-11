@@ -210,7 +210,7 @@ variable default values, and other things."
 ;;; :tagtype ARGUMENT HANDLING
 ;;
 ;; When a :tagtype argument is required, identify the current tag, of
-;; cf class 'type.  Apply those parameters to the dictionary.
+;; class 'type'.  Apply those parameters to the dictionary.
 
 (defun srecode-semantic-handle-:tagtype (dict)
   "Add macros into the dictionary DICT based on a tag of class type at point.
@@ -218,7 +218,7 @@ Assumes the cursor is in a tag of class type.  If not, throw an error."
   (let ((typetag (or srecode-semantic-selected-tag
 		     (semantic-current-tag-of-class 'type))))
     (when (not typetag)
-      (error "Cursor is not in a TAG of class 'type"))
+      (error "Cursor is not in a TAG of class `type'"))
     (srecode-semantic-apply-tag-to-dict
      typetag
      dict)))
@@ -285,8 +285,8 @@ CTXT is the pre-calculated context."
   "Insert TAG into a buffer using srecode templates at point.
 
 Optional STYLE-OPTION is a list of minor configuration of styles,
-such as the symbol 'prototype for prototype functions, or
-'system for system includes, and 'doxygen, for a doxygen style
+such as the symbol `prototype' for prototype functions, or
+`system' for system includes, and `doxygen', for a doxygen style
 comment.
 
 Optional third argument POINT-INSERT-FCN is a hook that is run after

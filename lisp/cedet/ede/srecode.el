@@ -75,7 +75,7 @@ updated in FORMS."
 TEMPLATE should specify a context by using a string format of:
   context:templatename
 Add DICTIONARY-ENTRIES into the dictionary before insertion.
-Note: Just like `srecode-insert', but templates found in 'ede app."
+Note: Just like `srecode-insert', but templates found in `ede' app."
   (require 'srecode/insert)
   (ede-srecode-insert-with-dictionary template
 

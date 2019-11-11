@@ -8737,13 +8737,13 @@ project is defined."
        ((/= (preceding-char) ?-)	; standard dash (minus)
 	(self-insert-command count))
        (t (self-insert-command count)
-	  (message "Enter '-' for horiz. line, 'CR' for commenting-out code, else enter comment")
+	  (message "Enter `-' for horiz. line, RET for commenting-out code, else enter comment")
 	  (let ((next-input (read-char)))
 	    (if (= next-input ?-)	; triple dash
 		(progn
 		  (vhdl-comment-display-line)
 		  (message
-		   "Enter '-' for display comment, else continue coding")
+		   "Enter `-' for display comment, else continue coding")
 		  (let ((next-input (read-char)))
 		    (if (= next-input ?-) ; four dashes
 			(vhdl-comment-display t)

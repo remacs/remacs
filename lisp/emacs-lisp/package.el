@@ -2622,7 +2622,7 @@ Helper function for `describe-package'."
 
 (defun package-install-button-action (button)
   "Run `package-install' on the package BUTTON points to.
-Used for the 'action property of buttons in the buffer created by
+Used for the `action' property of buttons in the buffer created by
 `describe-package'."
   (let ((pkg-desc (button-get button 'package-desc)))
     (when (y-or-n-p (format-message "Install package `%s'? "
@@ -2633,7 +2633,7 @@ Used for the 'action property of buttons in the buffer created by
 
 (defun package-delete-button-action (button)
   "Run `package-delete' on the package BUTTON points to.
-Used for the 'action property of buttons in the buffer created by
+Used for the `action' property of buttons in the buffer created by
 `describe-package'."
   (let ((pkg-desc (button-get button 'package-desc)))
     (when (y-or-n-p (format-message "Delete package `%s'? "
@@ -2645,7 +2645,7 @@ Used for the 'action property of buttons in the buffer created by
 (defun package-keyword-button-action (button)
   "Show filtered \"*Packages*\" buffer for BUTTON.
 The buffer is filtered by the `package-keyword' property of BUTTON.
-Used for the 'action property of buttons in the buffer created by
+Used for the `action' property of buttons in the buffer created by
 `describe-package'."
   (let ((pkg-keyword (button-get button 'package-keyword)))
     (package-show-package-list t (list pkg-keyword))))

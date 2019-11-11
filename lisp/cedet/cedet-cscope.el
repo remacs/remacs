@@ -39,12 +39,12 @@
 (defun cedet-cscope-search (searchtext texttype type scope)
   "Perform a search with CScope, return the created buffer.
 SEARCHTEXT is text to find.
-TEXTTYPE is the type of text, such as 'regexp, 'string, 'tagname,
-'tagregexp, or 'tagcompletions.
+TEXTTYPE is the type of text, such as `regexp', `string', `tagname',
+`tagregexp', or `tagcompletions'.
 TYPE is the type of search, meaning that SEARCHTEXT is compared to
 filename, tagname (tags table), references (uses of a tag) , or
 symbol (uses of something not in the tag table.)
-SCOPE is the scope of the search, such as 'project or 'subdirs."
+SCOPE is the scope of the search, such as `project' or `subdir'."
   ;; CScope is an interactive program.  It uses number flags
   ;; in order to perform command line searches.  Useful for this
   ;; tool are:

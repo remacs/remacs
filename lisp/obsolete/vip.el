@@ -2250,7 +2250,7 @@ a token has type \(command, address, end-mark\) and value."
 	   (forward-char 1)
 	   (cond ((looking-at "'") (setq ex-token nil))
 		 ((looking-at "[a-z]") (setq ex-token (following-char)))
-		 (t (error "Marks are ' and a-z")))
+		 (t (error "%s" "Marks are ' and a-z" ?')))
 	   (forward-char 1))
 	  ((looking-at "\n")
 	   (setq ex-token-type "end-mark")

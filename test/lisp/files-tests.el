@@ -240,8 +240,8 @@ form.")
     (should (equal kill-emacs-args '(nil)))))
 
 (ert-deftest files-tests-read-file-in-~ ()
-  "Test file prompting in directory named '~'.
-If we are in a directory named '~', the default value should not
+  "Test file prompting in directory named `~'.
+If we are in a directory named `~', the default value should not
 be $HOME."
   (cl-letf (((symbol-function 'completing-read)
              (lambda (_prompt _coll &optional _pred _req init _hist def _)

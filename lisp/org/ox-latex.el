@@ -385,7 +385,7 @@ variable is non-nil, Org passes their value to \\label unchanged.
 You are responsible for ensuring that the value is a valid LaTeX
 \\label key, and that no other \\label commands with the same key
 appear elsewhere in your document.  (Keys may contain letters,
-numbers, and the following punctuation: '_' '.'  '-' ':'.)  There
+numbers, and the following punctuation: `_' `.' `-' `:'.)  There
 are no such limitations on CUSTOM_ID and NAME when this variable
 is nil.
 

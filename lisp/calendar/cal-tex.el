@@ -71,7 +71,7 @@
 (defcustom cal-tex-which-days '(0 1 2 3 4 5 6)
   "The days of the week that are displayed on the portrait monthly calendar.
 Sunday is 0, Monday is 1, and so on.  The default is to print from Sunday to
-Saturday.  For example, use '(1 3 5) to only print Monday, Wednesday, Friday."
+Saturday.  For example, (1 3 5) prints only Monday, Wednesday, Friday."
   :type '(repeat integer)
   :group 'calendar-tex)
 
@@ -109,7 +109,7 @@ date in the weekly calendars, and in the top center of daily calendars.
 The default is ordinal day number of the year and the number of
 days remaining.  As an example, setting this to
 
-    '(calendar-hebrew-date-string date)
+    (calendar-hebrew-date-string date)
 
 will put the Hebrew date at the bottom of each day."
   :type 'sexp

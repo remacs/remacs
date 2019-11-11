@@ -1021,7 +1021,7 @@ If PAGE is nil, convert the whole document."
 
 (defun doc-view-pdfdraw-program-subcommand ()
   "Return the mutool subcommand replacing mudraw.
-Recent MuPDF distributions replaced 'mudraw' with 'mutool draw'."
+Recent MuPDF distributions replaced `mudraw' with `mutool draw'."
   (when (string-match "mutool[^/\\]*$" doc-view-pdfdraw-program)
     '("draw")))
 
