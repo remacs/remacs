@@ -468,7 +468,8 @@ displayed in the echo area."
 	       (gnus-add-timestamp-to-message
 		(if (or (and (null ,format-string) (null ,args))
 			(progn
-			  (setq str (apply 'format ,format-string ,args))
+			  (setq str (apply #'format-message ,format-string
+					   ,args))
 			  (zerop (length str))))
 		    (prog1
 			(and ,format-string str)
@@ -506,7 +507,7 @@ inside loops."
     ;; We have to do this format thingy here even if the result isn't
     ;; shown - the return value has to be the same as the return value
     ;; from `message'.
-    (apply 'format args)))
+    (apply #'format-message args)))
 
 (defun gnus-final-warning ()
   (when (and (consp gnus-action-message-log)
