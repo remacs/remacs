@@ -1013,8 +1013,6 @@ the `--debug-init' option to view a complete error backtrace."
     (when debug-on-error-should-be-set
       (setq debug-on-error debug-on-error-from-init-file))))
 
-(defvar package--activated)
-
 (defun command-line ()
   "A subroutine of `normal-top-level'.
 Amongst another things, it parses the command-line arguments."
@@ -1235,7 +1233,7 @@ please check its value")
   ;; If any package directory exists, initialize the package system.
   (and user-init-file
        package-enable-at-startup
-       (not package--activated)
+       (not (bound-and-true-p package--activated))
        (catch 'package-dir-found
 	 (let (dirs)
 	   (if (boundp 'package-directory-list)
