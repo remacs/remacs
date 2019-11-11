@@ -9,7 +9,7 @@
 ;; Keywords: languages
 ;; The "Version" is the date followed by the decimal rendition of the Git
 ;;     commit hex.
-;; Version: 2019.09.23.004801067
+;; Version: 2019.11.11.038630457
 
 ;; Yoni Rabkin <yoni@rabkins.net> contacted the maintainer of this
 ;; file on 19/3/2008, and the maintainer agreed that when a bug is
@@ -80,7 +80,7 @@
 ;; .emacs, or in your site's site-load.el
 
 ;;   (autoload 'verilog-mode "verilog-mode" "Verilog mode" t )
-;;   (add-to-list 'auto-mode-alist '("\\.[ds]?vh?\\'" . verilog-mode))
+;;   (add-to-list 'auto-mode-alist '("\\.[ds]?va?h?\\'" . verilog-mode))
 
 ;; Be sure to examine at the help for verilog-auto, and the other
 ;; verilog-auto-* functions for some major coding time savers.
@@ -124,7 +124,7 @@
 ;;
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "2019-09-23-049422b-vpo-GNU"
+(defconst verilog-mode-version "2019-11-11-24d7439-vpo-GNU"
   "Version of this Verilog mode.")
 (defconst verilog-mode-release-emacs t
   "If non-nil, this version of Verilog mode was released with Emacs itself.")
@@ -333,6 +333,15 @@ wherever possible, since it is slow."
     (defalias 'verilog-restore-buffer-modified-p 'restore-buffer-modified-p))
    (t
     (defalias 'verilog-restore-buffer-modified-p 'set-buffer-modified-p))))
+
+(eval-and-compile
+  (cond
+   ((fboundp 'quit-window)
+    (defalias 'verilog-quit-window 'quit-window))
+   (t
+    (defun verilog-quit-window (kill-ignored window)
+      "Quit WINDOW and bury its buffer. KILL-IGNORED is ignored."
+      (delete-window window)))))
 
 (eval-and-compile
   ;; Both xemacs and emacs
@@ -1037,7 +1046,7 @@ See also `verilog-library-flags', `verilog-library-directories'."
   :type '(repeat directory))
 (put 'verilog-library-files 'safe-local-variable 'listp)
 
-(defcustom verilog-library-extensions '(".v" ".sv")
+(defcustom verilog-library-extensions '(".v" ".va" ".sv")
   "List of extensions to use when looking for files for /*AUTOINST*/.
 See also `verilog-library-flags', `verilog-library-directories'."
   :type '(repeat string)
@@ -1246,14 +1255,17 @@ See also `verilog-auto-arg-sort'."
 (put 'verilog-auto-inst-sort 'safe-local-variable 'verilog-booleanp)
 
 (defcustom verilog-auto-inst-vector t
-  "Non-nil means when creating default ports with AUTOINST, use bus subscripts.
+  "True means when creating default ports with AUTOINST, use bus subscripts.
 If nil, skip the subscript when it matches the entire bus as declared in
 the module (AUTOWIRE signals always are subscripted, you must manually
 declare the wire to have the subscripts removed.)  Setting this to nil may
-speed up some simulators, but is less general and harder to read, so avoid."
+speed up some simulators, but is less general and harder to read, so avoid.
+If `unsigned', use vectors for unsigned types (like using true,
+otherwise no vectors if sizes match (like using nil)."
   :group 'verilog-mode-auto
-  :type 'boolean)
-(put 'verilog-auto-inst-vector 'safe-local-variable 'verilog-booleanp)
+  :type '(choice (const nil) (const t) (const unsigned)))
+(put 'verilog-auto-inst-vector 'safe-local-variable
+     '(lambda (x) (memq x '(nil t unsigned))))
 
 (defcustom verilog-auto-inst-template-numbers nil
   "If true, when creating templated ports with AUTOINST, add a comment.
@@ -7598,7 +7610,8 @@ and `verilog-separator-keywords'.)"
 	       (display-completion-list allcomp))
 	     ;; Wait for a key press. Then delete *Completion*  window
 	     (momentary-string-display "" (point))
-	     (quit-window nil (get-buffer-window "*Completions*")))))))
+	     (verilog-quit-window nil (get-buffer-window "*Completions*"))
+	     )))))
 
 (defun verilog-show-completions ()
   "Show all possible completions at current point."
@@ -7610,8 +7623,7 @@ and `verilog-separator-keywords'.)"
     (display-completion-list (nth 2 (verilog-completion-at-point))))
   ;; Wait for a key press. Then delete *Completion*  window
   (momentary-string-display "" (point))
-  (quit-window nil (get-buffer-window "*Completions*")))
-
+  (verilog-quit-window nil (get-buffer-window "*Completions*")))
 
 (defun verilog-get-default-symbol ()
   "Return symbol around current point as a string."
@@ -8477,6 +8489,10 @@ Return an array of [outputs inouts inputs wire reg assign const]."
             (setq enum (match-string-no-properties 2)))
 	  (or (search-forward "*/")
 	      (error "%s: Unmatched /* */, at char %d" (verilog-point-text) (point))))
+         ;; Skip over protected sections with Base64-encoded data
+         ((looking-at "^\\s *`pragma\\s +protect\\s +begin_protected")
+          (or (re-search-forward "^\\s *`pragma\\s +protect\\s +end_protected" nil t)
+              (forward-line)))
 	 ((looking-at "(\\*")
 	  ;; To advance past either "(*)" or "(* ... *)" don't forward past first *
 	  (forward-char 1)
@@ -8620,6 +8636,9 @@ Return an array of [outputs inouts inputs wire reg assign const]."
 		;; Ifdef?  Ignore name of define
 		((member keywd '("`ifdef" "`ifndef" "`elsif"))
 		 (setq rvalue t))
+                ;; Line directive? Skip over the rest of the line
+                ((equal keywd "`line")
+                 (forward-line))
 		;; Type?
 		((unless ptype
 		   (verilog-typedef-name-p keywd))
@@ -8852,6 +8871,12 @@ Return an array of [outputs inouts inputs wire reg assign const]."
     (let (sig vec multidim mem)
       ;; Remove leading reduction operators, etc
       (setq expr (verilog-string-replace-matches "^\\s-*[---+~!|&]+\\s-*" "" nil nil expr))
+      ;; Remove casting types
+      (setq expr (verilog-string-replace-matches
+                  "^\\s-*[a-zA-Z_][a-zA-Z_0-9]*\\s-*'" "" nil nil expr))
+      ;; Remove simple single set of parens (perhaps from cast, or perhaps not)
+      (setq expr (verilog-string-replace-matches
+                  "^\\s-*(\\([^)]*\\))\\s-*$" "\\1" nil nil expr))
       ;;(message "vrsde-ptop: `%s'" expr)
       (cond  ; Find \signal. Final space is part of escaped signal name
        ((string-match "^\\s-*\\(\\\\[^ \t\n\f]+\\s-\\)" expr)
@@ -8981,14 +9006,16 @@ This only works on instantiations created with /*AUTOINST*/ converted by
 \\[verilog-auto-inst].  Otherwise, it would have to read in the whole
 component library to determine connectivity of the design.
 
-One work around for this problem is to manually create // Inputs and //
-Outputs comments above subcell signals, for example:
+One work around for this problem is to manually create // Inputs
+and // Outputs comments above subcell signals, then have an empty
+AUTOINST, for example:
 
         submod SubModuleName (
             // Outputs
             .out (out),
             // Inputs
-            .in  (in));"
+            .in  (in)
+            /*AUTOINST*/);"
   (save-excursion
     (let ((end-mod-point (verilog-get-end-of-defun))
           st-point end-inst-point par-values
@@ -11355,7 +11382,9 @@ If PAR-VALUES replace final strings with these parameter values."
 	 (vl-memory (verilog-sig-memory port-st))
 	 (vl-mbits (if (verilog-sig-multidim port-st)
                        (verilog-sig-multidim-string port-st) ""))
-	 (vl-bits (if (or verilog-auto-inst-vector
+         (vl-bits (if (or (eq verilog-auto-inst-vector t)
+                          (and (eq verilog-auto-inst-vector `unsigned)
+                               (not (verilog-sig-signed port-st)))
 			  (not (assoc port (verilog-decls-get-signals moddecls)))
 			  (not (equal (verilog-sig-bits port-st)
 				      (verilog-sig-bits
