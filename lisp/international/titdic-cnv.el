@@ -283,7 +283,14 @@ SPC, 6, 3, 4, or 7 specifying a tone (SPC:陰平, 6:陽平, 3:上聲, 4:去聲,
 	    (pos (point)))
 	(cond ((= ch ?C)		; COMMENT
 	       (cond ((looking-at "COMMENT")
-		      (let ((pos (match-end 0)))
+		      (let ((pos (match-end 0))
+			    (to (progn (end-of-line) (point))))
+			(goto-char pos)
+			(while (re-search-forward "[\\\"]" to t)
+			  (replace-match "\\\\\\&"))
+			(goto-char pos)
+			(while (re-search-forward "['`]" to t)
+			  (replace-match "\\\\\\\\=\\&"))
 			(end-of-line)
 			(setq tit-comments
 			      (cons (buffer-substring-no-properties pos (point))
