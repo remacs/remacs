@@ -727,7 +727,7 @@ pub fn make_frame_invisible(frame: LispFrameLiveOrSelected, force: bool) {
     }
 }
 
-#[lisp_fn(min = "0")]
+#[lisp_fn]
 pub fn last_nonminibuffer_frame() -> LispObject {
     let frame = get_last_nonminibuffer_frame();
 
