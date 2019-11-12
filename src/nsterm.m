@@ -3435,19 +3435,22 @@ ns_draw_text_decoration (struct glyph_string *s, struct face *face,
               unsigned long descent = s->y + s->height - s->ybase;
               unsigned long minimum_offset;
               BOOL underline_at_descent_line, use_underline_position_properties;
-              Lisp_Object val = buffer_local_value (Qunderline_minimum_offset,
-                                                    s->w->contents);
-              if (FIXNUMP (val))
-                minimum_offset = XFIXNAT (val);
-              else
-                minimum_offset = 1;
-              val = buffer_local_value (Qx_underline_at_descent_line,
-                                        s->w->contents);
-              underline_at_descent_line = !(NILP (val) || EQ (val, Qunbound));
-              val = buffer_local_value (Qx_use_underline_position_properties,
-                                        s->w->contents);
-              use_underline_position_properties =
-		!(NILP (val) || EQ (val, Qunbound));
+	      Lisp_Object val = (WINDOW_BUFFER_LOCAL_VALUE
+				 (Qunderline_minimum_offset, s->w));
+
+	      if (FIXNUMP (val))
+		minimum_offset = XFIXNAT (val);
+	      else
+		minimum_offset = 1;
+
+	      val = (WINDOW_BUFFER_LOCAL_VALUE
+		     (Qx_underline_at_descent_line, s->w));
+	      underline_at_descent_line = !(NILP (val) || EQ (val, Qunbound));
+
+	      val = (WINDOW_BUFFER_LOCAL_VALUE
+		     (Qx_use_underline_position_properties, s->w));
+	      use_underline_position_properties
+		= !(NILP (val) || EQ (val, Qunbound));
 
               /* Use underline thickness of font, defaulting to 1.  */
               thickness = (font && font->underline_thickness > 0)
