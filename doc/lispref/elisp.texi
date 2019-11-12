@@ -52,12 +52,7 @@
 @end ifset
 @end tex
 
-
-@c Version of the manual and of Emacs.
-@c (See comments for EDITION in emacs.texi)
-@set VERSION  3.1
 @include emacsver.texi
-@set DATE October 2014
 
 @c in general, keep the following line commented out, unless doing a
 @c copy of this manual that will be published.  The manual should go
@@ -90,13 +85,18 @@
 @c We use the "type index" to index new functions and variables.
 @c @syncodeindex tp fn
 
+@c When printing, define VERSION to be the printed edition number and
+@c DATE to be the printed edition's date.  E.g., run the shell command
+@c "texi2any -D 'VERSION 3.2' -D 'DATE 31 March 2020'".  This relates
+@c mainly to the published book sold by the FSF.
+
 @copying
-@iftex
+@ifset VERSION
 This is edition @value{VERSION} of the @cite{GNU Emacs Lisp Reference Manual},@*
-@end iftex
-@ifnottex
+@end ifset
+@ifclear VERSION
 This is the @cite{GNU Emacs Lisp Reference Manual}
-@end ifnottex
+@end ifclear
 corresponding to Emacs version @value{EMACSVER}.
 
 Copyright @copyright{} 1990--1996, 1998--2019 Free Software Foundation, Inc.
@@ -127,7 +127,9 @@ developing GNU and promoting software freedom.''
 @subtitle @value{voltitle}
 @end ifset
 @subtitle For Emacs Version @value{EMACSVER}
+@ifset VERSION
 @subtitle Revision @value{VERSION}, @value{DATE}
+@end ifset
 
 @author by Bil Lewis, Dan LaLiberte, Richard Stallman,
 @author the GNU Manual Group, et al.

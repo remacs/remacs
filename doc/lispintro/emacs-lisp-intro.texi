@@ -63,10 +63,6 @@
 \global\hbadness=6666 % don't worry about not-too-underfull boxes
 @end tex
 
-@c These refer to the printed book sold by the FSF.
-@set edition-number 3.10
-@set update-date 28 October 2009
-
 @c For next or subsequent edition:
 @c   create function using with-output-to-temp-buffer
 @c   create a major mode, with keymaps
@@ -102,16 +98,24 @@
 * Emacs Lisp Intro: (eintr).    A simple introduction to Emacs Lisp programming.
 @end direntry
 
+@c When printing, define edition-number to be the printed edition
+@c number, titlepage-edition-number to be the spelled out edition
+@c number suitable for the title page, and update-date to be the date,
+@c in the preferred style for these.  E.g., run the shell command:
+@c   texi2any -D 'edition-number 3.11' \
+@c            -D 'titlepage-edition-number Revised Third Edtion' \
+@c            -D 'update-date 31 March 2020'
+@c This relates mainly to the published book sold by the FSF.
+
 @copying
 This is @cite{An Introduction to Programming in Emacs Lisp}, for
 people who are not programmers.
 @sp 1
-@iftex
+@ifset edition-number
 Edition @value{edition-number}, @value{update-date}
-@end iftex
-@ifnottex
+@end ifset
+@sp 1
 Distributed with Emacs version @value{EMACSVER}.
-@end ifnottex
 @sp 1
 Copyright @copyright{} 1990--1995, 1997, 2001--2019 Free Software
 Foundation, Inc.
@@ -173,7 +177,9 @@ supports it in developing GNU and promoting software freedom.''
 @sp 2
 @center @titlefont{Programming in Emacs Lisp}
 @sp 2
-@center Revised Third Edition
+@ifset titlepage-edition-number
+@center @value{titlepage-edition-number}
+@end ifset
 @sp 4
 @center by Robert J. Chassell
 
