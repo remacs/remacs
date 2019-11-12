@@ -281,13 +281,22 @@ with the same major mode as the current buffer."
   :group 'tab-line
   :version "27.1")
 
+(defvar tab-line-tabs-buffer-list-function #'tab-line-tabs-buffer-list
+  "Function to return a global list of buffers.
+Used only for `tab-line-tabs-mode-buffers' and `tab-line-tabs-buffer-groups'.")
+
+(defun tab-line-tabs-buffer-list ()
+  (seq-filter (lambda (b) (and (buffer-live-p b)
+                               (/= (aref (buffer-name b) 0) ?\s)))
+              (buffer-list)))
+
 (defun tab-line-tabs-mode-buffers ()
   "Return a list of buffers with the same major mode with current buffer."
   (let ((mode major-mode))
     (seq-sort-by #'buffer-name #'string<
                  (seq-filter (lambda (b) (with-current-buffer b
                                            (derived-mode-p mode)))
-                             (buffer-list)))))
+                             (funcall tab-line-tabs-buffer-list-function)))))
 
 (defvar tab-line-tabs-buffer-group-function nil
   "Function to put a buffer to the group.
@@ -308,18 +317,17 @@ If the major mode's name string matches REGEXP, use GROUPNAME instead.")
 (defun tab-line-tabs-buffer-group-name (&optional buffer)
   (if (functionp tab-line-tabs-buffer-group-function)
       (funcall tab-line-tabs-buffer-group-function buffer)
-    (unless (= (elt (buffer-name buffer) 0) ?\s)
-      (let ((mode (if buffer (with-current-buffer buffer
-                               (format-mode-line mode-name))
-                    (format-mode-line mode-name))))
-        (or (cdr (seq-find (lambda (group)
-                             (string-match-p (car group) mode))
-                           tab-line-tabs-buffer-groups))
-            mode)))))
+    (let ((mode (if buffer (with-current-buffer buffer
+                             (format-mode-line mode-name))
+                  (format-mode-line mode-name))))
+      (or (cdr (seq-find (lambda (group)
+                           (string-match-p (car group) mode))
+                         tab-line-tabs-buffer-groups))
+          mode))))
 
 (defun tab-line-tabs-buffer-groups ()
   (if (window-parameter nil 'tab-line-groups)
-      (let* ((buffers (buffer-list))
+      (let* ((buffers (funcall tab-line-tabs-buffer-list-function))
              (groups
               (seq-sort tab-line-tabs-buffer-groups-sort-function
                         (delq nil (mapcar #'car (seq-group-by
@@ -341,8 +349,8 @@ If the major mode's name string matches REGEXP, use GROUPNAME instead.")
         tabs)
 
     (let* ((window-parameter (window-parameter nil 'tab-line-group))
-           (group-name (tab-line-tabs-buffer-group-name))
-           (group (prog1 (or window-parameter group-name)
+           (group-name (tab-line-tabs-buffer-group-name (current-buffer)))
+           (group (prog1 (or window-parameter group-name "All")
                     (when (equal window-parameter group-name)
                       (set-window-parameter nil 'tab-line-group nil))))
            (group-tab `(tab
@@ -358,8 +366,8 @@ If the major mode's name string matches REGEXP, use GROUPNAME instead.")
                           (equal (tab-line-tabs-buffer-group-name b)
                                  group))
                         (seq-uniq (append (list (current-buffer))
-                                          (reverse (mapcar #'car (window-prev-buffers)))
-                                          (buffer-list)))))
+                                          (mapcar #'car (window-prev-buffers))
+                                          (funcall tab-line-tabs-buffer-list-function)))))
            (sorted-buffers (if (functionp tab-line-tabs-buffer-group-sort-function)
                                (seq-sort tab-line-tabs-buffer-group-sort-function
                                          buffers)
@@ -368,7 +376,11 @@ If the major mode's name string matches REGEXP, use GROUPNAME instead.")
                            `(tab
                              (name . ,(funcall tab-line-tab-name-function buffer))
                              (selected . ,(eq buffer (current-buffer)))
-                             (buffer . ,buffer)))
+                             (buffer . ,buffer)
+                             (close . ,(lambda (&optional b)
+                                         ;; kill-buffer because bury-buffer
+                                         ;; won't remove the buffer from tab-line
+                                         (kill-buffer (or b buffer))))))
                          sorted-buffers)))
       (cons group-tab tabs))))
 
@@ -427,7 +439,8 @@ variable `tab-line-tabs-function'."
                 separator
                 (apply 'propertize
                        (concat (propertize name 'keymap tab-line-tab-map)
-                               (or (and tab-line-close-button-show
+                               (or (and (or buffer-p (assq 'buffer tab) (assq 'close tab))
+                                        tab-line-close-button-show
                                         (not (eq tab-line-close-button-show
                                                  (if selected-p 'non-selected 'selected)))
                                         tab-line-close-button) ""))
@@ -506,8 +519,9 @@ using the `previous-buffer' command."
         (tab-line-select-tab-buffer buffer (posn-window posnp))
       (let ((select (cdr (assq 'select tab))))
         (when (functionp select)
-          (funcall select)
-          (force-mode-line-update))))))
+          (with-selected-window (posn-window posnp)
+            (funcall select)
+            (force-mode-line-update)))))))
 
 (defun tab-line-select-tab-buffer (buffer &optional window)
   (let* ((window-buffer (window-buffer window))
@@ -539,9 +553,17 @@ Its effect is the same as using the `previous-buffer' command
     (if (eq tab-line-tabs-function #'tab-line-tabs-window-buffers)
         (switch-to-prev-buffer window)
       (with-selected-window (or window (selected-window))
-        (let ((buffer (cadr (memq (current-buffer)
-                                  (reverse (funcall tab-line-tabs-function))))))
-          (when buffer (switch-to-buffer buffer)))))))
+        (let* ((tabs (funcall tab-line-tabs-function))
+               (tab (nth (1- (seq-position
+                              tabs (current-buffer)
+                              (lambda (tab buffer)
+                                (if (bufferp tab)
+                                    (eq buffer tab)
+                                  (eq buffer (cdr (assq 'buffer tab)))))))
+                         tabs))
+               (buffer (if (bufferp tab) tab (cdr (assq 'buffer tab)))))
+          (when (bufferp buffer)
+            (switch-to-buffer buffer)))))))
 
 (defun tab-line-switch-to-next-tab (&optional mouse-event)
   "Switch to the next tab.
@@ -552,16 +574,26 @@ Its effect is the same as using the `next-buffer' command
     (if (eq tab-line-tabs-function #'tab-line-tabs-window-buffers)
         (switch-to-next-buffer window)
       (with-selected-window (or window (selected-window))
-        (let ((buffer (cadr (memq (current-buffer)
-                                  (funcall tab-line-tabs-function)))))
-          (when buffer (switch-to-buffer buffer)))))))
+        (let* ((tabs (funcall tab-line-tabs-function))
+               (tab (nth (1+ (seq-position
+                              tabs (current-buffer)
+                              (lambda (tab buffer)
+                                (if (bufferp tab)
+                                    (eq buffer tab)
+                                  (eq buffer (cdr (assq 'buffer tab)))))))
+                         tabs))
+               (buffer (if (bufferp tab) tab (cdr (assq 'buffer tab)))))
+          (when (bufferp buffer)
+            (switch-to-buffer buffer)))))))
 
 
 (defcustom tab-line-close-tab-action 'bury-buffer
   "Defines what to do on closing the tab.
 If `bury-buffer', put the tab's buffer at the end of the list of all
 buffers that effectively hides the buffer's tab from the tab line.
-If `kill-buffer', kills the tab's buffer."
+If `kill-buffer', kills the tab's buffer.
+This option is useful when `tab-line-tabs-function' has the value
+`tab-line-tabs-window-buffers'."
   :type '(choice (const :tag "Bury buffer" bury-buffer)
                  (const :tag "Kill buffer" kill-buffer))
   :group 'tab-line
@@ -575,10 +607,13 @@ from the tab line."
   (interactive (list last-nonmenu-event))
   (let* ((posnp (and (listp mouse-event) (event-start mouse-event)))
          (window (and posnp (posn-window posnp)))
-         (buffer (or (get-pos-property 1 'tab (car (posn-string posnp)))
-                     (current-buffer))))
+         (tab (get-pos-property 1 'tab (car (posn-string posnp))))
+         (buffer (if (bufferp tab) tab (cdr (assq 'buffer tab))))
+         (close-action (unless (bufferp tab) (cdr (assq 'close tab)))))
     (with-selected-window (or window (selected-window))
       (cond
+       ((functionp close-action)
+        (funcall close-action))
        ((eq tab-line-close-tab-action 'kill-buffer)
         (kill-buffer buffer))
        ((eq tab-line-close-tab-action 'bury-buffer)
