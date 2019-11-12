@@ -475,7 +475,7 @@ When non-nil, NOEXP indicates that CALLBACK cannot be an expression
                   ;; `functionp' is probably not needed.
                   (functionp callback) noexp)
               callback
-	    (lambda () (interactive) callback)))
+	    (eval `(lambda () (interactive) ,callback) t)))
     command))
 
 ;;;###autoload
