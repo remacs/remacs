@@ -2738,11 +2738,11 @@ This function should make sure the region between @var{beg} and
 accessible portion.  Calls the function specified by
 @code{font-lock-ensure-function}.
 
-@item font-lock-refontify
+@item font-lock-debug-fontify
 This is a convenience command meant to be used when developing font
 locking for a mode, and should not be called from Lisp code.  It
 recomputes all the relevant variables and then calls
-@code{font-lock-ensure} on the entire buffer.
+@code{font-lock-fontify-region} on the entire buffer.
 @end ftable
 
   There are several variables that control how Font Lock mode highlights
