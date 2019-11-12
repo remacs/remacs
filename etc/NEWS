@@ -852,8 +852,8 @@ pipes, block devices and character devices.
 directories in the destination.
 
 +++
-*** The non-nil value of 'dired-dwim-target' uses one of the most recently
-visited windows with a Dired buffer instead of the next window.
+*** 'dired-dwim-target' can be customized to prefer either the next window,
+or one of the most recently visited windows with a Dired buffer.
 
 *** When the new user option 'dired-vc-rename-file' is non-nil,
 Dired performs file renaming using underlying version control system.

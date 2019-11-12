@@ -1993,6 +1993,22 @@ Optional arg HOW-TO determines how to treat the target.
    (format prompt (dired-mark-prompt arg files)) dir default))
 
 (defun dired-dwim-target-directories ()
+  (cond ((functionp dired-dwim-target)
+         (funcall dired-dwim-target))
+        (dired-dwim-target
+         (dired-dwim-target-next))))
+
+(defun dired-dwim-target-next ()
+  ;; Return directories from all next visible windows with dired-mode buffers.
+  (mapcan (lambda (w)
+            (with-current-buffer (window-buffer w)
+              (when (eq major-mode 'dired-mode)
+                (list (dired-current-directory)))))
+          (delq (selected-window) (window-list-1
+                                   (next-window nil 'nomini 'visible)
+                                   'nomini 'visible))))
+
+(defun dired-dwim-target-recent ()
   ;; Return directories from all visible windows with dired-mode buffers
   ;; ordered by most-recently-used.
   (mapcar #'cdr (sort (mapcan (lambda (w)

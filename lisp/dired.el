@@ -185,12 +185,22 @@ If a character, new links are unconditionally marked with that character."
 
 (defcustom dired-dwim-target nil
   "If non-nil, Dired tries to guess a default target directory.
-This means: if there is a Dired buffer displayed in one of the most
-recently selected windows, use its current directory, instead of this
-Dired buffer's current directory.
+This means: if there is a Dired buffer displayed in some window,
+use its current directory, instead of this Dired buffer's
+current directory.
+
+You can customize it to prefer either the next window with a Dired buffer,
+or the most recently used window with a Dired buffer.
 
 The target is used in the prompt for file copy, rename etc."
-  :type 'boolean
+  :type '(choice
+          (const :tag "No guess" nil)
+          (function-item :tag "Prefer next windows"
+                         dired-dwim-target-next)
+          (function-item :tag "Prefer most recently used windows"
+                         dired-dwim-target-recent)
+          (function :tag "Your function")
+          (other :tag "Try to guess" t))
   :group 'dired)
 
 (defcustom dired-copy-preserve-time t
