@@ -729,29 +729,39 @@ pub fn make_frame_invisible(frame: LispFrameLiveOrSelected, force: bool) {
 
 #[lisp_fn]
 pub fn last_nonminibuffer_frame() -> LispObject {
-    let frame = get_last_nonminibuffer_frame();
-
-    if frame.is_null() {
-        Qnil
-    } else {
-        frame.into()
+    unsafe {
+        last_non_minibuffer_frame.into()
     }
 }
 
-/// A frame which is not just a mini-buffer, or NULL if there are no such
-/// frames. This is usually the most recent such frame that was selected.
-static mut last_non_minibuffer_frame: LispFrameRef = LispFrameRef::new(std::ptr::null_mut());
+/// A frame to a guaranteed existing frame which is not just a mini-buffer,
+/// or None if there are no such frames.
+/// This is usually the most recent such frame that was selected.
+static mut last_non_minibuffer_frame: Option<LispFrameRef> = None;
 
 /// Return current last non-minibuffer frame reference
+/// or a pointer to null in case there are no such frames
 #[no_mangle]
 pub extern "C" fn get_last_nonminibuffer_frame() -> LispFrameRef {
-    unsafe { last_non_minibuffer_frame }
+    unsafe {
+        match last_non_minibuffer_frame {
+            Some(frame) => frame,
+            None => LispFrameRef::new(std::ptr::null_mut()),
+        }
+    }
 }
 
 /// Set current last non-minibuffer frame reference
 #[no_mangle]
 pub extern "C" fn set_last_nonminibuffer_frame(frame: LispFrameRef) {
-    unsafe { last_non_minibuffer_frame = frame }
+    unsafe {
+        // frame reference may be null, since it is called from C
+        if frame.is_null() {
+            last_non_minibuffer_frame = None
+        } else {
+            last_non_minibuffer_frame = Some(frame)
+        }
+    }
 }
 
 /// Return the value of frame parameter PROP in frame FRAME.
