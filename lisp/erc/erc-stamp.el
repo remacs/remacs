@@ -357,7 +357,7 @@ Return the empty string if FORMAT is nil."
 	ts)
     ""))
 
-;; This function is used to munge `buffer-invisibility-spec to an
+;; This function is used to munge `buffer-invisibility-spec' to an
 ;; appropriate value. Currently, it only handles timestamps, thus its
 ;; location.  If you add other features which affect invisibility,
 ;; please modify this function and move it to a more appropriate

@@ -9065,7 +9065,7 @@ contains the list of implementations currently supported for this command."
              (unless (string-equal val "")
 	       (when (null ,varimp-sym)
 		 (message
-		  "Use C-u M-x %s RET`to select another implementation"
+		  "Use `C-u M-x %s RET' to select another implementation"
 		  ,command-name)
 		 (sit-for 3))
 	       (customize-save-variable ',varimp-sym

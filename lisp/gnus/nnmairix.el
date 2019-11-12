@@ -1459,7 +1459,7 @@ group."
 	  (while (and allservers (not found))
 	    (setq mairixserver (gnus-server-to-method (car (pop allservers))))
 	    ;; First we look if SERVER is the backend of current nnmairix server
-	    (setq found (and (eq (cadr (assoc `nnmairix-backend mairixserver))
+	    (setq found (and (eq (cadr (assoc 'nnmairix-backend mairixserver))
 				 (car server))
 			     (string= (cadr (assoc 'nnmairix-backend-server mairixserver))
 				      (nth 1 server))))

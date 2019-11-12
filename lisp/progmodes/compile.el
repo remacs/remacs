@@ -1252,7 +1252,7 @@ FMTS is a list of format specs for transforming the file name.
   (unless file (setq file '("*unknown*")))
   (let* ((file-struct (compilation-get-file-structure file fmts))
 	 ;; Get first already existing marker (if any has one, all have one).
-	 ;; Do this first, as the compilation-assq`s may create new nodes.
+	 ;; Do this first, as the compilation-assq's may create new nodes.
 	 (marker-line	; a line structure
           (cadr (compilation--file-struct->loc-tree file-struct)))
 	 (marker
