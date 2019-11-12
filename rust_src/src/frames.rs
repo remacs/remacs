@@ -729,9 +729,7 @@ pub fn make_frame_invisible(frame: LispFrameLiveOrSelected, force: bool) {
 
 #[lisp_fn]
 pub fn last_nonminibuffer_frame() -> LispObject {
-    unsafe {
-        last_non_minibuffer_frame.into()
-    }
+    unsafe { last_non_minibuffer_frame.into() }
 }
 
 /// A frame to a guaranteed existing frame which is not just a mini-buffer,
