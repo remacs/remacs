@@ -64,7 +64,6 @@
 (require 'cl-lib)
 (declare-function netrc-parse "netrc")
 (defvar auto-save-file-name-transforms)
-(defvar outline-regexp)
 
 ;;; User Customizable Internal Variables:
 
@@ -1652,6 +1651,13 @@ version, the function does nothing."
   "[0-9]+:[0-9]+:[0-9]+\\.[0-9]+ [a-z0-9-]+ (\\([0-9]+\\)) #"
   "Used for highlighting Tramp debug buffers in `outline-mode'.")
 
+(defconst tramp-debug-font-lock-keywords
+  '(list
+    (concat "^\\(?:" tramp-debug-outline-regexp "\\).+")
+    '(1 font-lock-warning-face t t)
+    '(0 (outline-font-lock-face) keep t))
+  "Used for highlighting Tramp debug buffers in `outline-mode'.")
+
 (defun tramp-debug-outline-level ()
   "Return the depth to which a statement is nested in the outline.
 Point must be at the beginning of a header line.
@@ -1668,14 +1674,16 @@ The outline level is equal to the verbosity of the Tramp message."
       ;; Activate `outline-mode'.  This runs `text-mode-hook' and
       ;; `outline-mode-hook'.  We must prevent that local processes
       ;; die.  Yes: I've seen `flyspell-mode', which starts "ispell".
-      ;; Furthermore, `outline-regexp' must have the correct value
-      ;; already, because it is used by `font-lock-compile-keywords'.
+      ;; `(custom-declare-variable outline-minor-mode-prefix ...)'
+      ;; raises on error in `(outline-mode)', we don't want to see it
+      ;; in the traces.
       (let ((default-directory (tramp-compat-temporary-file-directory))
-	    (outline-regexp tramp-debug-outline-regexp)
 	    signal-hook-function)
 	(outline-mode))
-      (set (make-local-variable 'outline-regexp) tramp-debug-outline-regexp)
       (set (make-local-variable 'outline-level) 'tramp-debug-outline-level)
+      (set (make-local-variable 'font-lock-keywords)
+	   `(t (eval ,tramp-debug-font-lock-keywords)
+	       ,(eval tramp-debug-font-lock-keywords)))
       ;; Do not edit the debug buffer.
       (use-local-map special-mode-map))
     (current-buffer)))
