@@ -3684,6 +3684,8 @@ extern Lisp_Object string_make_unibyte (Lisp_Object);
 extern void syms_of_fns (void);
 
 /* Defined in floatfns.c.  */
+verify (FLT_RADIX == 2 || FLT_RADIX == 16);
+enum { LOG2_FLT_RADIX = FLT_RADIX == 2 ? 1 : 4 };
 int double_integer_scale (double);
 #ifndef HAVE_TRUNC
 extern double trunc (double);

@@ -335,19 +335,6 @@ This is the same as the exponent of a float.  */)
   return make_fixnum (value);
 }
 
-/* True if A is exactly representable as an integer.  */
-
-static bool
-integer_value (Lisp_Object a)
-{
-  if (FLOATP (a))
-    {
-      double d = XFLOAT_DATA (a);
-      return d == floor (d) && isfinite (d);
-    }
-  return true;
-}
-
 /* Return the integer exponent E such that D * FLT_RADIX**E (i.e.,
    scalbn (D, E)) is an integer that has precision equal to D and is
    representable as a double.
@@ -371,70 +358,68 @@ double_integer_scale (double d)
 		    && (FP_ILOGB0 != INT_MIN || d != 0)))));
 }
 
+/* Convert the Lisp number N to an integer and return a pointer to the
+   converted integer, represented as an mpz_t *.  Use *T as a
+   temporary; the returned value might be T.  Scale N by the maximum
+   of NSCALE and DSCALE while converting.  If NSCALE is nonzero, N
+   must be a float; signal an overflow if NSCALE is greater than
+   DBL_MANT_DIG - DBL_MIN_EXP, otherwise scalbn (XFLOAT_DATA (N), NSCALE)
+   must return an integer value, without rounding or overflow.  */
+
+static mpz_t const *
+rescale_for_division (Lisp_Object n, mpz_t *t, int nscale, int dscale)
+{
+  mpz_t const *pn;
+
+  if (FLOATP (n))
+    {
+      if (DBL_MANT_DIG - DBL_MIN_EXP < nscale)
+	overflow_error ();
+      mpz_set_d (*t, scalbn (XFLOAT_DATA (n), nscale));
+      pn = t;
+    }
+  else
+    pn = bignum_integer (t, n);
+
+  if (nscale < dscale)
+    {
+      emacs_mpz_mul_2exp (*t, *pn, (dscale - nscale) * LOG2_FLT_RADIX);
+      pn = t;
+    }
+  return pn;
+}
+
 /* the rounding functions  */
 
 static Lisp_Object
-rounding_driver (Lisp_Object arg, Lisp_Object divisor,
+rounding_driver (Lisp_Object n, Lisp_Object d,
 		 double (*double_round) (double),
 		 void (*int_divide) (mpz_t, mpz_t const, mpz_t const),
 		 EMACS_INT (*fixnum_divide) (EMACS_INT, EMACS_INT))
 {
-  CHECK_NUMBER (arg);
+  CHECK_NUMBER (n);
 
-  double d;
-  if (NILP (divisor))
+  if (NILP (d))
+    return FLOATP (n) ? double_to_integer (double_round (XFLOAT_DATA (n))) : n;
+
+  CHECK_NUMBER (d);
+
+  if (FIXNUMP (d))
     {
-      if (! FLOATP (arg))
-	return arg;
-      d = XFLOAT_DATA (arg);
-    }
-  else
-    {
-      CHECK_NUMBER (divisor);
-      if (integer_value (arg) && integer_value (divisor))
-	{
-	  /* Divide as integers.  Converting to double might lose
-	     info, even for fixnums; also see the FIXME below.  */
-
-	  if (FLOATP (arg))
-	    arg = double_to_integer (XFLOAT_DATA (arg));
-	  if (FLOATP (divisor))
-	    divisor = double_to_integer (XFLOAT_DATA (divisor));
-
-	  if (FIXNUMP (divisor))
-	    {
-	      if (XFIXNUM (divisor) == 0)
-		xsignal0 (Qarith_error);
-	      if (FIXNUMP (arg))
-		return make_int (fixnum_divide (XFIXNUM (arg),
-						XFIXNUM (divisor)));
-	    }
-	  int_divide (mpz[0],
-		      *bignum_integer (&mpz[0], arg),
-		      *bignum_integer (&mpz[1], divisor));
-	  return make_integer_mpz ();
-	}
-
-      double f1 = XFLOATINT (arg);
-      double f2 = XFLOATINT (divisor);
-      if (! IEEE_FLOATING_POINT && f2 == 0)
+      if (XFIXNUM (d) == 0)
 	xsignal0 (Qarith_error);
-      /* FIXME: This division rounds, so the result is double-rounded.  */
-      d = f1 / f2;
+
+      /* Divide fixnum by fixnum specially, for speed.  */
+      if (FIXNUMP (n))
+	return make_int (fixnum_divide (XFIXNUM (n), XFIXNUM (d)));
     }
 
-  /* Round, coarsely test for fixnum overflow before converting to
-     EMACS_INT (to avoid undefined C behavior), and then exactly test
-     for overflow after converting (as FIXNUM_OVERFLOW_P is inaccurate
-     on floats).  */
-  double dr = double_round (d);
-  if (fabs (dr) < 2 * (MOST_POSITIVE_FIXNUM + 1))
-    {
-      EMACS_INT ir = dr;
-      if (! FIXNUM_OVERFLOW_P (ir))
-	return make_fixnum (ir);
-    }
-  return double_to_integer (dr);
+  int nscale = FLOATP (n) ? double_integer_scale (XFLOAT_DATA (n)) : 0;
+  int dscale = FLOATP (d) ? double_integer_scale (XFLOAT_DATA (d)) : 0;
+  int_divide (mpz[0],
+	      *rescale_for_division (n, &mpz[0], nscale, dscale),
+	      *rescale_for_division (d, &mpz[1], dscale, nscale));
+  return make_integer_mpz ();
 }
 
 static EMACS_INT

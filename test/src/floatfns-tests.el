@@ -122,6 +122,8 @@
 
 (ert-deftest big-round ()
   (should (= (floor 54043195528445955 3)
-             (floor 54043195528445955 3.0))))
+             (floor 54043195528445955 3.0)))
+  (should (= (floor 1.7976931348623157e+308 5e-324)
+             (ash (1- (ash 1 53)) 2045))))
 
 (provide 'floatfns-tests)

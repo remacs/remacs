@@ -574,8 +574,6 @@ frac_to_double (Lisp_Object numerator, Lisp_Object denominator)
       && integer_to_intmax (numerator, &intmax_numerator))
     return intmax_numerator;
 
-  verify (FLT_RADIX == 2 || FLT_RADIX == 16);
-  enum { LOG2_FLT_RADIX = FLT_RADIX == 2 ? 1 : 4 };
   mpz_t const *n = bignum_integer (&mpz[0], numerator);
   mpz_t const *d = bignum_integer (&mpz[1], denominator);
   ptrdiff_t nbits = mpz_sizeinbase (*n, 2);
