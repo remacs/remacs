@@ -49,6 +49,12 @@ extern bool mpz_to_intmax (mpz_t const, intmax_t *) ARG_NONNULL ((1, 2));
 extern bool mpz_to_uintmax (mpz_t const, uintmax_t *) ARG_NONNULL ((1, 2));
 extern void mpz_set_intmax_slow (mpz_t, intmax_t) ARG_NONNULL ((1));
 extern void mpz_set_uintmax_slow (mpz_t, uintmax_t) ARG_NONNULL ((1));
+extern void emacs_mpz_mul (mpz_t, mpz_t const, mpz_t const)
+  ARG_NONNULL ((1, 2, 3));
+extern void emacs_mpz_mul_2exp (mpz_t, mpz_t const, EMACS_INT)
+  ARG_NONNULL ((1, 2));
+extern void emacs_mpz_pow_ui (mpz_t, mpz_t const, unsigned long)
+  ARG_NONNULL ((1, 2));
 extern double mpz_get_d_rounded (mpz_t const);
 
 INLINE_HEADER_BEGIN
