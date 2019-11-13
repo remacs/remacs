@@ -319,14 +319,14 @@ This can be used to disable echo etc."
 ;; tramp-loaddefs.el.  Otherwise, there would be recursive autoloading.
 ;;;###tramp-autoload
 (defsubst tramp-smb-file-name-p (filename)
-  "Check if it's a filename for SMB servers."
+  "Check if it's a FILENAME for SMB servers."
   (and (tramp-tramp-file-p filename)
        (string= (tramp-file-name-method (tramp-dissect-file-name filename))
 		tramp-smb-method)))
 
 ;;;###tramp-autoload
 (defun tramp-smb-file-name-handler (operation &rest args)
-  "Invoke the SMB related OPERATION.
+  "Invoke the SMB related OPERATION and ARGS.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (let ((fn (assoc operation tramp-smb-file-name-handler-alist)))
@@ -844,7 +844,7 @@ PRESERVE-UID-GID and PRESERVE-EXTENDED-ATTRIBUTES are completely ignored."
 		    device))))))))       ;11 file system number
 
 (defun tramp-smb-do-file-attributes-with-stat (vec &optional id-format)
-  "Implement `file-attributes' for Tramp files using stat command."
+  "Implement `file-attributes' for Tramp files using `stat' command."
   (tramp-message
    vec 5 "file attributes with stat: %s" (tramp-file-name-localname vec))
   (let* (size id link uid gid atime mtime ctime mode inode)
@@ -1530,7 +1530,7 @@ component is used as the target of the symlink."
 	(tramp-flush-connection-property v "process-buffer")))))
 
 (defun tramp-smb-handle-substitute-in-file-name (filename)
-  "Like `handle-substitute-in-file-name' for Tramp files.
+  "Like `substitute-in-file-name' for Tramp files.
 \"//\" substitutes only in the local filename part.  Catches
 errors for shares like \"C$/\", which are common in Microsoft Windows."
   ;; Check, whether the local part is a quoted file name.
@@ -1858,7 +1858,7 @@ are listed.  Result is the list (LOCALNAME MODE SIZE MTIME)."
 		  (buffer-substring (point) (point-at-eol)) nil 'omit)))))))))
 
 (defun tramp-smb-get-stat-capability (vec)
-  "Check whether the SMB server supports the STAT command."
+  "Check whether the SMB server supports the `stat' command."
   ;; When we are not logged in yet, we return nil.
   (if (and (tramp-smb-get-share vec)
 	   (process-live-p (tramp-get-connection-process vec)))
@@ -2117,7 +2117,7 @@ Removes smb prompt.  Returns nil if an error message has appeared."
   (tramp-smb-send-command vec "$rawui.WindowSize = $winsize"))
 
 (defun tramp-smb-shell-quote-argument (s)
-  "Similar to `shell-quote-argument', but uses windows cmd syntax."
+  "Similar to `shell-quote-argument', but uses Windows cmd syntax."
   (let ((system-type 'ms-dos))
     (tramp-unquote-shell-quote-argument s)))
 

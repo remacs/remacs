@@ -171,7 +171,7 @@ It is used for TCP/IP devices."
 ;; tramp-loaddefs.el.  Otherwise, there would be recursive autoloading.
 ;;;###tramp-autoload
 (defsubst tramp-adb-file-name-p (filename)
-  "Check if it's a filename for ADB."
+  "Check if it's a FILENAME for ADB."
   (and (tramp-tramp-file-p filename)
        (string= (tramp-file-name-method (tramp-dissect-file-name filename))
 		tramp-adb-method)))

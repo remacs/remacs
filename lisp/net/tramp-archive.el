@@ -295,8 +295,8 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 
 (defun tramp-archive-run-real-handler (operation args)
   "Invoke normal file name handler for OPERATION.
-First arg specifies the OPERATION, second arg is a list of arguments to
-pass to the OPERATION."
+First arg specifies the OPERATION, second arg ARGS is a list of
+arguments to pass to the OPERATION."
   (let* ((inhibit-file-name-handlers
 	  `(tramp-archive-file-name-handler
 	    .
@@ -308,8 +308,8 @@ pass to the OPERATION."
 ;;;###tramp-autoload
 (defun tramp-archive-file-name-handler (operation &rest args)
   "Invoke the file archive related OPERATION.
-First arg specifies the OPERATION, second arg is a list of arguments to
-pass to the OPERATION."
+First arg specifies the OPERATION, second arg ARGS is a list of
+arguments to pass to the OPERATION."
     (if (not tramp-archive-enabled)
         ;; Unregister `tramp-archive-file-name-handler'.
         (progn
@@ -413,7 +413,7 @@ name of a local copy, if any.")
   (url-hexify-string (tramp-gvfs-url-file-name archive)))
 
 (defun tramp-archive-dissect-file-name (name)
-  "Return a `tramp-file-name' structure.
+  "Return a `tramp-file-name' structure for NAME.
 The structure consists of the `tramp-archive-method' method, the
 hexified archive name as host, and the localname.  The archive
 name is kept in slot `hop'"
@@ -507,7 +507,7 @@ archive name is extracted from the hop part of the VEC structure."
        (tramp-file-name-hop vec)))
 
 (defmacro with-parsed-tramp-archive-file-name (filename var &rest body)
-  "Parse an archive filename and make components available in the body.
+  "Parse an archive filename and make components available in the BODY.
 This works exactly as `with-parsed-tramp-file-name' for the Tramp
 file name structure returned by `tramp-archive-dissect-file-name'.
 A variable `foo-archive' (or `archive') will be bound to the
@@ -533,7 +533,7 @@ offered."
        ,@body)))
 
 (defun tramp-archive-gvfs-file-name (name)
-  "Return FILENAME in GVFS syntax."
+  "Return NAME in GVFS syntax."
   (tramp-make-tramp-file-name
    (tramp-archive-dissect-file-name name) nil 'nohop))
 
@@ -541,7 +541,7 @@ offered."
 ;; File name primitives.
 
 (defun tramp-archive-handle-access-file (filename string)
-  "Like `access-file' for Tramp files."
+  "Like `access-file' for file archives."
   (access-file (tramp-archive-gvfs-file-name filename) string))
 
 (defun tramp-archive-handle-copy-file

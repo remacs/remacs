@@ -143,14 +143,14 @@ See `tramp-actions-before-shell' for more info.")
 ;; tramp-loaddefs.el.  Otherwise, there would be recursive autoloading.
 ;;;###tramp-autoload
 (defsubst tramp-sudoedit-file-name-p (filename)
-  "Check if it's a filename for SUDOEDIT."
+  "Check if it's a FILENAME for SUDOEDIT."
   (and (tramp-tramp-file-p filename)
        (string= (tramp-file-name-method (tramp-dissect-file-name filename))
 		tramp-sudoedit-method)))
 
 ;;;###tramp-autoload
 (defun tramp-sudoedit-file-name-handler (operation &rest args)
-  "Invoke the SUDOEDIT handler for OPERATION.
+  "Invoke the SUDOEDIT handler for OPERATION and ARGS.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (let ((fn (assoc operation tramp-sudoedit-file-name-handler-alist)))
@@ -749,8 +749,7 @@ ID-FORMAT valid values are `string' and `integer'."
 
 ;; Used in `tramp-sudoedit-sudo-actions'.
 (defun tramp-sudoedit-action-sudo (proc vec)
-  "Check, whether a sudo process has finished.
-Remove unneeded output."
+  "Check, whether a sudo process has finished.  Remove unneeded output."
   ;; There might be pending output for the exit status.
   (unless (process-live-p proc)
     (while (tramp-accept-process-output proc 0))
@@ -866,7 +865,7 @@ In case there is no valid Lisp expression, it raises an error."
 		(car args) (buffer-string)))))))
 
 (defun tramp-sudoedit-send-command-string (vec &rest args)
-  "Run command ARGS and return the output as astring."
+  "Run command ARGS and return the output as a string."
   (when (apply #'tramp-sudoedit-send-command vec args)
     (with-current-buffer (tramp-get-connection-buffer vec)
       (tramp-message vec 6 "\n%s" (buffer-string))

@@ -69,6 +69,7 @@ special handling of `substitute-in-file-name'."
 			 #'tramp-rfn-eshadow-setup-minibuffer)))
 
 (defun tramp-rfn-eshadow-update-overlay-regexp ()
+  "An overlay covering the shadowed part of the filename."
   (format "[^%s/~]*\\(/\\|~\\)" tramp-postfix-host-format))
 
 ;; Package rfn-eshadow is preloaded in Emacs, but for some reason,

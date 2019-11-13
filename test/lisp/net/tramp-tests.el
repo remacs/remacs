@@ -5146,7 +5146,8 @@ This does not support globbing characters in file names (yet)."
 
 (defun tramp--test-gvfs-p (&optional method)
   "Check, whether the remote host runs a GVFS based method.
-This requires restrictions of file name syntax."
+This requires restrictions of file name syntax.
+If optional METHOD is given, it is checked first."
   (or (member method tramp-gvfs-methods)
       (tramp-gvfs-file-name-p tramp-test-temporary-file-directory)))
 
@@ -5661,6 +5662,7 @@ Use the `ls' command."
 
 (defmacro tramp--test-with-proper-process-name-and-buffer (proc &rest body)
   "Set \"process-name\" and \"process-buffer\" connection properties.
+The values are derived from PROC.  Run BODY.
 This is needed in timer functions as well as process filters and sentinels."
   (declare (indent 1) (debug (processp body)))
   `(let* ((v (tramp-get-connection-property ,proc "vector" nil))
@@ -6054,7 +6056,8 @@ Since it unloads Tramp, it shall be the last test to run."
 	  (ert-fail (format "Hook `%s' still contains Tramp function" x))))))
 
 (defun tramp-test-all (&optional interactive)
-  "Run all tests for \\[tramp]."
+  "Run all tests for \\[tramp].
+If INTERACTIVE is non-nil, the tests are run interactively."
   (interactive "p")
   (funcall
    (if interactive

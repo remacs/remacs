@@ -17,6 +17,10 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see `https://www.gnu.org/licenses/'.
 
+;;; Commentary:
+
+;; A testsuite for testing file archives.
+
 ;;; Code:
 
 ;; The `tramp-archive-testnn-*' tests correspond to the respective
@@ -959,7 +963,8 @@ This tests also `file-executable-p', `file-writable-p' and `set-file-modes'."
     (tramp-archive-cleanup-hash)))
 
 (defun tramp-archive-test-all (&optional interactive)
-  "Run all tests for \\[tramp-archive]."
+  "Run all tests for \\[tramp-archive].
+If INTERACTIVE is non-nil, the tests are run interactively."
   (interactive "p")
   (funcall
    (if interactive #'ert-run-tests-interactively #'ert-run-tests-batch)

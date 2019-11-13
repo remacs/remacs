@@ -28,7 +28,7 @@
 ;; An implementation of information caching for remote files.
 
 ;; Each connection, identified by a `tramp-file-name' structure or by
-;; a process, has a unique cache. We distinguish 4 kind of caches,
+;; a process, has a unique cache.  We distinguish 4 kind of caches,
 ;; depending on the key:
 ;;
 ;; - localname is NIL.  This are reusable properties.  Examples:

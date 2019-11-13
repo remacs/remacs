@@ -147,14 +147,14 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 ;; tramp-loaddefs.el.  Otherwise, there would be recursive autoloading.
 ;;;###tramp-autoload
 (defsubst tramp-rclone-file-name-p (filename)
-  "Check if it's a filename for rclone."
+  "Check if it's a FILENAME for rclone."
   (and (tramp-tramp-file-p filename)
        (string= (tramp-file-name-method (tramp-dissect-file-name filename))
 		tramp-rclone-method)))
 
 ;;;###tramp-autoload
 (defun tramp-rclone-file-name-handler (operation &rest args)
-  "Invoke the rclone handler for OPERATION.
+  "Invoke the rclone handler for OPERATION and ARGS.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (let ((fn (assoc operation tramp-rclone-file-name-handler-alist)))
@@ -583,7 +583,8 @@ connection if a previous connection has died for some reason."
       vec "gid-string" (tramp-get-local-gid 'string)))
 
 (defun tramp-rclone-send-command (vec &rest args)
-  "Send the COMMAND to connection VEC."
+  "Send a command to connection VEC.
+The command is the list of strings ARGS."
   (with-current-buffer (tramp-get-connection-buffer vec)
     (erase-buffer)
     (let ((flags (tramp-get-method-parameter

@@ -612,7 +612,7 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 ;; tramp-loaddefs.el.  Otherwise, there would be recursive autoloading.
 ;;;###tramp-autoload
 (defsubst tramp-gvfs-file-name-p (filename)
-  "Check if it's a filename handled by the GVFS daemon."
+  "Check if it's a FILENAME handled by the GVFS daemon."
   (and (tramp-tramp-file-p filename)
        (let ((method
 	      (tramp-file-name-method (tramp-dissect-file-name filename))))
@@ -620,7 +620,7 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 
 ;;;###tramp-autoload
 (defun tramp-gvfs-file-name-handler (operation &rest args)
-  "Invoke the GVFS related OPERATION.
+  "Invoke the GVFS related OPERATION and ARGS.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (unless tramp-gvfs-enabled
@@ -658,7 +658,7 @@ Return nil for null BYTE-ARRAY."
 	      (butlast byte-array) byte-array)))))
 
 (defun tramp-gvfs-stringify-dbus-message (message)
-  "Convert a D-Bus message into readable UTF8 strings, used for traces."
+  "Convert a D-Bus MESSAGE into readable UTF8 strings, used for traces."
   (cond
    ((and (consp message) (characterp (car message)))
     (format "%S" (tramp-gvfs-dbus-byte-array-to-string message)))
@@ -1208,7 +1208,7 @@ If FILE-SYSTEM is non-nil, return file system attributes."
 
 (defun tramp-gvfs-monitor-process-filter (proc string)
   "Read output from \"gvfs-monitor-file\" and add corresponding \
-file-notify events."
+`file-notify' events."
   (let* ((events (process-get proc 'events))
 	 (rest-string (process-get proc 'rest-string))
 	 (dd (with-current-buffer (process-buffer proc) default-directory))
@@ -1524,7 +1524,7 @@ file-notify events."
 	result))))
 
 (defun tramp-gvfs-handler-mounted-unmounted (mount-info)
-  "Signal handler for the \"org.gtk.vfs.MountTracker.mounted\" and
+  "Signal handler for the \"org.gtk.vfs.MountTracker.mounted\" and \
 \"org.gtk.vfs.MountTracker.unmounted\" signals."
   (ignore-errors
     (let ((signal-name (dbus-event-member-name last-input-event))

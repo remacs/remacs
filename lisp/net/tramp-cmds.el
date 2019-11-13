@@ -60,7 +60,7 @@ SYNTAX can be one of the symbols `default' (default),
     "*debug tramp" (mapcar #'list (mapcar #'buffer-name (buffer-list))))))
 
 (defun tramp-list-remote-buffers ()
-  "Return a list of all buffers with remote default-directory."
+  "Return a list of all buffers with remote `default-directory'."
   (delq
    nil
    (mapcar

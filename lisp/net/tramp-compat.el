@@ -32,7 +32,7 @@
 ;; In Emacs 24 and 25, `tramp-unload-file-name-handlers' is not
 ;; autoloaded.  So we declare it here in order to avoid recursive
 ;; load.  This will be overwritten in tramp.el.
-(defun tramp-unload-file-name-handlers ())
+(defun tramp-unload-file-name-handlers () ".")
 
 (require 'auth-source)
 (require 'format-spec)
@@ -47,7 +47,7 @@
 ;; changed argument list, there are compiler warnings.  We want to
 ;; avoid them in cases we know what we do.
 (defmacro tramp-compat-funcall (function &rest arguments)
-  "Call FUNCTION if it exists.  Do not raise compiler warnings."
+  "Call FUNCTION with ARGUMENTS if it exists.  Do not raise compiler warnings."
   `(when (functionp ,function)
      (with-no-warnings (funcall ,function ,@arguments))))
 
@@ -267,6 +267,7 @@ NAME is unquoted."
 
 ;; `cl-struct-slot-info' has been introduced with Emacs 25.
 (defmacro tramp-compat-tramp-file-name-slots ()
+  "Return a list of slot names."
   (if (fboundp 'cl-struct-slot-info)
       '(cdr (mapcar #'car (cl-struct-slot-info 'tramp-file-name)))
     '(cdr (mapcar #'car (get 'tramp-file-name 'cl-struct-slots)))))

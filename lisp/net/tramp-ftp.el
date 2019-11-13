@@ -110,7 +110,7 @@ present for backward compatibility."
 
 ;;;###tramp-autoload
 (defun tramp-ftp-file-name-handler (operation &rest args)
-  "Invoke the Ange-FTP handler for OPERATION.
+  "Invoke the Ange-FTP handler for OPERATION and ARGS.
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (save-match-data
@@ -178,7 +178,7 @@ pass to the OPERATION."
 ;; tramp-loaddefs.el.  Otherwise, there would be recursive autoloading.
 ;;;###tramp-autoload
 (defsubst tramp-ftp-file-name-p (filename)
-  "Check if it's a filename that should be forwarded to Ange-FTP."
+  "Check if it's a FILENAME that should be forwarded to Ange-FTP."
   (and (tramp-tramp-file-p filename)
        (string= (tramp-file-name-method (tramp-dissect-file-name filename))
 		tramp-ftp-method)))
