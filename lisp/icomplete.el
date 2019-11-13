@@ -319,13 +319,14 @@ require user confirmation."
 
 (defun icomplete--fido-mode-setup ()
   "Setup `fido-mode''s minibuffer."
-  (use-local-map (make-composed-keymap icomplete-fido-mode-map
-                                       (current-local-map)))
-  (setq-local icomplete-tidy-shadowed-file-names t
-              icomplete-show-matches-on-no-input t
-              icomplete-hide-common-prefix nil
-              completion-styles '(flex)
-              completion-category-defaults nil))
+  (when (and icomplete-mode (icomplete-simple-completing-p))
+    (use-local-map (make-composed-keymap icomplete-fido-mode-map
+                                         (current-local-map)))
+    (setq-local icomplete-tidy-shadowed-file-names t
+                icomplete-show-matches-on-no-input t
+                icomplete-hide-common-prefix nil
+                completion-styles '(flex)
+                completion-category-defaults nil)))
 
 ;;;###autoload
 (define-minor-mode fido-mode
