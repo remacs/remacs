@@ -2655,6 +2655,26 @@ font_clear_cache (struct frame *f, Lisp_Object cache,
 }
 
 
+/* Check whether NAME should be ignored based on Vface_ignored_fonts.
+   This is reused by xg_font_filter to apply the same checks to the
+   GTK font chooser.  */
+
+bool
+font_is_ignored (const char *name, ptrdiff_t namelen)
+{
+  Lisp_Object tail = Vface_ignored_fonts;
+  Lisp_Object regexp;
+
+  FOR_EACH_TAIL_SAFE (tail)
+    {
+      regexp = XCAR (tail);
+      if (STRINGP (regexp)
+          && fast_c_string_match_ignore_case (regexp, name,
+                                              namelen) >= 0)
+        return true;
+    }
+  return false;
+}
 static Lisp_Object scratch_font_spec, scratch_font_prefer;
 
 /* Check each font-entity in VEC, and return a list of font-entities
@@ -2677,22 +2697,10 @@ font_delete_unmatched (Lisp_Object vec, Lisp_Object spec, int size)
 	{
 	  char name[256];
 	  ptrdiff_t namelen;
-	  Lisp_Object tail, regexp;
-
 	  namelen = font_unparse_xlfd (entity, 0, name, 256);
 	  if (namelen >= 0)
-	    {
-	      for (tail = Vface_ignored_fonts; CONSP (tail); tail = XCDR (tail))
-		{
-		  regexp = XCAR (tail);
-		  if (STRINGP (regexp)
-		      && fast_c_string_match_ignore_case (regexp, name,
-							  namelen) >= 0)
-		    break;
-		}
-	      if (CONSP (tail))
-		continue;
-	    }
+            if (font_is_ignored (name, namelen))
+                continue;
 	}
       if (NILP (spec))
 	{

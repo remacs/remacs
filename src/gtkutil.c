@@ -2228,6 +2228,21 @@ xg_get_file_name (struct frame *f,
 
 static char *x_last_font_name;
 
+#if GTK_CHECK_VERSION (3, 2, 0)
+static gboolean
+xg_font_filter (const PangoFontFamily *family,
+                const PangoFontFace *face,
+                gpointer data)
+{
+  const char *name = pango_font_family_get_name ((PangoFontFamily *)family);
+  ptrdiff_t namelen = strlen (name);
+
+  if (font_is_ignored (name, namelen))
+    return FALSE;
+  return TRUE;
+}
+#endif
+
 /* Pop up a GTK font selector and return the name of the font the user
    selects, as a C string.  The returned font name follows GTK's own
    format:
@@ -2247,6 +2262,9 @@ xg_get_font (struct frame *f, const char *default_name)
   w = gtk_font_chooser_dialog_new
     ("Pick a font", GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)));
 
+#if GTK_CHECK_VERSION (3, 2, 0)
+  gtk_font_chooser_set_filter_func (GTK_FONT_CHOOSER (w), xg_font_filter, NULL, NULL);
+#endif
   if (default_name)
     {
       /* Convert fontconfig names to Gtk names, i.e. remove - before
