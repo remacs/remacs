@@ -1648,7 +1648,11 @@ version, the function does nothing."
       (format "*debug tramp/%s %s*" method host-port))))
 
 (defconst tramp-debug-outline-regexp
-  "[0-9]+:[0-9]+:[0-9]+\\.[0-9]+ [a-z0-9-]+ (\\([0-9]+\\)) #"
+  (eval-when-compile
+    (concat
+     "[0-9]+:[0-9]+:[0-9]+\\.[0-9]+ " ;; Timestamp.
+     "\\(?:\\(#<thread .+>\\) \\)?"   ;; Thread.
+     "[a-z0-9-]+ (\\([0-9]+\\)) #"))  ;; Function name, verbosity.
   "Used for highlighting Tramp debug buffers in `outline-mode'.")
 
 (defconst tramp-debug-font-lock-keywords
@@ -1663,7 +1667,7 @@ version, the function does nothing."
 Point must be at the beginning of a header line.
 
 The outline level is equal to the verbosity of the Tramp message."
-  (1+ (string-to-number (match-string 1))))
+  (1+ (string-to-number (match-string 2))))
 
 (defun tramp-get-debug-buffer (vec)
   "Get the debug buffer for VEC."
