@@ -184,55 +184,6 @@ This is either `base64' or `quoted-printable'."
       (re-search-forward ":[ \t\n]*" nil t)
       (buffer-substring-no-properties (point) (point-max)))))
 
-(defun rfc2047-quote-special-characters-in-quoted-strings (&optional
-							   encodable-regexp)
-  "Quote special characters with `\\'s in quoted strings.
-Quoting will not be done in a quoted string if it contains characters
-matching ENCODABLE-REGEXP or it is within parentheses."
-  (goto-char (point-min))
-  (let ((tspecials (concat "[" ietf-drums-tspecials "]"))
-	(start (point))
-	beg end)
-    (with-syntax-table (standard-syntax-table)
-      (while (not (eobp))
-	(if (ignore-errors
-	      (forward-list 1)
-	      (eq (char-before) ?\)))
-	    (forward-list -1)
-	  (goto-char (point-max)))
-	(save-restriction
-	  (narrow-to-region start (point))
-	  (goto-char start)
-	  (while (search-forward "\"" nil t)
-	    (setq beg (match-beginning 0))
-	    (unless (eq (char-before beg) ?\\)
-	      (goto-char beg)
-	      (setq beg (1+ beg))
-	      (condition-case nil
-		  (progn
-		    (forward-sexp)
-		    (setq end (1- (point)))
-		    (goto-char beg)
-		    (if (and encodable-regexp
-			     (re-search-forward encodable-regexp end t))
-			(goto-char (1+ end))
-		      (save-restriction
-			(narrow-to-region beg end)
-			(while (re-search-forward tspecials nil 'move)
-			  (if (eq (char-before) ?\\)
-			      (if (looking-at tspecials) ;; Already quoted.
-				  (forward-char)
-				(insert "\\"))
-			    (goto-char (match-beginning 0))
-			    (insert "\\")
-			    (forward-char))))
-		      (forward-char)))
-		(error
-		 (goto-char beg)))))
-	  (goto-char (point-max)))
-	(forward-list 1)
-	(setq start (point))))))
-
 (defvar rfc2047-encoding-type 'address-mime
   "The type of encoding done by `rfc2047-encode-region'.
 This should be dynamically bound around calls to
@@ -269,18 +220,15 @@ Should be called narrowed to the head of the message."
 		(setq alist nil
 		      method (cdr elem))))
 	    (if (not (rfc2047-encodable-p))
-		(prog2
-		    (when (eq method 'address-mime)
-		      (rfc2047-quote-special-characters-in-quoted-strings))
-		    (if (and (eq (mm-body-7-or-8) '8bit)
-			     (mm-multibyte-p)
-			     (mm-coding-system-p
-			      (car message-posting-charset)))
-			;; 8 bit must be decoded.
-			(encode-coding-region
-			 (point-min) (point-max)
-			 (mm-charset-to-coding-system
-			  (car message-posting-charset)))))
+		(if (and (eq (mm-body-7-or-8) '8bit)
+			 (mm-multibyte-p)
+			 (mm-coding-system-p
+			  (car message-posting-charset)))
+		    ;; 8 bit must be decoded.
+		    (encode-coding-region
+		     (point-min) (point-max)
+		     (mm-charset-to-coding-system
+		      (car message-posting-charset))))
 	      ;; We found something that may perhaps be encoded.
 	      (re-search-forward "^[^:]+: *" nil t)
 	      (cond
@@ -397,8 +345,6 @@ Dynamically bind `rfc2047-encoding-type' to change that."
 	      (if (> (point) start)
 		  (rfc2047-encode start (point))
 		(goto-char end))))
-	;; `address-mime' case -- take care of quoted words, comments.
-	(rfc2047-quote-special-characters-in-quoted-strings encodable-regexp)
 	(with-syntax-table rfc2047-syntax-table
 	  (goto-char (point-min))
 	  (condition-case err		; in case of unbalanced quotes
