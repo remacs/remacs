@@ -4571,6 +4571,21 @@ With prefix argument, make it a temporary breakpoint."
   ;; Continue standard unloading.
   nil)
 
+(defun edebug--unwrap*-symbol-function (symbol)
+  ;; Try to unwrap SYMBOL's `symbol-function'.  The result is suitable
+  ;; to be fbound back to SYMBOL with `defalias'.  When no unwrapping
+  ;; could be done return nil.
+  (pcase (symbol-function symbol)
+    ((or (and `(macro . ,f) (let was-macro t))
+         (and  f            (let was-macro nil)))
+     ;; `defalias' takes care of advises so we must strip them
+     (let* ((orig-f (advice--cd*r f))
+            (unwrapped (edebug-unwrap* orig-f)))
+       (cond
+        ((equal unwrapped orig-f) nil)
+        (was-macro               `(macro . ,unwrapped))
+        (t                       unwrapped))))))
+
 (defun edebug-remove-instrumentation (functions)
   "Remove Edebug instrumentation from FUNCTIONS.
 Interactively, the user is prompted for the function to remove
@@ -4582,10 +4597,10 @@ instrumentation for, defaulting to all functions."
        (lambda (symbol)
          (when (and (get symbol 'edebug)
                     (or (functionp symbol)
-                        (macrop symbol)))
-           (let ((unwrapped (edebug-unwrap* (symbol-function symbol))))
-             (unless (equal unwrapped (symbol-function symbol))
-               (push symbol functions)))))
+                        (macrop symbol))
+                    (edebug--unwrap*-symbol-function
+                     symbol))
+           (push symbol functions)))
        obarray)
       (unless functions
         (error "Found no functions to remove instrumentation from"))
@@ -4599,8 +4614,9 @@ instrumentation for, defaulting to all functions."
           functions)))))
   ;; Remove instrumentation.
   (dolist (symbol functions)
-    (setf (symbol-function symbol)
-          (edebug-unwrap* (symbol-function symbol))))
+    (when-let ((unwrapped
+                (edebug--unwrap*-symbol-function symbol)))
+      (defalias symbol unwrapped)))
   (message "Removed edebug instrumentation from %s"
            (mapconcat #'symbol-name functions ", ")))
 
