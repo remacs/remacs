@@ -110,6 +110,12 @@
 ;;   that return 'file have per-file revision numbering; backends
 ;;   that return 'repository have per-repository revision numbering,
 ;;   so a revision level implicitly identifies a changeset
+;;
+;; - update-on-retrieve-tag
+;;
+;;   Takes no arguments.  Backends that return non-nil can update
+;;   buffers on `vc-retrieve-tag' based on user input.  In this case
+;;   user will be prompted to update buffers on `vc-retrieve-tag'.
 
 ;; STATE-QUERYING FUNCTIONS
 ;;
@@ -2302,14 +2308,15 @@ This function runs the hook `vc-retrieve-tag-hook' when finished."
       (vc-read-revision "Tag name to retrieve (default latest revisions): "
                         (list dir)
                         (vc-responsible-backend dir)))))
-  (let ((update (yes-or-no-p "Update any affected buffers? "))
-	(msg (if (or (not name) (string= name ""))
-		 (format "Updating %s... " (abbreviate-file-name dir))
-	       (format "Retrieving tag into %s... "
-		       (abbreviate-file-name dir)))))
+  (let* ((backend (vc-responsible-backend dir))
+         (update (when (vc-call-backend backend 'update-on-retrieve-tag)
+                   (yes-or-no-p "Update any affected buffers? ")))
+	 (msg (if (or (not name) (string= name ""))
+		  (format "Updating %s... " (abbreviate-file-name dir))
+	        (format "Retrieving tag %s into %s... "
+		        name (abbreviate-file-name dir)))))
     (message "%s" msg)
-    (vc-call-backend (vc-responsible-backend dir)
-		     'retrieve-tag dir name update)
+    (vc-call-backend backend 'retrieve-tag dir name update)
     (vc-resynch-buffer dir t t t)
     (run-hooks 'vc-retrieve-tag-hook)
     (message "%s" (concat msg "done"))))
@@ -3024,6 +3031,10 @@ to provide the `find-revision' operation instead."
 (defun vc-default-receive-file (backend file rev)
   "Let BACKEND receive FILE from another version control system."
   (vc-call-backend backend 'register (list file) rev ""))
+
+(defun vc-default-update-on-retrieve-tag ()
+  "Prompt for update buffers on `vc-retrieve-tag'."
+  t)
 
 (defun vc-default-retrieve-tag (backend dir name update)
   (if (string= name "")

@@ -47,6 +47,7 @@
 ;; FUNCTION NAME                                   STATUS
 ;; BACKEND PROPERTIES
 ;; * revision-granularity                          OK
+;; - update-on-retrieve-tag                        OK
 ;; STATE-QUERYING FUNCTIONS
 ;; * registered (file)                             OK
 ;; * state (file)                                  OK
@@ -218,6 +219,7 @@ toggle display of the entire list."
 
 (defun vc-git-revision-granularity () 'repository)
 (defun vc-git-checkout-model (_files) 'implicit)
+(defun vc-git-update-on-retrieve-tag () nil)
 
 ;;; STATE-QUERYING FUNCTIONS
 

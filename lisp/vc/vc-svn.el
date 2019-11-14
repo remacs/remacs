@@ -127,6 +127,7 @@ switches."
 
 (defun vc-svn-revision-granularity () 'repository)
 (defun vc-svn-checkout-model (_files) 'implicit)
+(defun vc-svn-update-on-retrieve-tag () nil)
 
 ;;;
 ;;; State-querying functions

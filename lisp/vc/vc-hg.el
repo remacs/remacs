@@ -40,6 +40,7 @@
 ;; FUNCTION NAME                               STATUS
 ;; BACKEND PROPERTIES
 ;; * revision-granularity                      OK
+;; - update-on-retrieve-tag                    OK
 ;; STATE-QUERYING FUNCTIONS
 ;; * registered (file)                         OK
 ;; * state (file)                              OK
@@ -194,6 +195,7 @@ highlighting the Log View buffer."
 
 (defun vc-hg-revision-granularity () 'repository)
 (defun vc-hg-checkout-model (_files) 'implicit)
+(defun vc-hg-update-on-retrieve-tag () nil)
 
 ;;; State querying functions
 
