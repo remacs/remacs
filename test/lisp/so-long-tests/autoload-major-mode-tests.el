@@ -38,6 +38,7 @@
 (ert-deftest so-long-tests-autoload-major-mode ()
   "File-local -*- so-long -*-"
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (so-long-tests-remember)
     (insert "-*- so-long -*-\n")
     (normal-mode)

@@ -29,13 +29,19 @@
 ;; (We could consistently use the latter, but the mixture of approaches
 ;; means that we're testing more things.)
 
-;; Running the tests with "make lisp/so-long-tests" is like:
+;; Running manually:
 ;;
-;; HOME=/nonexistent EMACSLOADPATH= LC_ALL=C \
-;; EMACS_TEST_DIRECTORY=/home/phil/emacs/trunk/repository/test \
+;; for test in lisp/so-long-tests/*-tests.el; do make ${test%.el}; done \
+;; 2>&1 | egrep -v '^(Loading|Source file|make|Changed to so-long-mode)'
+;;
+;; Which is equivalent to:
+;;
+;; for test in lisp/so-long-tests/*-tests.el; do \
+;; HOME=/nonexistent EMACSLOADPATH= LC_ALL=C EMACS_TEST_DIRECTORY=. \
 ;; "../src/emacs" --no-init-file --no-site-file --no-site-lisp \
-;; -L ":." -l ert -l lisp/so-long-tests.el --batch --eval \
-;; '(ert-run-tests-batch-and-exit (quote (not (tag :unstable))))'
+;; -L ":." -l ert -l "$test" --batch --eval \
+;; '(ert-run-tests-batch-and-exit (quote (not (tag :unstable))))'; \
+;; done 2>&1 | egrep -v '^(Loading|Source file|Changed to so-long-mode)'
 ;;
 ;; See also `ert-run-tests-batch-and-exit'.
 
@@ -58,6 +64,7 @@
 (ert-deftest so-long-tests-threshold-under ()
   "Under line length threshold."
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     (insert (make-string (1- so-long-threshold) ?x))
     (normal-mode)
@@ -66,6 +73,7 @@
 (ert-deftest so-long-tests-threshold-at ()
   "At line length threshold."
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     (insert (make-string (1- so-long-threshold) ?x))
     (normal-mode)
@@ -74,6 +82,7 @@
 (ert-deftest so-long-tests-threshold-over ()
   "Over line length threshold."
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     (normal-mode)
     (so-long-tests-remember)
@@ -85,12 +94,14 @@
   "Skip leading shebang, whitespace, and comments."
   ;; Long comment, no newline.
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     (insert (make-string (1+ so-long-threshold) ?\;))
     (normal-mode)
     (should (eq major-mode 'emacs-lisp-mode)))
   ;; Long comment, with newline.
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     (insert (make-string (1+ so-long-threshold) ?\;))
     (insert "\n")
@@ -98,6 +109,7 @@
     (should (eq major-mode 'emacs-lisp-mode)))
   ;; Long comment, with short text following.
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     (insert (make-string (1+ so-long-threshold) ?\;))
     (insert "\n")
@@ -106,6 +118,7 @@
     (should (eq major-mode 'emacs-lisp-mode)))
   ;; Long comment, with long text following.
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     (insert (make-string (1+ so-long-threshold) ?\;))
     (insert "\n")
@@ -116,6 +129,7 @@
 (ert-deftest so-long-tests-max-lines ()
   "Give up after `so-long-max-lines'."
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     ;; Insert exactly `so-long-max-lines' non-comment lines, followed
     ;; by a long line.
@@ -139,10 +153,91 @@
         (normal-mode)
         (should (eq major-mode 'so-long-mode))))))
 
+(ert-deftest so-long-tests-invisible-buffer-function ()
+  "Call `so-long-invisible-buffer-function' in invisible buffers."
+  ;; Visible buffer.
+  (with-temp-buffer
+    (display-buffer (current-buffer))
+    (insert "#!emacs\n")
+    (normal-mode)
+    (so-long-tests-remember)
+    (insert (make-string (1+ so-long-threshold) ?x))
+    (normal-mode)
+    (so-long-tests-assert-and-revert 'so-long-mode))
+  ;; Invisible buffer.
+  (with-temp-buffer
+    (insert "#!emacs\n")
+    (normal-mode)
+    (so-long-tests-remember)
+    (insert (make-string (1+ so-long-threshold) ?x))
+    (normal-mode)
+    (should (eq major-mode 'emacs-lisp-mode))
+    (should (eq nil (get-buffer-window)))
+    ;; Displaying the buffer should invoke `so-long'.
+    (display-buffer (current-buffer))
+    (should (window-live-p (get-buffer-window)))
+    (unless (version< emacs-version "27")
+      ;; From Emacs 27 the `display-buffer' call is insufficient.
+      ;; The various 'window change functions' are now invoked by the
+      ;; redisplay, and redisplay does nothing at all in batch mode,
+      ;; so we cannot test under this revised behaviour.  Refer to:
+      ;; https://lists.gnu.org/archive/html/emacs-devel/2019-10/msg00971.html
+      ;; For interactive (non-batch) test runs, calling `redisplay'
+      ;; does do the trick; so do that first.
+      (redisplay)
+      (when noninteractive
+        ;; In batch mode we need to cheat, and just pretend that
+        ;; `redisplay' triggered `window-configuration-change-hook'.
+        ;; This means the test is not as useful, but it still covers
+        ;; part of the process, and so it's better than nothing.
+        ;;
+        ;; Also test `so-long--active', in case a future version of
+        ;; Emacs adds the framework necessary to make `redisplay' work
+        ;; in batch mode.
+        (unless (eq so-long--active t)
+          (run-window-configuration-change-hook))))
+    (so-long-tests-assert-and-revert 'so-long-mode))
+  ;; `so-long-invisible-buffer-function' is `nil'.
+  (with-temp-buffer
+    (insert "#!emacs\n")
+    (normal-mode)
+    (so-long-tests-remember)
+    (insert (make-string (1+ so-long-threshold) ?x))
+    (let ((so-long-invisible-buffer-function nil))
+      (normal-mode))
+    (so-long-tests-assert-and-revert 'so-long-mode))
+  ;; `so-long-invisible-buffer-function' is `so-long'.
+  (with-temp-buffer
+    (insert "#!emacs\n")
+    (normal-mode)
+    (so-long-tests-remember)
+    (insert (make-string (1+ so-long-threshold) ?x))
+    (let ((so-long-invisible-buffer-function #'so-long))
+      (normal-mode))
+    (so-long-tests-assert-and-revert 'so-long-mode))
+  ;; `so-long-invisible-buffer-function' is `ignore'.
+  (with-temp-buffer
+    (insert "#!emacs\n")
+    (normal-mode)
+    (so-long-tests-remember)
+    (insert (make-string (1+ so-long-threshold) ?x))
+    (let ((so-long-invisible-buffer-function #'ignore))
+      (normal-mode))
+    (should (eq major-mode 'emacs-lisp-mode))
+    (display-buffer (current-buffer))
+    (unless (version< emacs-version "27")
+      ;; See the "Invisible buffer" case earlier in this function.
+      (redisplay)
+      (when noninteractive
+        (unless (eq so-long--active t)
+          (run-window-configuration-change-hook))))
+    (should (eq major-mode 'emacs-lisp-mode))))
+
 (ert-deftest so-long-tests-actions ()
   "Test each of the standard actions."
   (dolist (action (mapcar #'car so-long-action-alist))
     (with-temp-buffer
+      (display-buffer (current-buffer))
       (insert "#!emacs\n")
       (normal-mode)
       (so-long-tests-remember)
@@ -210,6 +305,7 @@
   "Targeted major modes."
   ;; Test the `so-long-target-modes' user option.
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     (insert (make-string (1+ so-long-threshold) ?x))
     ;; Nil target modes.
@@ -233,6 +329,7 @@
   "Custom predicate function."
   ;; Test the `so-long-predicate' user option.
   (with-temp-buffer
+    (display-buffer (current-buffer))
     (insert "#!emacs\n")
     ;; Always false.
     (let ((so-long-predicate #'ignore))
@@ -257,6 +354,7 @@
     ;; valid for the file-locals to be on the second line after the shebang,
     ;; but with the *.el filename we no longer need the shebang.
     (with-temp-buffer
+      (display-buffer (current-buffer))
       (setq buffer-file-name (expand-file-name "so-long-tests-data.el"))
       (insert ";; -*- so-long-action:so-long-minor-mode; -*-\n")
       (put 'so-long-action 'safe-local-variable #'symbolp)
@@ -275,6 +373,7 @@
       (normal-mode)
       (so-long-tests-remember))
     (with-temp-buffer
+      (display-buffer (current-buffer))
       (setq buffer-file-name (concat (make-temp-name "so-long-tests-") ".el"))
       (insert ";; -*- so-long-action:so-long-minor-mode; eval:(so-long) -*-\n")
       (put 'so-long-action 'safe-local-variable #'symbolp)
@@ -314,6 +413,7 @@
        ;; Downgrade the action from major mode to minor mode.
        (setq-default so-long-file-local-mode-function 'so-long-mode-downgrade)
        (with-temp-buffer
+         (display-buffer (current-buffer))
          (insert ,prop-line)
          (insert (make-string (1+ so-long-threshold) ?x))
          (insert ,local-vars)
@@ -322,6 +422,7 @@
        ;; Do not treat the file-local mode specially.
        (setq-default so-long-file-local-mode-function nil)
        (with-temp-buffer
+         (display-buffer (current-buffer))
          (insert ,prop-line)
          (insert (make-string (1+ so-long-threshold) ?x))
          (insert ,local-vars)
@@ -331,6 +432,7 @@
        (setq-default so-long-file-local-mode-function
                      #'so-long-tests-file-local-mode-function)
        (with-temp-buffer
+         (display-buffer (current-buffer))
          (insert ,prop-line)
          (insert (make-string (1+ so-long-threshold) ?x))
          (insert ,local-vars)
@@ -371,6 +473,7 @@
        ;; Do nothing at all when a file-local mode is used.
        (setq-default so-long-file-local-mode-function 'so-long-inhibit)
        (with-temp-buffer
+         (display-buffer (current-buffer))
          ;; Remember the new-buffer state.  The other cases will
          ;; validate the 'reverted' state against this.
          (so-long-tests-remember)
@@ -382,6 +485,7 @@
        ;; Downgrade from major mode to minor mode.
        (setq-default so-long-file-local-mode-function 'so-long-mode-downgrade)
        (with-temp-buffer
+         (display-buffer (current-buffer))
          (insert ,prop-line)
          (insert (make-string (1+ so-long-threshold) ?x))
          (insert ,local-vars)
@@ -390,6 +494,7 @@
        ;; Do not treat the file-local mode specially.
        (setq-default so-long-file-local-mode-function nil)
        (with-temp-buffer
+         (display-buffer (current-buffer))
          (insert ,prop-line)
          (insert (make-string (1+ so-long-threshold) ?x))
          (insert ,local-vars)
@@ -399,6 +504,7 @@
        (setq-default so-long-file-local-mode-function
                      #'so-long-tests-file-local-mode-function)
        (with-temp-buffer
+         (display-buffer (current-buffer))
          (insert ,prop-line)
          (insert (make-string (1+ so-long-threshold) ?x))
          (insert ,local-vars)
