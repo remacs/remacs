@@ -3035,6 +3035,7 @@ images if any to the browser, and deletes them when exiting the group
       (gnus-summary-show-article)
     (let ((gnus-visible-headers (or (get 'gnus-visible-headers 'standard-value)
 				    gnus-visible-headers))
+	  (gnus-mime-display-attachment-buttons-in-header nil)
 	  ;; As we insert a <hr>, there's no need for the body boundary.
 	  (gnus-treat-body-boundary nil))
       (gnus-summary-show-article)))
