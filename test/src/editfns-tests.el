@@ -90,6 +90,10 @@
                                    (propertize "45" 'face 'italic)))
            #("012345    "
              0 2 (face bold) 2 4 (face underline) 4 10 (face italic))))
+  ;; Bug #38191
+  (should (ert-equal-including-properties
+           (format (propertize "‘foo’ %s bar" 'face 'bold) "xxx")
+           #("‘foo’ xxx bar" 0 13 (face bold))))
   ;; Bug #32404
   (should (ert-equal-including-properties
            (format (concat (propertize "%s" 'face 'bold)

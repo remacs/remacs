@@ -3143,7 +3143,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
     /* The start and end bytepos in the output string.  */
     ptrdiff_t start, end;
 
-    /* The start of the spec in the format string.  */
+    /* The start bytepos of the spec in the format string.  */
     ptrdiff_t fbeg;
 
     /* Whether the argument is a string with intervals.  */
@@ -3954,7 +3954,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		    {
 		      position++;
 		      if (fieldn < nspec
-			  && position > info[fieldn].fbeg
+			  && bytepos >= info[fieldn].fbeg
 			  && translated == info[fieldn].start)
 			{
 			  translated += info[fieldn].end - info[fieldn].start;
@@ -3976,7 +3976,7 @@ styled_format (ptrdiff_t nargs, Lisp_Object *args, bool message)
 		    {
 		      position++;
 		      if (fieldn < nspec
-			  && position > info[fieldn].fbeg
+			  && bytepos >= info[fieldn].fbeg
 			  && translated == info[fieldn].start)
 			{
 			  translated += info[fieldn].end - info[fieldn].start;
