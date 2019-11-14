@@ -312,19 +312,24 @@
 (ert-deftest time-stamp-test-format-time-zone-offset ()
   "Test time-stamp format %z."
   (with-time-stamp-test-env
-    ;; documented 1995-2019, will change
-    (should (equal (time-stamp-string "%z" ref-time1)
-                   (format-time-string "%#Z" ref-time1 t)))
-    ;; undocumented, changed in 2019
-    (should (equal (time-stamp-string "%:z" ref-time1) "+0000"))
-    (should (equal (time-stamp-string "%:7z" ref-time1) "  +0000"))
-    (should (equal (time-stamp-string "%:07z" ref-time1) "  +0000"))
+    (let ((utc-abbr (format-time-string "%#Z" ref-time1 t)))
+    ;; documented 1995-2019, warned since 2019, will change
+      (time-stamp-should-warn
+       (equal (time-stamp-string "%z" ref-time1) utc-abbr)))
+    ;; implemented and documented (with compat caveat) since 2019
+    (should (equal (time-stamp-string "%5z" ref-time1) "+0000"))
     (let ((time-stamp-time-zone "PST8"))
-      (should (equal (time-stamp-string "%:z" ref-time1) "-0800")))
+      (should (equal (time-stamp-string "%5z" ref-time1) "-0800")))
     (let ((time-stamp-time-zone "HST10"))
-      (should (equal (time-stamp-string "%:z" ref-time1) "-1000")))
+      (should (equal (time-stamp-string "%5z" ref-time1) "-1000")))
     (let ((time-stamp-time-zone "CET-1"))
-      (should (equal (time-stamp-string "%:z" ref-time1) "+0100")))))
+      (should (equal (time-stamp-string "%5z" ref-time1) "+0100")))
+    ;; implemented since 2019, verify that these don't warn
+    (should (equal (time-stamp-string "%-z" ref-time1) "+00"))
+    (should (equal (time-stamp-string "%_z" ref-time1) "+0000"))
+    (should (equal (time-stamp-string "%:z" ref-time1) "+00:00"))
+    (should (equal (time-stamp-string "%::z" ref-time1) "+00:00:00"))
+    (should (equal (time-stamp-string "%:::z" ref-time1) "+00"))))
 
 (ert-deftest time-stamp-test-format-non-date-conversions ()
   "Test time-stamp formats for non-date items."

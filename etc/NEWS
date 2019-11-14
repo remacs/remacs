@@ -2248,7 +2248,18 @@ and 'gravatar-force-default'.
 *** The built-in ada-mode is now deleted.  The GNU ELPA package is a
 good replacement, even in very large source files.
 
-** Some conversions recommended for 'time-stamp-format' have changed.
+** time-stamp
+
+*** New '%5z' conversion for 'time-stamp-format' gives time zone offset.
+Specifying '%5z' in 'time-stamp-format' or 'time-stamp-pattern'
+expands to the time zone offset, e.g., '+0100'.  The time zone used is
+specified by 'time-stamp-time-zone'.
+
+Because this feature is new in Emacs 27.1, do not use it in the local
+variables section of any file that might be edited by an older version
+of Emacs.
+
+*** Some conversions recommended for 'time-stamp-format' have changed.
 The new documented/recommended %-conversions are closer to those
 used by 'format-time-string' and are compatible at least as far back
 as Emacs 22.1 (released in 2007).

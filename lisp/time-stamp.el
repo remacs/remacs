@@ -62,7 +62,8 @@ on the locale setting recorded in `system-time-locale' and
 %02S seconds
 %w   day number of week, Sunday is 0
 %02y 2-digit year: `03'                 %Y  4-digit year: `2003'
-%#Z  lowercase time zone name: `est'    %Z  gives uppercase: `EST'
+%Z   time zone name: `EST'              %#Z gives lowercase: `est'
+%5z  time zone offset: `-0500' (since Emacs 27; see note below)
 
 Non-date items:
 %%   a literal percent character: `%'
@@ -81,7 +82,10 @@ use \"%3a %3b %2d %02H:%02M:%02S %Z %Y\".
 The default padding of some formats has changed to be more compatible
 with format-time-string.  To be compatible with older versions of Emacs,
 specify a padding width (as shown) or use the : modifier to request the
-transitional behavior (again, as shown)."
+transitional behavior (again, as shown).
+
+The behavior of `%5z' is new in Emacs 27.  If your files might be
+edited by older versions of Emacs also, do not use this format yet."
   :type 'string
   :group 'time-stamp
   :version "27.1")
@@ -469,7 +473,7 @@ and all `time-stamp-format' compatibility."
       (cond
        ((eq cur-char ?%)
 	;; eat any additional args to allow for future expansion
-	(setq alt-form nil change-case nil upcase nil field-width "")
+	(setq alt-form 0 change-case nil upcase nil field-width "")
 	(while (progn
 		 (setq ind (1+ ind))
 		 (setq cur-char (if (< ind fmt-len)
@@ -503,7 +507,7 @@ and all `time-stamp-format' compatibility."
 	  (setq prev-char cur-char)
 	  ;; some characters we actually use
 	  (cond ((eq cur-char ?:)
-		 (setq alt-form t))
+		 (setq alt-form (1+ alt-form)))
 		((eq cur-char ?#)
 		 (setq change-case t))
 		((eq cur-char ?^)
@@ -517,7 +521,7 @@ and all `time-stamp-format' compatibility."
 	 ((eq cur-char ?%)
 	  "%")
 	 ((eq cur-char ?a)		;day of week
-          (if alt-form
+          (if (> alt-form 0)
                (if (string-equal field-width "")
                    (time-stamp--format "%A" time)
                  "")			;discourage "%:3a"
@@ -529,7 +533,7 @@ and all `time-stamp-format' compatibility."
 	      (time-stamp--format "%#A" time)
 	    (time-stamp--format "%A" time)))
 	 ((eq cur-char ?b)		;month name
-          (if alt-form
+          (if (> alt-form 0)
                (if (string-equal field-width "")
                    (time-stamp--format "%B" time)
                  "")			;discourage "%:3b"
@@ -561,7 +565,7 @@ and all `time-stamp-format' compatibility."
 	 ((eq cur-char ?w)		;weekday number, Sunday is 0
 	  (time-stamp--format "%w" time))
 	 ((eq cur-char ?y)		;year
-          (if alt-form
+          (if (> alt-form 0)
               (string-to-number (time-stamp--format "%Y" time))
             (if (or (string-equal field-width "")
                     (<= (string-to-number field-width) 2))
@@ -573,9 +577,24 @@ and all `time-stamp-format' compatibility."
 	 ((eq cur-char ?z)		;time zone offset
 	  (if change-case
 	      ""			;discourage %z variations
-            (if alt-form
-                (time-stamp--format "%z" time)
-              (time-stamp--format "%#Z" time)))) ;backward compat, will change
+            (cond ((= alt-form 0)
+                   (if (string-equal field-width "")
+                       (progn
+                         (time-stamp-conv-warn "%z" "%#Z")
+                         (time-stamp--format "%#Z" time))
+                     (cond ((string-equal field-width "1")
+                            (setq field-width "3")) ;%-z -> "+00"
+                           ((string-equal field-width "2")
+                            (setq field-width "5")) ;%_z -> "+0000"
+                           ((string-equal field-width "4")
+                            (setq field-width "0"))) ;discourage %4z
+                     (time-stamp--format "%z" time)))
+                  ((= alt-form 1)
+                   (time-stamp--format "%:z" time))
+                  ((= alt-form 2)
+                   (time-stamp--format "%::z" time))
+                  ((= alt-form 3)
+                   (time-stamp--format "%:::z" time)))))
 	 ((eq cur-char ?Z)              ;time zone name
 	  (if change-case
 	      (time-stamp--format "%#Z" time)
@@ -608,7 +627,7 @@ and all `time-stamp-format' compatibility."
 	  (system-name))
 	 ))
         (and (numberp field-result)
-             (not alt-form)
+             (= alt-form 0)
              (string-equal field-width "")
              ;; no width provided; set width for default
              (setq field-width "02"))
@@ -637,7 +656,7 @@ and all `time-stamp-format' compatibility."
 ALT-FORM is whether `#' specified.  FIELD-WIDTH is the string
 width specification or \"\".  TIME is the time to convert."
   (let ((format-string (concat "%" (char-to-string format-char))))
-    (if (and alt-form (not (string-equal field-width "")))
+    (if (and (> alt-form 0) (not (string-equal field-width "")))
 	""				;discourage "%:2d" and the like
       (string-to-number (time-stamp--format format-string time)))))
 
