@@ -170,12 +170,13 @@ first comment line visible (if point is in a comment)."
 
 ;;; Auxiliary functions
 
+
 ;; Return number of screen lines between START and END.
 (defun repos-count-screen-lines (start end)
   (save-excursion
     (save-restriction
-      (narrow-to-region start end)
-      (goto-char (point-min))
+      (narrow-to-region (point-min) end)
+      (goto-char start)
       (vertical-motion (- (point-max) (point-min))))))
 
 ;; Return number of screen lines between START and END; returns a negative
