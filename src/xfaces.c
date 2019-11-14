@@ -6777,13 +6777,14 @@ other font of the appropriate family and registry is available.  */);
 Each element is a regular expression that matches names of fonts to
 ignore.  */);
 #ifdef HAVE_XFT
-  /* Bug#37786.  */
+  /* This font causes libXft crashes, so ignore it by default.  Bug#37786.  */
   Vface_ignored_fonts = list1 (build_string ("Noto Color Emoji"));
 #else
   Vface_ignored_fonts = Qnil;
 #endif
 #ifdef HAVE_OTF_KANNADA_BUG
-  /* https://debbugs.gnu.org/30193  */
+  /* This font causes libotf crashes, so ignore it when we know we're
+     using a vulnerable version.  https://debbugs.gnu.org/30193  */
   Vface_ignored_fonts = Fcons (build_string ("Noto Serif Kannada"), Vface_ignored_fonts);
 #endif
 
