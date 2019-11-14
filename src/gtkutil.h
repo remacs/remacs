@@ -204,9 +204,5 @@ extern bool xg_ignore_gtk_scrollbar;
 
 extern bool xg_gtk_initialized;
 
-#if GTK_CHECK_VERSION (3, 2, 0)
-extern bool font_is_ignored (const char *, ptrdiff_t);
-#endif
-
 #endif /* USE_GTK */
 #endif /* GTKUTIL_H */
