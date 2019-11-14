@@ -1061,6 +1061,7 @@ Prompt for the archive file name.
 Choose the archiving command based on the archive file-name extension
 and `dired-compress-files-alist'."
   (interactive)
+  (require 'format-spec)
   (let* ((in-files (dired-get-marked-files nil nil nil nil t))
          (out-file (expand-file-name (read-file-name "Compress to: ")))
          (rule (cl-find-if
