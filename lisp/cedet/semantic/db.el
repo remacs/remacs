@@ -1,4 +1,4 @@
-;;; semantic/db.el --- Semantic tag database manager
+;;; semantic/db.el --- Semantic tag database manager  -*- lexical-binding:t -*-
 
 ;; Copyright (C) 2000-2019 Free Software Foundation, Inc.
 
@@ -115,11 +115,11 @@ This table is the root of tables, and contains the minimum needed
 for a new table not associated with a buffer."
   :abstract t)
 
-(cl-defmethod semanticdb-in-buffer-p ((obj semanticdb-abstract-table))
+(cl-defmethod semanticdb-in-buffer-p ((_obj semanticdb-abstract-table))
   "Return a nil, meaning abstract table OBJ is not in a buffer."
   nil)
 
-(cl-defmethod semanticdb-get-buffer ((obj semanticdb-abstract-table))
+(cl-defmethod semanticdb-get-buffer ((_obj semanticdb-abstract-table))
   "Return a buffer associated with OBJ.
 If the buffer is not in memory, load it with `find-file-noselect'."
   nil)
@@ -136,23 +136,23 @@ This uses semanticdb to get a better file name."
 	((and (stringp buffer-or-string) (file-exists-p buffer-or-string))
 	 (expand-file-name buffer-or-string))))
 
-(cl-defmethod semanticdb-full-filename ((obj semanticdb-abstract-table))
+(cl-defmethod semanticdb-full-filename ((_obj semanticdb-abstract-table))
   "Fetch the full filename that OBJ refers to.
 Abstract tables do not have file names associated with them."
   nil)
 
-(cl-defmethod semanticdb-dirty-p ((obj semanticdb-abstract-table))
+(cl-defmethod semanticdb-dirty-p ((_obj semanticdb-abstract-table))
   "Return non-nil if OBJ is dirty."
   nil)
 
-(cl-defmethod semanticdb-set-dirty ((obj semanticdb-abstract-table))
+(cl-defmethod semanticdb-set-dirty ((_obj semanticdb-abstract-table))
   "Mark the abstract table OBJ dirty.
 Abstract tables can not be marked dirty, as there is nothing
 for them to synchronize against."
   ;; The abstract table can not be dirty.
   nil)
 
-(cl-defmethod semanticdb-normalize-tags ((obj semanticdb-abstract-table) tags)
+(cl-defmethod semanticdb-normalize-tags ((_obj semanticdb-abstract-table) tags)
   "For the table OBJ, convert a list of TAGS, into standardized form.
 The default is to return TAGS.
 Some databases may default to searching and providing simplified tags
@@ -194,17 +194,18 @@ If one doesn't exist, create it."
 			 ;; Fill in the defaults
 		         :table obj
 			 ))
-      (oset obj index idx)
+      (setf (slot-value obj 'index) idx)
       idx)))
 
-(cl-defmethod semanticdb-synchronize ((idx semanticdb-abstract-search-index)
-				   new-tags)
+(cl-defmethod semanticdb-synchronize ((_idx semanticdb-abstract-search-index)
+				      _new-tags)
   "Synchronize the search index IDX with some NEW-TAGS."
   ;; The abstract class will do... NOTHING!
   )
 
-(cl-defmethod semanticdb-partial-synchronize ((idx semanticdb-abstract-search-index)
-					   new-tags)
+(cl-defmethod semanticdb-partial-synchronize
+  ((_idx semanticdb-abstract-search-index)
+   _new-tags)
   "Synchronize the search index IDX with some changed NEW-TAGS."
   ;; The abstract class will do... NOTHING!
   )
@@ -221,7 +222,8 @@ If one doesn't exist, create it."
 Examples include search results from external sources such as from
 Emacs's own symbol table, or from external libraries.")
 
-(cl-defmethod semanticdb-refresh-table ((obj semanticdb-search-results-table) &optional force)
+(cl-defmethod semanticdb-refresh-table ((_obj semanticdb-search-results-table)
+                                        &optional _force)
   "If the tag list associated with OBJ is loaded, refresh it.
 This will call `semantic-fetch-tags' if that file is in memory."
   nil)
@@ -279,7 +281,7 @@ If the buffer is in memory, return that buffer."
   (let ((buff (oref obj buffer)))
     (if (buffer-live-p buff)
 	buff
-      (oset obj buffer nil))))
+      (setf (slot-value obj 'buffer) nil))))
 
 (cl-defmethod semanticdb-get-buffer ((obj semanticdb-table))
   "Return a buffer associated with OBJ.
@@ -301,7 +303,7 @@ If OBJ's file is not loaded, read it in first."
 
 (cl-defmethod semanticdb-set-dirty ((obj semanticdb-table))
   "Mark the abstract table OBJ dirty."
-  (oset obj dirty t)
+  (setf (slot-value obj 'dirty) t)
   )
 
 (cl-defmethod semanticdb-debug-info ((obj semanticdb-table))
@@ -319,9 +321,8 @@ Adds the number of tags in this file to the object print name."
 
 ;;; DATABASE BASE CLASS
 ;;
-(unless (fboundp 'semanticdb-abstract-table-list-p)
-  (cl-deftype semanticdb-abstract-table-list ()
-    '(list-of semanticdb-abstract-table)))
+(cl-deftype semanticdb-abstract-table-list ()
+  '(list-of semanticdb-abstract-table))
 
 (defclass semanticdb-project-database (eieio-instance-tracker)
   ((tracking-symbol :initform semanticdb-database-list)
@@ -357,7 +358,7 @@ Note: This index will not be saved in a persistent file.")
   (expand-file-name (oref obj file)
 		    (oref (oref obj parent-db) reference-directory)))
 
-(cl-defmethod semanticdb-full-filename ((obj semanticdb-project-database))
+(cl-defmethod semanticdb-full-filename ((_obj semanticdb-project-database))
   "Fetch the full filename that OBJ refers to.
 Abstract tables do not have file names associated with them."
   nil)
@@ -385,7 +386,7 @@ Adds the number of tables in this file to the object print name."
   (princ (eieio-object-name obj (semanticdb-debug-info obj))
          stream))
 
-(cl-defmethod semanticdb-create-database ((dbc (subclass semanticdb-project-database)) directory)
+(cl-defmethod semanticdb-create-database ((_dbc (subclass semanticdb-project-database)) directory)
   "Create a new semantic database of class DBC for DIRECTORY and return it.
 If a database for DIRECTORY has already been created, return it.
 If DIRECTORY doesn't exist, create a new one."
@@ -396,12 +397,12 @@ If DIRECTORY doesn't exist, create a new one."
 		:tables nil))
       ;; Set this up here.   We can't put it in the constructor because it
       ;; would be saved, and we want DB files to be portable.
-      (oset db reference-directory (file-truename directory)))
+      (setf (slot-value db 'reference-directory) (file-truename directory)))
     db))
 
 (cl-defmethod semanticdb-flush-database-tables ((db semanticdb-project-database))
   "Reset the tables in DB to be empty."
-  (oset db tables nil))
+  (setf (slot-value db 'tables) nil))
 
 (cl-defmethod semanticdb-create-table ((db semanticdb-project-database) file)
   "Create a new table in DB for FILE and return it.
@@ -416,7 +417,7 @@ If the table for FILE does not exist, create one."
 			    (file-name-nondirectory file)
 			    :file (file-name-nondirectory file)
 			    ))
-      (oset newtab parent-db db)
+      (setf (slot-value newtab 'parent-db) db)
       (object-add-to-list db 'tables newtab t))
     newtab))
 
@@ -495,14 +496,14 @@ other than :table."
   "Remove from TABLE the cache object CACHE."
   (object-remove-from-list table 'cache cache))
 
-(cl-defmethod semanticdb-synchronize ((cache semanticdb-abstract-cache)
-				   new-tags)
+(cl-defmethod semanticdb-synchronize ((_cache semanticdb-abstract-cache)
+				      _new-tags)
   "Synchronize a CACHE with some NEW-TAGS."
   ;; The abstract class will do... NOTHING!
   )
 
-(cl-defmethod semanticdb-partial-synchronize ((cache semanticdb-abstract-cache)
-					   new-tags)
+(cl-defmethod semanticdb-partial-synchronize ((_cache semanticdb-abstract-cache)
+					      _new-tags)
   "Synchronize a CACHE with some changed NEW-TAGS."
   ;; The abstract class will do... NOTHING!
   )
@@ -547,14 +548,14 @@ other than :table."
   (object-remove-from-list db 'cache cache))
 
 
-(cl-defmethod semanticdb-synchronize ((cache semanticdb-abstract-db-cache)
-				   new-tags)
+(cl-defmethod semanticdb-synchronize ((_cache semanticdb-abstract-db-cache)
+				      _new-tags)
   "Synchronize a CACHE with some NEW-TAGS."
   ;; The abstract class will do... NOTHING!
   )
 
-(cl-defmethod semanticdb-partial-synchronize ((cache semanticdb-abstract-db-cache)
-					   new-tags)
+(cl-defmethod semanticdb-partial-synchronize ((_cache semanticdb-abstract-db-cache)
+					      _new-tags)
   "Synchronize a CACHE with some changed NEW-TAGS."
   ;; The abstract class will do... NOTHING!
   )
@@ -622,17 +623,18 @@ The file associated with OBJ does not need to be in a buffer."
 (cl-defmethod semanticdb-synchronize ((table semanticdb-abstract-table)
 				   new-tags)
   "Synchronize the table TABLE with some NEW-TAGS."
-  (oset table tags new-tags)
-  (oset table pointmax (point-max))
+  (setf (slot-value table 'tags) new-tags)
+  (setf (slot-value table 'pointmax) (point-max))
   (let ((fattr (file-attributes (semanticdb-full-filename table))))
-    (oset table fsize (file-attribute-size fattr))
-    (oset table lastmodtime (file-attribute-modification-time fattr))
-    )
+    (setf (slot-value table 'fsize) (file-attribute-size fattr))
+    (setf (slot-value table 'lastmodtime)
+          (file-attribute-modification-time fattr)))
+
   ;; Assume it is now up to date.
-  (oset table unmatched-syntax semantic-unmatched-syntax-cache)
+  (setf (slot-value table 'unmatched-syntax) semantic-unmatched-syntax-cache)
   ;; The lexical table should be good too.
   (when (featurep 'semantic/lex-spp)
-    (oset table lexical-table (semantic-lex-spp-save-table)))
+    (setf (slot-value table 'lexical-table) (semantic-lex-spp-save-table)))
   ;; this implies dirtiness
   (semanticdb-set-dirty table)
 
@@ -655,16 +657,16 @@ The file associated with OBJ does not need to be in a buffer."
   "Synchronize the table TABLE where some NEW-TAGS changed."
   ;; You might think we need to reset the tags, but since the partial
   ;; parser splices the lists, we don't need to do anything
-  ;;(oset table tags new-tags)
+  ;;(setf (slot-value table 'tags) new-tags)
   ;; We do need to mark ourselves dirty.
   (semanticdb-set-dirty table)
 
   ;; The lexical table may be modified.
   (when (featurep 'semantic/lex-spp)
-    (oset table lexical-table (semantic-lex-spp-save-table)))
+    (setf (slot-value table 'lexical-table) (semantic-lex-spp-save-table)))
 
   ;; Incremental parser doesn't monkey around with this.
-  (oset table unmatched-syntax semantic-unmatched-syntax-cache)
+  (setf (slot-value table 'unmatched-syntax) semantic-unmatched-syntax-cache)
 
   ;; Synchronize the index
   (when (slot-boundp table 'index)
@@ -683,8 +685,8 @@ The file associated with OBJ does not need to be in a buffer."
 
 ;;; SAVE/LOAD
 ;;
-(cl-defmethod semanticdb-save-db ((DB semanticdb-project-database)
-			       &optional suppress-questions)
+(cl-defmethod semanticdb-save-db ((_DB semanticdb-project-database)
+			          &optional _suppress-questions)
   "Cause a database to save itself.
 The database base class does not save itself persistently.
 Subclasses could save themselves to a file, or to a database, or other
@@ -702,7 +704,7 @@ form."
 
 ;; This prevents Semanticdb from querying multiple times if the users
 ;; answers "no" to creating the Semanticdb directory.
-(defvar semanticdb--inhibit-create-file-directory)
+(defvar semanticdb--inhibit-make-directory)
 
 (defun semanticdb-save-all-db ()
   "Save all semantic tag databases."
@@ -710,7 +712,7 @@ form."
   (unless noninteractive
     (message "Saving tag summaries..."))
   (let ((semanticdb--inhibit-make-directory noninteractive))
-    (mapc 'semanticdb-save-db semanticdb-database-list))
+    (mapc #'semanticdb-save-db semanticdb-database-list))
   (unless noninteractive
     (message "Saving tag summaries...done")))
 
@@ -737,7 +739,7 @@ Project Management software (such as EDE and JDE) should add their own
 predicates with `add-hook' to this variable, and semanticdb will save tag
 caches in directories controlled by them.")
 
-(cl-defmethod semanticdb-write-directory-p ((obj semanticdb-project-database))
+(cl-defmethod semanticdb-write-directory-p ((_obj semanticdb-project-database))
   "Return non-nil if OBJ should be written to disk.
 Uses `semanticdb-persistent-path' to determine the return value."
   nil)
@@ -764,9 +766,9 @@ Do not set the value of this variable permanently.")
 (defmacro semanticdb-with-match-any-mode (&rest body)
   "A Semanticdb search occurring withing BODY will search tags in all modes.
 This temporarily sets `semanticdb-match-any-mode' while executing BODY."
+  (declare (indent 0) (debug t))
   `(let ((semanticdb-match-any-mode t))
      ,@body))
-(put 'semanticdb-with-match-any-mode 'lisp-indent-function 0)
 
 (cl-defmethod semanticdb-equivalent-mode-for-search (table &optional buffer)
   "Return non-nil if TABLE's mode is equivalent to BUFFER.
@@ -779,7 +781,7 @@ all files of any type."
       (semanticdb-equivalent-mode table buffer))
   )
 
-(cl-defmethod semanticdb-equivalent-mode ((table semanticdb-abstract-table) &optional buffer)
+(cl-defmethod semanticdb-equivalent-mode ((_table semanticdb-abstract-table) &optional _buffer)
   "Return non-nil if TABLE's mode is equivalent to BUFFER.
 Equivalent modes are specified by the `semantic-equivalent-major-modes'
 local variable."
@@ -813,7 +815,6 @@ local variable."
 All subdirectories of a root project are considered a part of one project.
 Values in this string can be overridden by project management programs
 via the `semanticdb-project-root-functions' variable."
-  :group 'semanticdb
   :type '(repeat string))
 
 (defvar semanticdb-project-root-functions nil
