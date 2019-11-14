@@ -3032,7 +3032,7 @@ to provide the `find-revision' operation instead."
   "Let BACKEND receive FILE from another version control system."
   (vc-call-backend backend 'register (list file) rev ""))
 
-(defun vc-default-update-on-retrieve-tag ()
+(defun vc-default-update-on-retrieve-tag (_backend)
   "Prompt for update buffers on `vc-retrieve-tag'."
   t)
 
