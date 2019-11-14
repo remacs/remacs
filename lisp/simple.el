@@ -8658,7 +8658,7 @@ after it has been set up properly in other respects."
       (mapc (lambda (v)
 	      (condition-case ()
 		  (if (symbolp v)
-		      (makunbound v)
+		      (makunbound (make-local-variable v))
 		    (set (make-local-variable (car v)) (cdr v)))
 		(setting-constant nil))) ;E.g. for enable-multibyte-characters.
 	    lvars)
