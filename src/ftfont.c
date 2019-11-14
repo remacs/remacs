@@ -1264,6 +1264,8 @@ ftfont_entity_pattern (Lisp_Object entity, int pixel_size)
   return pat;
 }
 
+#ifndef USE_CAIRO
+
 Lisp_Object
 ftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 {
@@ -1459,6 +1461,8 @@ ftfont_close (struct font *font)
     FT_Done_Size (ftfont_info->ft_size);
 }
 
+#endif /* !USE_CAIRO */
+
 int
 ftfont_has_char (Lisp_Object font, int c)
 {
@@ -1488,6 +1492,8 @@ ftfont_has_char (Lisp_Object font, int c)
 	      != 0);
     }
 }
+
+#ifndef USE_CAIRO
 
 unsigned
 ftfont_encode_char (struct font *font, int c)
@@ -1559,6 +1565,8 @@ ftfont_text_extents (struct font *font, const unsigned int *code,
     }
   metrics->width = width;
 }
+
+#endif /* !USE_CAIRO */
 
 int
 ftfont_get_bitmap (struct font *font, unsigned int code, struct font_bitmap *bitmap, int bits_per_pixel)
@@ -3031,6 +3039,8 @@ ftfont_combining_capability (struct font *font)
 
 static void syms_of_ftfont_for_pdumper (void);
 
+#ifndef USE_CAIRO
+
 static struct font_driver const ftfont_driver =
   {
   /* We can't draw a text without device dependent functions.  */
@@ -3058,6 +3068,8 @@ static struct font_driver const ftfont_driver =
   .filter_properties = ftfont_filter_properties,
   .combining_capability = ftfont_combining_capability,
   };
+
+#endif /* !USE_CAIRO */
 
 void
 syms_of_ftfont (void)

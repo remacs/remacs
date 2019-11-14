@@ -13437,6 +13437,8 @@ tty_get_tab_bar_item (struct frame *f, int x, int *idx, ptrdiff_t *end)
   return Qnil;
 }
 
+#if defined HAVE_NTGUI && !defined CYGWIN
+
 /* Handle a mouse click at X/Y on the tab bar of TTY frame F.  If the
    click was on the tab bar and was handled, populate the EVENT
    structure, store it in keyboard queue, and return true; otherwise
@@ -13499,6 +13501,7 @@ tty_handle_tab_bar_click (struct frame *f, int x, int y, bool down_p,
 
   return true;
 }
+#endif /* HAVE_NTGUI && !CYGWIN */
 
 
 

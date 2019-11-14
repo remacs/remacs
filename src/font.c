@@ -3650,7 +3650,7 @@ font_update_drivers (struct frame *f, Lisp_Object new_drivers)
   return active_drivers;
 }
 
-#if defined (HAVE_XFT) || defined (HAVE_FREETYPE)
+#if (defined HAVE_XFT || defined HAVE_FREETYPE) && !defined USE_CAIRO
 
 static void
 fset_font_data (struct frame *f, Lisp_Object val)
@@ -3683,7 +3683,7 @@ font_get_frame_data (struct frame *f, Lisp_Object driver)
   return NILP (val) ? NULL : xmint_pointer (XCDR (val));
 }
 
-#endif /* HAVE_XFT || HAVE_FREETYPE */
+#endif /* (HAVE_XFT || HAVE_FREETYPE) && !USE_CAIRO */
 
 /* Sets attributes on a font.  Any properties that appear in ALIST and
    BOOLEAN_PROPERTIES or NON_BOOLEAN_PROPERTIES are set on the font.
