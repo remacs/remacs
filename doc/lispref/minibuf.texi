@@ -2253,16 +2253,12 @@ Here is an example of using this function:
 @end lisp
 @end defun
 
-If you need a function to read a character like @code{read-char} or
-@code{read-char-choice} (@pxref{Reading One Event}) but using the
-minibuffer, use @code{read-char-from-minibuffer}.
-
 @defun read-char-from-minibuffer prompt &optional chars history
 This function uses the minibuffer to read and return a single
 character.  Optionally, it ignores any input that is not a member of
 @var{chars}, a list of accepted characters.  The @var{history}
-argument specifies the history list symbol to use; if is omitted or
-@code{nil}, it doesn't use the history.
+argument specifies the history list symbol to use; if it is omitted or
+@code{nil}, this function doesn't use the history.
 @end defun
 
 @node Reading a Password

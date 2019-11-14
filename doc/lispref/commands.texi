@@ -2501,6 +2501,9 @@ and key sequences read from keyboard macros being executed.
   The lowest level functions for command input are @code{read-event},
 @code{read-char}, and @code{read-char-exclusive}.
 
+If you need a function to read a character using the minibuffer, use
+@code{read-char-from-minibuffer} (@pxref{Multiple Queries}).
+
 @defun read-event &optional prompt inherit-input-method seconds
 This function reads and returns the next event of command input,
 waiting if necessary until an event is available.
