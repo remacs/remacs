@@ -3366,19 +3366,35 @@ comment at the start of cc-engine.el for more info."
   (or (car (c-state-literal-at pos))
       pos))
 
-(defsubst c-state-cache-non-literal-place (pos state)
-  ;; Return a position outside of a string/comment/macro at or before POS.
-  ;; STATE is the parse-partial-sexp state at POS.
-  (let ((res (if (or (nth 3 state)	; in a string?
-		     (and (nth 4 state)
-			  (not (eq (nth 7 state) 'syntax-table)))) ; in a comment?
-		 (nth 8 state)
-	       pos)))
+(defun c-state-cache-lower-good-pos (here pos state)
+  ;; Return a good pos (in the sense of `c-state-cache-good-pos') at the
+  ;; lowest[*] position between POS and HERE which is syntactically equivalent
+  ;; to HERE.  This position may be HERE itself.  POS is before HERE in the
+  ;; buffer.
+  ;; [*] We don't actually always determine this exact position, since this
+  ;; would require a disproportionate amount of work, given that this function
+  ;; deals only with a corner condition, and POS and HERE are typically on
+  ;; adjacent lines.  We actually return either POS, when POS is a good
+  ;; position, HERE otherwise.  Exceptionally, when POS is in a comment, but
+  ;; HERE not, we can return the position of the end of the comment.
+  (let (s)
     (save-excursion
-      (goto-char res)
-      (if (c-beginning-of-macro)
-	  (point)
-	res))))
+      (goto-char pos)
+      (when (nth 8 state)	; POS in a comment or string.  Move out of it.
+	(setq s (parse-partial-sexp pos here nil nil state 'syntax-table))
+	(when (< (point) here)
+	  (setq pos (point)
+		state s)))
+      (if (eq (point) here)		; HERE is in the same literal as POS
+	  pos
+	(setq s (parse-partial-sexp pos here (1+ (car state)) nil state nil))
+	(cond
+	 ((> (car s) (car state))  ; Moved into a paren between POS and HERE
+	  here)
+	 ((not (eq (nth 6 s) (car state))) ; Moved out of a paren between POS
+					; and HERE
+	  here)
+	 (t pos))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Stuff to do with point-min, and coping with any literal there.
@@ -3685,7 +3701,13 @@ comment at the start of cc-engine.el for more info."
 							; brace pair.
 	    (setq c-state-cache nil
 		  c-state-cache-good-pos c-state-min-scan-pos)
-	  (setcdr ptr nil)
+	  ;; Do not alter the original `c-state-cache' structure, since there
+	  ;; may be a loop suspended which is looping through that structure.
+	  ;; This may have been the cause of bug #37910.
+	  (let ((cdr-ptr (cdr ptr)))
+	    (setcdr ptr nil)
+	    (setq c-state-cache (copy-sequence c-state-cache))
+	    (setcdr ptr cdr-ptr))
 	  (setq c-state-cache-good-pos (1+ (c-state-cache-top-lparen))))
 	)))
 
@@ -3788,11 +3810,12 @@ comment at the start of cc-engine.el for more info."
 		(setq new-cons (cons bra (1+ ce)))
 		(cond
 		 ((consp (car c-state-cache))
-		  (setcar c-state-cache new-cons))
+		  (setq c-state-cache (cons new-cons (cdr c-state-cache))))
 		 ((and (numberp (car c-state-cache)) ; probably never happens
 		       (< ce (car c-state-cache)))
-		  (setcdr c-state-cache
-			  (cons new-cons (cdr c-state-cache))))
+		  (setq c-state-cache
+			(cons (car c-state-cache)
+			      (cons new-cons (cdr c-state-cache)))))
 		 (t (setq c-state-cache (cons new-cons c-state-cache)))))
 
 	    ;; We haven't found a brace pair.  Record this in the cache.
@@ -3993,7 +4016,7 @@ comment at the start of cc-engine.el for more info."
 	(when (and c-state-cache
 		   (consp (car c-state-cache))
 		   (> (cdar c-state-cache) upper-lim))
-	  (setcar c-state-cache (caar c-state-cache))
+	  (setq c-state-cache (cons (caar c-state-cache) (cdr c-state-cache)))
 	  (setq scan-back-pos (car c-state-cache)
 		cons-separated t))
 
@@ -4130,7 +4153,7 @@ comment at the start of cc-engine.el for more info."
       ;; knowledge of what's inside these braces, we have no alternative but
       ;; to direct the caller to scan the buffer from the opening brace.
       (setq pos (caar c-state-cache))
-      (setcar c-state-cache pos)
+      (setq c-state-cache (cons pos (cdr c-state-cache)))
       (list (1+ pos) pos t)) ; return value.  We've just converted a brace pair
 			     ; entry into a { entry, so the caller needs to
 			     ; search for a brace pair before the {.
@@ -4380,7 +4403,7 @@ comment at the start of cc-engine.el for more info."
       (setq c-state-cache-good-pos
 	    (if (and bopl-state
 		     (< good-pos (- here c-state-cache-too-far)))
-		(c-state-cache-non-literal-place here-bopl bopl-state)
+		(c-state-cache-lower-good-pos here here-bopl bopl-state)
 	      good-pos)))
 
      ((eq strategy 'backward)
