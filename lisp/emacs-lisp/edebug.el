@@ -4571,23 +4571,37 @@ With prefix argument, make it a temporary breakpoint."
   ;; Continue standard unloading.
   nil)
 
-(defun edebug-remove-instrumentation ()
-  "Remove Edebug instrumentation from all functions."
-  (interactive)
-  (let ((functions nil))
-    (mapatoms
-     (lambda (symbol)
-       (when (and (functionp symbol)
-                  (get symbol 'edebug))
-         (let ((unwrapped (edebug-unwrap* (symbol-function symbol))))
-           (unless (equal unwrapped (symbol-function symbol))
-             (push symbol functions)
-             (setf (symbol-function symbol) unwrapped)))))
-     obarray)
-    (if (not functions)
-        (message "Found no functions to remove instrumentation from")
-      (message "Remove edebug instrumentation from %s"
-               (mapconcat #'symbol-name functions ", ")))))
+(defun edebug-remove-instrumentation (functions)
+  "Remove Edebug instrumentation from FUNCTIONS.
+Interactively, the user is prompted for the function to remove
+instrumentation for, defaulting to all functions."
+  (interactive
+   (list
+    (let ((functions nil))
+      (mapatoms
+       (lambda (symbol)
+         (when (and (functionp symbol)
+                    (get symbol 'edebug))
+           (let ((unwrapped (edebug-unwrap* (symbol-function symbol))))
+             (unless (equal unwrapped (symbol-function symbol))
+               (push symbol functions)))))
+       obarray)
+      (unless functions
+        (error "Found no functions to remove instrumentation from"))
+      (let ((name
+             (completing-read
+              "Remove instrumentation from (default all functions): "
+              functions)))
+        (if (and name
+                 (not (equal name "")))
+            (list (intern name))
+          functions)))))
+  ;; Remove instrumentation.
+  (dolist (symbol functions)
+    (setf (symbol-function symbol)
+          (edebug-unwrap* (symbol-function symbol))))
+  (message "Removed edebug instrumentation from %s"
+           (mapconcat #'symbol-name functions ", ")))
 
 (provide 'edebug)
 ;;; edebug.el ends here
