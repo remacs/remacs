@@ -836,6 +836,7 @@ extern Lisp_Object font_style_symbolic (Lisp_Object font,
                                         bool for_face);
 
 extern bool font_match_p (Lisp_Object spec, Lisp_Object font);
+extern bool font_is_ignored (const char *name, ptrdiff_t namelen);
 extern Lisp_Object font_list_entities (struct frame *, Lisp_Object);
 
 extern Lisp_Object font_get_name (Lisp_Object font_object);
