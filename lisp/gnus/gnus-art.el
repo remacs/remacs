@@ -8077,6 +8077,7 @@ url is put as the `gnus-button-url' overlay property on the button."
 		'button-data data
 		'action fun
 		'keymap gnus-url-button-map
+		'follow-link t
 		'category t
 		'button t)
 	  (and data (list 'gnus-data data))))
