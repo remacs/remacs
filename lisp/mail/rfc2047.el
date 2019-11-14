@@ -184,6 +184,56 @@ This is either `base64' or `quoted-printable'."
       (re-search-forward ":[ \t\n]*" nil t)
       (buffer-substring-no-properties (point) (point-max)))))
 
+(make-obsolete 'rfc2047-quote-special-characters-in-quoted-strings nil "27.1")
+(defun rfc2047-quote-special-characters-in-quoted-strings (&optional
+							   encodable-regexp)
+  "Quote special characters with `\\'s in quoted strings.
+Quoting will not be done in a quoted string if it contains characters
+matching ENCODABLE-REGEXP or it is within parentheses."
+  (goto-char (point-min))
+  (let ((tspecials (concat "[" ietf-drums-tspecials "]"))
+	(start (point))
+	beg end)
+    (with-syntax-table (standard-syntax-table)
+      (while (not (eobp))
+	(if (ignore-errors
+	      (forward-list 1)
+	      (eq (char-before) ?\)))
+	    (forward-list -1)
+	  (goto-char (point-max)))
+	(save-restriction
+	  (narrow-to-region start (point))
+	  (goto-char start)
+	  (while (search-forward "\"" nil t)
+	    (setq beg (match-beginning 0))
+	    (unless (eq (char-before beg) ?\\)
+	      (goto-char beg)
+	      (setq beg (1+ beg))
+	      (condition-case nil
+		  (progn
+		    (forward-sexp)
+		    (setq end (1- (point)))
+		    (goto-char beg)
+		    (if (and encodable-regexp
+			     (re-search-forward encodable-regexp end t))
+			(goto-char (1+ end))
+		      (save-restriction
+			(narrow-to-region beg end)
+			(while (re-search-forward tspecials nil 'move)
+			  (if (eq (char-before) ?\\)
+			      (if (looking-at tspecials) ;; Already quoted.
+				  (forward-char)
+				(insert "\\"))
+			    (goto-char (match-beginning 0))
+			    (insert "\\")
+			    (forward-char))))
+		      (forward-char)))
+		(error
+		 (goto-char beg)))))
+	  (goto-char (point-max)))
+	(forward-list 1)
+	(setq start (point))))))
+
 (defvar rfc2047-encoding-type 'address-mime
   "The type of encoding done by `rfc2047-encode-region'.
 This should be dynamically bound around calls to
