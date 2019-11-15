@@ -4580,8 +4580,9 @@ instrumentation for, defaulting to all functions."
     (let ((functions nil))
       (mapatoms
        (lambda (symbol)
-         (when (and (functionp symbol)
-                    (get symbol 'edebug))
+         (when (and (get symbol 'edebug)
+                    (or (functionp symbol)
+                        (macrop symbol)))
            (let ((unwrapped (edebug-unwrap* (symbol-function symbol))))
              (unless (equal unwrapped (symbol-function symbol))
                (push symbol functions)))))
