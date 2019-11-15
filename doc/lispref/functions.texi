@@ -453,7 +453,8 @@ after a @code{&rest} argument.
 
 @node Function Documentation
 @subsection Documentation Strings of Functions
-@cindex documentation of function
+@cindex documentation string of function
+@cindex function's documentation string
 
   A lambda expression may optionally have a @dfn{documentation string}
 just after the lambda list.  This string does not affect execution of
