@@ -1082,26 +1082,21 @@ confusable_symbol_character_p (int ch)
     }
 }
 
-signed char HEXDIGIT_CONST hexdigit[UCHAR_MAX + 1] =
+/* hexdigit[C] is one greater than C's numeric value if C is a
+   hexadecimal digit, zero otherwise.  */
+signed char const hexdigit[UCHAR_MAX + 1] =
   {
-#if HEXDIGIT_IS_CONST
-    [0 ... UCHAR_MAX] = -1,
-#endif
-    ['0'] = 0, ['1'] = 1, ['2'] = 2, ['3'] = 3, ['4'] = 4,
-    ['5'] = 5, ['6'] = 6, ['7'] = 7, ['8'] = 8, ['9'] = 9,
-    ['A'] = 10, ['B'] = 11, ['C'] = 12, ['D'] = 13, ['E'] = 14, ['F'] = 15,
-    ['a'] = 10, ['b'] = 11, ['c'] = 12, ['d'] = 13, ['e'] = 14, ['f'] = 15
+    ['0'] = 1 + 0, ['1'] = 1 + 1, ['2'] = 1 + 2, ['3'] = 1 + 3, ['4'] = 1 + 4,
+    ['5'] = 1 + 5, ['6'] = 1 + 6, ['7'] = 1 + 7, ['8'] = 1 + 8, ['9'] = 1 + 9,
+    ['A'] = 1 + 10, ['B'] = 1 + 11, ['C'] = 1 + 12,
+    ['D'] = 1 + 13, ['E'] = 1 + 14, ['F'] = 1 + 15,
+    ['a'] = 1 + 10, ['b'] = 1 + 11, ['c'] = 1 + 12,
+    ['d'] = 1 + 13, ['e'] = 1 + 14, ['f'] = 1 + 15
   };
 
 void
 syms_of_character (void)
 {
-#if !HEXDIGIT_IS_CONST
-  /* Set the non-hex digit values to -1.  */
-  for (int i = 0; i <= UCHAR_MAX; i++)
-    hexdigit[i] -= i != '0' && !hexdigit[i];
-#endif
-
   DEFSYM (Qcharacterp, "characterp");
   DEFSYM (Qauto_fill_chars, "auto-fill-chars");
 
