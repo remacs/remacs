@@ -240,6 +240,11 @@ in addition to the decimal/hex/octal representation.  Default nil.
 ** New function 'network-lookup-address-info'.
 This does IPv4 and/or IPv6 address lookups on hostnames.
 
++++
+** 'network-interface-list' can now return IPv4 and IPv6 addresses.
+IPv4 and IPv6 addresses are now returned by default if available,
+optionally including netmask/broadcast address information.
+
 ---
 ** Control of the threshold for using the 'distant-foreground' color.
 The threshold for color distance below which the 'distant-foreground'

@@ -2971,12 +2971,67 @@ non-@code{nil} if that particular network option is supported by
 on network connections.  Note that they are supported only on some
 systems.
 
-@defun network-interface-list
-This function returns a list describing the network interfaces
-of the machine you are using.  The value is an alist whose
-elements have the form @code{(@var{name} . @var{address})}.
-@var{address} has the same form as the @var{local-address}
-and @var{remote-address} arguments to @code{make-network-process}.
+@defun network-interface-list &optional full family
+This function returns a list describing the network interfaces of the
+machine you are using.  The value is an alist whose elements have the
+form @code{(@var{ifname} . @var{address})}.  @var{ifname} is a string
+naming the interface, @var{address} has the same form as the
+@var{local-address} and @var{remote-address} arguments to
+@code{make-network-process}, i.e. a vector of integers.  By default
+both IPv4 and IPv6 addresses are returned if possible.
+
+Optional argument @var{full} non-@code{nil} means to instead return a
+list of one or more elements of the form @w{@code{(@var{ifname}
+@var{addr} @var{bcast} @var{netmask})}}.  @var{ifname} is a non-unique
+string naming the interface.  @var{addr}, @var{bcast}, and
+@var{netmask} are vectors of integers detailing the IP address,
+broadcast address, and network mask.
+
+Optional argument @var{family} specified as symbol @code{ipv4} or
+@code{ipv6} restricts the returned information to IPv4 and IPv6
+addresses respectively, independently of the value of @var{full}.
+Speficying @code{ipv6} when IPv6 support is not available will result
+in an error being signaled.
+
+Some examples:
+
+@example
+(network-interface-list) @result{}
+(("vmnet8" .
+  [172 16 76 1 0])
+ ("vmnet1" .
+  [172 16 206 1 0])
+ ("lo0" .
+  [65152 0 0 0 0 0 0 1 0])
+ ("lo0" .
+  [0 0 0 0 0 0 0 1 0])
+ ("lo0" .
+  [127 0 0 1 0]))
+@end example
+
+@example
+(network-interface-list t) @result{}
+(("vmnet8"
+  [172 16 76 1 0]
+  [172 16 76 255 0]
+  [255 255 255 0 0])
+ ("vmnet1"
+  [172 16 206 1 0]
+  [172 16 206 255 0]
+  [255 255 255 0 0])
+ ("lo0"
+  [65152 0 0 0 0 0 0 1 0]
+  [65152 0 0 0 65535 65535 65535 65535 0]
+  [65535 65535 65535 65535 0 0 0 0 0])
+ ("lo0"
+  [0 0 0 0 0 0 0 1 0]
+  [0 0 0 0 0 0 0 1 0]
+  [65535 65535 65535 65535 65535 65535 65535 65535 0])
+ ("lo0"
+  [127 0 0 1 0]
+  [127 255 255 255 0]
+  [255 0 0 0 0]))
+@end example
 @end defun
 
 @defun network-interface-info ifname
@@ -2996,6 +3051,8 @@ The layer 2 address (Ethernet MAC address, for instance).
 @item flags
 The current flags of the interface.
 @end table
+
+Note that this function returns only IPv4 information.
 @end defun
 
 @defun format-network-address address &optional omit-port

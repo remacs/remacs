@@ -228,21 +228,22 @@ host address is a localhost address, or in the same subnet as one
 of the local interfaces, this function returns nil.  Non-nil
 otherwise."
   (let ((addresses (network-lookup-address-info host))
-        (network-interface-list (network-interface-list))
+        (network-interface-list (network-interface-list t))
         (off-net t))
     (when
      (or (and (functionp nsm-trust-local-network)
               (funcall nsm-trust-local-network))
          nsm-trust-local-network)
      (mapc
-      (lambda (address)
+      (lambda (ip)
         (mapc
-         (lambda (iface)
-           (let ((info (network-interface-info (car iface))))
+         (lambda (info)
+           (let ((local-ip (nth 1 info))
+                 (mask (nth 2 info)))
              (when
-                 (nsm-network-same-subnet (substring (car info) 0 -1)
-                                          (substring (car (cddr info)) 0 -1)
-                                          (substring address 0 -1))
+                 (nsm-network-same-subnet (substring local-ip 0 -1)
+                                          (substring mask 0 -1)
+                                          (substring ip 0 -1))
                (setq off-net nil))))
          network-interface-list))
       addresses))

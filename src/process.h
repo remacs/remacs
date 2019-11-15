@@ -291,7 +291,7 @@ extern void catch_child_signal (void);
 extern void restore_nofile_limit (void);
 
 #ifdef WINDOWSNT
-extern Lisp_Object network_interface_list (void);
+extern Lisp_Object network_interface_list (bool full, unsigned short match);
 extern Lisp_Object network_interface_info (Lisp_Object);
 #endif
 
