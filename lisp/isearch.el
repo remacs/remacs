@@ -1049,8 +1049,8 @@ Type \\[isearch-occur] to run `occur' that shows\
  the last search string.
 Type \\[isearch-highlight-regexp] to run `highlight-regexp'\
  that highlights the last search string.
-Type \\[isearch-highlight-lines-matching-regexp] to run
- `highlight-lines-matching-regexp'\ that highlights lines
+Type \\[isearch-highlight-lines-matching-regexp] to run\
+ `highlight-lines-matching-regexp' that highlights lines
  matching the last search string.
 
 Type \\[isearch-describe-bindings] to display all Isearch key bindings.
