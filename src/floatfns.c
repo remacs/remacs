@@ -340,9 +340,8 @@ This is the same as the exponent of a float.  */)
    representable as a double.
 
    Return DBL_MANT_DIG - DBL_MIN_EXP (the maximum possible valid
-   scale) if D is zero or tiny.  Return a value greater than
-   DBL_MANT_DIG - DBL_MIN_EXP if there is conversion trouble; on all
-   current platforms this can happen only if D is infinite or a NaN.  */
+   scale) if D is zero or tiny.  Return one greater than that if
+   D is infinite, and two greater than that if D is a NaN.  */
 
 int
 double_integer_scale (double d)
@@ -351,11 +350,10 @@ double_integer_scale (double d)
   return (DBL_MIN_EXP - 1 <= exponent && exponent < INT_MAX
 	  ? DBL_MANT_DIG - 1 - exponent
 	  : (DBL_MANT_DIG - DBL_MIN_EXP
-	     + (exponent == INT_MAX
-		|| (exponent == FP_ILOGBNAN
-		    && (FP_ILOGBNAN != FP_ILOGB0 || isnan (d)))
-		|| (!IEEE_FLOATING_POINT && exponent == INT_MIN
-		    && (FP_ILOGB0 != INT_MIN || d != 0)))));
+	     + ((exponent == FP_ILOGBNAN
+		 && (FP_ILOGBNAN != FP_ILOGB0 || isnan (d)))
+		? 2
+		: exponent == INT_MAX)));
 }
 
 /* Convert the Lisp number N to an integer and return a pointer to the
@@ -404,6 +402,7 @@ rounding_driver (Lisp_Object n, Lisp_Object d,
 
   CHECK_NUMBER (d);
 
+  int dscale = 0;
   if (FIXNUMP (d))
     {
       if (XFIXNUM (d) == 0)
@@ -413,9 +412,21 @@ rounding_driver (Lisp_Object n, Lisp_Object d,
       if (FIXNUMP (n))
 	return make_int (fixnum_divide (XFIXNUM (n), XFIXNUM (d)));
     }
+  else if (FLOATP (d))
+    {
+      if (XFLOAT_DATA (d) == 0)
+	xsignal0 (Qarith_error);
+      dscale = double_integer_scale (XFLOAT_DATA (d));
+    }
 
   int nscale = FLOATP (n) ? double_integer_scale (XFLOAT_DATA (n)) : 0;
-  int dscale = FLOATP (d) ? double_integer_scale (XFLOAT_DATA (d)) : 0;
+
+  /* If the numerator is finite and the denominator infinite, the
+     quotient is zero and there is no need to try the impossible task
+     of rescaling the denominator.  */
+  if (dscale == DBL_MANT_DIG - DBL_MIN_EXP + 1 && nscale < dscale)
+    return make_fixnum (0);
+
   int_divide (mpz[0],
 	      *rescale_for_division (n, &mpz[0], nscale, dscale),
 	      *rescale_for_division (d, &mpz[1], dscale, nscale));
