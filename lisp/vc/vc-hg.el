@@ -578,7 +578,7 @@ Optional arg REVISION is a revision to annotate from."
 (defun vc-hg-retrieve-tag (dir name _update)
   "Retrieve the version tagged by NAME of all registered files at or below DIR."
   (let ((default-directory dir))
-    (vc-hg-command nil 0 nil "update" name)
+    (vc-hg-command nil 0 nil "update" (unless (string-empty-p name) name))
     ;; TODO: update *vc-change-log* buffer so can see @ if --graph
     ))
 
