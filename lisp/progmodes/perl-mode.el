@@ -935,15 +935,24 @@ changed by, or (parse-state) if line starts in a quoted string."
 In usual case returns an integer: the column to indent to.
 Returns (parse-state) if line starts inside a string."
   (save-excursion
-    (let ((indent-point (point))
-	  (case-fold-search nil)
-	  (colon-line-end 0)
-          prev-char
-	  state containing-sexp)
-      (setq containing-sexp (nth 1 (syntax-ppss indent-point)))
+    (let* ((indent-point (point))
+	   (case-fold-search nil)
+	   (colon-line-end 0)
+           prev-char
+	   (state (syntax-ppss))
+	   (containing-sexp (nth 1 state))
+	   ;; Don't auto-indent in a quoted string or a here-document.
+	   (unindentable (or (nth 3 state) (eq 2 (nth 7 state)))))
+      (when (and (eq t (nth 3 state))
+                 (save-excursion
+                   (goto-char (nth 8 state))
+                   (looking-back "qw[ \t]*" (- (point) 4))))
+        ;; qw(...) is a list of words so the spacing is not meaningful,
+        ;; and makes indentation possible (and desirable).
+        (setq unindentable nil)
+        (setq containing-sexp (nth 8 state)))
       (cond
-       ;; Don't auto-indent in a quoted string or a here-document.
-       ((or (nth 3 state) (eq 2 (nth 7 state))) 'noindent)
+       (unindentable 'noindent)
        ((null containing-sexp)          ; Line is at top level.
         (skip-chars-forward " \t\f")
         (if (memq (following-char)
@@ -965,7 +974,11 @@ Returns (parse-state) if line starts inside a string."
             ;;             arg2
             ;;         );
             (progn
-              (skip-syntax-backward "(")
+              ;; Go just before the open paren (don't rely on the
+              ;; skip-syntax-backward to jump over it, because it could
+              ;; have string-fence syntax instead!).
+              (goto-char containing-sexp)
+              (skip-syntax-backward "(") ;FIXME: Not sure if still want this.
               (condition-case nil
                   (while (save-excursion
                            (skip-syntax-backward " ") (not (bolp)))
