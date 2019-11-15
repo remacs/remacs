@@ -309,8 +309,10 @@ CREATE-HOOK is a hook to run after creating a frame."
 	  (make-frame-visible (symbol-value frame-var))
 	  (select-frame (symbol-value frame-var))
 	  (set-window-dedicated-p (selected-window) nil)
-	  (if (not (eq (current-buffer) (symbol-value buffer-var)))
-	      (switch-to-buffer (symbol-value buffer-var)))
+	  (unless (eq (current-buffer) (symbol-value buffer-var))
+            ;; To avoid that 'switch-to-buffer-obey-display-actions'
+            ;; butts in, use plain 'set-window-buffer' (Bug#37840).
+            (set-window-buffer nil (symbol-value buffer-var)))
 	  (set-window-dedicated-p (selected-window) t)
 	  (raise-frame (symbol-value frame-var))
 	  )
@@ -346,7 +348,9 @@ CREATE-HOOK is a hook to run after creating a frame."
 	;; Put the buffer into the frame
 	(save-excursion
 	  (select-frame (symbol-value frame-var))
-	  (switch-to-buffer (symbol-value buffer-var))
+          ;; To avoid that 'switch-to-buffer-obey-display-actions'
+          ;; butts in, use plain 'set-window-buffer' (Bug#37840).
+	  (set-window-buffer nil (symbol-value buffer-var))
 	  (set-window-dedicated-p (selected-window) t))
 	;; Run hooks (like reposition)
 	(run-hooks create-hook)
