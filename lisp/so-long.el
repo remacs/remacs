@@ -421,6 +421,9 @@
 (declare-function outline-toggle-children "outline")
 (declare-function outline-toggle-children "outline")
 
+(declare-function ad-find-advice "advice")
+(declare-function ad-remove-advice "advice")
+
 (defvar so-long-enabled nil
   "Set to nil to prevent `so-long' from being triggered automatically.
 
