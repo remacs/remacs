@@ -1472,11 +1472,12 @@ harmonize_variable_watchers (Lisp_Object alias, Lisp_Object base_variable)
 
 DEFUN ("add-variable-watcher", Fadd_variable_watcher, Sadd_variable_watcher,
        2, 2, 0,
-       doc: /* Cause WATCH-FUNCTION to be called when SYMBOL is set.
+       doc: /* Cause WATCH-FUNCTION to be called when SYMBOL is about to be set.
 
 It will be called with 4 arguments: (SYMBOL NEWVAL OPERATION WHERE).
 SYMBOL is the variable being changed.
-NEWVAL is the value it will be changed to.
+NEWVAL is the value it will be changed to.  (The variable still has
+the old value when WATCH-FUNCTION is called.)
 OPERATION is a symbol representing the kind of change, one of: `set',
 `let', `unlet', `makunbound', and `defvaralias'.
 WHERE is a buffer if the buffer-local value of the variable is being
