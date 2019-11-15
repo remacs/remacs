@@ -580,7 +580,7 @@ Add an entry here when adding a new search engine.")
 
 (defcustom nnir-method-default-engines  '((nnimap . imap))
   "Alist of default search engines keyed by server method."
-  :version "24.1"
+  :version "27.1"
   :group 'nnir
   :type `(repeat (cons (choice (const nnimap) (const nntp) (const nnspool)
 			       (const nneething) (const nndir) (const nnmbox)
