@@ -463,8 +463,7 @@ Has no effect if `global-so-long-mode' is not enabled.")
 
 See `so-long-detected-long-line-p' for details."
   :type 'integer
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defcustom so-long-max-lines 5
   "Number of non-blank, non-comment lines to test for excessive length.
@@ -478,8 +477,7 @@ be counted.
 See `so-long-detected-long-line-p' for details."
   :type '(choice (integer :tag "Limit")
                  (const :tag "Unlimited" nil))
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defcustom so-long-skip-leading-comments t
   "Non-nil to ignore all leading comments and whitespace.
@@ -490,8 +488,7 @@ comments following the shebang will be ignored.
 
 See `so-long-detected-long-line-p' for details."
   :type 'boolean
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defcustom so-long-target-modes
   '(prog-mode css-mode sgml-mode nxml-mode)
@@ -507,8 +504,7 @@ files would prevent Emacs from handling them correctly."
   ;; Use 'symbol', as 'function' may be unknown => mismatch.
   :type '(choice (repeat :tag "Specified modes" symbol)
                  (const :tag "All modes" t))
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defcustom so-long-invisible-buffer-function #'so-long-deferred
   "Function called in place of `so-long' when the buffer is not displayed.
@@ -538,8 +534,7 @@ the mentioned options might interfere with some intended processing."
   :type '(radio (const so-long-deferred)
                 (const :tag "nil: Call so-long as normal" nil)
                 (function :tag "Custom function"))
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defcustom so-long-predicate 'so-long-detected-long-line-p
   "Function, called after `set-auto-mode' to decide whether action is needed.
@@ -552,8 +547,7 @@ then `so-long' will be invoked.
 Defaults to `so-long-detected-long-line-p'."
   :type '(radio (const so-long-detected-long-line-p)
                 (function :tag "Custom function"))
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 ;; Silence byte-compiler warning.  `so-long-action-alist' is defined below
 ;; as a user option; but the definition sequence required for its setter
@@ -605,8 +599,7 @@ subsequently called."
                                   (function :tag "Action")
                                   (function :tag "Revert")))
   :set #'so-long--action-alist-setter
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 (put 'so-long-action-alist 'risky-local-variable t)
 
 (defcustom so-long-action 'so-long-mode
@@ -630,8 +623,7 @@ Each action likewise determines the behaviour of `so-long-revert'.
 If the value is nil, or not defined in `so-long-action-alist', then no action
 will be taken."
   :type (so-long--action-type)
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defvar-local so-long-function nil
   "The function called by `so-long'.
@@ -701,8 +693,7 @@ an example."
                 (const so-long-inhibit)
                 (const :tag "nil: Use so-long-function as normal" nil)
                 (function :tag "Custom function"))
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 (make-variable-buffer-local 'so-long-file-local-mode-function)
 
 ;; `provided-mode-derived-p' was added in 26.1
@@ -779,8 +770,7 @@ disabled modes are re-enabled by calling them with the numeric argument 1.
 Please submit bug reports to recommend additional modes for this list, whether
 they are in Emacs core, GNU ELPA, or elsewhere."
   :type '(repeat symbol) ;; not function, as may be unknown => mismatch.
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defcustom so-long-variable-overrides
   '((bidi-paragraph-direction . left-to-right)
@@ -813,24 +803,21 @@ scanned to find the next position."
              (show-paren-mode boolean)
              (truncate-lines boolean)
              (which-func-mode boolean))
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defcustom so-long-hook nil
   "List of functions to call after `so-long' is called.
 
 See also `so-long-revert-hook'."
   :type 'hook
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defcustom so-long-revert-hook nil
   "List of functions to call after `so-long-revert' is called.
 
 See also `so-long-hook'."
   :type 'hook
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defcustom so-long-mode-line-label "So Long"
   "Text label of `so-long-mode-line-info' when long lines are detected.
@@ -838,20 +825,17 @@ See also `so-long-hook'."
 If nil, no mode line indicator will be displayed."
   :type '(choice (string :tag "String")
                  (const :tag "None" nil))
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defface so-long-mode-line-active
   '((t :inherit mode-line-emphasis))
   "Face for `so-long-mode-line-info' when mitigations are active."
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 (defface so-long-mode-line-inactive
   '((t :inherit mode-line-inactive))
   "Face for `so-long-mode-line-info' when mitigations have been reverted."
-  :package-version '(so-long . "1.0")
-  :group 'so-long)
+  :package-version '(so-long . "1.0"))
 
 ;; Modes that go slowly and line lengths excessive
 ;; Font-lock performance becoming oppressive
