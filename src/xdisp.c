@@ -21719,13 +21719,17 @@ extend_face_to_end_of_line (struct it *it)
 		}
 	    }
 
-	  /* Fill space until window edge with the merged face.  */
-	  const int stretch_width = it->last_visible_x - it->current_x;
+	  /* Fill space until window edge with the merged face.  Do that
+	     only for L2R rows, as R2L rows are handled specially below.  */
+	  if (!it->glyph_row->reversed_p)
+	    {
+	      const int stretch_width = it->last_visible_x - it->current_x;
 
-	  if (stretch_width > 0)
-	      append_stretch_glyph (it, Qnil, stretch_width,
-	                            it->ascent + it->descent,
-	                            stretch_ascent);
+	      if (stretch_width > 0)
+		append_stretch_glyph (it, Qnil, stretch_width,
+				      it->ascent + it->descent,
+				      stretch_ascent);
+	    }
 
 	  it->char_to_display = saved_char;
 	  it->position = saved_pos;
