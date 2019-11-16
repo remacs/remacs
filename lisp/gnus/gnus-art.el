@@ -5864,6 +5864,7 @@ all parts."
      b e
      'keymap gnus-mime-button-map
      'face gnus-article-button-face
+     'follow-link t
      'help-echo
      "mouse-2: toggle the MIME part; down-mouse-3: more options")))
 
@@ -6147,6 +6148,7 @@ If nil, don't show those extra buttons."
 	     keymap ,gnus-mime-button-map
 	     mouse-face ,gnus-article-mouse-face
 	     face ,gnus-article-button-face
+	     follow-link t
 	     gnus-part ,id
 	     button t
 	     article-type multipart
@@ -6170,6 +6172,7 @@ If nil, don't show those extra buttons."
 	       keymap ,gnus-mime-button-map
 	       mouse-face ,gnus-article-mouse-face
 	       face ,gnus-article-button-face
+	       follow-link t
 	       gnus-part ,id
 	       button t
 	       gnus-data ,handle
@@ -8404,6 +8407,7 @@ url is put as the `gnus-button-url' overlay property on the button."
      gnus-prev-page-line-format nil
      `(keymap ,gnus-prev-page-map
 	      gnus-prev t
+	      follow-link t
 	      gnus-callback gnus-article-button-prev-page
 	      article-type annotation))
     (setq e (if (bolp)
@@ -8435,6 +8439,7 @@ url is put as the `gnus-button-url' overlay property on the button."
     (gnus-eval-format gnus-next-page-line-format nil
 		      `(keymap ,gnus-next-page-map
                                gnus-next t
+			       follow-link t
                                gnus-callback gnus-article-button-next-page
                                article-type annotation))
     (setq e (if (bolp)
@@ -8822,11 +8827,12 @@ For example:
      gnus-mime-security-button-line-format
      gnus-mime-security-button-line-format-alist
      `(keymap ,gnus-mime-security-button-map
-	 gnus-callback gnus-mime-security-press-button
-	 gnus-line-format ,gnus-mime-security-button-line-format
-	 gnus-mime-details ,gnus-mime-security-button-pressed
-	 article-type annotation
-	 gnus-data ,handle))
+	      gnus-callback gnus-mime-security-press-button
+	      gnus-line-format ,gnus-mime-security-button-line-format
+	      gnus-mime-details ,gnus-mime-security-button-pressed
+	      article-type annotation
+	      follow-link t
+	      gnus-data ,handle))
     (setq e (if (bolp)
 		;; Exclude a newline.
 		(1- (point))
