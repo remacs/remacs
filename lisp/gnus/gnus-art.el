@@ -6678,14 +6678,17 @@ not have a face in `gnus-article-boring-faces'."
 	   "An" "Ap" [?A (meta return)] [?A delete]))
 	(nosave-in-article
 	 '("AS" "\C-d"))
-	keys new-sum-point)
+	keys new-sum-point gnus-pick-mode func)
     (with-current-buffer gnus-article-current-summary
-      (let (gnus-pick-mode)
-	(setq unread-command-events (nconc unread-command-events
-					   (list (or key last-command-event)))
-	      keys (read-key-sequence nil t))))
+      (setq unread-command-events (nconc unread-command-events
+					 (list (or key last-command-event)))
+	    keys (read-key-sequence nil t)
+	    func (key-binding keys t)))
 
     (message "")
+
+    (when (eq func 'undefined)
+      (error "%s is undefined" keys))
 
     (cond
      ((eq (aref keys (1- (length keys))) ?\C-h)
@@ -6693,28 +6696,23 @@ not have a face in `gnus-article-boring-faces'."
      ((or (member keys nosaves)
 	  (member keys nosave-but-article)
 	  (member keys nosave-in-article))
-      (let (func)
-	(with-current-buffer gnus-article-current-summary
-	  ;; We disable the pick minor mode commands.
-	  (let (gnus-pick-mode)
-	    (setq func (key-binding keys t))))
-	(if (or (not func)
-		(numberp func))
-	    (ding)
-	  (unless (member keys nosave-in-article)
-	    (set-buffer gnus-article-current-summary))
-	  (when (and (symbolp func)
-		     (get func 'disabled))
-	    (error "Function %s disabled" func))
-	  (call-interactively func)
-	  (setq new-sum-point (point)))
-	(when (member keys nosave-but-article)
-	  (pop-to-buffer gnus-article-buffer))))
+      (if (or (not func)
+	      (numberp func))
+	  (ding)
+	(unless (member keys nosave-in-article)
+	  (set-buffer gnus-article-current-summary))
+	(when (and (symbolp func)
+		   (get func 'disabled))
+	  (error "Function %s disabled" func))
+	(call-interactively func)
+	(setq new-sum-point (point)))
+      (when (member keys nosave-but-article)
+	(pop-to-buffer gnus-article-buffer)))
      (t
       ;; These commands should restore window configuration.
       (let ((obuf (current-buffer))
 	    (owin (current-window-configuration))
-	    win func in-buffer selected new-sum-start new-sum-hscroll err)
+	    win in-buffer selected new-sum-start new-sum-hscroll err)
 	(cond (not-restore-window
 	       (pop-to-buffer gnus-article-current-summary)
 	       (setq win (selected-window)))
@@ -6733,9 +6731,6 @@ not have a face in `gnus-article-boring-faces'."
 		 (select-frame-set-input-focus (window-frame win))
 		 (select-window win))))
 	(setq in-buffer (current-buffer))
-	;; We disable the pick minor mode commands.
-	(setq func (let (gnus-pick-mode)
-		     (key-binding keys t)))
 	(when (and (symbolp func)
 		   (get func 'disabled))
 	  (error "Function %s disabled" func))
