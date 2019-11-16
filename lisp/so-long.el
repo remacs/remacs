@@ -272,13 +272,13 @@
 ;;     (setq so-long-threshold 1000)
 ;;     (setq so-long-max-lines 100)
 ;;     ;; Additional target major modes to trigger for.
-;;     (mapc (apply-partially 'add-to-list 'so-long-target-modes)
+;;     (mapc (apply-partially #'add-to-list 'so-long-target-modes)
 ;;           '(sgml-mode nxml-mode))
 ;;     ;; Additional buffer-local minor modes to disable.
-;;     (mapc (apply-partially 'add-to-list 'so-long-minor-modes)
+;;     (mapc (apply-partially #'add-to-list 'so-long-minor-modes)
 ;;           '(diff-hl-mode diff-hl-amend-mode diff-hl-flydiff-mode))
 ;;     ;; Additional variables to override.
-;;     (mapc (apply-partially 'add-to-list 'so-long-variable-overrides)
+;;     (mapc (apply-partially #'add-to-list 'so-long-variable-overrides)
 ;;           '((show-trailing-whitespace . nil)
 ;;             (truncate-lines . nil))))
 
