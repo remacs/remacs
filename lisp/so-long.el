@@ -902,14 +902,19 @@ If RESET is non-nil, remove any existing values before storing the new ones."
           `(menu-item
             ,label
             ,(let ((sym (make-symbol "so-long-menu-item-replace-action")))
-               ;; Using a symbol here, so that `describe-key' on the menu item
-               ;; produces the `so-long-menu-item-replace-action' documentation.
-               (defalias sym
-                 (apply-partially #'so-long-menu-item-replace-action item)
-                 (documentation #'so-long-menu-item-replace-action))
-               (put sym 'interactive-form '(interactive "@"))
-               ;; We use "@" as commands in the mode-line menu may be
-               ;; triggered by mouse when some other window is selected.
+               ;; We make a symbol so that `describe-key' on the menu item
+               ;; produces something more descriptive than byte code.  There is
+               ;; no interned `so-long-menu-item-replace-action' which might
+               ;; make this slightly confusing -- but only in the rare situation
+               ;; when someone uses `describe-key' on one of these menu items,
+               ;; and then wants to find more information.  We mitigate this by
+               ;; making the following docstring very clear.
+               (defalias sym (lambda () (interactive "@") (so-long key))
+                 ;; We use "@" as commands in the mode-line menu may be
+                 ;; triggered by mouse when some other window is selected.
+                 "Revert the current action and invoke the chosen replacement.
+
+This commmand calls `so-long' with the selected action as an argument.")
                sym)
             :enable (not (and so-long--active
                               (eq ',actionfunc so-long-function)
@@ -924,20 +929,6 @@ If RESET is non-nil, remove any existing values before storing the new ones."
     (define-key-after help-map [so-long-customize]
       '(menu-item "Customize" so-long-customize))
     map))
-
-(defun so-long-menu-item-replace-action (replacement)
-  "Revert the current action and invoke the specified replacement.
-
-REPLACEMENT is a `so-long-action-alist' item."
-  (interactive)
-  (when so-long--active
-    (so-long-revert))
-  (cl-destructuring-bind (_key _label actionfunc revertfunc)
-      replacement
-    (setq so-long-function actionfunc)
-    (setq so-long-revert-function revertfunc)
-    (setq this-command 'so-long)
-    (so-long)))
 
 ;;;###autoload
 (defun so-long-commentary ()

@@ -259,22 +259,24 @@
       (so-long-tests-assert-and-revert (or action 'so-long-mode)))))
 
 (ert-deftest so-long-tests-so-long-menu-item-replace-action ()
-  "Test using the `so-long-menu-item-replace-action' menu item."
+  "Test using the `so-long-menu' action commands."
   (with-temp-buffer
     (insert "#!emacs\n")
     (normal-mode)
     (so-long-tests-remember)
     (insert (make-string (1+ so-long-threshold) ?x))
-    (let (action)
+    (let ((menu (so-long-menu))
+          action
+          command)
       (dolist (item so-long-action-alist)
-        ;; n.b. Any existing action is first reverted.
-        (so-long-menu-item-replace-action item)
-        (setq action (car item))
+        (setq action (car item)
+              command (lookup-key menu (vector action)))
+        (funcall command)
         (so-long-tests-assert-active action))
       ;; After all actions have been used, revert to normal and assert
       ;; that the most recent action to have been applied is the one
       ;; we have just reverted.
-      (so-long-revert)
+      (funcall (lookup-key menu [so-long-revert]))
       (so-long-tests-assert-reverted action))))
 
 (ert-deftest so-long-tests-major-mode ()
