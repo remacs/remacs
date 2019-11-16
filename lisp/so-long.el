@@ -415,15 +415,6 @@
 
 (declare-function longlines-mode "longlines")
 (defvar longlines-mode)
-
-(declare-function outline-next-visible-heading "outline")
-(declare-function outline-previous-visible-heading "outline")
-(declare-function outline-toggle-children "outline")
-(declare-function outline-toggle-children "outline")
-
-(declare-function ad-find-advice "advice")
-(declare-function ad-remove-advice "advice")
-
 (defvar so-long-enabled nil
   "Set to nil to prevent `so-long' from being triggered automatically.
 
@@ -985,6 +976,10 @@ REPLACEMENT is a `so-long-action-alist' item."
     (rename-buffer buf)
     ;; Enable `outline-mode' and `view-mode' for user convenience.
     (outline-mode)
+    (declare-function outline-next-visible-heading "outline")
+    (declare-function outline-previous-visible-heading "outline")
+    (declare-function outline-toggle-children "outline")
+    (declare-function outline-toggle-children "outline")
     (view-mode 1)
     ;; Add some custom local bindings.
     (let ((map (make-sparse-keymap)))
@@ -1832,6 +1827,8 @@ If it appears in `%s', you should remove it."
   (when (version< so-long-version "1.0")
     (remove-hook 'change-major-mode-hook 'so-long-change-major-mode)
     (require 'advice)
+    (declare-function ad-find-advice "advice")
+    (declare-function ad-remove-advice "advice")
     (when (ad-find-advice 'hack-local-variables 'after 'so-long--file-local-mode)
       (ad-remove-advice 'hack-local-variables 'after 'so-long--file-local-mode)
       (ad-activate 'hack-local-variables))
