@@ -261,10 +261,6 @@
 (ert-deftest so-long-tests-so-long-menu-item-replace-action ()
   "Test using the `so-long-menu-item-replace-action' menu item."
   (with-temp-buffer
-    ;; Due to (with-selected-window (so-long-menu-click-window) ...)
-    ;; (used by `so-long-menu-item-replace-action'), our temp buffer
-    ;; must be in the selected window.
-    (set-window-buffer nil (current-buffer))
     (insert "#!emacs\n")
     (normal-mode)
     (so-long-tests-remember)
@@ -278,7 +274,7 @@
       ;; After all actions have been used, revert to normal and assert
       ;; that the most recent action to have been applied is the one
       ;; we have just reverted.
-      (so-long-menu-item-revert)
+      (so-long-revert)
       (so-long-tests-assert-reverted action))))
 
 (ert-deftest so-long-tests-major-mode ()

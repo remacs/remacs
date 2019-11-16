@@ -889,7 +889,7 @@ If RESET is non-nil, remove any existing values before storing the new ones."
         (help-map (make-sparse-keymap "Help")))
     ;; `so-long-revert'.
     (define-key-after map [so-long-revert]
-      '(menu-item "Revert to normal" so-long-menu-item-revert
+      '(menu-item "Revert to normal" so-long-revert
                   :enable (and so-long-revert-function
                                so-long--active)))
     ;; `so-long-menu-item-replace-action' over `so-long-action-alist'.
@@ -907,7 +907,9 @@ If RESET is non-nil, remove any existing values before storing the new ones."
                (defalias sym
                  (apply-partially #'so-long-menu-item-replace-action item)
                  (documentation #'so-long-menu-item-replace-action))
-               (put sym 'interactive-form '(interactive))
+               (put sym 'interactive-form '(interactive "@"))
+               ;; We use "@" as commands in the mode-line menu may be
+               ;; triggered by mouse when some other window is selected.
                sym)
             :enable (not (and so-long--active
                               (eq ',actionfunc so-long-function)
@@ -923,38 +925,19 @@ If RESET is non-nil, remove any existing values before storing the new ones."
       '(menu-item "Customize" so-long-customize))
     map))
 
-(defun so-long-menu-click-window ()
-  "Return the window for a click in the So Long menu.
-
-Commands in the mode-line menu may be triggered by mouse when some other window
-is selected, so we need to make sure we are acting on the correct buffer."
-  ;; Refer to (info "(elisp) Click Events") regarding the form of the mouse
-  ;; position list for clicks in the mode line.
-  (or (and (mouse-event-p last-nonmenu-event)
-           (windowp (car (cadr last-nonmenu-event))) ; cXXXr only available
-           (car (cadr last-nonmenu-event)))          ; since Emacs 26.1
-      (selected-window)))
-
-(defun so-long-menu-item-revert ()
-  "Invoke `so-long-revert'."
-  (interactive)
-  (with-selected-window (so-long-menu-click-window)
-    (so-long-revert)))
-
 (defun so-long-menu-item-replace-action (replacement)
   "Revert the current action and invoke the specified replacement.
 
 REPLACEMENT is a `so-long-action-alist' item."
   (interactive)
-  (with-selected-window (so-long-menu-click-window)
-    (when so-long--active
-      (so-long-revert))
-    (cl-destructuring-bind (_key _label actionfunc revertfunc)
-        replacement
-      (setq so-long-function actionfunc)
-      (setq so-long-revert-function revertfunc)
-      (setq this-command 'so-long)
-      (so-long))))
+  (when so-long--active
+    (so-long-revert))
+  (cl-destructuring-bind (_key _label actionfunc revertfunc)
+      replacement
+    (setq so-long-function actionfunc)
+    (setq so-long-revert-function revertfunc)
+    (setq this-command 'so-long)
+    (so-long)))
 
 ;;;###autoload
 (defun so-long-commentary ()
@@ -1644,7 +1627,9 @@ automatically by `global-so-long-mode').
 For the default action, reverting will restore the original major mode, and
 restore the minor modes and settings which were overridden when `so-long' was
 invoked."
-  (interactive)
+  (interactive "@")
+  ;; We use "@" as commands in the mode-line menu may be triggered by mouse
+  ;; when some other window is selected.
   (unless so-long--calling
     (let ((so-long--calling t))
       (when so-long-revert-function
@@ -1652,10 +1637,6 @@ invoked."
         (setq so-long--active nil))
       (let ((inhibit-read-only t))
         (run-hooks 'so-long-revert-hook)))))
-
-;; Duplicate the `so-long-revert' documentation for the menu item.
-(put 'so-long-menu-item-revert 'function-documentation
-     (documentation 'so-long-revert t))
 
 ;;;###autoload
 (defun so-long-enable ()
@@ -1878,10 +1859,10 @@ If it appears in `%s', you should remove it."
 ; LocalWords:  customize customized customizing Customization globalized amongst
 ; LocalWords:  initialized profiler boolean minified pre redisplay config keymap
 ; LocalWords:  noerror selectable mapc sgml nxml hl flydiff defs arg Phil Sainty
-; LocalWords:  defadvice nadvice whitespace ie bos eos eobp origmode un Un cXXXr
+; LocalWords:  defadvice nadvice whitespace ie bos eos eobp origmode un Un setq
 ; LocalWords:  docstring auf wiedersehen longlines alist autoload Refactored Inc
 ; LocalWords:  MERCHANTABILITY RET REGEXP VAR ELPA WS mitigations EmacsWiki eval
-; LocalWords:  setq rx filename filenames
+; LocalWords:  rx filename filenames
 
 ;; So long, farewell, auf wiedersehen, goodbye
 ;; You have to go, this code is minified
