@@ -1151,13 +1151,13 @@ Letters do not insert themselves; instead, they are commands.
           nil))))
 
 (defun tab-bar-list-next-line (&optional arg)
-  (interactive)
+  (interactive "p")
   (forward-line arg)
   (beginning-of-line)
   (move-to-column tab-bar-list-column))
 
 (defun tab-bar-list-prev-line (&optional arg)
-  (interactive)
+  (interactive "p")
   (forward-line (- arg))
   (beginning-of-line)
   (move-to-column tab-bar-list-column))
