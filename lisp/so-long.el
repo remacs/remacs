@@ -1576,8 +1576,12 @@ This command is called automatically when long lines are detected, when
 
 The effects of the action can be undone by calling `so-long-revert'.
 
-If ACTION is provided, it is used instead of `so-long-action'.  With a prefix
-argument, select the action to use interactively."
+If ACTION is provided, it is used instead of `so-long-action'.
+
+With a prefix argument, select the action to use interactively.
+
+If an action was already active in the buffer, it will be reverted before
+invoking the new action."
   (interactive
    (list (and current-prefix-arg
               (intern
@@ -1587,6 +1591,10 @@ argument, select the action to use interactively."
   ;; Ensure that `so-long-deferred' only triggers `so-long' once (at most).
   (remove-hook 'window-configuration-change-hook #'so-long :local)
   (unless so-long--calling
+    ;; Revert the existing action, if any.
+    (when so-long--active
+      (so-long-revert))
+    ;; Invoke the new action.
     (let ((so-long--calling t))
       (so-long--ensure-enabled)
       ;; ACTION takes precedence if supplied.
