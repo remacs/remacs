@@ -1561,7 +1561,9 @@ If nil, don't change the value of `debug-on-error'."
 This affects printing by `eval-expression' (via
 `eval-expression-print-format')."
   :group 'lisp
-  :type 'integer
+  :type `(choice (const :tag "ASCII characters" 127)
+                 (const :tag "All characters" ,(max-char))
+                 (integer :tag "Max codepoint to display as character"))
   :version "26.1")
 
 (defun eval-expression-print-format (value)
