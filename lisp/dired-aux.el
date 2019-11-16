@@ -1999,15 +1999,19 @@ Optional arg HOW-TO determines how to treat the target.
         (dired-dwim-target
          (dired-dwim-target-next))))
 
-(defun dired-dwim-target-next ()
-  ;; Return directories from all next visible windows with dired-mode buffers.
+(defun dired-dwim-target-next (&optional all-frames)
+  ;; Return directories from all next windows with dired-mode buffers.
   (mapcan (lambda (w)
             (with-current-buffer (window-buffer w)
               (when (eq major-mode 'dired-mode)
                 (list (dired-current-directory)))))
           (delq (selected-window) (window-list-1
-                                   (next-window nil 'nomini 'visible)
-                                   'nomini 'visible))))
+                                   (next-window nil 'nomini all-frames)
+                                   'nomini all-frames))))
+
+(defun dired-dwim-target-next-visible ()
+  ;; Return directories from all next visible windows with dired-mode buffers.
+  (dired-dwim-target-next 'visible))
 
 (defun dired-dwim-target-recent ()
   ;; Return directories from all visible windows with dired-mode buffers
