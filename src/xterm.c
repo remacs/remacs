@@ -9032,7 +9032,8 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 		  unblock_input ();
 		}
 
-	      if (old_left != f->left_pos || old_top != f->top_pos)
+	      if (!FRAME_TOOLTIP_P (f)
+		  && (old_left != f->left_pos || old_top != f->top_pos))
 		{
 		  inev.ie.kind = MOVE_FRAME_EVENT;
 		  XSETFRAME (inev.ie.frame_or_window, f);
