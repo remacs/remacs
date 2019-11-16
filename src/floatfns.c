@@ -350,10 +350,7 @@ double_integer_scale (double d)
   return (DBL_MIN_EXP - 1 <= exponent && exponent < INT_MAX
 	  ? DBL_MANT_DIG - 1 - exponent
 	  : (DBL_MANT_DIG - DBL_MIN_EXP
-	     + ((exponent == FP_ILOGBNAN
-		 && (FP_ILOGBNAN != FP_ILOGB0 || isnan (d)))
-		? 2
-		: exponent == INT_MAX)));
+	     + (isnan (d) ? 2 : exponent == INT_MAX)));
 }
 
 /* Convert the Lisp number N to an integer and return a pointer to the
