@@ -231,8 +231,10 @@ evaluating forms that never instrument them: from a file with
 (@kbd{M-:}).
 
 @findex edebug-remove-instrumentation
-  If you want to remove Edebug instrumentation from all functions, you
-can use the @code{edebug-remove-instrumentation} command.
+  A different way to remove the instrumentation from a definition is
+to use the @code{edebug-remove-instrumentation} command.  It also
+allows removing the instrumentation from everything that has been
+instrumented.
 
   @xref{Edebug Eval}, for other evaluation functions available
 inside of Edebug.
