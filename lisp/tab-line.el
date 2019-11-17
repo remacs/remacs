@@ -357,8 +357,6 @@ If the major mode's name string matches REGEXP, use GROUPNAME instead.")
                       (set-window-parameter nil 'tab-line-group nil))))
            (group-tab `(tab
                         (name . ,group)
-                        ;; Just to highlight the current group name
-                        (selected . t)
                         (select . ,(lambda ()
                                      (set-window-parameter nil 'tab-line-groups t)
                                      (set-window-parameter nil 'tab-line-group group)
@@ -445,25 +443,75 @@ variable `tab-line-tabs-function'."
                                         tab-line-close-button) ""))
                        `(
                          tab ,tab
+                         ,@(if selected-p '(selected t))
                          face ,(if selected-p
                                    (if (eq (selected-window) (old-selected-window))
                                        'tab-line-tab-current
                                      'tab-line-tab)
                                  'tab-line-tab-inactive)
                          mouse-face tab-line-highlight)))))
-           tabs)))
+           tabs))
+         (hscroll-data (tab-line-auto-hscroll strings hscroll)))
+    (setq hscroll (nth 1 hscroll-data))
     (append
-     (list separator
-           (when (and (natnump hscroll) (> hscroll 0))
-             tab-line-left-button)
-           (when (if (natnump hscroll)
-                     (< hscroll (1- (length strings)))
-                   (> (length strings) 1))
-               tab-line-right-button))
-     (if hscroll (nthcdr hscroll strings) strings)
+     (if (null (nth 0 hscroll-data))
+         (when hscroll
+           (setq hscroll nil)
+           (set-window-parameter nil 'tab-line-hscroll hscroll))
+       (list separator
+             (when (and (integerp hscroll) (not (zerop hscroll)))
+               tab-line-left-button)
+             (when (if (integerp hscroll)
+                       (< (abs hscroll) (1- (length strings)))
+                     (> (length strings) 1))
+               tab-line-right-button)))
+     (if hscroll (nthcdr (abs hscroll) strings) strings)
      (when (eq tab-line-tabs-function #'tab-line-tabs-window-buffers)
        (list (concat separator (when tab-line-new-tab-choice
                                  tab-line-new-button)))))))
+
+
+(defun tab-line-auto-hscroll (strings hscroll)
+  (with-temp-buffer
+    (let ((truncate-partial-width-windows nil)
+          (inhibit-modification-hooks t)
+          show-arrows)
+      (setq truncate-lines nil
+            buffer-undo-list t)
+      (apply 'insert strings)
+      (goto-char (point-min))
+      (add-face-text-property (point-min) (point-max) 'tab-line)
+      ;; Continuation means tab-line doesn't fit completely,
+      ;; thus scroll arrows are needed for scrolling.
+      (setq show-arrows (> (vertical-motion 1) 0))
+      ;; Try to auto-scroll only when scrolling is needed,
+      ;; but no manual scrolling was performed before.
+      (when (and show-arrows (not (and (integerp hscroll) (>= hscroll 0))))
+        (let ((pos (seq-position strings 'selected
+                                 (lambda (str prop)
+                                   (get-pos-property 1 prop str)))))
+          ;; Do nothing if no tab is selected.
+          (when pos
+            ;; Check if the selected tab is already visible.
+            (erase-buffer)
+            (apply 'insert (reverse
+                            (if (and (integerp hscroll) (>= pos (abs hscroll)))
+                                (nthcdr (abs hscroll) strings)
+                              strings)))
+            (goto-char (point-min))
+            (add-face-text-property (point-min) (point-max) 'tab-line)
+            (when (> (vertical-motion 1) 0)
+              (let* ((point (previous-single-property-change (point) 'tab))
+                     (tab-prop (or (get-pos-property point 'tab)
+                                   (get-pos-property
+                                    (previous-single-property-change point 'tab) 'tab)))
+                     (new (seq-position strings tab-prop
+                                        (lambda (str tab)
+                                          (eq (get-pos-property 1 'tab str) tab)))))
+                (when new
+                  (setq hscroll (- new))
+                  (set-window-parameter nil 'tab-line-hscroll hscroll)))))))
+      (list show-arrows hscroll))))
 
 
 (defun tab-line-hscroll (&optional arg window)
@@ -473,7 +521,7 @@ variable `tab-line-tabs-function'."
                  (funcall tab-line-tabs-function))))
     (set-window-parameter
      window 'tab-line-hscroll
-     (max 0 (min (+ (or hscroll 0) (or arg 1))
+     (max 0 (min (+ (if (integerp hscroll) (abs hscroll) 0) (or arg 1))
                  (1- (length tabs)))))
     (when window
       (force-mode-line-update t))))
