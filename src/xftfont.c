@@ -211,6 +211,9 @@ xftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 #ifdef FC_DUAL
       && spacing != FC_DUAL
 #endif	/* FC_DUAL */
+#ifdef FC_CHARCELL
+      && spacing != FC_CHARCELL
+#endif	/* FC_CHARCELL */
       )
     {
       font->min_width = font->max_width = font->average_width
