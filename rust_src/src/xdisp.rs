@@ -110,11 +110,11 @@ pub fn invisible_p(pos: LispObject) -> LispObject {
         pos
     };
     let invis = text_prop_means_invisible(prop);
-    return match invis {
+    match invis {
         0 => Qnil,
         1 => Qt,
         _ => LispObject::from(invis),
-    };
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/xdisp_exports.rs"));
