@@ -80,9 +80,9 @@ fn text_prop_means_invisible(prop: LispObject) -> EmacsInt {
     let cur_buf = ThreadState::current_buffer_unchecked();
     if cur_buf.invisibility_spec_.is_t() {
         if prop.is_nil() {
-            1
-        } else {
             0
+        } else {
+            1
         }
     } else {
         invisible_prop(prop, cur_buf.invisibility_spec_.as_cons().unwrap())
