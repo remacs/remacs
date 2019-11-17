@@ -4906,10 +4906,12 @@ Read file name, prompting with PROMPT and completing in directory DIR.
 See `read-file-name' for additional parameters."
   (let (filename)
     (cond
-     ((or (eq predicate 'file-directory-p)
-	  (eq (and (symbolp this-command)
-		   (get this-command 'ido)) 'dir)
-	  (memq this-command ido-read-file-name-as-directory-commands))
+     ((and (not (memq this-command ido-read-file-name-non-ido))
+           (or (eq predicate 'file-directory-p)
+	       (eq (and (symbolp this-command)
+                        (get this-command 'ido))
+                   'dir)
+	       (memq this-command ido-read-file-name-as-directory-commands)))
       (setq filename
 	    (ido-read-directory-name prompt dir default-filename mustmatch initial)))
      ((and (not (eq (and (symbolp this-command)
