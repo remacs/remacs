@@ -5151,7 +5151,7 @@ and the right cell border character."
 
 (defun table--put-cell-face-property (beg end &optional object)
   "Put cell face property."
-  (put-text-property beg end 'face 'table-cell object))
+  (put-text-property beg end 'font-lock-face 'table-cell object))
 
 (defun table--put-cell-keymap-property (beg end &optional object)
   "Put cell keymap property."
@@ -5178,7 +5178,7 @@ instead of the current buffer and returns the OBJECT."
 				   'table-cell nil
 				   'table-justify nil
 				   'table-valign nil
-				   'face nil
+				   'font-lock-face nil
 				   'rear-nonsticky nil
 				   'cursor-sensor-functions nil
 				   'keymap nil)
