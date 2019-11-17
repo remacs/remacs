@@ -68,7 +68,7 @@ fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
 }
 
 // originally the macro TEXT_PROP_MEANS_INVISIBLE from intervals.h
-pub fn text_prop_means_invisible(prop: LispObject) -> EmacsInt {
+fn text_prop_means_invisible(prop: LispObject) -> EmacsInt {
     let cur_buf = ThreadState::current_buffer_unchecked();
     if cur_buf.invisibility_spec_.is_t() {
         if prop.is_nil() {
