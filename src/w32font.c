@@ -2000,11 +2000,14 @@ w32_encode_weight (int n)
 static Lisp_Object
 w32_to_fc_weight (int n)
 {
-  if (n >= FW_EXTRABOLD) return intern ("black");
+  if (n >= FW_HEAVY)     return intern ("black");
+  if (n >= FW_EXTRABOLD) return Qextra_bold;
   if (n >= FW_BOLD)      return Qbold;
   if (n >= FW_SEMIBOLD)  return intern ("demibold");
   if (n >= FW_NORMAL)    return intern ("medium");
-  return Qlight;
+  if (n >= FW_LIGHT)     return Qlight;
+  if (n >= FW_EXTRALIGHT) return Qextra_light;
+  return intern ("thin");
 }
 
 /* Fill in all the available details of LOGFONT from FONT_SPEC.  */
