@@ -317,7 +317,7 @@ invocation of `next-error'.
 
 Once \\[next-error] has chosen the buffer for error messages, it
 runs `next-error-hook' with `run-hooks', and stays with that buffer
-until you use it in some other buffer which uses Compilation mode
+until you use it in some other buffer that uses Compilation mode
 or Compilation Minor mode.
 
 To control which errors are matched, customize the variable
@@ -487,14 +487,14 @@ rather than files.  These modes usually use read-only buffers."
 It must be called via `run-hook-with-args-until-success' with no arguments.
 
 If any function on this hook returns a non-nil value, `delete-selection-mode'
-will act on that value (see `delete-selection-helper'), and will
+will act on that value (see `delete-selection-helper') and will
 usually delete the region.  If all the functions on this hook return
 nil, it is an indiction that `self-insert-command' needs the region
-untouched by `delete-selection-mode', and will itself do whatever is
+untouched by `delete-selection-mode' and will itself do whatever is
 appropriate with the region.
-Any function on `post-self-insert-hook' which act on the region should
+Any function on `post-self-insert-hook' that acts on the region should
 add a function to this hook so that `delete-selection-mode' could
-refrain from deleting the region before `post-self-insert-hook'
+refrain from deleting the region before the `post-self-insert-hook'
 functions are called.
 This hook is run by `delete-selection-uses-region-p', which see.")
 
@@ -543,7 +543,7 @@ A non-nil INTERACTIVE argument means to run the `post-self-insert-hook'."
                    (delete-region (point)
                                   (line-end-position))))
             ;; Indent the line after the newline, except in one case:
-            ;; when we added the newline at the beginning of a line which
+            ;; when we added the newline at the beginning of a line that
             ;; starts a page.
             (or was-page-start
                 (move-to-left-margin nil t)))))
@@ -561,7 +561,7 @@ A non-nil INTERACTIVE argument means to run the `post-self-insert-hook'."
 	;; We first used let-binding to protect the hook, but that
 	;; was naive since add-hook affects the symbol-default
 	;; value of the variable, whereas the let-binding might
-	;; only protect the buffer-local value.
+	;; protect only the buffer-local value.
 	(remove-hook 'post-self-insert-hook postproc t))))
   nil)
 
@@ -878,7 +878,7 @@ This is useful for inserting control characters.
 With argument, insert ARG copies of the character.
 
 If the first character you type after this command is an octal digit,
-you should type a sequence of octal digits which specify a character code.
+you should type a sequence of octal digits that specify a character code.
 Any nondigit terminates the sequence.  If the terminator is a RET,
 it is discarded; any other terminator is used itself as input.
 The variable `read-quoted-char-radix' specifies the radix for this feature;
@@ -953,7 +953,7 @@ Leave one space or none, according to the context."
 
 (defun delete-horizontal-space (&optional backward-only)
   "Delete all spaces and tabs around point.
-If BACKWARD-ONLY is non-nil, only delete them before point."
+If BACKWARD-ONLY is non-nil, delete them only before point."
   (interactive "*P")
   (let ((orig-pos (point)))
     (delete-region
@@ -994,7 +994,7 @@ The second call in a sequence deletes all spaces.
 
 The third call in a sequence restores the original whitespace (and point).
 
-If MODE is `single-shot', it only performs the first step in the sequence.
+If MODE is `single-shot', it performs only the first step in the sequence.
 If MODE is `fast' and the first step would not result in any change
 \(i.e., there are exactly (abs N) spaces around point),
 the function goes straight to the second step.
@@ -1197,7 +1197,7 @@ the actual saved text might be different from what was killed."
 (defun mark-whole-buffer ()
   "Put point at beginning and mark at end of buffer.
 Also push mark at point before pushing mark at end of buffer.
-If narrowing is in effect, only uses the accessible part of the buffer.
+If narrowing is in effect, uses only the accessible part of the buffer.
 You probably should not use this function in Lisp programs;
 it is usually a mistake for a Lisp function to use any subroutine
 that uses or sets the mark."
@@ -1630,7 +1630,7 @@ there is no such truncation.
 If the resulting value is an integer, and CHAR-PRINT-LIMIT is
 non-nil (interactively, unless given a non-zero prefix argument)
 it will be printed in several additional formats (octal,
-hexadecimal, and character).  The character format is only used
+hexadecimal, and character).  The character format is used only
 if the value is below CHAR-PRINT-LIMIT (interactively, if the
 prefix argument is -1 or the value doesn't exceed
 `eval-expression-print-maximum-character').
@@ -1692,7 +1692,7 @@ the minibuffer, then read and evaluate the result."
 
 (defun repeat-complex-command (arg)
   "Edit and re-evaluate last complex command, or ARGth from last.
-A complex command is one which used the minibuffer.
+A complex command is one that used the minibuffer.
 The command is placed in the minibuffer as a Lisp form for editing.
 The result is executed, repeating the command as changed.
 If the command has been changed or is not the most recent previous
@@ -2298,8 +2298,8 @@ previous element of the minibuffer history in the minibuffer."
 	 (unless (eolp) (backward-char 1)))))))
 
 (defun next-complete-history-element (n)
-  "Get next history element which completes the minibuffer before the point.
-The contents of the minibuffer after the point are deleted, and replaced
+  "Get next history element that completes the minibuffer before the point.
+The contents of the minibuffer after the point are deleted and replaced
 by the new completion."
   (interactive "p")
   (let ((point-at-start (point)))
@@ -2314,8 +2314,8 @@ by the new completion."
 
 (defun previous-complete-history-element (n)
   "\
-Get previous history element which completes the minibuffer before the point.
-The contents of the minibuffer after the point are deleted, and replaced
+Get previous history element that completes the minibuffer before the point.
+The contents of the minibuffer after the point are deleted and replaced
 by the new completion."
   (interactive "p")
   (next-complete-history-element (- n)))
@@ -2497,7 +2497,7 @@ If t, we undid all the way to the end of it.")
 Repeat this command to undo more changes.
 A numeric ARG serves as a repeat count.
 
-In Transient Mark mode when the mark is active, only undo changes within
+In Transient Mark mode when the mark is active, undo changes only within
 the current region.  Similarly, when not in Transient Mark mode, just \\[universal-argument]
 as an argument limits undo to changes within the current region."
   (interactive "*P")
@@ -2787,7 +2787,7 @@ Return what remains of the list."
 (defun undo-start (&optional beg end)
   "Set `pending-undo-list' to the front of the undo list.
 The next call to `undo-more' will undo the most recently made change.
-If BEG and END are specified, then only undo elements
+If BEG and END are specified, then undo only elements
 that apply to text between BEG and END are used; other undo elements
 are ignored.  If BEG and END are nil, all undo elements are used."
   (if (eq buffer-undo-list t)
@@ -3225,7 +3225,7 @@ Normally, Emacs discards the undo info for the current command if
 it exceeds `undo-outer-limit'.  But if you set this option
 non-nil, it asks in the echo area whether to discard the info.
 If you answer no, there is a slight risk that Emacs might crash, so
-only do it if you really want to undo the command.
+do it only if you really want to undo the command.
 
 This option is mainly intended for debugging.  You have to be
 careful if you use it for other purposes.  Garbage collection is
@@ -3241,7 +3241,7 @@ excessively long before answering the question."
 We don't ask the user about truncating the undo list until the
 current item gets bigger than this amount.
 
-This variable only matters if `undo-ask-before-discard' is non-nil.")
+This variable matters only if `undo-ask-before-discard' is non-nil.")
 (make-variable-buffer-local 'undo-extra-outer-limit)
 
 ;; When the first undo batch in an undo list is longer than
@@ -3611,7 +3611,7 @@ impose the use of a shell (with its need to quote arguments)."
 	    (push-mark nil t)
 	    ;; We do not use -f for csh; we will not support broken use of
 	    ;; .cshrcs.  Even the BSD csh manual says to use
-	    ;; "if ($?prompt) exit" before things which are not useful
+	    ;; "if ($?prompt) exit" before things that are not useful
 	    ;; non-interactively.  Besides, if someone wants their other
 	    ;; aliases for shell commands then they can still have them.
             (call-process-shell-command command nil (if error-file
@@ -3734,7 +3734,7 @@ string and it is displayed in the echo area, it is not specified whether
 the contents are inserted into the buffer anyway.
 
 Optional arguments ACTION and FRAME are as for `display-buffer',
-and are only used if a pop-up buffer is displayed."
+and are used only if a pop-up buffer is displayed."
   (cond ((and (stringp message) (not (string-match "\n" message)))
 	 ;; Trivial case where we can use the echo area
 	 (message "%s" message))
@@ -3894,7 +3894,7 @@ interactively, this is t."
                                        (if error-file
                                            (list t error-file)
                                          t)))
-            ;; It is rude to delete a buffer which the command is not using.
+            ;; It is rude to delete a buffer that the command is not using.
             ;; (let ((shell-buffer (get-buffer "*Shell Command Output*")))
             ;;   (and shell-buffer (not (eq shell-buffer (current-buffer)))
             ;; 	 (kill-buffer shell-buffer)))
@@ -4009,8 +4009,8 @@ by `file-local-name' before passing it to this function.
 
 File names in INFILE and BUFFER are handled normally, but file
 names in ARGS should be relative to `default-directory', as they
-are passed to the process verbatim.  (This is a difference to
-`call-process' which does not support file name handlers for INFILE
+are passed to the process verbatim.  (This is a difference from
+`call-process', which does not support file name handlers for INFILE
 and BUFFER.)
 
 Some file name handlers might not support all variants, for example
@@ -4217,7 +4217,7 @@ see other processes running on the system, use `list-system-processes'."
             (when strs (mapconcat #'identity strs " "))))))
 
 (defvar prefix-command-echo-keystrokes-functions nil
-  "Abnormal hook which constructs the description of the current prefix state.
+  "Abnormal hook that constructs the description of the current prefix state.
 Each function is called with no argument, should return a string or nil.")
 
 (defun prefix-command-update ()
@@ -4316,7 +4316,7 @@ Digits or minus sign following \\[universal-argument] make up the numeric argume
 Repeating \\[universal-argument] without digits or minus sign
  multiplies the argument by 4 each time.
 For some commands, just \\[universal-argument] by itself serves as a flag
-which is different in effect from any particular numeric argument.
+that is different in effect from any particular numeric argument.
 These commands include \\[set-mark-command] and \\[start-kbd-macro]."
   (interactive)
   (prefix-command-preserve-state)
@@ -4438,7 +4438,7 @@ MS-Windows, or the pasteboard on Nextstep/Mac OS.
 This variable holds a function that Emacs calls whenever text is
 put in the kill ring, to make the new kill available to other
 programs.  The function takes one argument, TEXT, which is a
-string containing the text which should be made available.")
+string containing the text that should be made available.")
 
 (defvar interprogram-paste-function #'gui-selection-value
   "Function to call to get text cut from other programs.
@@ -4890,7 +4890,7 @@ bidirectional display before and after the region."
     ;; Replace each run of non-LTR characters with a single RLM.  Note
     ;; that the \cR category includes both the Arabic Letter (AL) and
     ;; R characters; here we ignore the distinction between them,
-    ;; because that distinction only affects Arabic Number (AN)
+    ;; because that distinction affects only Arabic Number (AN)
     ;; characters, which are weak and don't affect the reordering.
     (squeeze-bidi-context-1 start end "\\CL+" "\x200f")))
 
@@ -5972,7 +5972,7 @@ in effect and the mark is active, by acting on the region instead
 of their usual default part of the buffer's text.  Examples of
 such commands include \\[comment-dwim], \\[flush-lines], \\[keep-lines],
 \\[query-replace], \\[query-replace-regexp], \\[ispell], and \\[undo].
-To see the documentation of commands which are sensitive to the
+To see the documentation of commands that are sensitive to the
 Transient Mark mode, invoke \\[apropos-documentation] and type \"transient\"
 or \"mark.*active\" at the prompt."
   :global t
@@ -5989,16 +5989,16 @@ as a fallback, and won't change the buffer bounds.")
 
 (defvar non-essential nil
   "Whether the currently executing code is performing an essential task.
-This variable should be non-nil only when running code which should not
-disturb the user.  E.g. it can be used to prevent Tramp from prompting the
-user for a password when we are simply scanning a set of files in the
+This variable should be non-nil only when running code that should not
+disturb the user.  E.g., it can be used to prevent Tramp from prompting
+the user for a password when we are simply scanning a set of files in the
 background or displaying possible completions before the user even asked
 for it.")
 
 (defun pop-global-mark ()
   "Pop off global mark ring and jump to the top location."
   (interactive)
-  ;; Pop entries which refer to non-existent buffers.
+  ;; Pop entries that refer to non-existent buffers.
   (while (and global-mark-ring (not (marker-buffer (car global-mark-ring))))
     (setq global-mark-ring (cdr global-mark-ring)))
   (or global-mark-ring
@@ -6033,7 +6033,7 @@ function will not vscroll.
 ARG defaults to 1.
 
 If there is no character in the target line exactly under the current column,
-the cursor is positioned after the character in that line which spans this
+the cursor is positioned after the character in that line that spans this
 column, or at the end of the line if it is not long enough.
 If there is no line in the buffer after this one, behavior depends on the
 value of `next-line-add-newlines'.  If non-nil, it inserts a newline character
@@ -6081,7 +6081,7 @@ function will not vscroll.
 ARG defaults to 1.
 
 If there is no character in the target line exactly over the current column,
-the cursor is positioned after the character in that line which spans this
+the cursor is positioned after the character in that line that spans this
 column, or at the end of the line if it is not long enough.
 
 If the variable `line-move-visual' is non-nil, this command moves
@@ -6166,7 +6166,7 @@ lines."
   :group 'editing-basics
   :version "23.1")
 
-;; Only used if display-graphic-p.
+;; Used only if display-graphic-p.
 (declare-function font-info "font.c" (name &optional frame))
 
 (defun default-font-height ()
@@ -6781,7 +6781,7 @@ rests."
 (defun move-beginning-of-line (arg)
   "Move point to beginning of current line as displayed.
 \(If there's an image in the line, this disregards newlines
-which are part of the text that the image rests on.)
+that are part of the text that the image rests on.)
 
 With argument ARG not nil or 1, move forward ARG - 1 lines first.
 If point reaches the beginning or end of buffer, it stops there.
@@ -7273,7 +7273,7 @@ constitute a word."
 (put 'fill-prefix 'safe-local-variable 'string-or-null-p)
 
 (defcustom auto-fill-inhibit-regexp nil
-  "Regexp to match lines which should not be auto-filled."
+  "Regexp to match lines that should not be auto-filled."
   :type '(choice (const :tag "None" nil)
 		 regexp)
   :group 'fill)
@@ -7365,7 +7365,7 @@ Returns t if it really did any work."
       t)))
 
 (defvar comment-line-break-function 'comment-indent-new-line
-  "Mode-specific function which line breaks and continues a comment.
+  "Mode-specific function that line breaks and continues a comment.
 This function is called during auto-filling when a comment syntax
 is defined.
 The function should take a single optional argument, which is a flag
@@ -7656,7 +7656,7 @@ Returns non-nil if we find there is a mismatch."
                               (eq (syntax-class end-syntax) 5)
                               (cdr end-syntax))))
     ;; For self-matched chars like " and $, we can't know when they're
-    ;; mismatched or unmatched, so we can only do it for parens.
+    ;; mismatched or unmatched, so we can do it only for parens.
     (when matching-paren
       (not (and start
                 (or
@@ -7875,7 +7875,7 @@ specification for `play-sound'."
 
 (defcustom read-mail-command 'rmail
   "Your preference for a mail reading package.
-This is used by some keybindings which support reading mail.
+This is used by some keybindings that support reading mail.
 See also `mail-user-agent' concerning sending mail."
   :type '(radio (function-item :tag "Rmail" :format "%t\n" rmail)
                 (function-item :tag "Gnus" :format "%t\n" gnus)
@@ -8841,7 +8841,7 @@ See also `normal-erase-is-backspace'."
 		   (define-key local-function-key-map [backspace] [?\C-?])
                    (dolist (b bindings)
                      ;; Not sure if input-decode-map is really right, but
-                     ;; keyboard-translate-table (used below) only works
+                     ;; keyboard-translate-table (used below) works only
                      ;; for integer events, and key-translation-table is
                      ;; global (like the global-map, used earlier).
                      (define-key input-decode-map (car b) nil)
