@@ -24,13 +24,16 @@
     ;; if invisible isn't set, invisible-p should be nil
     (goto-char (point-min))
     (should-not (invisible-p (point)))
+    ;; should also be able to pass the overlay to invisible-p, instead
+    ;; of just the position
+    (let* ((prop-and-overlay (get-char-property-and-overlay (point) 'invisible))
+           (overlay (cdr prop-and-overlay)))
+      (should-not (invisible-p (point))))
     ;; if the property invisible is t, invisible-p should be t
     (forward-word)
     (put-text-property (point) (save-excursion (forward-word) (point))
                        'invisible t)
     (should (eq t (invisible-p (point))))
-    ;; should also be able to pass the overlay to invisible-p, instead
-    ;; of just the position
     (let* ((prop-and-overlay (get-char-property-and-overlay (point) 'invisible))
            (overlay (cdr prop-and-overlay)))
       (should (eq t (invisible-p (point)))))
@@ -58,5 +61,11 @@
     ;; ...and when (atom . nil), invisible-p should be t
     (forward-word) (forward-char)
     (put-text-property (point) (save-excursion (forward-word) (point))
-                       'invisible 'baz)
-    (should (eq t (invisible-p (point))))))
+                       'invisible '(baz quux))
+    (should (eq t (invisible-p (point))))
+    ;; if the invisible property is a non-nil value not in the list,
+    ;; invisible-p should be nil
+    (forward-word) (forward-char)
+    (put-text-property (point) (save-excursion (forward-word) (point))
+                       'invisible t)
+    (should-not (invisible-p (point)))))
