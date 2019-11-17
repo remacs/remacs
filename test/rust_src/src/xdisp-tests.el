@@ -50,14 +50,16 @@
     (should (eq t (invisible-p (point))))
     ;; ...and when the invisible property is an atom and
     ;; invisibility-spec contains (atom . non-nil), then invisible-p
-    ;; should return 2
+    ;; should be non-nil and non-t
     (forward-word) (forward-char)
     (put-text-property (point) (save-excursion (forward-word) (point))
                        'invisible 'bar)
-    (should (= 2 (invisible-p (point))))
+    (should (invisible-p (point)))
+    (should-not (eq t (invisible-p (point))))
     (let* ((prop-and-overlay (get-char-property-and-overlay (point) 'invisible))
            (overlay (cdr prop-and-overlay)))
-      (should (= 2 (invisible-p (point)))))
+      (should (invisible-p (point)))
+      (should-not (eq t (invisible-p (point)))))
     ;; ...and when (atom . nil), invisible-p should be t
     (forward-word) (forward-char)
     (put-text-property (point) (save-excursion (forward-word) (point))
