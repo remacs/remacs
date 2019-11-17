@@ -4007,14 +4007,13 @@ subprocess is `default-directory'.
 If PROGRAM is a remote file name, it should be processed
 by `file-local-name' before passing it to this function.
 
-File names in INFILE and BUFFER are handled normally, but file
-names in ARGS should be relative to `default-directory', as they
-are passed to the process verbatim.  (This is a difference from
-`call-process', which does not support file name handlers for INFILE
-and BUFFER.)
+Handle file names in INFILE and BUFFER normally; this differs
+from `call-process', which does not support file name handlers
+for INFILE and BUFFER.  However, pass ARGS to the process
+verbatim without file name handling, as `call-process' does.
 
-Some file name handlers might not support all variants, for example
-they might behave as if DISPLAY was nil, regardless of the actual
+Some file name handlers might not support all variants.  For
+example, they might treat DISPLAY as nil regardless of the actual
 value passed."
   (let ((fh (find-file-name-handler default-directory 'process-file))
         lc stderr-file)
