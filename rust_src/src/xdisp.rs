@@ -42,23 +42,31 @@ pub fn trace_redisplay(arg: Option<InteractiveNumericPrefix>) {
 }
 
 fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
-    let proplist = if propval.is_cons() {
-        propval
-    } else {
-        LispObject::cons(propval, Qnil)
-    };
-    let iter = proplist.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off);
-
-    for propelt in iter {
-        for tem in list.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
-            if propelt.eq(tem) {
+    for tem in list.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
+        if propval.eq(tem) {
+            return 1;
+        }
+        if tem.is_cons() && propval.eq(tem.as_cons().unwrap().car()) {
+            if tem.as_cons().unwrap().cdr().is_nil() {
                 return 1;
+            } else {
+                return 2;
             }
-            if tem.is_cons() && propelt.eq(tem.as_cons().unwrap().car()) {
-                if tem.as_cons().unwrap().cdr().is_nil() {
+        }
+    }
+
+    if propval.is_cons() {
+        for propelt in propval.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
+            for tem in list.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
+                if propelt.eq(tem) {
                     return 1;
-                } else {
-                    return 2;
+                }
+                if tem.is_cons() && propelt.eq(tem.as_cons().unwrap().car()) {
+                    if tem.as_cons().unwrap().cdr().is_nil() {
+                        return 1;
+                    } else {
+                        return 2;
+                    }
                 }
             }
         }
