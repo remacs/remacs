@@ -112,8 +112,7 @@ See the documentation for `tmm-prompt'."
   "String to insert between shortcut and menu item.
 If nil, there will be no shortcuts.  It should not consist only of spaces,
 or else the correct item might not be found in the `*Completions*' buffer."
-  :type 'string
-  :group 'tmm)
+  :type 'string)
 
 (defvar tmm-mb-map nil
   "A place to store minibuffer map.")
@@ -127,8 +126,7 @@ marked letters to pick up your choice.  Type C-g or ESC ESC ESC to cancel.
   "Help text to insert on the top of the completion buffer.
 To save space, you can set this to nil,
 in which case the standard introduction text is deleted too."
-  :type '(choice string (const nil))
-  :group 'tmm)
+  :type '(choice string (const nil)))
 
 (defcustom tmm-shortcut-style '(downcase upcase)
   "What letters to use as menu shortcuts.
@@ -136,20 +134,17 @@ Must be either one of the symbols `downcase' or `upcase',
 or else a list of the two in the order you prefer."
   :type '(choice (const downcase)
 		 (const upcase)
-		 (repeat (choice (const downcase) (const upcase))))
-  :group 'tmm)
+		 (repeat (choice (const downcase) (const upcase)))))
 
 (defcustom tmm-shortcut-words 2
   "How many successive words to try for shortcuts, nil means all.
 If you use only one of `downcase' or `upcase' for `tmm-shortcut-style',
 specify nil for this variable."
-  :type '(choice integer (const nil))
-  :group 'tmm)
+  :type '(choice integer (const nil)))
 
 (defface tmm-inactive
   '((t :inherit shadow))
-  "Face used for inactive menu items."
-  :group 'tmm)
+  "Face used for inactive menu items.")
 
 (defun tmm--completion-table (items)
   (lambda (string pred action)
@@ -296,10 +291,10 @@ Takes a list of lists with a string as car, returns list with
 shortcuts added to these cars.
 Stores a list of all the shortcuts in the free variable `tmm-short-cuts'."
   (let ((tmm-next-shortcut-digit ?0))
-    (mapcar 'tmm-add-one-shortcut (reverse list))))
+    (mapcar #'tmm-add-one-shortcut (reverse list))))
 
 (defsubst tmm-add-one-shortcut (elt)
-;; uses the free vars tmm-next-shortcut-digit and tmm-short-cuts
+  ;; uses the free vars tmm-next-shortcut-digit and tmm-short-cuts
   (cond
    ((eq (cddr elt) 'ignore)
     (cons (concat " " (make-string (length tmm-mid-prompt) ?\-)
@@ -316,14 +311,12 @@ Stores a list of all the shortcuts in the free variable `tmm-short-cuts'."
                     (not (and paren (> pos paren)))) ; don't go past "(binding.."
           (if (or (= pos 0)
                   (/= (aref str (1- pos)) ?.)) ; avoid file extensions
-              (let ((shortcut-style
-                     (if (listp tmm-shortcut-style) ; convert to list
-                         tmm-shortcut-style
-                       (list tmm-shortcut-style))))
-                (while shortcut-style ; try upcase and downcase variants
-                  (setq char (funcall (car shortcut-style) (aref str pos)))
-                  (if (not (memq char tmm-short-cuts)) (throw 'done char))
-                  (setq shortcut-style (cdr shortcut-style)))))
+              (dolist (shortcut-style ; try upcase and downcase variants
+                       (if (listp tmm-shortcut-style) ; convert to list
+                           tmm-shortcut-style
+                       (list tmm-shortcut-style)))
+                (setq char (funcall shortcut-style (aref str pos)))
+                (if (not (memq char tmm-short-cuts)) (throw 'done char))))
           (setq word (1+ word))
           (setq pos (match-end 0)))
         (while (<= tmm-next-shortcut-digit ?9) ; no letter shortcut, pick a digit
@@ -386,10 +379,10 @@ Stores a list of all the shortcuts in the free variable `tmm-short-cuts'."
   (setq tmm-old-mb-map (tmm-define-keys t))
   (or tmm-completion-prompt
       (add-hook 'completion-setup-hook
-                'tmm-completion-delete-prompt 'append))
+                #'tmm-completion-delete-prompt 'append))
   (unwind-protect
       (minibuffer-completion-help)
-    (remove-hook 'completion-setup-hook 'tmm-completion-delete-prompt))
+    (remove-hook 'completion-setup-hook #'tmm-completion-delete-prompt))
   (with-current-buffer "*Completions*"
     (tmm-remove-inactive-mouse-face)
     (when tmm-completion-prompt
