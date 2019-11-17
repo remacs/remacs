@@ -21,23 +21,42 @@
   "Check making text invisible"
   (with-temp-buffer
     (insert "hello world\nsome bunch of text")
+    ;; if invisible isn't set, invisible-p should be nil
     (goto-char (point-min))
     (should-not (invisible-p (point)))
+    ;; if the property invisible is t, invisible-p should be t
     (forward-word)
     (put-text-property (point) (save-excursion (forward-word) (point))
                        'invisible t)
     (should (eq t (invisible-p (point))))
+    ;; should also be able to pass the overlay to invisible-p, instead
+    ;; of just the position
     (let* ((prop-and-overlay (get-char-property-and-overlay (point) 'invisible))
            (overlay (cdr prop-and-overlay)))
       (should (eq t (invisible-p (point)))))
+    ;; if buffer-invisiblity-spec is nil, invisible-p should be nil
     (setq buffer-invisibility-spec nil)
     (should-not (invisible-p (point)))
-    (setq buffer-invisibility-spec '(foo (bar . t)))
+    ;; if buffer-invisibility-spec is a list...
+    (setq buffer-invisibility-spec '(foo (bar . t) (baz . nil)))
+    ;; ...then when the invisible property is an atom in the spec
+    ;; list, invisible-p should be t
     (next-line) (beginning-of-line)
     (put-text-property (point) (save-excursion (forward-word) (point))
                        'invisible 'foo)
     (should (eq t (invisible-p (point))))
+    ;; ...and when the invisible property is an atom and
+    ;; invisibility-spec contains (atom . non-nil), then invisible-p
+    ;; should return 2
     (forward-word) (forward-char)
     (put-text-property (point) (save-excursion (forward-word) (point))
                        'invisible 'bar)
-    (should (= 2 (invisible-p (point))))))
+    (should (= 2 (invisible-p (point))))
+    (let* ((prop-and-overlay (get-char-property-and-overlay (point) 'invisible))
+           (overlay (cdr prop-and-overlay)))
+      (should (= 2 (invisible-p (point)))))
+    ;; ...and when (atom . nil), invisible-p should be t
+    (forward-word) (forward-char)
+    (put-text-property (point) (save-excursion (forward-word) (point))
+                       'invisible 'baz)
+    (should (eq t (invisible-p (point))))))
