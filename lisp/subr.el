@@ -2707,7 +2707,6 @@ When CHARS is non-nil, any input that is not one of CHARS is ignored.
 When HISTORY is a symbol, then allows navigating in a history.
 The navigation commands are `M-p' and `M-n', with `RET' to select
 a character from history."
-  (discard-input)
   (let* ((empty-history '())
          (map (if (consp chars)
                   (or (gethash chars read-char-from-minibuffer-map-hash)
@@ -2847,7 +2846,6 @@ is nil and `use-dialog-box' is non-nil."
 	    answer (x-popup-dialog t `(,prompt ("Yes" . act) ("No" . skip)))))
      (t
       (setq prompt (funcall padded prompt))
-      (discard-input)
       (let* ((empty-history '())
              (str (read-from-minibuffer
                    prompt nil
@@ -4622,7 +4620,7 @@ This function is called directly from the C code."
 					  byte-compile-current-file
 					  byte-compile-root-dir)))
 	      (byte-compile-warn "%s" msg))
-	  (run-with-timer 0 nil
+	  (run-with-idle-timer 0 nil
 			  (lambda (msg)
 			    (minibuffer-message "%s" msg))
 			  msg)))))
