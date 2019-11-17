@@ -46,6 +46,9 @@
 (require 'nsm)
 (require 'puny)
 
+(eval-when-compile
+  (require 'epa)) ; for epa-suppress-error-buffer
+
 (declare-function starttls-available-p "starttls" ())
 (declare-function starttls-negotiate "starttls" (process))
 (declare-function starttls-open-stream "starttls" (name buffer host port))
@@ -225,10 +228,12 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
       ;; Either nil or a list with a key/certificate pair.
       spec)
      ((eq spec t)
-      (let* ((auth-info
-	      (car (auth-source-search :max 1
-				       :host host
-				       :port service)))
+      (let* ((epa-suppress-error-buffer t)
+             (auth-info
+              (ignore-errors
+                (car (auth-source-search :max 1
+                                         :host host
+                                         :port service))))
 	     (key (plist-get auth-info :key))
 	     (cert (plist-get auth-info :cert)))
 	(and key cert (file-readable-p key) (file-readable-p cert)

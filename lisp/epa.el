@@ -179,6 +179,7 @@ You should bind this variable with `let', but do not set it globally.")
 (defvar epa-list-keys-arguments nil)
 (defvar epa-info-buffer nil)
 (defvar epa-error-buffer nil)
+(defvar epa-suppress-error-buffer nil)
 (defvar epa-last-coding-system-specified nil)
 
 (defvar epa-key-list-mode-map
@@ -578,7 +579,8 @@ If SECRET is non-nil, list secret keys instead of public keys."
     (message "%s" info)))
 
 (defun epa-display-error (context)
-  (unless (equal (epg-context-error-output context) "")
+  (unless (or (equal (epg-context-error-output context) "")
+              epa-suppress-error-buffer)
     (let ((buffer (get-buffer-create "*Error*")))
       (save-selected-window
 	(unless (and epa-error-buffer (buffer-live-p epa-error-buffer))
