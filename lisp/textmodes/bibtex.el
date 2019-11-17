@@ -2915,6 +2915,9 @@ for parsing BibTeX keys.  If parsing fails, try to set this variable to nil."
                                          (1+ (match-beginning 3)) (1- (match-end 3)))))
                                (unless (assoc key crossref-keys)
                                  (push (list key) crossref-keys))))
+                            ;; We have probably have a non-bibtex file.
+                            ((not (match-beginning bibtex-type-in-head))
+                             (throw 'userkey nil))
                             ;; only keys of known entries
                             ((assoc-string (bibtex-type-in-head)
                                            bibtex-entry-alist t)
