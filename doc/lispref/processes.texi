@@ -2521,11 +2521,11 @@ expect the network traffic to be encrypted.
 Either a list of the form @code{(@var{key-file} @var{cert-file})},
 naming the certificate key file and certificate file itself, or
 @code{t}, meaning to query @code{auth-source} for this information
-(@pxref{Help for users,,auth-source, auth, Emacs auth-source Library}).
-Only used for @acronym{TLS} or @acronym{STARTTLS}.  If
-@code{:client-certificate} is not specified, behave as if it were t,
-customize @code{network-stream-use-client-certificates} to change
-this.
+(@pxref{Help for users,,auth-source, auth, Emacs auth-source
+Library}).  Only used for @acronym{TLS} or @acronym{STARTTLS}.  To
+enable automatic queries of @code{auth-source} when
+@code{:client-certificate} is not specified customize
+@code{network-stream-use-client-certificates} to t.
 
 @item :return-list @var{cons-or-nil}
 The return value of this function.  If omitted or @code{nil}, return a

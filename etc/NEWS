@@ -341,7 +341,8 @@ certificates via 'auth-source'.
 ** New user option 'network-stream-use-client-certificates'.
 When non-nil, 'open-network-stream' performs lookups of client
 certificates using 'auth-source' as if ':client-certificate t' were
-specified.  Defaults to t.
+specified iff there is no explicit ':client-certificate' parameter.
+Defaults to nil.
 
 +++
 ** New function 'fill-polish-nobreak-p', to be used in 'fill-nobreak-predicate'.

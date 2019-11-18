@@ -58,7 +58,7 @@
 (defvar starttls-gnutls-program)
 (defvar starttls-program)
 
-(defcustom network-stream-use-client-certificates t
+(defcustom network-stream-use-client-certificates nil
   "Whether to use client certificates for network connections.
 
 When non-nil, `open-network-stream' will automatically look for
@@ -144,12 +144,12 @@ values:
 
 :client-certificate should either be a list where the first
   element is the certificate key file name, and the second
-  element is the certificate file name itself, or t, which
-  means that `auth-source' will be queried for the key and the
+  element is the certificate file name itself, or t, which means
+  that `auth-source' will be queried for the key and the
   certificate.  This parameter will only be used when doing TLS
-  or STARTTLS connections.  If :client-certificate is not
-  specified, behave as if it were t, customize
-  `network-stream-use-client-certificates' to change this.
+  or STARTTLS connections.  To enable automatic queries of
+  `auth-source' when `:client-certificate' is not specified
+  customize `network-stream-use-client-certificates' to t.
 
 :use-starttls-if-possible is a boolean that says to do opportunistic
 STARTTLS upgrades even if Emacs doesn't have built-in TLS functionality.
