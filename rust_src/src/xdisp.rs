@@ -83,10 +83,10 @@ fn text_prop_means_invisible(prop: LispObject) -> EmacsInt {
             1
         }
     } else {
-        match cur_buf.invisibility_spec_.as_cons() {
-            Some(cons) => invisible_prop(prop, cons),
-            None => 0,
-        }
+        cur_buf
+            .invisibility_spec_
+            .as_cons()
+            .map_or(0, |cons| invisible_prop(prop, cons))
     }
 }
 
