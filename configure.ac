@@ -3469,11 +3469,6 @@ if test "${HAVE_X11}" = "yes" && test "${HAVE_FREETYPE}" = "yes" \
   fi
 fi
 
-# The user explicitly asked for HarfBuzz, but it won't be used.
-if test "${with_harfbuzz}" == "yes" && test "$HAVE_HARFBUZZ" != "yes"; then
-   AC_MSG_ERROR([HarfBuzz wanted, but won't be used.  Maybe some library files are missing?]);
-fi
-
 ### End of font-backend section.
 
 AC_SUBST(FREETYPE_CFLAGS)
