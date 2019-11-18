@@ -44,7 +44,7 @@
     (setq buffer-invisibility-spec '(foo (bar . t) (baz . nil)))
     ;; ...then when the invisible property is an atom in the spec
     ;; list, invisible-p should be t
-    (next-line) (beginning-of-line)
+    (forward-line) (beginning-of-line)
     (put-text-property (point) (save-excursion (forward-word) (point))
                        'invisible 'foo)
     (should (eq t (invisible-p (point))))
