@@ -2282,7 +2282,16 @@ xg_get_font (struct frame *f, const char *default_name)
     default_name = x_last_font_name;
 
   if (default_name)
-    gtk_font_chooser_set_font (GTK_FONT_CHOOSER (w), default_name);
+    {
+#ifdef HAVE_GTK3
+      PangoFontDescription *desc
+        = pango_font_description_from_string (default_name);
+      gtk_font_chooser_set_font_desc (GTK_FONT_CHOOSER (w), desc);
+      pango_font_description_free (desc);
+#else
+      gtk_font_chooser_set_font (GTK_FONT_CHOOSER (w), default_name);
+#endif
+    }
 
   gtk_widget_set_name (w, "emacs-fontdialog");
   done = xg_dialog_run (f, w);
@@ -2306,8 +2315,10 @@ xg_get_font (struct frame *f, const char *default_name)
 			QCweight, XG_WEIGHT_TO_SYMBOL (weight),
 			QCslant, XG_STYLE_TO_SYMBOL (style));
 
+          char *font_desc_str = pango_font_description_to_string (desc);
+          dupstring (&x_last_font_name, font_desc_str);
+          g_free (font_desc_str);
 	  pango_font_description_free (desc);
-	  dupstring (&x_last_font_name, family);
 	}
 
 #else /* Use old font selector, which just returns the font name.  */
