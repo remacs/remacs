@@ -5541,11 +5541,13 @@ The following commands are available:
 	      (lambda (&rest _) (org-show-context 'isearch)))
 
   ;; Setup the pcomplete hooks
-  (setq-local pcomplete-command-completion-function 'org-pcomplete-initial)
-  (setq-local pcomplete-command-name-function 'org-command-at-point)
-  (setq-local pcomplete-default-completion-function 'ignore)
-  (setq-local pcomplete-parse-arguments-function 'org-parse-arguments)
+  (setq-local pcomplete-command-completion-function #'org-pcomplete-initial)
+  (setq-local pcomplete-command-name-function #'org-command-at-point)
+  (setq-local pcomplete-default-completion-function #'ignore)
+  (setq-local pcomplete-parse-arguments-function #'org-parse-arguments)
   (setq-local pcomplete-termination-string "")
+  (add-hook 'completion-at-point-functions
+            #'pcomplete-completions-at-point nil t)
   (setq-local buffer-face-mode-face 'org-default)
 
   ;; If empty file that did not turn on Org mode automatically, make
@@ -19501,7 +19503,7 @@ COMMANDS is a list of alternating OLDDEF NEWDEF command names."
 (org-defkey org-mode-map "\C-i"       'org-cycle)
 (org-defkey org-mode-map [(tab)]      'org-cycle)
 (org-defkey org-mode-map [(control tab)] 'org-force-cycle-archived)
-(org-defkey org-mode-map "\M-\t" #'pcomplete)
+(org-defkey org-mode-map "\M-\t" nil) ;; Override text-mode binding
 
 ;; The following line is necessary under Suse GNU/Linux
 (org-defkey org-mode-map [S-iso-lefttab]  'org-shifttab)
@@ -19567,7 +19569,7 @@ COMMANDS is a list of alternating OLDDEF NEWDEF command names."
   (org-defkey org-mode-map [?\C-c (right)] 'org-shiftright)
   (org-defkey org-mode-map [?\C-c ?\C-x (right)] 'org-shiftcontrolright)
   (org-defkey org-mode-map [?\C-c ?\C-x (left)] 'org-shiftcontrolleft)
-  (org-defkey org-mode-map [?\e (tab)] #'pcomplete)
+  (org-defkey org-mode-map [?\e (tab)] nil)  ;; Override text-mode binding
   (org-defkey org-mode-map [?\e (shift return)] 'org-insert-todo-heading)
   (org-defkey org-mode-map [?\e (shift left)]   'org-shiftmetaleft)
   (org-defkey org-mode-map [?\e (shift right)]  'org-shiftmetaright)
