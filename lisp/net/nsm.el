@@ -204,17 +204,21 @@ LOCAL-IP, MASK, and IP are specified as vectors of integers, and
 are expected to have the same length.  Works for both IPv4 and
 IPv6 addresses."
   (let ((matches t)
-        (length (length local-ip)))
-    (unless (memq length '(4 5 8 9))
+        (ip-length (length ip))
+        (local-length (length local-ip)))
+    (unless (and (memq ip-length '(4 5 8 9))
+                 (memq local-length '(4 5 8 9)))
       (error "Unexpected length of IP address %S" local-ip))
-    (dotimes (i length)
-      (setq matches (and matches
-                         (=
-                          (logand (aref local-ip i)
-                                  (aref mask i))
-                          (logand (aref ip i)
-                                  (aref mask i))))))
-    matches))
+    (if (/= ip-length local-length)
+        nil
+        (dotimes (i local-length)
+          (setq matches (and matches
+                             (=
+                              (logand (aref local-ip i)
+                                      (aref mask i))
+                              (logand (aref ip i)
+                                      (aref mask i))))))
+        matches)))
 
 (defun nsm-should-check (host)
   "Determine whether NSM should check for TLS problems for HOST.
@@ -238,7 +242,7 @@ otherwise."
              (when
                  (nsm-network-same-subnet (substring (car info) 0 -1)
                                           (substring (car (cddr info)) 0 -1)
-                                          address)
+                                          (substring address 0 -1))
                (setq off-net nil))))
          network-interface-list))
       addresses))
