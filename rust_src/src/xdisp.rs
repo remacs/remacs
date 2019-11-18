@@ -42,30 +42,29 @@ pub fn trace_redisplay(arg: Option<InteractiveNumericPrefix>) {
 }
 
 fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
-    for tem in list.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
-        if propval.eq(tem) {
-            return 1;
-        }
-        if tem.is_cons() {
-            let (car, cdr) = tem.into();
-            if propval.eq(car) {
-                return if cdr.is_nil() { 1 } else { 2 };
+    let find_prop = |propelt: LispObject| {
+        for tem in list.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
+            if propelt.eq(tem) {
+                return Some(1);
+            }
+            if tem.is_cons() {
+                let (car, cdr) = tem.into();
+                if propelt.eq(car) {
+                    return Some(if cdr.is_nil() { 1 } else { 2 });
+                }
             }
         }
+        return None;
+    };
+
+    if let Some(val) = find_prop(propval) {
+        return val;
     }
 
     if propval.is_cons() {
         for propelt in propval.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
-            for tem in list.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
-                if propelt.eq(tem) {
-                    return 1;
-                }
-                if tem.is_cons() {
-                    let (car, cdr) = tem.into();
-                    if propelt.eq(car) {
-                        return if cdr.is_nil() { 1 } else { 2 };
-                    }
-                }
+            if let Some(val) = find_prop(propelt) {
+                return val;
             }
         }
     }
