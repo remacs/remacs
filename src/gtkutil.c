@@ -2228,7 +2228,7 @@ xg_get_file_name (struct frame *f,
 
 static char *x_last_font_name;
 
-#if GTK_CHECK_VERSION (3, 2, 0)
+#if HAVE_GTK3
 static gboolean
 xg_font_filter (const PangoFontFamily *family,
                 const PangoFontFace *face,
@@ -2262,7 +2262,7 @@ xg_get_font (struct frame *f, const char *default_name)
   w = gtk_font_chooser_dialog_new
     ("Pick a font", GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)));
 
-#if GTK_CHECK_VERSION (3, 2, 0)
+#ifdef HAVE_GTK3
   gtk_font_chooser_set_filter_func (GTK_FONT_CHOOSER (w), xg_font_filter, NULL, NULL);
 #endif
   if (default_name)
