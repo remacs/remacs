@@ -2,14 +2,14 @@
 
 use remacs_macros::lisp_fn;
 
-use crate::lisp::LispObject;
-use crate::threads::ThreadState;
 #[cfg(feature = "glyph-debug")]
 use crate::{interactive::InteractiveNumericPrefix, remacs_sys::trace_redisplay_p};
 use crate::{
+    lisp::LispObject,
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::bset_update_mode_line,
     remacs_sys::{EmacsInt, Fget_char_property, Qinvisible, Qnil, Qt},
+    threads::ThreadState,
 };
 
 /// Mark the current buffer for redisplay.
