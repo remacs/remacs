@@ -49,9 +49,6 @@
       (should (eq nil (nsm-should-check "127.0.0.1")))
       (should (eq nil (nsm-should-check "localhost"))))))
 
-;; FIXME This will never return true, since
-;; network-interface-list only gives the primary address of each
-;; interface, which will be the IPv4 one
 (defun nsm-ipv6-is-available ()
   (and (featurep 'make-network-process '(:family ipv6))
        (cl-rassoc-if
@@ -61,6 +58,17 @@
 
 (ert-deftest nsm-check-local-subnet-ipv6 ()
   (skip-unless (nsm-ipv6-is-available))
+  (let ((local-ip '[123 456 789 11 172 26 128 160 0])
+        (mask '[255 255 255 255 255 255 255 0 0])
+
+        (wrong-length-mask '[255 255 255 255 255 255 255])
+        (wrong-mask '[255 255 255 255 255 255 255 255 0])
+        (remote-ip-yes '[123 456 789 11 172 26 128 161 0])
+        (remote-ip-no '[123 456 789 11 172 26 129 161 0]))
+    (should (eq t (nsm-network-same-subnet local-ip mask remote-ip-yes)))
+    (should (eq nil (nsm-network-same-subnet local-ip mask remote-ip-no)))
+    (should-error (nsm-network-same-subnet local-ip wrong-length-mask remote-ip-yes))
+    (should (eq nil (nsm-network-same-subnet local-ip wrong-mask remote-ip-yes))))
   (should (eq t (nsm-should-check "::1")))
   (let ((nsm-trust-local-network t))
     (should (eq nil (nsm-should-check "::1")))))
