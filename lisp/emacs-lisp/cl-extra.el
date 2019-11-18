@@ -693,17 +693,15 @@ PROPLIST is a list of the sort returned by `symbol-plist'.
     (forward-sexp)))
 
 ;;;###autoload
-(defun cl-prettyexpand (form &optional full)
-  "Expand macros in FORM and insert the pretty-printed result.
-Optional argument FULL non-nil means to expand all macros,
-including `cl-block' and `cl-eval-when'."
+(defun cl-prettyexpand (form &optional _full)
+  "Expand macros in FORM and insert the pretty-printed result."
+  (declare (advertised-calling-convention (form) "27.1"))
   (message "Expanding...")
-  (let ((cl--compiling-file full)
-	(byte-compile-macro-environment nil))
-    (setq form (macroexpand-all form
-                                (and (not full) '((cl-block) (cl-eval-when)))))
+  (let ((byte-compile-macro-environment nil))
+    (setq form (macroexpand-all form))
     (message "Formatting...")
-    (prog1 (cl-prettyprint form)
+    (prog1
+        (cl-prettyprint form)
       (message ""))))
 
 ;;; Integration into the online help system.
