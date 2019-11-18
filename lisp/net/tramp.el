@@ -3306,9 +3306,13 @@ User is always nil."
 (defun tramp-handle-file-regular-p (filename)
   "Like `file-regular-p' for Tramp files."
   (and (file-exists-p filename)
-       (eq ?-
-	   (aref (tramp-compat-file-attribute-modes (file-attributes filename))
-		 0))))
+       ;; Sometimes, `file-attributes' does not return a proper value
+       ;; even if `file-exists-p' does.
+       (ignore-errors
+	 (eq ?-
+	     (aref
+	      (tramp-compat-file-attribute-modes (file-attributes filename))
+	      0)))))
 
 (defun tramp-handle-file-remote-p (filename &optional identification connected)
   "Like `file-remote-p' for Tramp files."
