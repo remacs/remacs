@@ -2228,7 +2228,7 @@ xg_get_file_name (struct frame *f,
 
 static char *x_last_font_name;
 
-#if HAVE_GTK3
+#ifdef HAVE_GTK3
 static gboolean
 xg_font_filter (const PangoFontFamily *family,
                 const PangoFontFace *face,
