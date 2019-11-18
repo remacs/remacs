@@ -54,7 +54,7 @@ fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
                 }
             }
         }
-        return None;
+        None
     };
 
     if let Some(val) = find_prop(propval) {
@@ -69,7 +69,7 @@ fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
         }
     }
 
-    return 0;
+    0
 }
 
 // originally the macro TEXT_PROP_MEANS_INVISIBLE from intervals.h
