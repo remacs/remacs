@@ -46,11 +46,10 @@ fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
         if propval.eq(tem) {
             return 1;
         }
-        if tem.is_cons() && propval.eq(tem.as_cons().unwrap().car()) {
-            if tem.as_cons().unwrap().cdr().is_nil() {
-                return 1;
-            } else {
-                return 2;
+        if tem.is_cons() {
+            let (car, cdr) = tem.into();
+            if propval.eq(car) {
+                return if cdr.is_nil() { 1 } else { 2 };
             }
         }
     }
@@ -61,11 +60,10 @@ fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
                 if propelt.eq(tem) {
                     return 1;
                 }
-                if tem.is_cons() && propelt.eq(tem.as_cons().unwrap().car()) {
-                    if tem.as_cons().unwrap().cdr().is_nil() {
-                        return 1;
-                    } else {
-                        return 2;
+                if tem.is_cons() {
+                    let (car, cdr) = tem.into();
+                    if propelt.eq(car) {
+                        return if cdr.is_nil() { 1 } else { 2 };
                     }
                 }
             }
