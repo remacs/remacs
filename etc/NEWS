@@ -231,6 +231,7 @@ To get the old, less-secure behavior, you can set the
 *** When run by root, emacsclient no longer connects to non-root sockets.
 (Instead you can use Tramp methods to run root commands in a non-root Emacs.)
 
++++
 ** New function 'network-lookup-address-info'.
 This does IPv4 and/or IPv6 address lookups on hostnames.
 
