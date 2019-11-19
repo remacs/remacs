@@ -5,6 +5,7 @@ use remacs_macros::lisp_fn;
 #[cfg(feature = "glyph-debug")]
 use crate::{interactive::InteractiveNumericPrefix, remacs_sys::trace_redisplay_p};
 use crate::{
+    intervals::text_prop_means_invisible,
     lisp::LispObject,
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::bset_update_mode_line,
@@ -41,7 +42,7 @@ pub fn trace_redisplay(arg: Option<InteractiveNumericPrefix>) {
     }
 }
 
-fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
+pub fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
     let find_prop = |propelt: LispObject| {
         for tem in list.iter_cars(LispConsEndChecks::off, LispConsCircularChecks::off) {
             if propelt.eq(tem) {
@@ -70,23 +71,6 @@ fn invisible_prop(propval: LispObject, list: LispCons) -> EmacsInt {
     }
 
     0
-}
-
-// originally the macro TEXT_PROP_MEANS_INVISIBLE from intervals.h
-fn text_prop_means_invisible(prop: LispObject) -> EmacsInt {
-    let cur_buf = ThreadState::current_buffer_unchecked();
-    if cur_buf.invisibility_spec_.is_t() {
-        if prop.is_nil() {
-            0
-        } else {
-            1
-        }
-    } else {
-        cur_buf
-            .invisibility_spec_
-            .as_cons()
-            .map_or(0, |cons| invisible_prop(prop, cons))
-    }
 }
 
 /// Non-nil if text properties at POS cause text there to be currently invisible.

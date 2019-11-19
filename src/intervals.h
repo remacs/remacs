@@ -223,11 +223,9 @@ set_interval_plist (INTERVAL i, Lisp_Object plist)
 /* If PROP is the `invisible' property of a character,
    this is 1 if the character should be treated as invisible,
    and 2 if it is invisible but with an ellipsis.  */
-
+extern int text_prop_means_invisible(Lisp_Object); // defined in intervals.rs
 #define TEXT_PROP_MEANS_INVISIBLE(prop)					\
-  (EQ (BVAR (current_buffer, invisibility_spec), Qt)			\
-   ? !NILP (prop)							\
-   : invisible_prop (prop, BVAR (current_buffer, invisibility_spec)))
+  (text_prop_means_invisible(prop))
 
 /* Declared in alloc.c.  */
 
