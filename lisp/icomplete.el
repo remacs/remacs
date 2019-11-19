@@ -253,7 +253,11 @@ require user confirmation."
                           (path (expand-file-name thing dir)))
                      (when (yes-or-no-p (concat "Delete file " path "? "))
                        (delete-file path) t)))))))
-        (when (funcall action)
+        (when (let (;; Allow `yes-or-no-p' to work and don't let it
+                    ;; `icomplete-exhibit' anything.
+                    (enable-recursive-minibuffers t)
+                    (icomplete-mode nil))
+                (funcall action))
           (completion--cache-all-sorted-completions
            (icomplete--field-beg)
            (icomplete--field-end)
