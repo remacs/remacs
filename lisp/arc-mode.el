@@ -291,11 +291,16 @@ Archive and member name will be added."
 		       (string :format "%v")))
   :group 'archive-zip)
 
-(defcustom archive-zip-case-fiddle t
-  "If non-nil then zip file members may be down-cased.
+(declare-function msdos-long-file-names "msdos.c")
+(defcustom archive-zip-case-fiddle (and (eq system-type 'ms-dos)
+                                        (not (msdos-long-file-names)))
+  "If non-nil, then all-caps names of zip file members will be down-cased.
 This case fiddling will only happen for members created by a system
-that uses caseless file names."
+that uses caseless file names.
+In addition, this flag forces members added/updated in the zip archive
+to be truncated to DOS 8+3 file-name restrictions."
   :type 'boolean
+  :version "27.1"
   :group 'archive-zip)
 ;; ------------------------------
 ;; Zoo archive configuration
