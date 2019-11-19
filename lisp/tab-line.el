@@ -471,13 +471,21 @@ variable `tab-line-tabs-function'."
                                  tab-line-new-button)))))))
 
 
+(defcustom tab-line-auto-hscroll t
+  "Allow or disallow automatic horizontal scrolling of the tab line.
+Non-nil means the tab line are automatically scrolled horizontally to make
+the selected tab visible."
+  :type 'boolean
+  :group 'tab-line
+  :version "27.1")
+
 (defun tab-line-auto-hscroll (strings hscroll)
   (with-temp-buffer
     (let ((truncate-partial-width-windows nil)
+          (truncate-lines nil)
           (inhibit-modification-hooks t)
+          (buffer-undo-list t)
           show-arrows)
-      (setq truncate-lines nil
-            buffer-undo-list t)
       (apply 'insert strings)
       (goto-char (point-min))
       (add-face-text-property (point-min) (point-max) 'tab-line)
@@ -486,7 +494,9 @@ variable `tab-line-tabs-function'."
       (setq show-arrows (> (vertical-motion 1) 0))
       ;; Try to auto-scroll only when scrolling is needed,
       ;; but no manual scrolling was performed before.
-      (when (and show-arrows (not (and (integerp hscroll) (>= hscroll 0))))
+      (when (and tab-line-auto-hscroll
+                 show-arrows
+                 (not (and (integerp hscroll) (>= hscroll 0))))
         (let ((pos (seq-position strings 'selected
                                  (lambda (str prop)
                                    (get-pos-property 1 prop str)))))
