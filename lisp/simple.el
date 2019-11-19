@@ -1389,10 +1389,17 @@ absolute line number."
         (forward-line 0)
         (1+ (count-lines start (point)))))))
 
+(defcustom what-cursor-show-names nil
+  "Whether to show character names in `what-cursor-position'."
+  :type 'boolean
+  :version "27.1"
+  :group 'editing-basics)
+
 (defun what-cursor-position (&optional detail)
   "Print info on cursor position (on screen and within buffer).
-Also describe the character after point, and give its character code
-in octal, decimal and hex.
+Also describe the character after point, and give its character
+code in octal, decimal and hex.  If `what-cursor-show-names' is
+non-nil, additionally show the name of the character.
 
 For a non-ASCII multibyte character, also give its encoding in the
 buffer's selected coding system if the coding system encodes the
@@ -1404,6 +1411,12 @@ In addition, with prefix argument, show details about that character
 in *Help* buffer.  See also the command `describe-char'."
   (interactive "P")
   (let* ((char (following-char))
+         (char-name (and what-cursor-show-names
+                         (or (get-char-code-property char 'name)
+                             (get-char-code-property char 'old-name))))
+         (char-name-fmt (if char-name
+                            (format ", %s" char-name)
+                          ""))
 	 (bidi-fixer
 	  ;; If the character is one of LRE, LRO, RLE, RLO, it will
 	  ;; start a directional embedding, which could completely
@@ -1449,7 +1462,7 @@ in *Help* buffer.  See also the command `describe-char'."
 	    (setq coding (default-value 'buffer-file-coding-system)))
 	(if (eq (char-charset char) 'eight-bit)
 	    (setq encoding-msg
-		  (format "(%d, #o%o, #x%x, raw-byte)" char char char))
+		  (format "(%d, #o%o, #x%x%s, raw-byte)" char char char char-name-fmt))
 	  ;; Check if the character is displayed with some `display'
 	  ;; text property.  In that case, set under-display to the
 	  ;; buffer substring covered by that property.
@@ -1468,17 +1481,17 @@ in *Help* buffer.  See also the command `describe-char'."
 	  (setq encoding-msg
 		(if display-prop
 		    (if (not (stringp display-prop))
-			(format "(%d, #o%o, #x%x, part of display \"%s\")"
-				char char char under-display)
-		      (format "(%d, #o%o, #x%x, part of display \"%s\"->\"%s\")"
-			      char char char under-display display-prop))
+			(format "(%d, #o%o, #x%x%s, part of display \"%s\")"
+				char char char char-name-fmt under-display)
+		      (format "(%d, #o%o, #x%x%s, part of display \"%s\"->\"%s\")"
+			      char char char char-name-fmt under-display display-prop))
 		  (if encoded
-		      (format "(%d, #o%o, #x%x, file %s)"
-			      char char char
+		      (format "(%d, #o%o, #x%x%s, file %s)"
+			      char char char char-name-fmt
 			      (if (> (length encoded) 1)
 				  "..."
 				(encoded-string-description encoded coding)))
-		    (format "(%d, #o%o, #x%x)" char char char)))))
+		    (format "(%d, #o%o, #x%x%s)" char char char char-name-fmt)))))
 	(if detail
 	    ;; We show the detailed information about CHAR.
 	    (describe-char (point)))

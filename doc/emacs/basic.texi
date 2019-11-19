@@ -696,6 +696,15 @@ position as a percentage of the total.  After @samp{column=} is the
 horizontal position of point, in columns counting from the left edge
 of the window.
 
+@vindex what-cursor-show-names
+  If the user option @code{what-cursor-show-names} is non-@code{nil},
+the name of the character, as defined by the Unicode Character
+Database, is shown as well.  The part in parentheses would then become:
+
+@smallexample
+(99, #o143, #x63, LATIN SMALL LETTER C)
+@end smallexample
+
   If the buffer has been narrowed, making some of the text at the
 beginning and the end temporarily inaccessible, @kbd{C-x =} displays
 additional text describing the currently accessible range.  For

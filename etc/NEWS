@@ -232,6 +232,11 @@ To get the old, less-secure behavior, you can set the
 (Instead you can use Tramp methods to run root commands in a non-root Emacs.)
 
 +++
+** New user option 'what-cursor-show-names'.
+When non-nil, 'what-cursor-position' will show the name of the character
+in addition to the decimal/hex/octal representation.  Default nil.
+
++++
 ** New function 'network-lookup-address-info'.
 This does IPv4 and/or IPv6 address lookups on hostnames.
 
