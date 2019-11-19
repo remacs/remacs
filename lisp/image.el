@@ -369,8 +369,10 @@ be determined."
 	    ;; If nothing seems to be supported, return first type that matched.
 	    (or first (setq first type))))))))
 
-(declare-function image-convert-p "image-converter.el" (file))
-(declare-function image-convert "image-converter.el" (image))
+(declare-function image-convert-p "image-converter.el"
+                  (source &optional image-format))
+(declare-function image-convert "image-converter.el"
+                  (image &optional image-format))
 
 ;;;###autoload
 (defun image-type (source &optional type data-p)
@@ -380,12 +382,20 @@ Optional TYPE is a symbol describing the image type.  If TYPE is omitted
 or nil, try to determine the image type from its first few bytes
 of image data.  If that doesn't work, and SOURCE is a file name,
 use its file extension as image type.
-Optional DATA-P non-nil means SOURCE is a string containing image data."
+
+Optional DATA-P non-nil means SOURCE is a string containing image
+data.  If DATA-P is a symbol with a name on the format
+`image/jpeg', that may be used as a hint to determine the image
+type if we can't otherwise guess it."
   (when (and (not data-p) (not (stringp source)))
     (error "Invalid image file name `%s'" source))
   (unless type
     (setq type (if data-p
-		   (image-type-from-data source)
+		   (or (image-type-from-data source)
+                       (and image-use-external-converter
+                            (progn
+                              (require 'image-converter)
+                              (image-convert-p source data-p))))
 		 (or (image-type-from-file-header source)
 		     (image-type-from-file-name source)
                      (and image-use-external-converter
@@ -457,14 +467,18 @@ Images should not be larger than specified by `max-image-size'.
 Image file names that are not absolute are searched for in the
 \"images\" sub-directory of `data-directory' and
 `x-bitmap-file-path' (in that order)."
-  ;; It is x_find_image_file in image.c that sets the search path.
-  (setq type (image-type file-or-data type data-p))
-  ;; If we have external image conversion switched on (for exotic,
-  ;; non-native image formats), then we convert the file.
-  (when (eq type 'image-convert)
-    (setq file-or-data (image-convert file-or-data)
-          type 'png
-          data-p t))
+  (let ((data-format
+         ;; Pass the image format, if any, if this is data.
+         (and data-p (or (plist-get props :format) t))))
+    ;; It is x_find_image_file in image.c that sets the search path.
+    (setq type (ignore-error unknown-image-type
+                 (image-type file-or-data type data-format)))
+    ;; If we have external image conversion switched on (for exotic,
+    ;; non-native image formats), then we convert the file.
+    (when (eq type 'image-convert)
+      (setq file-or-data (image-convert file-or-data data-format)
+            type 'png
+            data-p t)))
   (when (image-type-available-p type)
     (append (list 'image :type type (if data-p :data :file) file-or-data)
             (and (not (plist-get props :scale))
