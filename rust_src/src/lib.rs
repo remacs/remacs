@@ -148,7 +148,6 @@ pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons};
 mod hacks {
     use core::mem::ManuallyDrop;
 
-    #[allow(unions_with_drop_fields)]
     pub union Hack<T> {
         t: ManuallyDrop<T>,
         u: (),
