@@ -158,14 +158,17 @@ static int exec_personality;
 /* Try to disable randomization if the current process needs it and
    does not appear to have it already.  */
 int
-maybe_disable_address_randomization (bool dumping, int argc, char **argv)
+maybe_disable_address_randomization (int argc, char **argv)
 {
   /* Undocumented Emacs option used only by this function.  */
   static char const aslr_disabled_option[] = "--__aslr-disabled";
 
   if (argc < 2 || strcmp (argv[1], aslr_disabled_option) != 0)
     {
-      bool disable_aslr = dumping;
+      /* If dumping via unexec, ASLR must be disabled, as otherwise
+	 data may be scattered and undumpable as a simple executable.
+	 If pdumping, disabling ASLR makes the .pdmp file reproducible.  */
+      bool disable_aslr = will_dump_p ();
 # ifdef __PPC64__
       disable_aslr = true;
 # endif

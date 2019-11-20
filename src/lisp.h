@@ -4576,10 +4576,10 @@ struct tty_display_info;
 
 /* Defined in sysdep.c.  */
 #ifdef HAVE_PERSONALITY_ADDR_NO_RANDOMIZE
-extern int maybe_disable_address_randomization (bool, int, char **);
+extern int maybe_disable_address_randomization (int, char **);
 #else
 INLINE int
-maybe_disable_address_randomization (bool dumping, int argc, char **argv)
+maybe_disable_address_randomization (int argc, char **argv)
 {
   return argc;
 }

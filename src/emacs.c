@@ -1054,8 +1054,7 @@ main (int argc, char **argv)
     load_pdump (argc, argv);
 #endif
 
-  argc = maybe_disable_address_randomization (
-    will_dump_with_unexec_p (), argc, argv);
+  argc = maybe_disable_address_randomization (argc, argv);
 
 #if defined GNU_LINUX && defined HAVE_UNEXEC
   if (!initialized)
