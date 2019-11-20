@@ -187,7 +187,7 @@ and also to avoid outputting the warning during normal execution."
              (symbolp (car form))
              (get (car form) 'byte-obsolete-info)
              (or (not (fboundp 'byte-compile-warning-enabled-p))
-                 (byte-compile-warning-enabled-p 'obsolete)))
+                 (byte-compile-warning-enabled-p 'obsolete (car form))))
         (let* ((fun (car form))
                (obsolete (get fun 'byte-obsolete-info)))
           (macroexp--warn-and-return
