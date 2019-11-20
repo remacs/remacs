@@ -125,15 +125,15 @@ impl Debug for LispVectorlikeRef {
         match self.as_vector() {
             Some(v) => {
                 write!(f, "[")?;
-                match v.as_slice().split_first() {
-                    Some((first, rest)) => {
+                match v.as_slice() {
+                    [] => {}
+                    [first, rest @ ..] => {
                         write!(f, "{:?}", first)?;
                         for elt in rest {
                             write!(f, " {:?}", elt)?;
                         }
                     }
-                    None => {}
-                };
+                }
                 write!(f, "]")
             }
             None => write!(
