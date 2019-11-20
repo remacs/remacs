@@ -153,6 +153,7 @@ Using @value{tramp}
 * Ad-hoc multi-hops::           Declaring multiple hops in the file name.
 * Remote processes::            Integration with other Emacs packages.
 * Cleanup remote connections::  Cleanup remote connections.
+* Renaming remote files::       Renaming remote files.
 * Archive file names::          Access to files in file archives.
 
 How file names, directories and localnames are mangled and managed
@@ -1409,7 +1410,7 @@ use the @samp{john} as the default user for the domain
 A Caution: @value{tramp} will override any default user specified in
 the configuration files outside Emacs, such as @file{~/.ssh/config}.
 To stop @value{tramp} from applying the default value, set the
-corresponding alist entry to nil:
+corresponding alist entry to @code{nil}:
 
 @lisp
 @group
@@ -2710,6 +2711,7 @@ is a feature of Emacs that may cause missed prompts when using
 * Ad-hoc multi-hops::           Declaring multiple hops in the file name.
 * Remote processes::            Integration with other Emacs packages.
 * Cleanup remote connections::  Cleanup remote connections.
+* Renaming remote files::       Renaming remote files.
 * Archive file names::          Access to files in file archives.
 @end menu
 
@@ -3371,9 +3373,9 @@ To open @command{powershell} as a remote shell, use this:
 
 @value{tramp} provides several ways to flush remote connections.
 
-@deffn Command tramp-cleanup-connection vec
-This command flushes all connection related objects.  @option{vec} is
-the internal representation of a remote connection.  When called
+@deffn Command tramp-cleanup-connection vec &optional keep-debug keep-password
+This command flushes all connection related objects.  @var{vec} is the
+internal representation of a remote connection.  When called
 interactively, this command lists active remote connections in the
 minibuffer.  Each connection is of the format
 @file{@trampfn{method,user@@host,}}.
@@ -3383,11 +3385,14 @@ Flushing remote connections also cleans the password cache
 (@pxref{Connection caching}), and recentf cache (@pxref{File
 Conveniences, , , emacs}).  It also deletes session timers
 (@pxref{Predefined connection information}) and connection buffers.
+
+If @var{keep-debug} is non-@code{nil}, the debug buffer is kept.  A
+non-@code{nil} @var{keep-password} preserves the password cache.
 @end deffn
 
 @deffn Command tramp-cleanup-this-connection
-Flushes only the current buffer's remote connection objects, the same
-as in @code{tramp-cleanup-connection}.
+Flushes the current buffer's remote connection objects, the same as in
+@code{tramp-cleanup-connection}.
 @end deffn
 
 @deffn Command tramp-cleanup-all-connections
@@ -3404,6 +3409,112 @@ killing all buffers related to remote connections.
 @end deffn
 
 
+@node Renaming remote files
+@section Renaming remote files
+@cindex save remote files
+
+Sometimes, it is desirable to safe file contents of buffers visiting a
+given remote host.  This could happen for example, if the local host
+changes its network integration, and the remote host is not reachable
+anymore.
+
+@deffn Command tramp-rename-files source target
+Replace in all buffers the visiting file name from @var{source} to
+@var{target}.  @var{source} is a remote directory name, which could
+contain also a localname part.  @var{target} is the directory name
+@var{source} is replaced with.  Often, @var{target} is a remote
+directory name on another host, but it can also be a local directory
+name.  If @var{target} has no local part, the local part from
+@var{source} is used.
+
+If @var{target} is @code{nil}, it is selected according to the first
+match in @code{tramp-default-rename-alist}.  If called interactively,
+this match is offered as initial value for selection.
+
+On all buffers, which have a @code{buffer-file-name} matching
+@var{source}, this name is modified by replacing @var{source} with
+@var{target}.  This is applied by calling
+@code{set-visited-file-name}.  The new @code{buffer-file-name} is
+prompted for modification in the minibuffer.  The buffers are marked
+modified, and must be saved explicitly.
+
+If user option @code{tramp-confirm-rename-file-names} is nil, changing
+the file name happens without confirmation.  This requires a
+matching entry in @code{tramp-default-rename-alist}.
+
+Remote buffers related to the remote connection identified by
+@var{source}, which are not visiting files, or which are visiting
+files not matching @var{source}, are not modified.
+
+Interactively, @var{target} is selected from
+@code{tramp-default-rename-alist} without confirmation if the prefix
+argument is non-@code{nil}.
+
+The remote connection identified by @var{source} is flushed by
+@code{tramp-cleanup-connection}.
+@end deffn
+
+@deffn Command tramp-rename-these-files target
+Replace visiting file names to @var{target}.  The current buffer must
+be related to a remote connection.  In all buffers, which are visiting
+a file with the same directory name, the buffer file name is changed.
+
+Interactively, @var{target} is selected from
+@code{tramp-default-rename-alist} without confirmation if the prefix
+argument is non-@code{nil}.
+@end deffn
+
+@defopt tramp-default-rename-alist
+The default target for renaming remote buffer file names.  This is an
+alist of cons cells @code{(source . target)}.  The first matching item
+specifies the target to be applied for renaming buffer file names from
+source via @code{tramp-rename-files}.  @code{source} is a regular
+expressions, which matches a remote file name.  @code{target} must be
+a directory name, which could be remote (including remote directories
+Tramp infers by default, such as @samp{@trampfn{method,user@@host,}}).
+
+@code{target} can contain the patterns @code{%m}, @code{%u} or
+@code{%h}, which are replaced by the method name, user name or host
+name of @code{source} when calling @code{tramp-rename-files}.
+
+@code{source} could also be a Lisp form, which will be evaluated.  The
+result must be a string or nil, which is interpreted as a regular
+expression which always matches.
+
+Example entries:
+
+@lisp
+@group
+("@trampfn{ssh,badhost,/path/to/dir/}"
+ . "@trampfn{ssh,goodhost,/path/to/another/dir/}")
+@end group
+@end lisp
+
+would trigger renaming of buffer file names on @samp{badhost} to
+@samp{goodhost}, including changing the directory name.
+
+@lisp
+("@trampfn{ssh,.+\\\\.company\\\\.org,}" . "@value{prefix}ssh@value{postfixhop}multi.hop|ssh@value{postfixhop}%h@value{postfix}")
+@end lisp
+
+routes all connections to a host in @samp{company.org} via
+@samp{@trampfn{ssh,multi.hop,}}, which might be useful when using
+Emacs outside the company network.
+
+@lisp
+(nil . "~/saved-files/%m:%u@@%h/")
+@end lisp
+
+saves all remote files locally, with a directory name including method
+name, user name and host name of the remote connection.
+@end defopt
+
+@defopt tramp-confirm-rename-file-names
+Whether renaming a buffer file name by @code{tramp-rename-files} or
+@code{tramp-rename-these-files} must be confirmed.
+@end defopt
+
+
 @node Archive file names
 @section Archive file names
 @cindex file archives
@@ -3412,7 +3523,7 @@ killing all buffers related to remote connections.
 @cindex archive method
 
 @value{tramp} offers also transparent access to files inside file
-archives.  This is possible only on machines which have installed
+archives.  This is possible only on hosts which have installed
 @acronym{GVFS, the GNOME Virtual File System}, @ref{GVFS-based
 methods}.  Internally, file archives are mounted via the
 @acronym{GVFS} @option{archive} method.
@@ -4437,6 +4548,21 @@ The buffer-local variable @code{default-directory} tells this.  If the
 form @code{(file-remote-p default-directory)} returns non-@code{nil},
 the buffer is remote.  See the optional arguments of
 @code{file-remote-p} for determining details of the remote connection.
+
+
+@item
+How to save files when a remote host isn't reachable anymore?
+
+If the local machine Emacs is running on changes its network
+integration, remote hosts could become unreachable.  This happens for
+example, if the local machine is moved between your office and your
+home without restarting Emacs.
+
+In such cases, the command @code{tramp-rename-files} can be used to
+alter remote buffers’ method, host, and/or directory names.  This
+permits saving their contents in the same location via another network
+path, or somewhere else entirely (including locally).  @pxref{Renaming
+remote files}.
 
 
 @item

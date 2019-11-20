@@ -1837,6 +1837,11 @@ possible to configure the remote login shell.  This avoids problems
 with remote hosts, where "/bin/sh" is a link to a shell which
 cooperates badly with Tramp.
 
++++
+*** New commands 'tramp-rename-files' and 'tramp-rename-these-files'.
+They allow to save remote files somewhere else when the corresponding
+host is not reachable anymore.
+
 ** Rcirc
 
 ---

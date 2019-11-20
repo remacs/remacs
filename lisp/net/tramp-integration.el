@@ -36,6 +36,8 @@
 (declare-function tramp-file-name-equal-p "tramp")
 (declare-function tramp-tramp-file-p "tramp")
 (defvar eshell-path-env)
+(defvar ido-read-file-name-non-ido)
+(defvar ivy-completing-read-handlers-alist)
 (defvar recentf-exclude)
 (defvar tramp-current-connection)
 (defvar tramp-postfix-host-format)
@@ -169,6 +171,20 @@ NAME must be equal to `tramp-current-connection'."
 			   #'tramp-recentf-cleanup)
 	      (remove-hook 'tramp-cleanup-all-connections-hook
 			   #'tramp-recentf-cleanup-all))))
+
+;;; Integration of ido.el:
+
+(with-eval-after-load 'ido
+  (add-to-list 'ido-read-file-name-non-ido 'tramp-rename-files)
+  (add-to-list 'ido-read-file-name-non-ido 'tramp-these-rename-files))
+
+;;; Integration of ivy.el:
+
+(with-eval-after-load 'ivy
+  (add-to-list 'ivy-completing-read-handlers-alist
+	       '(tramp-rename-files . completing-read-default))
+  (add-to-list 'ivy-completing-read-handlers-alist
+	       '(tramp-these-rename-files . completing-read-default)))
 
 ;;; Default connection-local variables for Tramp:
 
