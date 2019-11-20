@@ -167,7 +167,7 @@ maybe_disable_address_randomization (int argc, char **argv)
     {
       /* If dumping via unexec, ASLR must be disabled, as otherwise
 	 data may be scattered and undumpable as a simple executable.
-	 If pdumping, disabling ASLR makes the .pdmp file reproducible.  */
+	 If pdumping, disabling ASLR lessens differences in the .pdmp file.  */
       bool disable_aslr = will_dump_p ();
 # ifdef __PPC64__
       disable_aslr = true;
