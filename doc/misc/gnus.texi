@@ -2628,9 +2628,6 @@ type.  @xref{Document Groups}.
 Create one of the groups mentioned in @code{gnus-useful-groups}
 (@code{gnus-group-make-useful-group}).
 
-@c FIXME: Gmane.org is no longer working; fix the Gmane referrences
-@c in this file accordingly.
-
 @item G w
 @kindex G w @r{(Group)}
 @findex gnus-group-make-web-group
@@ -2641,7 +2638,7 @@ Make an ephemeral group based on a web search
 (@code{gnus-group-make-web-group}).  If you give a prefix to this
 command, make a solid group instead.  You will be prompted for the
 search engine type and the search string.  Valid search engine types
-include @code{google}, @code{dejanews}, and @code{gmane}.
+include @code{google} and @code{dejanews}.
 @xref{Web Searches}.
 
 If you use the @code{google} search engine, you can limit the search
@@ -2694,25 +2691,6 @@ The following commands create ephemeral groups.  They can be called not
 only from the Group buffer, but in any Gnus buffer.
 
 @table @code
-@item gnus-read-ephemeral-gmane-group
-@findex gnus-read-ephemeral-gmane-group
-@vindex gnus-gmane-group-download-format
-Read an ephemeral group on Gmane.org.  The articles are downloaded via
-HTTP using the URL specified by @code{gnus-gmane-group-download-format}.
-Gnus will prompt you for a group name, the start article number and an
-the article range.
-
-@item gnus-read-ephemeral-gmane-group-url
-@findex gnus-read-ephemeral-gmane-group-url
-This command is similar to @code{gnus-read-ephemeral-gmane-group}, but
-the group name and the article number and range are constructed from a
-given @acronym{URL}.  Supported @acronym{URL} formats include:
-@indicateurl{http://thread.gmane.org/gmane.foo.bar/12300/focus=12399},
-@indicateurl{http://thread.gmane.org/gmane.foo.bar/12345/},
-@indicateurl{http://article.gmane.org/gmane.foo.bar/12345/},
-@indicateurl{http://permalink.gmane.org/gmane.foo.bar/12345/}, and
-@indicateurl{http://news.gmane.org/group/gmane.foo.bar/thread=12345}.
-
 @item gnus-read-ephemeral-emacs-bug-group
 @findex gnus-read-ephemeral-emacs-bug-group
 Read an Emacs bug report in an ephemeral group.  Gnus will prompt for
@@ -17019,7 +16997,6 @@ before you restore the data.
 @cindex nnweb
 @cindex Google
 @cindex dejanews
-@cindex gmane
 @cindex Usenet searches
 @cindex searching the Usenet
 
@@ -17060,7 +17037,7 @@ Virtual server variables:
 @item nnweb-type
 @vindex nnweb-type
 What search engine type is being used.  The currently supported types
-are @code{google}, @code{dejanews}, and @code{gmane}.  Note that
+are @code{google} and @code{dejanews}.  Note that
 @code{dejanews} is an alias to @code{google}.
 
 @item nnweb-search
@@ -21167,9 +21144,9 @@ through mail and news repositories.  Different backends (like
 @dfn{engines} in @code{nnir} lingo), but all use the same basic search
 interface.
 
-The @code{nnimap} and @code{gmane} search engines should work with no
-configuration.  Other engines require a local index that needs to be
-created and maintained outside of Gnus.
+The @code{nnimap} search engine should work with no configuration.
+Other engines require a local index that needs to be created and
+maintained outside of Gnus.
 
 
 @node Basic Usage
@@ -21215,22 +21192,20 @@ special search features for each engine separately.
 @node Setting up nnir
 @subsection Setting up nnir
 
-To set up nnir you may need to do some prep work.  Firstly, you may need
-to configure the search engines you plan to use.  Some of them, like
-@code{imap} and @code{gmane}, need no special configuration.  Others,
-like @code{namazu} and @code{swish}, require configuration as described
-below.  Secondly, you need to associate a search engine with a server or
-a backend.
+To set up nnir you may need to do some prep work.  Firstly, you may
+need to configure the search engines you plan to use.  Some of them,
+like @code{imap}, need no special configuration.  Others, like
+@code{namazu} and @code{swish}, require configuration as described
+below.  Secondly, you need to associate a search engine with a server
+or a backend.
 
 If you just want to use the @code{imap} engine to search @code{nnimap}
-servers, and the @code{gmane} engine to search @code{gmane} then you
-don't have to do anything.  But you might want to read the details of the
-query language anyway.
+servers then you don't have to do anything.  But you might want to
+read the details of the query language anyway.
 
 @menu
 * Associating Engines::                 How to associate engines.
 * The imap Engine::                     Imap configuration and usage.
-* The gmane Engine::                    Gmane configuration and usage.
 * The swish++ Engine::                  Swish++ configuration and usage.
 * The swish-e Engine::                  Swish-e configuration and usage.
 * The namazu Engine::                   Namazu configuration and usage.
@@ -21262,11 +21237,8 @@ engine for all servers using the @code{nnimap} backend.  In this case you
 can customize the variable @code{nnir-method-default-engines}.  This is
 an alist of pairs of the form @code{(backend . engine)}.  By default this
 variable is set to use the @code{imap} engine for all servers using the
-@code{nnimap} backend, and the @code{gmane} backend for @code{nntp}
-servers.  (Don't worry, the @code{gmane} search engine won't actually try
-to search non-gmane @code{nntp} servers.)  But if you wanted to use
-@code{namazu} for all your servers with an @code{nnimap} backend you
-could change this to
+@code{nnimap} backend.  But if you wanted to use @code{namazu} for all
+your servers with an @code{nnimap} backend you could change this to
 
 @lisp
 '((nnimap . namazu)
@@ -21320,39 +21292,6 @@ customize @code{nnir-imap-default-search-key}.  For example to use
 @lisp
 (setq nnir-imap-default-search-key "Imap")
 @end lisp
-
-@node The gmane Engine
-@subsubsection The gmane Engine
-
-The @code{gmane} engine requires no configuration.
-
-Gmane queries follow a simple query language:
-
-@table @samp
-@item Boolean query operators
-AND, OR, NOT (or AND NOT), and XOR are supported, and brackets can be
-used to control operator precedence, e.g., (emacs OR xemacs) AND linux.
-Note that operators must be written with all capital letters to be
-recognized.
-
-@item Required and excluded terms
-+ and @minus{} can be used to require or exclude terms, e.g., football
-@minus{}american
-
-@item Unicode handling
-The search engine converts all text to utf-8, so searching should work
-in any language.
-
-@item Stopwords
-Common English words (like 'the' and 'a') are ignored by default.  You
-can override this by prefixing such words with a + (e.g., +the) or
-enclosing the word in quotes (e.g., "the").
-
-@end table
-
-The query can be limited to articles by a specific author using a
-prefix-arg.  After inputting the query this will prompt for an author
-name (or part of a name) to match.
 
 @node The swish++ Engine
 @subsubsection The swish++ Engine
@@ -21509,7 +21448,6 @@ Alist of pairs of server backends and search engines.  The default
 associations are
 @example
 (nnimap . imap)
-(nntp . gmane)
 @end example
 
 @item nnir-ignored-newsgroups
