@@ -702,7 +702,11 @@ Possible return values:
   (catch 'return
     (let ((levels
            (if (stringp halfsexp)
-               (prog1 (list (cdr (assoc halfsexp smie-grammar)))
+               (prog1 (list (or (cdr (assoc halfsexp smie-grammar))
+                                (when (string-match "\\`\\s(\\|\\s)\\(\\)\\'"
+                                                    halfsexp)
+                                  (if (match-end 1) '(0 nil) '(nil 0)))
+                                (error "Unknown token: %S" halfsexp)))
                  (setq halfsexp nil)))))
       (while
           (let* ((pos (point))
