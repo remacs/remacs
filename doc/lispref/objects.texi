@@ -124,9 +124,7 @@ The printed representation of an interned symbol whose name is an
 empty string (@pxref{Symbol Type}).
 
 @item #'
-Expands to @code{function} and is commonly used to quote function
-symbols (as opposed to @samp{'} which is used to quote non-function
-symbols (@pxref{Anonymous Functions})).
+This is a shortcut for @code{function}, see @ref{Anonymous Functions}.
 
 @item #:
 The printed representation of an uninterned symbol whose name is
