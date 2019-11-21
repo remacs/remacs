@@ -1000,13 +1000,18 @@ Note that the MAX parameter is used so we can exit the parse early."
     (forward-line 1)
     (skip-chars-forward "\t ")))
 
+(defun auth-source-netrc-looking-at-token ()
+  "Say whether the next think in the buffer is a token (password, etc).
+Match data is altered to reflect the token."
+  (or (looking-at "'\\([^']*\\)'")
+      (looking-at "\"\\([^\"]*\\)\"")
+      (looking-at "\\([^ \t\n]+\\)")))
+
 (defun auth-source-netrc-parse-one ()
   "Read one thing from the current buffer."
   (auth-source-netrc-parse-next-interesting)
 
-  (when (or (looking-at "'\\([^']*\\)'")
-            (looking-at "\"\\([^\"]*\\)\"")
-            (looking-at "\\([^ \t\n]+\\)"))
+  (when (auth-source-netrc-looking-at-token)
     (forward-char (length (match-string 0)))
     (prog1
         (match-string-no-properties 1)
@@ -2427,7 +2432,7 @@ passwords are revealed when point moved into the password.
       (while (re-search-forward (format "\\(\\s-\\|^\\)\\(%s\\)\\s-+"
                                         authinfo-hidden)
                                 nil t)
-        (when (looking-at "[^\n\t ]+")
+        (when (auth-source-netrc-looking-at-token)
           (let ((overlay (make-overlay (match-beginning 0) (match-end 0))))
             (overlay-put overlay 'display (propertize "****"
                                                       'face 'warning))
