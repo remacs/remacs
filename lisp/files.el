@@ -958,7 +958,7 @@ one or more of those symbols."
       ;; M-x load-library RET t/x.e TAB finds some files.  Also remove elements
       ;; from `names' that matched `string' only when they still had
       ;; their suffix.
-      (setq names (all-completions string names))
+      (setq names (all-completions string-file names))
       ;; Remove duplicates of the first element, so that we can easily check
       ;; if `names' really contains only a single element.
       (when (cdr names) (setcdr names (delete (car names) (cdr names))))
