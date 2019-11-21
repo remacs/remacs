@@ -3538,50 +3538,61 @@ Message buffers and is not meant to be called directly."
 (defun message-insert-signature (&optional force)
   "Insert a signature.  See documentation for variable `message-signature'."
   (interactive (list 0))
-  (let* ((signature
-	  (cond
-	   ((and (null message-signature)
-		 (eq force 0))
-	    (save-excursion
-	      (goto-char (point-max))
-	      (not (re-search-backward message-signature-separator nil t))))
-	   ((and (null message-signature)
-		 force)
-	    t)
-	   ((functionp message-signature)
-	    (funcall message-signature))
-	   ((listp message-signature)
-	    (eval message-signature))
-	   (t message-signature)))
-	 signature-file)
-    (setq signature
-	  (cond ((stringp signature)
-		 signature)
-		((and (eq t signature) message-signature-file)
-		 (setq signature-file
-		       (if (and message-signature-directory
-				;; don't actually use the signature directory
-				;; if message-signature-file contains a path.
-				(not (file-name-directory
-				      message-signature-file)))
-			   (expand-file-name message-signature-file
-					     message-signature-directory)
-			 message-signature-file))
-		 (file-exists-p signature-file))))
-    (when signature
-      (goto-char (point-max))
-      ;; Insert the signature.
-      (unless (bolp)
-	(newline))
-      (when message-signature-insert-empty-line
-	(newline))
-      (insert "-- ")
-      (newline)
-      (if (eq signature t)
-	  (insert-file-contents signature-file)
-	(insert signature))
-      (goto-char (point-max))
-      (or (bolp) (newline)))))
+  (let ((message-signature message-signature)
+	(message-signature-file message-signature-file))
+    ;; If called interactively and there's no signature to insert,
+    ;; consult the global values to see whether there's anything they
+    ;; have to say for themselves.  This can happen when using
+    ;; `gnus-posting-styles', for instance.
+    (when (and (null message-signature)
+	       (null message-signature-file)
+	       (eq force 0))
+      (setq message-signature (default-value 'message-signature)
+	    message-signature-file (default-value 'message-signature-file)))
+    (let* ((signature
+	    (cond
+	     ((and (null message-signature)
+		   (eq force 0))
+	      (save-excursion
+		(goto-char (point-max))
+		(not (re-search-backward message-signature-separator nil t))))
+	     ((and (null message-signature)
+		   force)
+	      t)
+	     ((functionp message-signature)
+	      (funcall message-signature))
+	     ((listp message-signature)
+	      (eval message-signature))
+	     (t message-signature)))
+	   signature-file)
+      (setq signature
+	    (cond ((stringp signature)
+		   signature)
+		  ((and (eq t signature) message-signature-file)
+		   (setq signature-file
+			 (if (and message-signature-directory
+				  ;; don't actually use the signature directory
+				  ;; if message-signature-file contains a path.
+				  (not (file-name-directory
+					message-signature-file)))
+			     (expand-file-name message-signature-file
+					       message-signature-directory)
+			   message-signature-file))
+		   (file-exists-p signature-file))))
+      (when signature
+	(goto-char (point-max))
+	;; Insert the signature.
+	(unless (bolp)
+	  (newline))
+	(when message-signature-insert-empty-line
+	  (newline))
+	(insert "-- ")
+	(newline)
+	(if (eq signature t)
+	    (insert-file-contents signature-file)
+	  (insert signature))
+	(goto-char (point-max))
+	(or (bolp) (newline))))))
 
 (defun message-insert-importance-high ()
   "Insert header to mark message as important."
