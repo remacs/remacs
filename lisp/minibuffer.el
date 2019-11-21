@@ -3494,6 +3494,11 @@ that is non-nil."
 ;;; "flex" completion, also known as flx/fuzzy/scatter completion
 ;; Completes "foo" to "frodo" and "farfromsober"
 
+(defcustom completion-flex-nospace nil
+  "Make flex style fail when a space is found in pattern."
+  :version "27.1"
+  :type 'boolean)
+
 (put 'flex 'completion--adjust-metadata 'completion--flex-adjust-metadata)
 
 (defun completion--flex-adjust-metadata (metadata)
@@ -3539,29 +3544,31 @@ which is at the core of flex logic.  The extra
 
 (defun completion-flex-try-completion (string table pred point)
   "Try to flex-complete STRING in TABLE given PRED and POINT."
-  (pcase-let ((`(,all ,pattern ,prefix ,suffix ,_carbounds)
-               (completion-substring--all-completions
-                string table pred point
-                #'completion-flex--make-flex-pattern)))
-    (if minibuffer-completing-file-name
-        (setq all (completion-pcm--filename-try-filter all)))
-    ;; Try some "merging", meaning add as much as possible to the
-    ;; user's pattern without losing any possible matches in `all'.
-    ;; i.e this will augment "cfi" to "config" if all candidates
-    ;; contain the substring "config".  FIXME: this still won't
-    ;; augment "foo" to "froo" when matching "frodo" and
-    ;; "farfromsober".
-    (completion-pcm--merge-try pattern all prefix suffix)))
+  (unless (and completion-flex-nospace (string-match-p " " string))
+    (pcase-let ((`(,all ,pattern ,prefix ,suffix ,_carbounds)
+                 (completion-substring--all-completions
+                  string table pred point
+                  #'completion-flex--make-flex-pattern)))
+      (if minibuffer-completing-file-name
+          (setq all (completion-pcm--filename-try-filter all)))
+      ;; Try some "merging", meaning add as much as possible to the
+      ;; user's pattern without losing any possible matches in `all'.
+      ;; i.e this will augment "cfi" to "config" if all candidates
+      ;; contain the substring "config".  FIXME: this still won't
+      ;; augment "foo" to "froo" when matching "frodo" and
+      ;; "farfromsober".
+      (completion-pcm--merge-try pattern all prefix suffix))))
 
 (defun completion-flex-all-completions (string table pred point)
   "Get flex-completions of STRING in TABLE, given PRED and POINT."
-  (pcase-let ((`(,all ,pattern ,prefix ,_suffix ,_carbounds)
-               (completion-substring--all-completions
-                string table pred point
-                #'completion-flex--make-flex-pattern)))
-    (when all
-      (nconc (completion-pcm--hilit-commonality pattern all)
-             (length prefix)))))
+  (unless (and completion-flex-nospace (string-match-p " " string))
+    (pcase-let ((`(,all ,pattern ,prefix ,_suffix ,_carbounds)
+                 (completion-substring--all-completions
+                  string table pred point
+                  #'completion-flex--make-flex-pattern)))
+      (when all
+        (nconc (completion-pcm--hilit-commonality pattern all)
+               (length prefix))))))
 
 ;; Initials completion
 ;; Complete /ums to /usr/monnier/src or lch to list-command-history.
