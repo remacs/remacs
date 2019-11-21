@@ -409,6 +409,8 @@ matches strings where the pattern appears as a subsequence.  Put
 simply, makes "foo" complete to both "barfoo" and "frodo".  Add 'flex'
 to 'completion-styles' or 'completion-category-overrides' to use it.
 
+** The 'completion-common-part' face is now visible by default.
+
 +++
 ** New face attribute ':extend' to control face extension at EOL.
 The new face attribute ':extend' controls whether to use the face for

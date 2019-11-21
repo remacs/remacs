@@ -1692,7 +1692,9 @@ See also `display-completion-list'.")
   "Face for the first character after point in completions.
 See also the face `completions-common-part'.")
 
-(defface completions-common-part '((t nil))
+(defface completions-common-part
+  '((((class color) (min-colors 16) (background light)) :foreground "blue3")
+    (((class color) (min-colors 16) (background dark)) :foreground "lightblue"))
   "Face for the parts of completions which matched the pattern.
 See also the face `completions-first-difference'.")
 
