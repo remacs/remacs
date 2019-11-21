@@ -480,6 +480,7 @@ Image file names that are not absolute are searched for in the
     ;; If we have external image conversion switched on (for exotic,
     ;; non-native image formats), then we convert the file.
     (when (eq type 'image-convert)
+      (require 'image-converter)
       (setq file-or-data (image-convert file-or-data data-format)
             type 'png
             data-p t)))
