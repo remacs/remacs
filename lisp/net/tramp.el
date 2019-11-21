@@ -4958,8 +4958,6 @@ name of a process or buffer, or nil to default to the current buffer."
 (defun tramp-unload-tramp ()
   "Discard Tramp from loading remote files."
   (interactive)
-  ;; ange-ftp settings must be re-enabled.
-  (tramp-compat-funcall 'tramp-ftp-enable-ange-ftp)
   ;; Maybe it's not loaded yet.
   (ignore-errors (unload-feature 'tramp 'force)))
 
