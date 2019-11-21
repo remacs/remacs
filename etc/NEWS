@@ -222,7 +222,7 @@ The command-line argument '--socket-name' overrides it.
 +++
 *** Emacs and emacsclient now default to "$XDG_RUNTIME_DIR/emacs"
 as the directory for client/server sockets, if Emacs is running
-under an X Window System desktop that sets the 'XDG_RUNTIME_DIR'
+on a platform or environment that sets the 'XDG_RUNTIME_DIR'
 environment variable to indicate where session sockets should go.
 To get the old, less-secure behavior, you can set the
 'EMACS_SOCKET_NAME' environment variable to an appropriate value.
@@ -925,6 +925,11 @@ Code that attempted to invoke 'smerge-mode' when visiting an Hg file
 with conflicts existed in earlier versions of Emacs, but incorrectly
 never detected a conflict due to invalid assumptions about cached
 values.
+
++++
+*** The Hg (Mercurial) back-end now supports 'vc-region-history'.
+The 'C-x v h' command now works in buffers that visit files controlled
+by Hg.
 
 +++
 *** 'C-u C-x v D' ('vc-root-version-diff') prompts for two revisions

@@ -70,14 +70,18 @@ is a string, it should be a MIME format string like
 
 (defun image-convert (image &optional image-format)
   "Convert IMAGE file to the PNG format.
-IMAGE can either be a file name, which will make the return value
-a string with the image data.
+IMAGE can either be a file name or image data.
 
-If IMAGE-FORMAT is non-nil, IMAGE is a string containing the
-image data, and IMAGE-FORMAT is a symbol with a MIME format name
-like \"image/webp\".
+To pass in image data, IMAGE should a string containing the image
+data, and IMAGE-FORMAT should be a symbol with a MIME format name
+like \"image/webp\".  For instance:
 
-IMAGE can also be an image object as returned by `create-image'."
+  (image-convert data-string 'image/bmp)
+
+IMAGE can also be an image object as returned by `create-image'.
+
+This function converts the image to PNG, and the converted image
+data is returned as a string."
   ;; Find an installed image converter.
   (unless image-converter
     (image-converter--find-converter))

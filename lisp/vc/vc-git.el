@@ -1295,9 +1295,9 @@ This requires git 1.8.4 or later, for the \"-L\" option of \"git log\"."
   ;; to the HEAD version of the file, not to the current state of the file.
   ;; So we need to look at all the local changes and adjust lfrom/lto
   ;; accordingly.
-  ;; FIXME: Maybe this should be done in vc.el (i.e. for all backends), but
-  ;; since Git is the only backend to support this operation so far, it's hard
-  ;; to tell.
+  ;; FIXME: Maybe this should be done in vc.el (i.e. for other backends),
+  ;; but since Git is one of the two backends that support this operation
+  ;; so far, it's hard to tell; hg doesn't need this.
   (with-temp-buffer
     (vc-call-backend 'git 'diff file "HEAD" nil (current-buffer))
     (goto-char (point-min))

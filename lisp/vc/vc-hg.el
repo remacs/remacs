@@ -483,6 +483,55 @@ If LIMIT is non-nil, show no more than this many entries."
 
 (autoload 'vc-switches "vc")
 
+(defun vc-hg-region-history (file buffer lfrom lto)
+  "Insert into BUFFER the history of FILE for lines LFROM to LTO.
+This requires hg 4.4 or later, for the \"-L\" option of \"hg log\"."
+  (vc-hg-command buffer 'async nil "log" "-f" "-p" "-L"
+                  (format "%s,%d:%d" (file-relative-name file) lfrom lto)))
+
+(require 'diff-mode)
+
+(defvar vc-hg-region-history-mode-map
+  (let ((map (make-composed-keymap
+              nil (make-composed-keymap
+                   (list diff-mode-map vc-hg-log-view-mode-map)))))
+    map))
+
+(defvar vc-hg--log-view-long-font-lock-keywords nil)
+(defvar font-lock-keywords)
+(defvar vc-hg-region-history-font-lock-keywords
+  '((vc-hg-region-history-font-lock)))
+
+(defun vc-hg-region-history-font-lock (limit)
+  (let ((in-diff (save-excursion
+                   (beginning-of-line)
+                   (or (looking-at "^\\(?:diff\\|changeset\\)\\>")
+                       (re-search-backward "^\\(?:diff\\|changeset\\)\\>"
+                                           nil t))
+                   (eq ?d (char-after (match-beginning 0))))))
+    (while
+        (let ((end (save-excursion
+                     (if (re-search-forward "\n\\(diff\\|changeset\\)\\>"
+                                            limit t)
+                         (match-beginning 1)
+                       limit))))
+          (let ((font-lock-keywords (if in-diff diff-font-lock-keywords
+                                      vc-hg--log-view-long-font-lock-keywords)))
+            (font-lock-fontify-keywords-region (point) end))
+          (goto-char end)
+          (prog1 (< (point) limit)
+            (setq in-diff (eq ?d (char-after))))))
+    nil))
+
+(define-derived-mode vc-hg-region-history-mode
+    vc-hg-log-view-mode "Hg-Region-History"
+  "Major mode to browse Hg's \"log -p\" output."
+  (setq-local vc-hg--log-view-long-font-lock-keywords
+              log-view-font-lock-keywords)
+  (setq-local font-lock-defaults
+              (cons 'vc-hg-region-history-font-lock-keywords
+                    (cdr font-lock-defaults))))
+
 (defun vc-hg-diff (files &optional oldvers newvers buffer _async)
   "Get a difference report using hg between two revisions of FILES."
   (let* ((firstfile (car files))

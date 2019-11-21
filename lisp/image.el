@@ -158,6 +158,10 @@ or \"ffmpeg\") is installed."
   (let ((map (make-sparse-keymap)))
     (define-key map "-" 'image-decrease-size)
     (define-key map "+" 'image-increase-size)
+    (define-key map [C-wheel-down] 'image-mouse-decrease-size)
+    (define-key map [C-mouse-5]    'image-mouse-decrease-size)
+    (define-key map [C-wheel-up]   'image-mouse-increase-size)
+    (define-key map [C-mouse-4]    'image-mouse-increase-size)
     (define-key map "r" 'image-rotate)
     (define-key map "o" 'image-save)
     map))
@@ -476,6 +480,7 @@ Image file names that are not absolute are searched for in the
     ;; If we have external image conversion switched on (for exotic,
     ;; non-native image formats), then we convert the file.
     (when (eq type 'image-convert)
+      (require 'image-converter)
       (setq file-or-data (image-convert file-or-data data-format)
             type 'png
             data-p t)))
@@ -1007,23 +1012,39 @@ has no effect."
 
 (imagemagick-register-types)
 
-(defun image-increase-size (n)
+(defun image-increase-size (&optional n)
   "Increase the image size by a factor of N.
 If N is 3, then the image size will be increased by 30%.  The
 default is 20%."
   (interactive "P")
   (image--change-size (if n
-                          (1+ (/ n 10.0))
+                          (1+ (/ (prefix-numeric-value n) 10.0))
                         1.2)))
 
-(defun image-decrease-size (n)
+(defun image-decrease-size (&optional n)
   "Decrease the image size by a factor of N.
 If N is 3, then the image size will be decreased by 30%.  The
 default is 20%."
   (interactive "P")
   (image--change-size (if n
-                          (- 1 (/ n 10.0))
+                          (- 1 (/ (prefix-numeric-value n) 10.0))
                         0.8)))
+
+(defun image-mouse-increase-size (&optional event)
+  "Increase the image size using the mouse."
+  (interactive "e")
+  (when (listp event)
+    (save-window-excursion
+      (posn-set-point (event-start event))
+      (image-increase-size))))
+
+(defun image-mouse-decrease-size (&optional event)
+  "Decrease the image size using the mouse."
+  (interactive "e")
+  (when (listp event)
+    (save-window-excursion
+      (posn-set-point (event-start event))
+      (image-decrease-size))))
 
 (defun image--get-image ()
   "Return the image at point."

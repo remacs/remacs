@@ -123,6 +123,9 @@ Objects that have no read syntax are presented like this
 The printed representation of an interned symbol whose name is an
 empty string (@pxref{Symbol Type}).
 
+@item #'
+This is a shortcut for @code{function}, see @ref{Anonymous Functions}.
+
 @item #:
 The printed representation of an uninterned symbol whose name is
 @var{foo} is @samp{#:@var{foo}} (@pxref{Symbol Type}).

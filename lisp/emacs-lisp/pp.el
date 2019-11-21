@@ -53,6 +53,7 @@ to make output that `read' can handle, whenever this is possible."
 ;;;###autoload
 (defun pp-buffer ()
   "Prettify the current buffer with printed representation of a Lisp object."
+  (interactive)
   (goto-char (point-min))
   (while (not (eobp))
     ;; (message "%06d" (- (point-max) (point)))
