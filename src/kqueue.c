@@ -414,7 +414,7 @@ only when the upper directory of the renamed file is watched.  */)
     }
 
   /* Open file.  */
-  file = ENCODE_FILE (file);
+  Lisp_Object encoded_file = ENCODE_FILE (file);
   oflags = O_NONBLOCK;
 #if O_EVTONLY
   oflags |= O_EVTONLY;
@@ -426,7 +426,7 @@ only when the upper directory of the renamed file is watched.  */)
 #else
     oflags |= O_NOFOLLOW;
 #endif
-  fd = emacs_open (SSDATA (file), oflags, 0);
+  fd = emacs_open (SSDATA (encoded_file), oflags, 0);
   if (fd == -1)
     report_file_error ("File cannot be opened", file);
 
