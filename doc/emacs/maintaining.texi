@@ -963,6 +963,10 @@ Display the changes that a ``pull'' operation will retrieve
 @item C-x v O
 Display the changes that will be sent by the next ``push'' operation
 (@code{vc-log-outgoing}).
+
+@item C-x v h
+Display the history of changes made in the region of file visited by
+the current buffer (@code{vc-region-history}).
 @end table
 
 @kindex C-x v l
@@ -1068,20 +1072,20 @@ buffer.  However, RCS, SCCS, CVS, and SRC do not support this feature.
 
 @kindex C-x v h
 @findex vc-region-history
-A useful variant of examining changes is provided by the command
+A useful variant of examining history of changes is provided by the command
 @kbd{vc-region-history} (by default bound to @kbd{C-x v h}), which shows
-a @file{*VC-history*} buffer with the history of changes to the region
-of the current file between point and the mark (@pxref{Mark}).  The
+a @file{*VC-history*} buffer with the history of changes made in the region
+of the current buffer's file between point and the mark (@pxref{Mark}).  The
 history of changes includes the commit log messages and also the
 changes themselves in the Diff format.
 
-Invoke this command after marking the region of the current file in
+Invoke this command after marking in the current buffer the region in
 whose changes you are interested.  In the @file{*VC-history*} buffer
 it pops up, you can use all of the commands available in the
 @file{*vc-change-log*} buffer described above, and also the commands
 defined by Diff mode (@pxref{Diff Mode}).
 
-This command is currently available only with Git.
+This command is currently available only with Git and Mercurial (hg).
 
 @node VC Undo
 @subsection Undoing Version Control Actions

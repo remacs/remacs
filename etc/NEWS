@@ -927,6 +927,11 @@ never detected a conflict due to invalid assumptions about cached
 values.
 
 +++
+*** The Hg (Mercurial) back-end now supports 'vc-region-history'.
+The 'C-x v h' command now works in buffers that visit files controlled
+by Hg.
+
++++
 *** 'C-u C-x v D' ('vc-root-version-diff') prompts for two revisions
 and compares their entire trees.
 
