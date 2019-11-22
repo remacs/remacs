@@ -2588,6 +2588,10 @@ pointer is over.  To change this behaviour, you can customize the user
 option 'mouse-wheel-follow-mouse'.  Note that this will also affect
 scrolling.
 
+---
+** help-follow-symbol now signals 'user-error' if point (or the
+position pointed to by the argument POS) is not in a symbol.
+
 
 * Lisp Changes in Emacs 27.1
 
