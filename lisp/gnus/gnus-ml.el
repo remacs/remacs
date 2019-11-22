@@ -150,7 +150,7 @@ If FORCE is non-nil, replace the old ones."
 	 (with-current-buffer gnus-original-article-buffer
 	   (gnus-fetch-field "list-archive"))))
     (cond (list-archive
-	   (if (string-match "<\\(http:[^>]*\\)>" list-archive)
+	   (if (string-match "<\\(https?:[^>]*\\)>" list-archive)
 	       (browse-url (match-string 1 list-archive))
 	     (browse-url list-archive)))
 	  (t (gnus-message 1 "no list-archive in this group")))))
