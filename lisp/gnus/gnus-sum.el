@@ -10419,17 +10419,13 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 
 (defun gnus-summary-copy-article (&optional n to-newsgroup select-method)
   "Copy the current article to some other group.
-If TO-NEWSGROUP is string, do not prompt for a newsgroup to copy to.
-When called interactively, if TO-NEWSGROUP is nil, use the value of
-the variable `gnus-move-split-methods' for finding a default target
-newsgroup.
-If SELECT-METHOD is non-nil, do not move to a specific newsgroup, but
-re-spool using this method."
+Arguments have the same meanings as in `gnus-summary-move-article'."
   (interactive "P")
   (gnus-summary-move-article n to-newsgroup select-method 'copy))
 
 (defun gnus-summary-crosspost-article (&optional n)
-  "Crosspost the current article to some other group."
+  "Crosspost the current article to some other group.
+Arguments have the same meanings as in `gnus-summary-move-article'."
   (interactive "P")
   (gnus-summary-move-article n nil nil 'crosspost))
 
