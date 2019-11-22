@@ -567,8 +567,14 @@ class declarations.")
            "intern"
            ;; Python 3:
            "ascii" "breakpoint" "bytearray" "bytes" "exec"
-           ;; Extra:
-           "__all__" "__doc__" "__name__" "__package__")
+           ;; Special attributes:
+           ;; https://docs.python.org/3/reference/datamodel.html
+           "__annotations__" "__closure__" "__code__"
+           "__defaults__" "__dict__" "__doc__" "__globals__"
+           "__kwdefaults__" "__name__" "__module__" "__package__"
+           "__qualname__"
+           ;; Extras:
+           "__all__")
           symbol-end) . font-lock-builtin-face))
   "Font lock keywords to use in python-mode for level 2 decoration.
 
