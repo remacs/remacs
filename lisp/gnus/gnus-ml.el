@@ -58,7 +58,9 @@
 
 ;;;###autoload
 (defun turn-on-gnus-mailing-list-mode ()
-  (when (gnus-group-find-parameter gnus-newsgroup-name 'to-list)
+  (when (or (gnus-group-find-parameter gnus-newsgroup-name 'to-list)
+            (and gnus-mailing-list-groups
+                 (string-match gnus-mailing-list-groups gnus-newsgroup-name)))
     (gnus-mailing-list-mode 1)))
 
 ;;;###autoload
