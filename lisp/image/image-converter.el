@@ -87,6 +87,9 @@ data is returned as a string."
     (image-converter--find-converter))
   (unless image-converter
     (error "No external image converters available"))
+  (when (and image-format
+             (not (= (length (split-string (symbol-name image-format) "/")) 2)))
+    (error "IMAGE-FORMAT should be a symbol like `image/png'"))
   (with-temp-buffer
     (set-buffer-multibyte nil)
     (when-let ((err (image-converter--convert
