@@ -1002,8 +1002,6 @@ untar into a directory named DIR; otherwise, signal an error."
          (generated-autoload-file (expand-file-name auto-name pkg-dir))
          ;; We don't need 'em, and this makes the output reproducible.
          (autoload-timestamps nil)
-         ;; Silence `autoload-generate-file-autoloads'.
-         (noninteractive inhibit-message)
          (backup-inhibited t)
          (version-control 'never))
     (package-autoload-ensure-default-file generated-autoload-file)
@@ -1029,7 +1027,6 @@ untar into a directory named DIR; otherwise, signal an error."
 This assumes that `pkg-desc' has already been activated with
 `package-activate-1'."
   (let ((warning-minimum-level :error)
-        (save-silently inhibit-message)
         (load-path load-path))
     (byte-recompile-directory (package-desc-dir pkg-desc) 0 t)))
 
@@ -1840,8 +1837,7 @@ Used to populate `package-selected-packages'."
   (when value
     (setq package-selected-packages value))
   (if after-init-time
-      (let ((save-silently inhibit-message))
-        (customize-save-variable 'package-selected-packages package-selected-packages))
+      (customize-save-variable 'package-selected-packages package-selected-packages)
     (add-hook 'after-init-hook #'package--save-selected-packages)))
 
 (defun package--user-selected-p (pkg)
