@@ -42,6 +42,7 @@ are certain characters found on non-English keyboards
 @cindex C-
 @cindex META
 @cindex M-
+@cindex Alt key, serving as Meta
   Emacs also recognizes control characters that are entered using
 @dfn{modifier keys}.  Two commonly-used modifier keys are
 @key{Control} (usually labeled @key{Ctrl}), and @key{Meta} (usually
@@ -63,6 +64,8 @@ separate character.  You don't hold down @key{ESC} while typing the
 next character; instead, press @key{ESC} and release it, then enter
 the next character.  This feature is useful on certain text terminals
 where the @key{Meta} key does not function reliably.
+
+  Emacs supports 3 additional modifier keys, see @ref{Modifier Keys}.
 
 @cindex keys stolen by window manager
 @cindex window manager, keys stolen by
