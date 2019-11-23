@@ -957,6 +957,7 @@ This is always set to nil at the entry to `table-with-cache-buffer' before execu
     (completion-separator-self-insert-autofilling . *table--cell-self-insert-command)
     (completion-separator-self-insert-command . *table--cell-self-insert-command)
     (delete-char . *table--cell-delete-char)
+    (delete-forward-char . *table--cell-delete-char)
     (delete-backward-char . *table--cell-delete-backward-char)
     (backward-delete-char . *table--cell-delete-backward-char)
     (backward-delete-char-untabify . *table--cell-delete-backward-char)
