@@ -21395,12 +21395,12 @@ append_space_for_newline (struct it *it, bool default_face_p)
 	{
 	  const int local_default_face_id =
 	    lookup_basic_face (it->w, it->f, DEFAULT_FACE_ID);
-	  struct face* default_face =
-	    FACE_FROM_ID_OR_NULL (it->f, local_default_face_id);
 
 #ifdef HAVE_WINDOW_SYSTEM
 	  if (FRAME_WINDOW_P (it->f))
 	    {
+	      struct face *default_face
+		= FACE_FROM_ID (it->f, local_default_face_id);
 	      struct font *font = (default_face->font
 	                           ? default_face->font
 	                           : FRAME_FONT (it->f));
