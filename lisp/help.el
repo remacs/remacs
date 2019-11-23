@@ -1380,27 +1380,39 @@ The result, when formatted by `substitute-command-keys', should equal STRING."
 ;; But for various reasons, they are more widely needed, so they were
 ;; moved to this file, which is preloaded.  https://debbugs.gnu.org/17001
 
-(defun help-split-fundoc (docstring def)
+(defun help-split-fundoc (docstring def &optional section)
   "Split a function DOCSTRING into the actual doc and the usage info.
-Return (USAGE . DOC) or nil if there's no usage info, where USAGE info
-is a string describing the argument list of DEF, such as
-\"(apply FUNCTION &rest ARGUMENTS)\".
-DEF is the function whose usage we're looking for in DOCSTRING."
+Return (USAGE . DOC), where USAGE is a string describing the argument
+list of DEF, such as \"(apply FUNCTION &rest ARGUMENTS)\".
+DEF is the function whose usage we're looking for in DOCSTRING.
+With SECTION nil, return nil if there is no usage info; conversely,
+SECTION t means to return (USAGE . DOC) even if there's no usage info.
+When SECTION is \\='usage or \\='doc, return only that part."
   ;; Functions can get the calling sequence at the end of the doc string.
   ;; In cases where `function' has been fset to a subr we can't search for
   ;; function's name in the doc string so we use `fn' as the anonymous
   ;; function name instead.
-  (when (and docstring (string-match "\n\n(fn\\(\\( .*\\)?)\\)\\'" docstring))
-    (let ((doc (unless (zerop (match-beginning 0))
-		 (substring docstring 0 (match-beginning 0))))
-	  (usage-tail (match-string 1 docstring)))
-      (cons (format "(%s%s"
-		    ;; Replace `fn' with the actual function name.
-		    (if (symbolp def)
-			(help--docstring-quote (format "%S" def))
-		      'anonymous)
-		    usage-tail)
-	    doc))))
+  (let* ((found (and docstring
+                     (string-match "\n\n(fn\\(\\( .*\\)?)\\)\\'" docstring)))
+         (doc (if found
+                  (and (memq section '(t nil doc))
+                       (not (zerop (match-beginning 0)))
+                       (substring docstring 0 (match-beginning 0)))
+                docstring))
+         (usage (and found
+                     (memq section '(t nil usage))
+                     (let ((tail (match-string 1 docstring)))
+                       (format "(%s%s"
+                               ;; Replace `fn' with the actual function name.
+                               (if (and (symbolp def) def)
+                                   (help--docstring-quote (format "%S" def))
+                                 'anonymous)
+                               tail)))))
+    (pcase section
+      (`nil (and usage (cons usage doc)))
+      (`t (cons usage doc))
+      (`usage usage)
+      (`doc doc))))
 
 (defun help-add-fundoc-usage (docstring arglist)
   "Add the usage info to DOCSTRING.
