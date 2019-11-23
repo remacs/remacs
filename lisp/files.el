@@ -7153,10 +7153,11 @@ normally equivalent short `-D' option is just passed on to
 		(goto-char beg)
 		;; First find the line to put it on.
 		(when (re-search-forward "^ *\\(total\\)" nil t)
+		  ;; Replace "total" with "total used in directory" to
+		  ;; avoid confusion.
+		  (replace-match "total used in directory" nil nil nil 1)
 		  (let ((available (get-free-disk-space ".")))
 		    (when available
-		      ;; Replace "total" with "used", to avoid confusion.
-		      (replace-match "total used in directory" nil nil nil 1)
 		      (end-of-line)
 		      (insert " available " available))))))))))
 
