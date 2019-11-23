@@ -27,40 +27,42 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "pdumper.h"
 
-#if GNUTLS_VERSION_NUMBER >= 0x030014
-# define HAVE_GNUTLS_X509_SYSTEM_TRUST
-#endif
+#ifdef HAVE_GNUTLS
 
-#if GNUTLS_VERSION_NUMBER >= 0x030200
-# define HAVE_GNUTLS_CIPHER_GET_IV_SIZE
-#endif
+# if GNUTLS_VERSION_NUMBER >= 0x030014
+#  define HAVE_GNUTLS_X509_SYSTEM_TRUST
+# endif
 
-#if GNUTLS_VERSION_NUMBER >= 0x030202
-# define HAVE_GNUTLS_CIPHER_GET_TAG_SIZE
-# define HAVE_GNUTLS_DIGEST_LIST /* also gnutls_digest_get_name */
-#endif
+# if GNUTLS_VERSION_NUMBER >= 0x030200
+#  define HAVE_GNUTLS_CIPHER_GET_IV_SIZE
+# endif
 
-#if GNUTLS_VERSION_NUMBER >= 0x030205
-# define HAVE_GNUTLS_EXT__DUMBFW
-#endif
+# if GNUTLS_VERSION_NUMBER >= 0x030202
+#  define HAVE_GNUTLS_CIPHER_GET_TAG_SIZE
+#  define HAVE_GNUTLS_DIGEST_LIST /* also gnutls_digest_get_name */
+# endif
 
-#if GNUTLS_VERSION_NUMBER >= 0x030400
-# define HAVE_GNUTLS_ETM_STATUS
-#endif
+# if GNUTLS_VERSION_NUMBER >= 0x030205
+#  define HAVE_GNUTLS_EXT__DUMBFW
+# endif
 
-#if GNUTLS_VERSION_NUMBER < 0x030600
-# define HAVE_GNUTLS_COMPRESSION_GET
-#endif
+# if GNUTLS_VERSION_NUMBER >= 0x030400
+#  define HAVE_GNUTLS_ETM_STATUS
+# endif
+
+# if GNUTLS_VERSION_NUMBER < 0x030600
+#  define HAVE_GNUTLS_COMPRESSION_GET
+# endif
 
 /* gnutls_mac_get_nonce_size was added in GnuTLS 3.2.0, but was
    exported only since 3.3.0. */
-#if GNUTLS_VERSION_NUMBER >= 0x030300
-# define HAVE_GNUTLS_MAC_GET_NONCE_SIZE
-#endif
+# if GNUTLS_VERSION_NUMBER >= 0x030300
+#  define HAVE_GNUTLS_MAC_GET_NONCE_SIZE
+# endif
 
-#if GNUTLS_VERSION_NUMBER >= 0x030501
-# define HAVE_GNUTLS_EXT_GET_NAME
-#endif
+# if GNUTLS_VERSION_NUMBER >= 0x030501
+#  define HAVE_GNUTLS_EXT_GET_NAME
+# endif
 
 /* Although AEAD support started in GnuTLS 3.4.0 and works in 3.5.14,
    it was broken through at least GnuTLS 3.4.10; see:
@@ -68,11 +70,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    The relevant fix seems to have been made in GnuTLS 3.5.1; see:
    https://gitlab.com/gnutls/gnutls/commit/568935848dd6b82b9315d8b6c529d00e2605e03d
    So, require 3.5.1.  */
-#if GNUTLS_VERSION_NUMBER >= 0x030501
-# define HAVE_GNUTLS_AEAD
-#endif
-
-#ifdef HAVE_GNUTLS
+# if GNUTLS_VERSION_NUMBER >= 0x030501
+#  define HAVE_GNUTLS_AEAD
+# endif
 
 # ifdef WINDOWSNT
 #  include <windows.h>
@@ -221,12 +221,12 @@ DEF_DLL_FN (const char *, gnutls_cipher_get_name,
 	    (gnutls_cipher_algorithm_t));
 DEF_DLL_FN (gnutls_mac_algorithm_t, gnutls_mac_get, (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_mac_get_name, (gnutls_mac_algorithm_t));
-#ifdef HAVE_GNUTLS_COMPRESSION_GET
+#  ifdef HAVE_GNUTLS_COMPRESSION_GET
 DEF_DLL_FN (gnutls_compression_method_t, gnutls_compression_get,
             (gnutls_session_t));
 DEF_DLL_FN (const char *, gnutls_compression_get_name,
             (gnutls_compression_method_t));
-#endif
+#  endif
 DEF_DLL_FN (unsigned, gnutls_safe_renegotiation_status, (gnutls_session_t));
 
 #  ifdef HAVE_GNUTLS3
@@ -1408,11 +1408,11 @@ returned as the :certificate entry.  */)
   if (verification & GNUTLS_CERT_EXPIRED)
     warnings = Fcons (intern (":expired"), warnings);
 
-#if GNUTLS_VERSION_NUMBER >= 0x030100
+# if GNUTLS_VERSION_NUMBER >= 0x030100
   if (verification & GNUTLS_CERT_SIGNATURE_FAILURE)
     warnings = Fcons (intern (":signature-failure"), warnings);
 
-# if GNUTLS_VERSION_NUMBER >= 0x030114
+#  if GNUTLS_VERSION_NUMBER >= 0x030114
   if (verification & GNUTLS_CERT_REVOCATION_DATA_SUPERSEDED)
     warnings = Fcons (intern (":revocation-data-superseded"), warnings);
 
@@ -1422,20 +1422,20 @@ returned as the :certificate entry.  */)
   if (verification & GNUTLS_CERT_SIGNER_CONSTRAINTS_FAILURE)
     warnings = Fcons (intern (":signer-constraints-failure"), warnings);
 
-#  if GNUTLS_VERSION_NUMBER >= 0x030400
+#   if GNUTLS_VERSION_NUMBER >= 0x030400
   if (verification & GNUTLS_CERT_PURPOSE_MISMATCH)
     warnings = Fcons (intern (":purpose-mismatch"), warnings);
 
-#   if GNUTLS_VERSION_NUMBER >= 0x030501
+#    if GNUTLS_VERSION_NUMBER >= 0x030501
   if (verification & GNUTLS_CERT_MISSING_OCSP_STATUS)
     warnings = Fcons (intern (":missing-ocsp-status"), warnings);
 
   if (verification & GNUTLS_CERT_INVALID_OCSP_STATUS)
     warnings = Fcons (intern (":invalid-ocsp-status"), warnings);
+#    endif
 #   endif
 #  endif
 # endif
-#endif
 
   if (XPROCESS (proc)->gnutls_extra_peer_verification &
       CERTIFICATE_NOT_MATCHING)
@@ -1505,19 +1505,19 @@ returned as the :certificate entry.  */)
 				  (gnutls_mac_get (state)))));
 
   /* Compression name. */
-#ifdef HAVE_GNUTLS_COMPRESSION_GET
+# ifdef HAVE_GNUTLS_COMPRESSION_GET
   result = nconc2
     (result, list2 (intern (":compression"),
 		    build_string (gnutls_compression_get_name
 				  (gnutls_compression_get (state)))));
-#endif
+# endif
 
   /* Encrypt-then-MAC. */
-#ifdef HAVE_GNUTLS_ETM_STATUS
+# ifdef HAVE_GNUTLS_ETM_STATUS
   result = nconc2
     (result, list2 (intern (":encrypt-then-mac"),
 		    gnutls_session_etm_status (state) ? Qt : Qnil));
-#endif
+# endif
 
   /* Renegotiation Indication */
   if (proto <= GNUTLS_TLS1_2)
