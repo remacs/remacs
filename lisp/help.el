@@ -878,10 +878,6 @@ current buffer."
             (princ ", which is ")
 	    (describe-function-1 defn)))))))
 
-(defun help--doc-without-fn (mode)
-  ;; Remove the (fn...) thingy at the end of the docstring
-  (replace-regexp-in-string "\n\n(fn[^)]*?)\\'" "" (documentation mode)))
-
 (defun describe-mode (&optional buffer)
   "Display documentation of current major mode and minor modes.
 A brief summary of the minor modes comes first, followed by the
@@ -955,7 +951,8 @@ documentation for the major and minor modes of that buffer."
 				     "no indicator"
 				   (format "indicator%s"
 					   indicator))))
-		  (princ (help--doc-without-fn mode-function)))
+		  (princ (help-split-fundoc (documentation mode-function)
+                                            nil 'doc)))
 		(insert-button pretty-minor-mode
 			       'action (car help-button-cache)
 			       'follow-link t
@@ -985,7 +982,7 @@ documentation for the major and minor modes of that buffer."
                                     nil t)
 		(help-xref-button 1 'help-function-def mode file-name)))))
 	(princ ":\n")
-	(princ (help--doc-without-fn major-mode)))))
+	(princ (help-split-fundoc (documentation major-mode) nil 'doc)))))
   ;; For the sake of IELM and maybe others
   nil)
 
