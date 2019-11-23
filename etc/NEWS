@@ -973,6 +973,15 @@ The 'C-x v h' command now works in buffers that visit files controlled
 by Hg.
 
 +++
+*** The Hg (Mercurial) back-end now prompts for revision to merge when
+you invoke 'C-x v m' ('vc-merge').
+
+---
+*** The Hg (Mercurial) back-end now use tags, branches and bookmarks
+instead of revision numbers as completion candidates when it prompts
+for a revision.
+
++++
 *** 'C-u C-x v D' ('vc-root-version-diff') prompts for two revisions
 and compares their entire trees.
 

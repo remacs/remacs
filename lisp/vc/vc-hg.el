@@ -566,7 +566,9 @@ This requires hg 4.4 or later, for the \"-L\" option of \"hg log\"."
 (defun vc-hg-revision-table (files)
   (let ((default-directory (file-name-directory (car files))))
     (with-temp-buffer
-      (vc-hg-command t nil files "log" "--template" "{rev} ")
+      (vc-hg-command t nil nil "branches" "-q")
+      (vc-hg-command t nil nil "bookmarks" "-q")
+      (vc-hg-command t nil nil "tags" "-q")
       (split-string
        (buffer-substring-no-properties (point-min) (point-max))))))
 
@@ -1487,13 +1489,16 @@ call \"hg push -r REVS\" to push the specified revisions REVS."
   (vc-hg--pushpull "push" prompt nil (called-interactively-p 'interactive)))
 
 (defun vc-hg-merge-branch ()
-  "Merge incoming changes into the current working directory.
+  "Prompt for revision and merge it into working directory.
 This runs the command \"hg merge\"."
   (let* ((root (vc-hg-root default-directory))
 	 (buffer (format "*vc-hg : %s*" (expand-file-name root)))
          ;; Disable pager.
-         (process-environment (cons "HGPLAIN=1" process-environment)))
-    (apply 'vc-do-async-command buffer root vc-hg-program '("--config" "ui.report_untrusted=0" "merge"))
+         (process-environment (cons "HGPLAIN=1" process-environment))
+         (branch (vc-read-revision "Revision to merge: ")))
+    (apply 'vc-do-async-command buffer root vc-hg-program
+           (append '("--config" "ui.report_untrusted=0" "merge")
+                   (unless (string= branch "") (list branch))))
     (with-current-buffer buffer (vc-run-delayed (vc-compilation-mode 'hg)))
     (vc-set-async-update buffer)))
 

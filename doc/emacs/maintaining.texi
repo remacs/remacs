@@ -1443,7 +1443,9 @@ the @command{git checkout} command, which changes the contents of the
 working tree to match the branch you switch to.  Bazaar also supports
 co-located branches, in which case the @command{bzr switch} command
 will switch branches in the current directory.  With Subversion, you
-switch to another branch using the @command{svn switch} command.
+switch to another branch using the @command{svn switch} command.  With
+Mercurial, command @command{hg update} is used to swith to another
+branch.
 
   The VC command to switch to another branch in the current directory
 is @kbd{C-x v r @var{branch-name} @key{RET}} (@code{vc-retrieve-tag}).
@@ -1558,8 +1560,9 @@ command @kbd{C-x v m} (@code{vc-merge}).  On Bazaar, this prompts for
 the exact arguments to pass to @command{bzr merge}, offering a
 sensible default if possible.  On Git, this prompts for the name of a
 branch to merge from, with completion (based on the branch names known
-to the current repository).  The output from running the merge command
-is shown in a separate buffer.
+to the current repository).  With Mercurial, this prompts for argument
+to pass to @command{hg merge}.  The output from running the merge
+command is shown in a separate buffer.
 
   On a centralized version control system like CVS, @kbd{C-x v m}
 prompts for a branch ID, or a pair of revision IDs (@pxref{Switching
