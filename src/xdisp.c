@@ -21726,9 +21726,12 @@ extend_face_to_end_of_line (struct it *it)
 	      const int stretch_width = it->last_visible_x - it->current_x;
 
 	      if (stretch_width > 0)
-		append_stretch_glyph (it, Qnil, stretch_width,
-				      it->ascent + it->descent,
-				      stretch_ascent);
+		{
+		  memset (&it->position, 0, sizeof it->position);
+		  append_stretch_glyph (it, Qnil, stretch_width,
+					it->ascent + it->descent,
+					stretch_ascent);
+		}
 	    }
 
 	  it->char_to_display = saved_char;
