@@ -691,7 +691,8 @@ extern Lisp_Object code_convert_string_norecord (Lisp_Object, Lisp_Object,
                                                  bool);
 extern Lisp_Object encode_string_utf_8 (Lisp_Object, Lisp_Object, bool,
 					Lisp_Object, Lisp_Object);
-extern Lisp_Object decode_string_utf_8 (Lisp_Object, Lisp_Object, bool,
+extern Lisp_Object decode_string_utf_8 (Lisp_Object, const char *, ptrdiff_t,
+					Lisp_Object, bool,
 					Lisp_Object, Lisp_Object);
 extern Lisp_Object encode_file_name (Lisp_Object);
 extern Lisp_Object decode_file_name (Lisp_Object);

@@ -228,7 +228,7 @@ json_encode (Lisp_Object string)
 {
   /* FIXME: Raise an error if STRING is not a scalar value
      sequence.  */
-  return code_convert_string (string, Qutf_8_unix, Qt, true, true, true);
+  return encode_string_utf_8 (string, Qnil, false, Qt, Qt);
 }
 
 static AVOID

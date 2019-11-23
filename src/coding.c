@@ -6353,11 +6353,15 @@ utf8_string_p (Lisp_Object string)
 }
 
 /* Like make_string, but always returns a multibyte Lisp string, and
-   avoids decoding if TEXT encoded in UTF-8.  */
-
+   avoids decoding if TEXT is encoded in UTF-8.  */
 Lisp_Object
 make_string_from_utf8 (const char *text, ptrdiff_t nbytes)
 {
+#if 0
+  /* This method is on average 2 times slower than if we use
+     decode_string_utf_8.  However, please leave the slower
+     implementation in the code for now, in case it needs to be reused
+     in some situations.  */
   ptrdiff_t chars, bytes;
   parse_str_as_multibyte ((const unsigned char *) text, nbytes,
 			  &chars, &bytes);
@@ -6374,6 +6378,9 @@ make_string_from_utf8 (const char *text, ptrdiff_t nbytes)
       decode_coding_object (&coding, Qnil, 0, 0, nbytes, nbytes, Qt);
       return coding.dst_object;
     }
+#else
+  return decode_string_utf_8 (Qnil, text, nbytes, Qnil, false, Qt, Qt);
+#endif
 }
 
 /* Detect how end-of-line of a text of length SRC_BYTES pointed by
@@ -9537,7 +9544,7 @@ get_buffer_gap_address (Lisp_Object buffer, ptrdiff_t nbytes)
   return BUF_GPT_ADDR (buf);
 }
 
-/* Return a pointer to the byte sequence for C, and set the length in
+/* Return a pointer to the byte sequence for C, and its byte length in
    LEN.  This function is used to get a byte sequence for HANDLE_8_BIT
    and HANDLE_OVER_UNI arguments of encode_string_utf_8 and
    decode_string_utf_8 when those arguments are given by
@@ -9572,11 +9579,16 @@ get_char_bytes (int c, int *len)
 
 /* Encode STRING by the coding system utf-8-unix.
 
+   This function is optimized for speed when the input string is
+   already a valid sequence of Unicode codepoints in the internal
+   representation, i.e. there are neither 8-bit raw bytes nor
+   characters beyond the Unicode range in the string's contents.
+
    Ignore any :pre-write-conversion and :encode-translation-table
-   properties of that coding system.
+   properties.
 
    Assume that arguments have values as described below.
-   The validity must be assured by callers.
+   The validity must be enforced and ensured by the caller.
 
    STRING is a multibyte string or an ASCII-only unibyte string.
 
@@ -9587,17 +9599,24 @@ get_char_bytes (int c, int *len)
    inserted characters.  The caller should have made BUFFER ready for
    modifying in advance (e.g., by calling invalidate_buffer_caches).
 
-   If BUFFER is Qnil, return a unibyte string from the encoded result.
-   If NOCOPY, and if STRING contains only Unicode characters (i.e.,
-   the encoding does not change the byte sequence), return STRING even
-   if it is multibyte.
+   If BUFFER is nil, return a unibyte string from the encoded result.
+
+   If NOCOPY is non-zero, and if STRING contains only Unicode
+   characters (i.e., the encoding does not change the byte sequence),
+   return STRING even if it is multibyte.  WARNING: This will return a
+   _multibyte_ string, something that callers might not expect, especially
+   if STRING is not pure-ASCII; only use NOCOPY non-zero if the caller
+   will only use the byte sequence of the encoded result accessed by
+   SDATA or SSDATA, and the original STRING will _not_ be modified after
+   the encoding.  When in doubt, always pass NOCOPY as zero.  You _have_
+   been warned!
 
    HANDLE-8-BIT and HANDLE-OVER-UNI specify how to handle a non-Unicode
-   character.  The former is for an eight-bit character (represented
+   character in STRING.  The former is for an eight-bit character (represented
    by a 2-byte overlong sequence in a multibyte STRING).  The latter is
-   for an over-Unicode character (a character whose code is greater
-   than the maximum Unicode character 0x10FFFF, represented by a 4 or
-   5-byte sequence in a multibyte STRING).
+   for a codepoint beyond the end of the Unicode range (a character whose
+   code is greater than the maximum Unicode character 0x10FFFF, represented
+   by a 4 or 5-byte sequence in a multibyte STRING).
 
    If these two arguments are unibyte strings (typically
    "\357\277\275", the UTF-8 sequence for the Unicode REPLACEMENT
@@ -9605,18 +9624,20 @@ get_char_bytes (int c, int *len)
    unibyte sequence.
 
    If the two arguments are characters, encode a non-Unicode
-   character as if it was the argument.
+   character as the respective argument characters.
 
    If they are Qignored, skip a non-Unicode character.
 
-   If HANDLE-8-BIT is Qt, encode an eight-bit character into one
-   byte of the same value.
+   If HANDLE-8-BIT is Qt, encode eight-bit characters into single bytes
+   of the same value, like the usual Emacs encoding does.
 
-   If HANDLE-OVER-UNI is Qt, encode an over-unicode character
-   into the same 4 or 5-byte sequence.
+   If HANDLE-OVER-UNI is Qt, encode characters beyond the Unicode
+   range into the same 4 or 5-byte sequence as used by Emacs
+   internally, like the usual Emacs encoding does.
 
    If the two arguments are Qnil, return Qnil if STRING has a
-   non-Unicode character.  */
+   non-Unicode character.  This allows the caller to signal an error
+   if such input strings are not allowed.  */
 
 Lisp_Object
 encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
@@ -9624,15 +9645,15 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 		     Lisp_Object handle_over_uni)
 {
   ptrdiff_t nchars = SCHARS (string), nbytes = SBYTES (string);
-  if (NILP (buffer) && nchars == nbytes)
-    /* STRING contains only ASCII characters. */
+  if (NILP (buffer) && nchars == nbytes && nocopy)
+    /* STRING contains only ASCII characters.  */
     return string;
 
   ptrdiff_t num_8_bit = 0;   /* number of eight-bit chars in STRING */
   /* The following two vars are counted only if handle_over_uni is not Qt.  */
   ptrdiff_t num_over_4 = 0; /* number of 4-byte non-Unicode chars in STRING */
   ptrdiff_t num_over_5 = 0; /* number of 5-byte non-Unicode chars in STRING */
-  ptrdiff_t outbytes;	     /* number of bytes of decoding result. */
+  ptrdiff_t outbytes;	     /* number of bytes of decoding result */
   unsigned char *p = SDATA (string);
   unsigned char *pend = p + nbytes;
   unsigned char *src = NULL, *dst = NULL;
@@ -9668,10 +9689,10 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 	    }
 
 	  /* A character to change the byte sequence on encoding was
-	     found.  A rare case. */
+	     found.  A rare case.  */
 	  if (len == 2)
 	    {
-	      /* Handle an eight-bit character by handle_8_bit. */
+	      /* Handle an eight-bit character by handle_8_bit.  */
 	      if (scan_count == 0)
 		{
 		  if (NILP (handle_8_bit))
@@ -9699,7 +9720,7 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 	    }
 	  else			/* len == 4 or 5 */
 	    {
-	      /* Handle an over-unicode character by handle_over_uni. */
+	      /* Handle an over-unicode character by handle_over_uni.  */
 	      if (scan_count == 0)
 		{
 		  if (NILP (handle_over_uni))
@@ -9729,19 +9750,20 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 
       if (scan_count == 0)
 	{
-	  /* End of the first scane */
+	  /* End of the first scan.  */
 	  outbytes = nbytes;
 	  if (num_8_bit == 0
 	      && (num_over_4 + num_over_5 == 0 || EQ (handle_over_uni, Qt)))
 	    {
 	      /* We can break the loop because there is no need of
 		 changing the byte sequence.  This is the typical
-		 case. */
+		 case.  */
 	      scan_count = 1;
 	    }
 	  else
 	    {
-	      /* Prepare for the next scan to handle non-Unicode characters. */
+	      /* Prepare for handling non-Unicode characters during
+		 the next scan.  */
 	      if (num_8_bit > 0)
 		{
 		  if (CHARACTERP (handle_8_bit))
@@ -9792,7 +9814,7 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 		}
 	    }
 
-	  /* Prepare a return value and a space to store the encoded bytes. */
+	  /* Prepare return value and space to store the encoded bytes.  */
 	  if (BUFFERP (buffer))
 	    {
 	      val = make_fixnum (outbytes);
@@ -9822,38 +9844,51 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
   return val;
 }
 
-/* Decode STRING by the coding system utf-8-unix.
+/* Decode input string by the coding system utf-8-unix.
 
-   Ignore any :pre-write-conversion and :encode-translation-table
-   properties of that coding system.
+   This function is optimized for speed when the input string is
+   already a valid UTF-8 sequence, i.e. there are neither 8-bit raw
+   bytes nor any UTF-8 sequences longer than 4 bytes in the string's
+   contents.
 
-   Assumes that arguments have values as described below.
-   The validity must be assured by callers.
+   Ignore any :post-read-conversion and :decode-translation-table
+   properties.
 
-   STRING is a unibyte string or an ASCII-only multibyte string.
+   Assume that arguments have values as described below.
+   The validity must be enforced and ensured by the caller.
+
+   STRING is a unibyte string, an ASCII-only multibyte string, or Qnil.
+   If STRING is Qnil, the input is a C string pointed by STR whose
+   length in bytes is in STR_LEN.
 
    BUFFER is a multibyte buffer or Qnil.
-
    If BUFFER is a multibyte buffer, insert the decoding result of
    Unicode characters after point of the buffer, and return the number
    of inserted characters.  The caller should have made BUFFER ready
    for modifying in advance (e.g., by calling invalidate_buffer_caches).
 
    If BUFFER is Qnil, return a multibyte string from the decoded result.
-   As a special case, return STRING itself in the following cases:
-   1. STRING contains only ASCII characters.
-   2. NOCOPY is true, and STRING contains only valid UTF-8 sequences.
 
-   For maximum speed, always specify NOCOPY true when STRING is
-   guaranteed to contain only valid UTF-8 sequences.
+   NOCOPY non-zero means it is OK to return the input STRING if it
+   contains only ASCII characters or only valid UTF-8 sequences of 2
+   to 4 bytes.  WARNING: This will return a _unibyte_ string, something
+   that callers might not expect, especially if STRING is not
+   pure-ASCII; only use NOCOPY non-zero if the caller will only use
+   the byte sequence of the decoded result accessed via SDATA or
+   SSDATA, and if the original STRING will _not_ be modified after the
+   decoding.  When in dount, always pass NOCOPY as zero.  You _have_
+   been warned!
+
+   If STRING is Qnil, and the original string is passed via STR, NOCOPY
+   is ignored.
 
    HANDLE-8-BIT and HANDLE-OVER-UNI specify how to handle a invalid
-   byte sequence.  The former is for an 1-byte invalid sequence that
-   violates the fundamental UTF-8 encoding rule.  The latter is for a
-   4 or 5-byte invalid sequence that Emacs internally uses to
-   represent an over-unicode character (a character of code greater
-   than #x10FFFF).  Note that this function does not treat an overlong
-   UTF-8 sequence as invalid.
+   byte sequence.  The former is for a 1-byte invalid sequence that
+   violates the fundamental UTF-8 encoding rules.  The latter is for a
+   4 or 5-byte overlong sequences that Emacs internally uses to
+   represent characters beyond the Unicode range (characters whose
+   codepoints are greater than #x10FFFF).  Note that this function does
+   not in general treat such overlong UTF-8 sequences as invalid.
 
    If these two arguments are strings (typically a 1-char string of
    the Unicode REPLACEMENT CHARACTER #xFFFD), decode an invalid byte
@@ -9862,24 +9897,28 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 
    If the two arguments are characters, decode an invalid byte
    sequence into the corresponding multibyte representation of the
-   characters.
+   respective character.
 
-   If they are Qignored, skip an invalid byte sequence.
+   If they are Qignored, skip an invalid byte sequence without
+   producing anything in the decoded string.
 
-   If HANDLE-8-BIT is Qt, decode a 1-byte invalid sequence into
-   the corresponding eight-bit character.
+   If HANDLE-8-BIT is Qt, decode a 1-byte invalid sequence into the
+   corresponding eight-bit multibyte representation, like the usual
+   Emacs decoding does.
 
-   If HANDLE-OVER-UNI is Qt, decode a 4 or 5-byte invalid sequence
-   that follows Emacs' representation for an over-unicode character
-   into the corresponding character.
+   If HANDLE-OVER-UNI is Qt, decode a 4 or 5-byte overlong sequence
+   that follows Emacs' internal representation for a character beyond
+   Unicode range into the corresponding character, like the usual
+   Emacs decoding does.
 
-   If the two arguments are Qnil, return Qnil if STRING has an invalid
-   sequence.  */
+   If the two arguments are Qnil, return Qnil if the input string has
+   raw bytes or overlong sequences.  This allows the caller to signal
+   an error if such inputs are not allowed.  */
 
 Lisp_Object
-decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
-		     bool nocopy, Lisp_Object handle_8_bit,
-		     Lisp_Object handle_over_uni)
+decode_string_utf_8 (Lisp_Object string, const char *str, ptrdiff_t str_len,
+		     Lisp_Object buffer, bool nocopy,
+		     Lisp_Object handle_8_bit, Lisp_Object handle_over_uni)
 {
   /* This is like BYTES_BY_CHAR_HEAD, but it is assured that C >= 0x80
      and it returns 0 for an invalid sequence.  */
@@ -9891,24 +9930,26 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
    : (c) == 0xF8 ? 5			\
    : 0)
 
-  ptrdiff_t nbytes = SBYTES (string);
-  unsigned char *p = SDATA (string), *pend = p + nbytes;
-  ptrdiff_t num_8_bit = 0;   /* number of invalid 1-byte sequences. */
-  ptrdiff_t num_over_4 = 0;  /* number of invalid 4-byte sequences. */
-  ptrdiff_t num_over_5 = 0;  /* number of invalid 5-byte sequences. */
-  ptrdiff_t outbytes = nbytes;	/* number of decoded bytes. */
-  ptrdiff_t outchars = 0;    /* number of decoded characters. */
+  ptrdiff_t nbytes = STRINGP (string) ? SBYTES (string) : str_len;
+  unsigned char *p = STRINGP (string) ? SDATA (string) : (unsigned char *) str;
+  unsigned char *str_orig = p;
+  unsigned char *pend = p + nbytes;
+  ptrdiff_t num_8_bit = 0;   /* number of invalid 1-byte sequences */
+  ptrdiff_t num_over_4 = 0;  /* number of invalid 4-byte sequences */
+  ptrdiff_t num_over_5 = 0;  /* number of invalid 5-byte sequences */
+  ptrdiff_t outbytes = nbytes;	/* number of decoded bytes */
+  ptrdiff_t outchars = 0;    /* number of decoded characters */
   unsigned char *src = NULL, *dst = NULL;
   bool change_byte_sequence = false;
 
-  /* Scan bytes in STRING twice.  The first scan is to count invalid
-     sequences, and the second scan is to decode STRING.  If the
+  /* Scan input bytes twice.  The first scan is to count invalid
+     sequences, and the second scan is to decode input.  If the
      decoding is trivial (no need of changing the byte sequence),
      the second scan is avoided.  */
   while (p < pend)
     {
       src = p;
-      /* Try short cut for an ASCII-only case. */
+      /* Try short cut for an ASCII-only case.  */
       while (p < pend && *p < 0x80) p++;
       outchars += (p - src);
       if (p == pend)
@@ -9916,7 +9957,7 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
       int c = *p;
       outchars++;
       int len = UTF_8_SEQUENCE_LENGTH (c);
-      /* len == 0, 2, 3, 4, 5 */
+      /* len == 0, 2, 3, 4, 5.  */
       if (UTF_8_EXTRA_OCTET_P (p[1])
 	  && (len == 2
 	      || (UTF_8_EXTRA_OCTET_P (p[2])
@@ -9930,7 +9971,7 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 	  continue;
 	}
 
-      /* A sequence to change on decoding was found.  A rare case. */
+      /* A sequence to change on decoding was found.  A rare case.  */
       if (len == 0)
 	{
 	  if (NILP (handle_8_bit))
@@ -9951,19 +9992,19 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
       p += len;
     }
 
-  Lisp_Object val;	     /* the return value. */
+  Lisp_Object val;	     /* the return value */
 
   if (! change_byte_sequence
       && NILP (buffer))
     {
-      if (nocopy)
+      if (nocopy && STRINGP (string))
 	return string;
       val = make_uninit_multibyte_string (outchars, outbytes);
-      memcpy (SDATA (val), SDATA (string), pend - SDATA (string));
+      memcpy (SDATA (val), str_orig, pend - str_orig);
       return val;
     }
 
-  /* Count the number of resulting chars and bytes. */
+  /* Count the number of resulting chars and bytes.  */
   unsigned char *replace_8_bit = NULL, *replace_over_uni = NULL;
   int replace_8_bit_len = 0, replace_over_uni_len = 0;
 
@@ -10022,7 +10063,7 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 	}
     }
 
-  /* Prepare a return value and a space to store the decoded bytes. */
+  /* Prepare return value and  space to store the decoded bytes.  */
   if (BUFFERP (buffer))
     {
       val = make_fixnum (outchars);
@@ -10030,19 +10071,20 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
     }
   else
     {
-      if (nocopy && (num_8_bit + num_over_4 + num_over_5) == 0)
+      if (nocopy && (num_8_bit + num_over_4 + num_over_5) == 0
+	  && STRINGP (string))
 	return string;
       val = make_uninit_multibyte_string (outchars, outbytes);
       dst = SDATA (val);
     }
 
-  src = SDATA (string);
+  src = str_orig;
   if (change_byte_sequence)
     {
       p = src;
       while (p < pend)
 	{
-	  /* Try short cut for an ASCII-only case. */
+	  /* Try short cut for an ASCII-only case.  */
 	  /* while (p < pend && *p < 0x80) p++; */
 	  /* if (p == pend) */
 	  /*   break; */
@@ -10089,7 +10131,7 @@ decode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
 	    }
 	  else			/* len == 4 or 5 */
 	    {
-	      /* Handle p[0]... by handle_over_uni */
+	      /* Handle p[0]... by handle_over_uni.  */
 	      if (replace_over_uni)
 		{
 		  memcpy (dst, replace_over_uni, replace_over_uni_len);
