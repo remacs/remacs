@@ -339,7 +339,7 @@ _outside_ any bindings for these variables.  (`defvar' and
 This macro calls `custom-declare-variable'.  If you want to
 programmatically alter a customizable variable (for instance, to
 write a package that extends the syntax of a variable), you can
-call that functcion directly.
+call that function directly.
 
 See Info node `(elisp) Customization' in the Emacs Lisp manual
 for more information."
