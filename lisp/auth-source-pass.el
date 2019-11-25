@@ -277,7 +277,7 @@ PORT may be a list of ports."
                   (seq-mapcat
                    (lambda (p)
                      (auth-source-pass--name-port-user-suffixes domain user p))
-                   (if (listp port) port (list port))))
+                   (if (consp port) port (list port))))
                 domains)))
 
 (defun auth-source-pass--domains (name-components)
