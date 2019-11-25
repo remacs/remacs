@@ -422,8 +422,15 @@ to 'completion-styles' or 'completion-category-overrides' to use it.
 The new face attribute ':extend' controls whether to use the face for
 displaying the empty space beyond end of line (EOL) till the edge of
 the window.  By default, this attribute is non-nil only for 'region',
-'secondary-selection', 'hl-line' and diff faces; any other face that
-crosses end of line will not affect the display of the empty space at EOL.
+'secondary-selection', 'hl-line' and some faces of Diff and Ediff
+modes; any other face that crosses end of line will not affect the
+display of the empty space at EOL.  This is to make Emacs behave more
+like other GUI applications with respect to displaying faces that
+cross line boundaries.
+
+Themes that redefine faces should add a non-nil ':extend' attribute to
+the above-mentioned faces, to keep the behavior of the default face
+definitions.
 
 ** Connection-local variables
 
