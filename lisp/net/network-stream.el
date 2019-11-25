@@ -233,7 +233,7 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
               (ignore-errors
                 (car (auth-source-search :max 1
                                          :host host
-                                         :port service))))
+                                         :port (format "%s" service)))))
 	     (key (plist-get auth-info :key))
 	     (cert (plist-get auth-info :cert)))
 	(and key cert (file-readable-p key) (file-readable-p cert)
