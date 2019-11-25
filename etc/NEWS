@@ -3273,6 +3273,12 @@ Previously it was supported only in the Cygwin-w32 build.
 ** Emacs now handles key combinations involving the macOS "command"
 and "option" modifier keys more correctly.
 
+** MacOS modifier key behaviour is now more adjustable.
+The behaviour of the macOS "Option", "Command", "Control" and
+"Function" keys can now be specified separately for use with
+ordinary keys, function keys and mouse clicks.  This allows using them
+in their standard macOS way for composing characters.
+
 ** The special handling of 'frame-title-format' on NS where setting it
 to 't' would enable the macOS proxy icon has been replaced with a
 separate variable, 'ns-use-proxy-icon'.  'frame-title-format' will now

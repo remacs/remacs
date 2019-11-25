@@ -424,16 +424,23 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 	     ;; msdos.c
 	     (dos-unsupported-char-glyph display integer)
 	     ;; nsterm.m
-             ;;
-             ;; FIXME: Why does ⌃ use nil instead of none?  Also the
-             ;; description is confusing; setting it to nil disables ⌃
-             ;; entirely.
 	     (ns-control-modifier
 	      ns
-	      (choice (const :tag "No modifier" nil)
+	      (choice (const :tag "No modifier" none)
 		      (const control) (const meta)
 		      (const alt) (const hyper)
-		      (const super)) "23.1")
+		      (const super)
+                      (plist :key-type (choice (const :ordinary)
+                                               (const :function)
+                                               (const :mouse))
+                             :value-type (choice (const control)
+                                                 (const meta)
+                                                 (const alt)
+                                                 (const hyper)
+                                                 (const super)
+                                                 (const :tag "No modifier"
+                                                        none))))
+              "23.1")
 	     (ns-right-control-modifier
 	      ns
 	      (choice (const :tag "No modifier (work as control)" none)
@@ -441,13 +448,35 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 			     left)
 		      (const control) (const meta)
 		      (const alt) (const hyper)
-		      (const super)) "24.1")
+		      (const super)
+                      (plist :key-type (choice (const :ordinary)
+                                               (const :function)
+                                               (const :mouse))
+                             :value-type (choice (const control)
+                                                 (const meta)
+                                                 (const alt)
+                                                 (const hyper)
+                                                 (const super)
+                                                 (const :tag "No modifier"
+                                                        none))))
+              "24.1")
 	     (ns-command-modifier
 	      ns
 	      (choice (const :tag "No modifier (work as layout switch)" none)
 		      (const control) (const meta)
 		      (const alt) (const hyper)
-		      (const super)) "23.1")
+		      (const super)
+                      (plist :key-type (choice (const :ordinary)
+                                               (const :function)
+                                               (const :mouse))
+                             :value-type (choice (const control)
+                                                 (const meta)
+                                                 (const alt)
+                                                 (const hyper)
+                                                 (const super)
+                                                 (const :tag "No modifier"
+                                                        none))))
+              "23.1")
 	     (ns-right-command-modifier
 	      ns
 	      (choice (const :tag "No modifier (work as layout switch)" none)
@@ -455,13 +484,35 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 			     left)
 		      (const control) (const meta)
 		      (const alt) (const hyper)
-		      (const super)) "24.1")
+		      (const super)
+                      (plist :key-type (choice (const :ordinary)
+                                               (const :function)
+                                               (const :mouse))
+                             :value-type (choice (const control)
+                                                 (const meta)
+                                                 (const alt)
+                                                 (const hyper)
+                                                 (const super)
+                                                 (const :tag "No modifier"
+                                                        none))))
+              "24.1")
 	     (ns-alternate-modifier
 	      ns
 	      (choice (const :tag "No modifier (work as alternate/option)" none)
 		      (const control) (const meta)
 		      (const alt) (const hyper)
-		      (const super)) "23.1")
+		      (const super)
+                      (plist :key-type (choice (const :ordinary)
+                                               (const :function)
+                                               (const :mouse))
+                             :value-type (choice (const control)
+                                                 (const meta)
+                                                 (const alt)
+                                                 (const hyper)
+                                                 (const super)
+                                                 (const :tag "No modifier"
+                                                        none))))
+              "23.1")
 	     (ns-right-alternate-modifier
 	      ns
 	      (choice (const :tag "No modifier (work as alternate/option)" none)
@@ -469,13 +520,35 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 			     left)
 		      (const control) (const meta)
 		      (const alt) (const hyper)
-		      (const super)) "23.3")
+		      (const super)
+                      (plist :key-type (choice (const :ordinary)
+                                               (const :function)
+                                               (const :mouse))
+                             :value-type (choice (const control)
+                                                 (const meta)
+                                                 (const alt)
+                                                 (const hyper)
+                                                 (const super)
+                                                 (const :tag "No modifier"
+                                                        none))))
+              "23.3")
 	     (ns-function-modifier
 	      ns
 	      (choice (const :tag "No modifier (work as function)" none)
 		      (const control) (const meta)
 		      (const alt) (const hyper)
-		      (const super)) "23.1")
+		      (const super)
+                      (plist :key-type (choice (const :ordinary)
+                                               (const :function)
+                                               (const :mouse))
+                             :value-type (choice (const control)
+                                                 (const meta)
+                                                 (const alt)
+                                                 (const hyper)
+                                                 (const super)
+                                                 (const :tag "No modifier"
+                                                        none))))
+              "23.1")
 	     (ns-antialias-text ns boolean "23.1")
 	     (ns-auto-hide-menu-bar ns boolean "24.1")
              (ns-confirm-quit ns boolean "25.1")

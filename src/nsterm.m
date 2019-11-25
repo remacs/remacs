@@ -354,6 +354,19 @@ static CGPoint menu_mouse_point;
 #define NSLeftAlternateKeyMask  (0x000020 | NSEventModifierFlagOption)
 #define NSRightAlternateKeyMask (0x000040 | NSEventModifierFlagOption)
 
+/* MODIFIER if a symbol; otherwise its property KIND, if a symbol.  */
+static Lisp_Object
+mod_of_kind (Lisp_Object modifier, Lisp_Object kind)
+{
+  if (SYMBOLP (modifier))
+    return modifier;
+  else
+    {
+      Lisp_Object val = Fplist_get (modifier, kind);
+      return SYMBOLP (val) ? val : Qnil;
+    }
+}
+
 static unsigned int
 ev_modifiers_helper (unsigned int flags, unsigned int left_mask,
                      unsigned int right_mask, unsigned int either_mask,
@@ -380,30 +393,35 @@ ev_modifiers_helper (unsigned int flags, unsigned int left_mask,
   return modifiers;
 }
 
-#define EV_MODIFIERS2(flags)                                            \
+#define EV_MODIFIERS2(flags, kind)                                      \
   (((flags & NSEventModifierFlagHelp) ?                                 \
     hyper_modifier : 0)                                                 \
    | ((flags & NSEventModifierFlagShift) ?                              \
       shift_modifier : 0)                                               \
-   | ((flags & NS_FUNCTION_KEY_MASK) ?                                  \
-      parse_solitary_modifier (ns_function_modifier) : 0)               \
+   | ((flags & NS_FUNCTION_KEY_MASK)                                    \
+      ? parse_solitary_modifier (mod_of_kind (ns_function_modifier,     \
+                                              kind))                    \
+      : 0)                                                              \
    | ev_modifiers_helper (flags, NSLeftControlKeyMask,                  \
                           NSRightControlKeyMask,                        \
                           NSEventModifierFlagControl,                   \
-                          ns_control_modifier,                          \
-                          ns_right_control_modifier)                    \
+                          mod_of_kind (ns_control_modifier, kind),      \
+                          mod_of_kind (ns_right_control_modifier,       \
+                                       kind))                           \
    | ev_modifiers_helper (flags, NSLeftCommandKeyMask,                  \
                           NSRightCommandKeyMask,                        \
                           NSEventModifierFlagCommand,                   \
-                          ns_command_modifier,                          \
-                          ns_right_command_modifier)                    \
+                          mod_of_kind (ns_command_modifier, kind),      \
+                          mod_of_kind (ns_right_command_modifier,       \
+                                       kind))                           \
    | ev_modifiers_helper (flags, NSLeftAlternateKeyMask,                \
                           NSRightAlternateKeyMask,                      \
                           NSEventModifierFlagOption,                    \
-                          ns_alternate_modifier,                        \
-                          ns_right_alternate_modifier))
+                          mod_of_kind (ns_alternate_modifier, kind),    \
+                          mod_of_kind (ns_right_alternate_modifier,     \
+                                       kind)))
 
-#define EV_MODIFIERS(e) EV_MODIFIERS2 ([e modifierFlags])
+#define EV_MODIFIERS(e) EV_MODIFIERS2 ([e modifierFlags], QCmouse)
 
 #define EV_UDMODIFIERS(e)                                      \
     ((([e type] == NSEventTypeLeftMouseDown) ? down_modifier : 0)       \
@@ -2599,6 +2617,18 @@ get_keysym_name (int keysym)
 }
 
 #ifdef NS_IMPL_COCOA
+static Lisp_Object
+right_mod (Lisp_Object left, Lisp_Object right)
+{
+  return EQ (right, Qleft) ? left : right;
+}
+
+static bool
+nil_or_none (Lisp_Object val)
+{
+  return NILP (val) || EQ (val, Qnone);
+}
+
 static UniChar
 ns_get_shifted_character (NSEvent *event)
 /* Look up the character corresponding to the key pressed on the
@@ -2630,25 +2660,25 @@ ns_get_shifted_character (NSEvent *event)
   NSTRACE ("ns_get_shifted_character");
 
   if ((flags & NSRightAlternateKeyMask) == NSRightAlternateKeyMask
-      && (EQ (ns_right_alternate_modifier, Qnone)
-          || (EQ (ns_right_alternate_modifier, Qleft)
-              && EQ (ns_alternate_modifier, Qnone))))
+      && nil_or_none (mod_of_kind (right_mod (ns_alternate_modifier,
+                                              ns_right_alternate_modifier),
+                                   QCordinary)))
     modifiers |= rightOptionKey;
 
   if ((flags & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask
-      && EQ (ns_alternate_modifier, Qnone))
+      && nil_or_none (mod_of_kind (ns_alternate_modifier, QCordinary)))
     modifiers |= optionKey;
 
   if ((flags & NSRightCommandKeyMask) == NSRightCommandKeyMask
-      && (EQ (ns_right_command_modifier, Qnone)
-          || (EQ (ns_right_command_modifier, Qleft)
-              && EQ (ns_command_modifier, Qnone))))
+      && nil_or_none (mod_of_kind (right_mod (ns_command_modifier,
+                                              ns_right_command_modifier),
+                                   QCordinary)))
     /* Carbon doesn't differentiate between left and right command
        keys.  */
     modifiers |= cmdKey;
 
   if ((flags & NSLeftCommandKeyMask) == NSLeftCommandKeyMask
-      && EQ (ns_command_modifier, Qnone))
+      && nil_or_none (mod_of_kind (ns_command_modifier, QCordinary)))
     modifiers |= cmdKey;
 
   result = UCKeyTranslate (layout, [event keyCode], kUCKeyActionDown,
@@ -6287,7 +6317,8 @@ not_in_argv (NSString *arg)
          modifier keys, which returns 0 for shift-like modifiers.
          Therefore its return value is the set of control-like
          modifiers.  */
-      emacs_event->modifiers = EV_MODIFIERS2 (flags);
+      Lisp_Object kind = fnKeysym ? QCfunction : QCordinary;
+      emacs_event->modifiers = EV_MODIFIERS2 (flags, kind);
 
       /* Function keys (such as the F-keys, arrow keys, etc.) set
          modifiers as though the fn key has been pressed when it
@@ -6296,7 +6327,9 @@ not_in_argv (NSString *arg)
          <home>).  We need to unset the fn modifier in these cases.
          FIXME: Can we avoid setting it in the first place?  */
       if (fnKeysym && (flags & NS_FUNCTION_KEY_MASK))
-        emacs_event->modifiers ^= parse_solitary_modifier (ns_function_modifier);
+        emacs_event->modifiers
+          ^= parse_solitary_modifier (mod_of_kind (ns_function_modifier,
+                                                   QCfunction));
 
       if (NS_KEYLOG)
         fprintf (stderr, "keyDown: code =%x\tfnKey =%x\tflags = %x\tmods = %x\n",
@@ -9399,57 +9432,75 @@ syms_of_nsterm (void)
 
   DEFVAR_LISP ("ns-alternate-modifier", ns_alternate_modifier,
                "This variable describes the behavior of the alternate or option key.\n\
-Set to the symbol control, meta, alt, super, or hyper means it is taken to be\n\
-that key.\n\
-Set to none means that the alternate / option key is not interpreted by Emacs\n\
-at all, allowing it to be used at a lower level for accented character entry.");
+Either SYMBOL, describing the behaviour for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+separately for ordinary keys, function keys, and mouse events.\n\
+\n\
+Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
+If `none', the key is ignored by Emacs and retains its standard meaning.");
   ns_alternate_modifier = Qmeta;
 
   DEFVAR_LISP ("ns-right-alternate-modifier", ns_right_alternate_modifier,
                "This variable describes the behavior of the right alternate or option key.\n\
-Set to the symbol control, meta, alt, super, or hyper means it is taken to be\n\
-that key.\n\
-Set to left means be the same key as `ns-alternate-modifier'.\n\
-Set to none means that the alternate / option key is not interpreted by Emacs\n\
-at all, allowing it to be used at a lower level for accented character entry.");
+Either SYMBOL, describing the behaviour for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+separately for ordinary keys, function keys, and mouse events.\n\
+It can also be `left' to use the value of `ns-alternate-modifier' instead.\n\
+\n\
+Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
+If `none', the key is ignored by Emacs and retains its standard meaning.");
   ns_right_alternate_modifier = Qleft;
 
   DEFVAR_LISP ("ns-command-modifier", ns_command_modifier,
                "This variable describes the behavior of the command key.\n\
-Set to the symbol control, meta, alt, super, or hyper means it is taken to be\n\
-that key.");
+Either SYMBOL, describing the behaviour for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+separately for ordinary keys, function keys, and mouse events.\n\
+\n\
+Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
+If `none', the key is ignored by Emacs and retains its standard meaning.");
   ns_command_modifier = Qsuper;
 
   DEFVAR_LISP ("ns-right-command-modifier", ns_right_command_modifier,
                "This variable describes the behavior of the right command key.\n\
-Set to the symbol control, meta, alt, super, or hyper means it is taken to be\n\
-that key.\n\
-Set to left means be the same key as `ns-command-modifier'.\n\
-Set to none means that the command / option key is not interpreted by Emacs\n\
-at all, allowing it to be used at a lower level for accented character entry.");
+Either SYMBOL, describing the behaviour for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+separately for ordinary keys, function keys, and mouse events.\n\
+It can also be `left' to use the value of `ns-command-modifier' instead.\n\
+\n\
+Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
+If `none', the key is ignored by Emacs and retains its standard meaning.");
   ns_right_command_modifier = Qleft;
 
   DEFVAR_LISP ("ns-control-modifier", ns_control_modifier,
                "This variable describes the behavior of the control key.\n\
-Set to the symbol control, meta, alt, super, or hyper means it is taken to be\n\
-that key.");
+Either SYMBOL, describing the behaviour for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+separately for ordinary keys, function keys, and mouse events.\n\
+\n\
+Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
+If `none', the key is ignored by Emacs and retains its standard meaning.");
   ns_control_modifier = Qcontrol;
 
   DEFVAR_LISP ("ns-right-control-modifier", ns_right_control_modifier,
                "This variable describes the behavior of the right control key.\n\
-Set to the symbol control, meta, alt, super, or hyper means it is taken to be\n\
-that key.\n\
-Set to left means be the same key as `ns-control-modifier'.\n\
-Set to none means that the control / option key is not interpreted by Emacs\n\
-at all, allowing it to be used at a lower level for accented character entry.");
+Either SYMBOL, describing the behaviour for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+separately for ordinary keys, function keys, and mouse events.\n\
+It can also be `left' to use the value of `ns-control-modifier' instead.\n\
+\n\
+Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
+If `none', the key is ignored by Emacs and retains its standard meaning.");
   ns_right_control_modifier = Qleft;
 
   DEFVAR_LISP ("ns-function-modifier", ns_function_modifier,
-               "This variable describes the behavior of the function key (on laptops).\n\
-Set to the symbol control, meta, alt, super, or hyper means it is taken to be\n\
-that key.\n\
-Set to none means that the function key is not interpreted by Emacs at all,\n\
-allowing it to be used at a lower level for accented character entry.");
+               "This variable describes the behavior of the function (fn) key.\n\
+Either SYMBOL, describing the behaviour for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+separately for ordinary keys, function keys, and mouse events.\n\
+\n\
+Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
+If `none', the key is ignored by Emacs and retains its standard meaning.");
   ns_function_modifier = Qnone;
 
   DEFVAR_LISP ("ns-antialias-text", ns_antialias_text,
@@ -9529,6 +9580,9 @@ This variable is ignored on macOS < 10.7 and GNUstep.  Default is t.  */);
 
   DEFSYM (Qcocoa, "cocoa");
   DEFSYM (Qgnustep, "gnustep");
+  DEFSYM (QCordinary, ":ordinary");
+  DEFSYM (QCfunction, ":function");
+  DEFSYM (QCmouse, ":mouse");
 
 #ifdef NS_IMPL_COCOA
   Fprovide (Qcocoa, Qnil);

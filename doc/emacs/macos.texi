@@ -48,18 +48,8 @@ Support}), but we hope to improve it in the future.
 Emacs provides a set of key bindings using this modifier key that mimic
 other Mac / GNUstep applications (@pxref{Mac / GNUstep Events}).  You
 can change these bindings in the usual way (@pxref{Key Bindings}).
-
-@vindex ns-alternate-modifier
-@vindex ns-right-alternate-modifier
-  The variable @code{ns-right-alternate-modifier} controls the
-behavior of the right @key{Alt} and @key{Option} keys.  These keys
-behave like the left-hand keys if the value is @code{left} (the
-default).  A value of @code{control}, @code{meta}, @code{alt},
-@code{super}, or @code{hyper} makes them behave like the corresponding
-modifier keys; a value of @code{left} means be the same key as
-@code{ns-alternate-modifier}; a value of @code{none} tells Emacs to
-ignore them, in which case you get the default behavior of macOS
-accentuation system from the right @key{Option} key.
+The modifiers themselves can be customized;
+@pxref{Mac / GNUstep Customization}.
 
   @kbd{S-mouse-1} adjusts the region to the click position,
 just like @kbd{mouse-3} (@code{mouse-save-then-kill}); it does not pop
@@ -106,6 +96,52 @@ There are a few customization options that are specific to the
 Nextstep port.  For example, they affect things such as the modifier
 keys and the fullscreen behavior.  To see all such options, use
 @kbd{M-x customize-group @key{RET} ns @key{RET}}.
+
+@subsection Modifier keys
+
+The following variables control the behaviour of the actual modifier
+keys:
+
+@table @code
+@vindex ns-alternate-modifier
+@vindex ns-right-alternate-modifier
+@item ns-alternate-modifier
+@itemx ns-right-alternate-modifier
+The left and right @key{Option} or @key{Alt} keys.
+
+@vindex ns-command-modifier
+@vindex ns-right-command-modifier
+@item ns-command-modifier
+@itemx ns-right-command-modifier
+The left and right @key{Command} keys.
+
+@vindex ns-control-modifier
+@vindex ns-right-control-modifier
+@item ns-control-modifier
+@itemx ns-right-control-modifier
+The left and right @key{Control} keys.
+
+@vindex ns-function-modifier
+@item ns-function-modifier
+The @key{Function} (fn) key.
+@end table
+
+The value of each variable is either a symbol, describing the key for
+any purpose, or a list of the form
+@code{(:ordinary @var{symbol} :function @var{symbol} :mouse @var{symbol})},
+which describes the modifier when used with ordinary keys, function keys
+(that do not produce a character, such as arrow keys), and mouse clicks.
+
+If the @var{symbol} is one of @code{control}, @code{meta}, @code{alt},
+@code{super} or @code{hyper}, this describes the Emacs modifier it
+represents.  If @var{symbol} is @code{none}, Emacs does not use the
+key, which retains its standard behaviour.  For instance, the
+@key{Option} key in macOS is then used for composing additional
+characters.
+
+The variables for right-hand keys, like @code{ns-right-alternate-modifier},
+may also be set to @code{left}, which means to use the same behaviour as
+the corresponding left-hand key.
 
 @subsection Font Panel
 
