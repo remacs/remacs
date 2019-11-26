@@ -4850,7 +4850,8 @@ minibuffer window or is dedicated to its buffer."
     (user-error "Window is strongly dedicated to its buffer"))
    (t
     (dotimes (_ (or arg 1))
-      (switch-to-next-buffer)))))
+      (unless (switch-to-next-buffer)
+        (user-error "No next buffer"))))))
 
 (defun previous-buffer (&optional arg)
   "In selected window switch to ARGth previous buffer.
@@ -4864,7 +4865,8 @@ minibuffer window or is dedicated to its buffer."
     (user-error "Window is strongly dedicated to its buffer"))
    (t
     (dotimes (_ (or arg 1))
-      (switch-to-prev-buffer)))))
+      (unless (switch-to-prev-buffer)
+        (user-error "No previous buffer"))))))
 
 (defun delete-windows-on (&optional buffer-or-name frame)
   "Delete all windows showing BUFFER-OR-NAME.
