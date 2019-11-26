@@ -1255,6 +1255,36 @@ in the selected frame."
   (tab-bar-list-select))
 
 
+(defun display-buffer-in-tab (buffer alist)
+  "Display BUFFER in a tab.
+ALIST is an association list of action symbols and values.  See
+Info node `(elisp) Buffer Display Action Alists' for details of
+such alists.
+
+If ALIST contains a `name' entry, it creates a new tab with that name and
+displays BUFFER in a new tab.  If a tab with this name already exists, it
+switches to that tab before displaying BUFFER.  The `name' entry can be
+a function, then it is called with two arguments: BUFFER and ALIST, and
+should return the tab name.  When a `name' entry is omitted, create
+a new tab without an explicit name.
+
+This is an action function for buffer display, see Info
+node `(elisp) Buffer Display Action Functions'.  It should be
+called only by `display-buffer' or a function directly or
+indirectly called by the latter."
+  (let ((name (cdr (assq 'name alist))))
+    (when (functionp name)
+      (setq name (funcall name buffer alist)))
+    (if name
+        (let ((tab-index (tab-bar--tab-index-by-name name)))
+          (if tab-index
+              (tab-bar-select-tab (1+ tab-index))
+            (let ((tab-bar-new-tab-choice t))
+              (tab-bar-new-tab)
+              (tab-bar-rename-tab name))))
+      (tab-bar-new-tab))))
+
+
 (defun switch-to-buffer-other-tab (buffer-or-name &optional norecord)
   "Switch to buffer BUFFER-OR-NAME in another tab.
 Like \\[switch-to-buffer-other-frame] (which see), but creates a new tab."
