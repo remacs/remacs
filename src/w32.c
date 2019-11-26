@@ -242,7 +242,21 @@ typedef struct _REPARSE_DATA_BUFFER {
 #undef recvfrom
 #undef sendto
 
+/* We need at least XP level for GetAdaptersAddresses stuff.  */
+#if _WIN32_WINNT < 0x0501
+# undef ORIG_WIN32_WINNT
+# define ORIG_WIN32_WINNT _WIN32_WINNT
+# undef _WIN32_WINNT
+# define _WIN32_WINNT 0x0501
+#endif
+
 #include <iphlpapi.h>	/* should be after winsock2.h */
+
+#ifdef ORIG_WIN32_WINNT
+# undef _WIN32_WINNT
+# define _WIN32_WINNT ORIG_WIN32_WINNT
+# undef ORIG_WIN32_WINNT
+#endif
 
 #include <wincrypt.h>
 
@@ -9432,6 +9446,40 @@ network_interface_get_info (Lisp_Object ifname)
   return res;
 }
 
+static bool
+address_prefix_match (int family, struct sockaddr *address,
+		      struct sockaddr *prefix_address, ULONG prefix_len)
+{
+  UINT8 *address_data;
+  UINT8 *prefix_address_data;
+  int i;
+
+  if (family == AF_INET6)
+    {
+      address_data = (UINT8 *) &(((struct sockaddr_in6 *) address)->sin6_addr);
+      prefix_address_data =
+	(UINT8 *) &(((struct sockaddr_in6 *) prefix_address)->sin6_addr);
+    }
+  else
+    {
+      address_data = (UINT8 *) &(((struct sockaddr_in *) address)->sin_addr);
+      prefix_address_data =
+	(UINT8 *) &(((struct sockaddr_in *) prefix_address)->sin_addr);
+    }
+
+  for (i = 0; i < prefix_len >> 3; i++)
+    {
+      if (address_data[i] != prefix_address_data[i])
+	return false;
+    }
+
+  if (prefix_len % 8)
+    return (prefix_address_data[i] ==
+	    (address_data[i] & (0xff << (8 - prefix_len % 8))));
+
+  return true;
+}
+
 Lisp_Object
 network_interface_list (bool full, unsigned short match)
 {
@@ -9586,7 +9634,37 @@ network_interface_list (bool full, unsigned short match)
                  byte order, so convert from host to network order
                  when generating the netmask.  */
               int i;
-              ULONG numbits = address->OnLinkPrefixLength;
+              ULONG numbits;
+	      if (w32_major_version >= 6) /* Vista or later */
+		{
+#if _WIN32_WINNT >= 0x0600
+		  numbits = address->OnLinkPrefixLength;
+#else
+		  /* Kludge alert!  OnLinkPrefixLength is only defined
+		     when compiling for Vista and later.  */
+		  numbits = *(UINT8 *) (address->LeaseLifetime
+					+ sizeof (address->LeaseLifetime));
+#endif
+		}
+	      else		/* Windows XP */
+		{
+		  IP_ADAPTER_PREFIX *prefix = adapter->FirstPrefix;
+		  numbits = 0;
+		  for ( ; prefix; prefix = prefix->Next)
+		    {
+		      /* We want the longest matching prefix. */
+		      if (prefix->Address.lpSockaddr->sa_family
+			  != ifa_addr->sa_family
+			  || prefix->PrefixLength <= numbits)
+			continue;
+		      if (address_prefix_match (ifa_addr->sa_family, ifa_addr,
+						prefix->Address.lpSockaddr,
+						prefix->PrefixLength))
+			numbits = prefix->PrefixLength;
+		    }
+		  if (!numbits)
+		    numbits = (ifa_addr->sa_family == AF_INET6) ? 128 : 32;
+		}
               for (i = 0; i < addr_len; i++)
                 {
                   if (numbits >= 32)
