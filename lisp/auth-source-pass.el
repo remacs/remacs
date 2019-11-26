@@ -34,8 +34,7 @@
 
 (require 'seq)
 (eval-when-compile (require 'subr-x))
-(eval-when-compile
-  (require 'cl-lib))
+(require 'cl-lib)
 (require 'auth-source)
 (require 'url-parse)
 
