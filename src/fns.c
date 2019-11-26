@@ -2805,15 +2805,18 @@ if `last-nonmenu-event' is nil, and `use-dialog-box' is non-nil.  */)
   AUTO_STRING (yes_or_no, "(yes or no) ");
   prompt = CALLN (Fconcat, prompt, yes_or_no);
 
+  ptrdiff_t count = SPECPDL_INDEX ();
+  specbind (Qenable_recursive_minibuffers, Qt);
+
   while (1)
     {
       ans = Fdowncase (Fread_from_minibuffer (prompt, Qnil, Qnil, Qnil,
 					      Qyes_or_no_p_history, Qnil,
 					      Qnil));
       if (SCHARS (ans) == 3 && !strcmp (SSDATA (ans), "yes"))
-	return Qt;
+	return unbind_to (count, Qt);
       if (SCHARS (ans) == 2 && !strcmp (SSDATA (ans), "no"))
-	return Qnil;
+	return unbind_to (count, Qnil);
 
       Fding (Qnil);
       Fdiscard_input ();

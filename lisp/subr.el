@@ -2847,6 +2847,7 @@ is nil and `use-dialog-box' is non-nil."
      (t
       (setq prompt (funcall padded prompt))
       (let* ((empty-history '())
+             (enable-recursive-minibuffers t)
              (str (read-from-minibuffer
                    prompt nil
                    (make-composed-keymap y-or-n-p-map query-replace-map)
