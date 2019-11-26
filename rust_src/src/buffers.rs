@@ -1884,30 +1884,42 @@ pub fn move_overlay(
         end_num.into(),
         buf.into(),
     );
-    let n_beg = overlay_start(overlay_ref).unwrap();
-    let n_end = overlay_end(overlay_ref).unwrap();
+    let n_beg = overlay_start(overlay_ref);
+    let n_end = overlay_end(overlay_ref);
     // If the overlay has changed buffers, do a through redisplay
-    if obuffer != None && !buf.eq(&obuffer.unwrap()) {
-        if let (Some(mut ob), Some(beg), Some(end)) = (obuffer, o_beg, o_end) {
-            unsafe { modify_overlay(ob.as_mut(), beg as ptrdiff_t, end as ptrdiff_t) };
-        }
-        unsafe { modify_overlay(buf.as_mut(), n_beg as ptrdiff_t, n_end as ptrdiff_t) };
-    } else {
-        // Redisplay the area the overlay has just left, or just enclosed
-        if o_beg.unwrap() == n_beg {
+    if obuffer.is_some() && !buf.eq(&obuffer.unwrap()) {
+        if let Some(mut ob) = obuffer {
             unsafe {
                 modify_overlay(
-                    buf.as_mut(),
-                    o_end.unwrap() as ptrdiff_t,
-                    n_end as ptrdiff_t,
+                    ob.as_mut(),
+                    o_beg.unwrap_or(0) as ptrdiff_t,
+                    o_end.unwrap_or(0) as ptrdiff_t,
                 )
             };
-        } else if o_end.unwrap() == n_end {
+        }
+        unsafe {
+            modify_overlay(
+                buf.as_mut(),
+                n_beg.unwrap_or(0) as ptrdiff_t,
+                n_end.unwrap_or(0) as ptrdiff_t,
+            )
+        };
+    } else {
+        // Redisplay the area the overlay has just left, or just enclosed
+        if o_beg == n_beg {
             unsafe {
                 modify_overlay(
                     buf.as_mut(),
-                    o_beg.unwrap() as ptrdiff_t,
-                    n_beg as ptrdiff_t,
+                    o_end.unwrap_or(0) as ptrdiff_t,
+                    n_end.unwrap_or(0) as ptrdiff_t,
+                )
+            };
+        } else if o_end == n_end {
+            unsafe {
+                modify_overlay(
+                    buf.as_mut(),
+                    o_beg.unwrap_or(0) as ptrdiff_t,
+                    n_beg.unwrap_or(0) as ptrdiff_t,
                 )
             };
         } else {
@@ -1915,12 +1927,12 @@ pub fn move_overlay(
                 modify_overlay(
                     buf.as_mut(),
                     EmacsInt::from(min(&[
-                        LispObject::from(o_beg.unwrap()),
-                        LispObject::from(n_beg),
+                        LispObject::from(o_beg.unwrap_or(0)),
+                        LispObject::from(n_beg.unwrap_or(0)),
                     ])) as ptrdiff_t,
                     EmacsInt::from(max(&[
-                        LispObject::from(o_end.unwrap()),
-                        LispObject::from(n_end),
+                        LispObject::from(o_end.unwrap_or(0)),
+                        LispObject::from(n_end.unwrap_or(0)),
                     ])) as ptrdiff_t,
                 )
             };
@@ -1934,7 +1946,7 @@ pub fn move_overlay(
     }
 
     // Put the overlay into the new buffer's overlay lists, first on the wrong list.
-    if (n_end as isize) < buf.overlay_center {
+    if (n_end.unwrap_or(0) as isize) < buf.overlay_center {
         overlay_ref.next = buf.overlays_after;
         buf.overlays_after = overlay_ref.as_mut();
     } else {
