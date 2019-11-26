@@ -1102,11 +1102,6 @@ Just like @code{eieio-class-children}, but with no checks.
 Returns @code{t} if @var{obj}'s class is the same as @var{class}.
 @end defun
 
-@defun same-class-fast-p obj class
-Same as @code{same-class-p} except this is a macro and no type checking
-is performed.
-@end defun
-
 @defun object-of-class-p obj class
 Returns @code{t} if @var{obj} inherits anything from @var{class}.  This
 is different from @code{same-class-p} because it checks for inheritance.
