@@ -4607,7 +4607,7 @@ This function is called directly from the C code."
 			               (string-match "\\.elc?\\>" file))
                             obarray))
 	   (msg (format "Package %s is deprecated" package))
-	   (fun (lambda (msg) (minibuffer-message "%s" msg))))
+	   (fun (lambda (msg) (message "%s" msg))))
       ;; Cribbed from cl--compiling-file.
       (when (or (not (fboundp 'byte-compile-warning-enabled-p))
                 (byte-compile-warning-enabled-p 'obsolete package))

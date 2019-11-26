@@ -2875,7 +2875,57 @@ If the first argument is nil or the empty string, the function clears
 any existing message; this lets the minibuffer contents show.  See
 also `current-message'.
 
+When the variable `message-in-echo-area' is non-nil, use the function
+`message-in-echo-area' to display the message in the echo area.
+Otherwise, when the minibuffer is active, use `minibuffer-message'
+to temporarily display the message at the end of the minibuffer.
+
 usage: (message FORMAT-STRING &rest ARGS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  if (NILP (Vmessage_in_echo_area)
+      && !inhibit_message
+      && !(NILP (args[0]) || (STRINGP (args[0]) && SBYTES (args[0]) == 0))
+      && WINDOW_LIVE_P (Factive_minibuffer_window ())
+      && WINDOW_LIVE_P (Fold_selected_window ())
+      && BUFFERP (Fwindow_buffer (Fold_selected_window ()))
+      && !NILP (Fminibufferp (Fwindow_buffer (Fold_selected_window ()))))
+    {
+      ptrdiff_t count = SPECPDL_INDEX ();
+
+      /* Avoid possible recursion.  */
+      specbind (Qmessage_in_echo_area, Qt);
+
+      record_unwind_current_buffer ();
+      Fset_buffer (Fwindow_buffer (Fold_selected_window ()));
+
+      return unbind_to (count, CALLN (Fapply, intern ("minibuffer-message"),
+                                      Flist (nargs, args)));
+    }
+  else
+    return Fmessage_in_echo_area (nargs, args);
+}
+
+DEFUN ("message-in-echo-area", Fmessage_in_echo_area, Smessage_in_echo_area, 1, MANY, 0,
+       doc: /* Display a message at the bottom of the screen.
+The message also goes into the `*Messages*' buffer, if `message-log-max'
+is non-nil.  (In keyboard macros, that's all it does.)
+Return the message.
+
+In batch mode, the message is printed to the standard error stream,
+followed by a newline.
+
+The first argument is a format control string, and the rest are data
+to be formatted under control of the string.  Percent sign (%), grave
+accent (\\=`) and apostrophe (\\=') are special in the format; see
+`format-message' for details.  To display STRING without special
+treatment, use (message-in-echo-area "%s" STRING).
+
+If the first argument is nil or the empty string, the function clears
+any existing message; this lets the minibuffer contents show.  See
+also `current-message'.
+
+usage: (message-in-echo-area FORMAT-STRING &rest ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
 {
   if (NILP (args[0])
@@ -4520,6 +4570,11 @@ This variable is experimental; email 32252@debbugs.gnu.org if you need
 it to be non-nil.  */);
   binary_as_unsigned = false;
 
+  DEFVAR_LISP ("message-in-echo-area", Vmessage_in_echo_area,
+	       doc: /* Non-nil means overwrite the minibuffer with a message in the echo area.  */);
+  Vmessage_in_echo_area = Qnil;
+  DEFSYM (Qmessage_in_echo_area, "message-in-echo-area");
+
   defsubr (&Spropertize);
   defsubr (&Schar_equal);
   defsubr (&Sgoto_char);
@@ -4594,6 +4649,7 @@ it to be non-nil.  */);
   defsubr (&Semacs_pid);
   defsubr (&Ssystem_name);
   defsubr (&Smessage);
+  defsubr (&Smessage_in_echo_area);
   defsubr (&Smessage_box);
   defsubr (&Smessage_or_box);
   defsubr (&Scurrent_message);

@@ -1474,7 +1474,7 @@ manpage command."
           (kill-buffer Man-buffer)))
 
       (when message
-        (minibuffer-message "%s" message)))))
+        (message "%s" message)))))
 
 (defun Man-page-from-arguments (args)
   ;; Skip arguments and only print the page name.

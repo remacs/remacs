@@ -712,16 +712,16 @@ If ARGS are provided, then pass MESSAGE through `format-message'."
       (progn
         (if args
             (apply #'message message args)
-          (message "%s" message))
+          (message-in-echo-area "%s" message))
         (prog1 (sit-for (or minibuffer-message-timeout 1000000))
-          (message nil)))
+          (message-in-echo-area nil)))
     ;; Record message in the *Messages* buffer
     (let ((inhibit-message t))
       (if args
           (apply #'message message args)
-        (message "%s" message)))
+        (message-in-echo-area "%s" message)))
     ;; Clear out any old echo-area message to make way for our new thing.
-    (message nil)
+    (message-in-echo-area nil)
     (setq message (if (and (null args)
                            (string-match-p "\\` *\\[.+\\]\\'" message))
                       ;; Make sure we can put-text-property.
@@ -1840,7 +1840,7 @@ variables.")
 (defun minibuffer-completion-help (&optional start end)
   "Display a list of possible completions of the current minibuffer contents."
   (interactive)
-  (message "Making completion list...")
+  (message-in-echo-area "Making completion list...")
   (let* ((start (or start (minibuffer-prompt-end)))
          (end (or end (point-max)))
          (string (buffer-substring start end))
@@ -1851,7 +1851,7 @@ variables.")
                        minibuffer-completion-predicate
                        (- (point) start)
                        md)))
-    (message nil)
+    (message-in-echo-area nil)
     (if (or (null completions)
             (and (not (consp (cdr completions)))
                  (equal (car completions) string)))

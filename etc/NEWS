@@ -755,6 +755,10 @@ the minibuffer.  If non-nil, point will move to the end of the prompt
 at the end of the active minibuffer.
 
 +++
+*** The function 'message' now displays the message at the end of the minibuffer
+when the minibuffer is active.
+
++++
 *** 'y-or-n-p' now uses the minibuffer to read 'y' or 'n' answer.
 
 *** Some commands that previously used read-char-choice now read
