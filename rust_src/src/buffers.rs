@@ -1839,8 +1839,8 @@ pub fn move_overlay(
     buffer: LispObject,
 ) -> LispObject {
     let count = c_specpdl_index();
-    let overlay_ref = LispOverlayRef::from(overlay);
-    let buf = buffer
+    let mut overlay_ref = LispOverlayRef::from(overlay);
+    let mut buf = buffer
         .as_buffer()
         .or(overlay_buffer(overlay_ref))
         .unwrap_or(ThreadState::current_buffer_unchecked());
@@ -1864,14 +1864,14 @@ pub fn move_overlay(
     } else {
         (beg_num, end_num)
     };
-    specbind(Qinhibit_quit, Qt);
+    unsafe { specbind(Qinhibit_quit, Qt) };
     let obuffer = overlay_buffer(overlay_ref);
-    let o_beg = None;
-    let o_end = None;
-    if let Some(ob) = obuffer {
+    let mut o_beg = None;
+    let mut o_end = None;
+    if let Some(mut ob) = obuffer {
         o_beg = overlay_start(overlay_ref);
         o_end = overlay_end(overlay_ref);
-        unchain_both(ob.as_mut(), overlay_ref.into());
+        unsafe { unchain_both(ob.as_mut(), overlay_ref.into()) };
     }
     // Set the overlay boundaries, which may clip them
     set_marker(
@@ -1888,40 +1888,61 @@ pub fn move_overlay(
     let n_end = overlay_end(overlay_ref).unwrap();
     // If the overlay has changed buffers, do a through redisplay
     if obuffer != None && !buf.eq(&obuffer.unwrap()) {
-        if let (Some(ob), Some(beg), Some(end)) = (obuffer, o_beg, o_end) {
-            modify_overlay(ob.as_mut(), beg, end);
+        if let (Some(mut ob), Some(beg), Some(end)) = (obuffer, o_beg, o_end) {
+            unsafe { modify_overlay(ob.as_mut(), beg as ptrdiff_t, end as ptrdiff_t) };
         }
-        modify_overlay(buf.as_mut(), n_beg, n_end);
+        unsafe { modify_overlay(buf.as_mut(), n_beg as ptrdiff_t, n_end as ptrdiff_t) };
     } else {
         // Redisplay the area the overlay has just left, or just enclosed
         if o_beg.unwrap() == n_beg {
-            modify_overlay(buf.as_mut(), o_end.unwrap(), n_end);
+            unsafe {
+                modify_overlay(
+                    buf.as_mut(),
+                    o_end.unwrap() as ptrdiff_t,
+                    n_end as ptrdiff_t,
+                )
+            };
         } else if o_end.unwrap() == n_end {
-            modify_overlay(buf.as_mut(), o_beg.unwrap(), n_beg);
+            unsafe {
+                modify_overlay(
+                    buf.as_mut(),
+                    o_beg.unwrap() as ptrdiff_t,
+                    n_beg as ptrdiff_t,
+                )
+            };
         } else {
-            modify_overlay(
-                buf.as_mut(),
-                min([o_beg.unwrap(), n_beg]),
-                max([o_end.unwrap(), n_end]),
-            );
+            unsafe {
+                modify_overlay(
+                    buf.as_mut(),
+                    EmacsInt::from(min(&[
+                        LispObject::from(o_beg.unwrap()),
+                        LispObject::from(n_beg),
+                    ])) as ptrdiff_t,
+                    EmacsInt::from(max(&[
+                        LispObject::from(o_end.unwrap()),
+                        LispObject::from(n_end),
+                    ])) as ptrdiff_t,
+                )
+            };
         }
     }
 
     // Delete the overlay if it is empty after clipping and has the evaporate property.
     if n_beg == n_end && overlay_get(overlay_ref, Qevaporate).is_nil() {
-        return unbind_to(count, delete_overlay(overlay_ref));
+        delete_overlay(overlay_ref);
+        return unbind_to(count, Qnil);
     }
 
     // Put the overlay into the new buffer's overlay lists, first on the wrong list.
-    if n_end < buf.overlay_center {
+    if (n_end as isize) < buf.overlay_center {
         overlay_ref.next = buf.overlays_after;
-        buf.overlays_after = overlay_ref;
+        buf.overlays_after = overlay_ref.as_mut();
     } else {
         overlay_ref.next = buf.overlays_before;
-        buf.overlays_before = overlay_ref;
+        buf.overlays_before = overlay_ref.as_mut();
     }
     // This puts it in the right list, and in the right order.
-    recenter_overlay_lists(buf, buf.overlay_center);
+    unsafe { recenter_overlay_lists(buf.as_mut(), buf.overlay_center) };
 
     return unbind_to(count, overlay);
 }
