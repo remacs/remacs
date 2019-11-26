@@ -3920,8 +3920,13 @@ or killed, or has been already shown by a recent invocation of
 If repeated invocations of this command have already shown all buffers
 previously shown in @var{window}, further invocations will show buffers
 from the buffer list of the frame @var{window} appears on (@pxref{Buffer
-List}), trying to skip buffers that are already shown in another window
-on that frame.
+List}).
+
+The option @code{switch-to-prev-buffer-skip} described below can be
+used to inhibit switching to certain buffers, for example, to those
+already shown in another window.  Also, if @var{window}'s frame has a
+@code{buffer-predicate} parameter (@pxref{Buffer Parameters}), that
+predicate may inhibit switching to certain buffers.
 @end deffn
 
 @deffn Command switch-to-next-buffer &optional window
@@ -3933,20 +3938,65 @@ defaults to the selected one.
 If there is no recent invocation of @code{switch-to-prev-buffer} that
 can be undone, this function tries to show a buffer from the buffer list
 of the frame @var{window} appears on (@pxref{Buffer List}).
+
+The option @code{switch-to-prev-buffer-skip} and the
+@code{buffer-predicate} (@pxref{Buffer Parameters}) of @var{window}'s
+frame affect this command as they do for @code{switch-to-prev-buffer}.
 @end deffn
 
-By default @code{switch-to-prev-buffer} and @code{switch-to-next-buffer}
-can switch to a buffer that is already shown in another window on the
-same frame.  The following option can be used to override this behavior.
+By default @code{switch-to-prev-buffer} and
+@code{switch-to-next-buffer} can switch to a buffer that is already
+shown in another window.  The following option can be used to override
+this behavior.
 
-@defopt switch-to-visible-buffer
-If this variable is non-@code{nil}, @code{switch-to-prev-buffer} and
-@code{switch-to-next-buffer} may switch to a buffer that is already
-visible on the same frame, provided the buffer was shown in the
-relevant window before.  If it is @code{nil},
-@code{switch-to-prev-buffer} and @code{switch-to-next-buffer} always
-try to avoid switching to a buffer that is already visible in another
-window on the same frame.  The default is @code{t}.
+@defopt switch-to-prev-buffer-skip
+If this variable is @code{nil}, @code{switch-to-prev-buffer} may
+switch to any buffer, including those already shown in other windows.
+
+If this variable is non-@code{nil}, @code{switch-to-prev-buffer} will
+refrain from switching to certain buffers.  The following values can
+be used:
+
+@itemize @bullet
+@item
+@code{this} means do not switch to a buffer shown on the frame that
+hosts the window @code{switch-to-prev-buffer} is acting upon.
+
+@item
+@code{visible} means do not switch to a buffer shown on any visible
+frame.
+
+@item
+0 (the number zero) means do not switch to a buffer shown on any
+visible or iconified frame.
+
+@item
+@code{t} means do not switch to a buffer shown on any live frame.
+
+@item
+A function that takes three arguments---the @var{window} argument of
+@code{switch-to-prev-buffer}, a buffer @code{switch-to-prev-buffer}
+intends to switch to and the @var{bury-or-kill} argument of
+@code{switch-to-prev-buffer}.  If that function returns
+non-@code{nil}, @code{switch-to-prev-buffer} will refrain from
+switching to the buffer specified by the second argument.
+@end itemize
+
+The command @code{switch-to-next-buffer} obeys this option in a
+similar way.  If this option specifies a function,
+@code{switch-to-next-buffer} will call that function with the third
+argument always @code{nil}.
+
+Note that since @code{switch-to-prev-buffer} is called by
+@code{bury-buffer}, @code{replace-buffer-in-windows} and
+@code{quit-restore-window} as well, customizing this option may also
+affect the behavior of Emacs when a window is quit or a buffer gets
+buried or killed.
+
+Note also that under certain circumstances
+@code{switch-to-prev-buffer} and @code{switch-to-next-buffer} may
+ignore this option, for example, when there is only one buffer left
+these functions can switch to.
 @end defopt
 
 

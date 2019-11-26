@@ -4409,6 +4409,68 @@ that is already visible in another window on the same frame."
   :version "24.1"
   :group 'windows)
 
+(make-obsolete-variable 'switch-to-visible-buffer
+                        'switch-to-prev-buffer-skip "27.1")
+
+(defcustom switch-to-prev-buffer-skip nil
+  "Buffers `switch-to-prev-buffer' should skip.
+If this variable is nil, `switch-to-prev-buffer' may switch to
+any buffer, including those already shown in other windows.
+
+If this variable is non-nil, `switch-to-prev-buffer' will refrain
+from switching to certain buffers according to the value of this
+variable:
+
+- `this' means do not switch to a buffer shown on the frame that
+  hosts the window `switch-to-prev-buffer' is acting upon.
+
+- `visible' means do not switch to a buffer shown on any visible
+  frame.
+
+- 0 (the number zero) means do not switch to a buffer shown on
+  any visible or iconified frame.
+
+- t means do not switch to a buffer shown on any live frame.
+
+If this option specifies a function, that function is called with
+three arguments - the WINDOW argument of `switch-to-prev-buffer',
+a buffer `switch-to-prev-buffer' intends to switch to and the
+BURY-OR-KILL argument of `switch-to-prev-buffer'.  If that
+function returns non-nil, `switch-to-prev-buffer' will not switch
+to that buffer.
+
+Since `switch-to-prev-buffer' is called by `bury-buffer',
+`replace-buffer-in-windows' and `quit-restore-window' among
+others, customizing this option may also affect the behavior of
+Emacs when a window is quit or a buffer gets buried or killed.
+
+The value of this option is consulted by `switch-to-next-buffer'
+as well.  In that case, if this option specifies a function, it
+will be called with the third argument nil.
+
+Under certain circumstances `switch-to-prev-buffer' may ignore
+this option, for example, when there is only one buffer left."
+  :type
+  '(choice (const :tag "Never" nil)
+           (const :tag "This frame" this)
+	   (const :tag "Visible frames" visible)
+	   (const :tag "Visible and iconified frames" 0)
+	   (const :tag "Any frame" t)
+           (function :tag "Function"))
+  :version "27.1"
+  :group 'windows)
+
+(defun switch-to-prev-buffer-skip-p (skip window buffer &optional bury-or-kill)
+  "Return non-nil if `switch-to-prev-buffer' should skip BUFFER.
+SKIP is a value derived from `switch-to-prev-buffer-skip', WINDOW
+the window `switch-to-prev-buffer' acts upon.  Optional argument
+BURY-OR-KILL is passed unchanged by `switch-to-prev-buffer' and
+omitted in calls from `switch-to-next-buffer'."
+  (when skip
+    (if (functionp skip)
+        (funcall skip window buffer bury-or-kill)
+      (get-buffer-window buffer skip))))
+
 (defun switch-to-prev-buffer (&optional window bury-or-kill)
   "In WINDOW switch to previous buffer.
 WINDOW must be a live window and defaults to the selected one.
@@ -4424,6 +4486,12 @@ move the buffer to the end of WINDOW's previous buffers list so a
 future invocation of `switch-to-prev-buffer' less likely switches
 to it.
 
+The option `switch-to-prev-buffer-skip' can be used to not switch
+to certain buffers, for example, to those already shown in
+another window.  Also, if WINDOW's frame has a `buffer-predicate'
+parameter, that predicate may inhibit switching to certain
+buffers.
+
 This function is called by `prev-buffer'."
   (interactive)
   (let* ((window (window-normalize-window window t))
@@ -4433,7 +4501,15 @@ This function is called by `prev-buffer'."
 	 ;; Save this since it's destroyed by `set-window-buffer'.
 	 (next-buffers (window-next-buffers window))
          (pred (frame-parameter frame 'buffer-predicate))
-	 entry new-buffer killed-buffers visible)
+         (skip
+          (cond
+           ((or (functionp switch-to-prev-buffer-skip)
+                (memq switch-to-prev-buffer-skip '(t visible 0)))
+            switch-to-prev-buffer-skip)
+           ((or switch-to-prev-buffer-skip
+                (not switch-to-visible-buffer))
+            frame)))
+         entry new-buffer killed-buffers skipped)
     (when (window-minibuffer-p window)
       ;; Don't switch in minibuffer window.
       (unless (setq window (minibuffer-selected-window))
@@ -4456,11 +4532,8 @@ This function is called by `prev-buffer'."
 		   ;; When BURY-OR-KILL is nil, avoid switching to a
 		   ;; buffer in WINDOW's next buffers list.
 		   (or bury-or-kill (not (memq new-buffer next-buffers))))
-	  (if (and (not switch-to-visible-buffer)
-		   (get-buffer-window new-buffer frame))
-	      ;; Try to avoid showing a buffer visible in some other
-	      ;; window.
-	      (setq visible new-buffer)
+          (if (switch-to-prev-buffer-skip-p skip window new-buffer bury-or-kill)
+	      (setq skipped new-buffer)
 	    (set-window-buffer-start-and-point
 	     window new-buffer (nth 1 entry) (nth 2 entry))
 	    (throw 'found t))))
@@ -4478,18 +4551,17 @@ This function is called by `prev-buffer'."
           (when (and (buffer-live-p buffer)
                      (not (eq buffer old-buffer))
                      (or (null pred) (funcall pred buffer))
+                     ;; Skip buffers whose names start with a space.
                      (not (eq (aref (buffer-name buffer) 0) ?\s))
-                     ;; Don't show a buffer shown in a side window before.
+                     ;; Skip buffers shown in a side window before.
                      (not (buffer-local-value 'window--sides-shown buffer))
                      (or bury-or-kill (not (memq buffer next-buffers))))
-            (if (and (not switch-to-visible-buffer)
-                     (get-buffer-window buffer frame))
-                ;; Try to avoid showing a buffer visible in some other window.
-                (unless visible
-                  (setq visible buffer))
+            (if (switch-to-prev-buffer-skip-p skip window buffer bury-or-kill)
+	        (setq skipped (or skipped buffer))
               (setq new-buffer buffer)
               (set-window-buffer-start-and-point window new-buffer)
               (throw 'found t)))))
+
       (unless bury-or-kill
 	;; Scan reverted next buffers last (must not use nreverse
 	;; here!).
@@ -4502,14 +4574,16 @@ This function is called by `prev-buffer'."
 		     (not (eq buffer old-buffer))
                      (or (null pred) (funcall pred buffer))
 		     (setq entry (assq buffer (window-prev-buffers window))))
-	    (setq new-buffer buffer)
-	    (set-window-buffer-start-and-point
-	     window new-buffer (nth 1 entry) (nth 2 entry))
-	    (throw 'found t))))
+            (if (switch-to-prev-buffer-skip-p skip window buffer bury-or-kill)
+	        (setq skipped (or skipped buffer))
+	      (setq new-buffer buffer)
+	      (set-window-buffer-start-and-point
+	       window new-buffer (nth 1 entry) (nth 2 entry))
+	      (throw 'found t)))))
 
-      ;; Show a buffer visible in another window.
-      (when visible
-	(setq new-buffer visible)
+      (when skipped
+        ;; Show first skipped buffer.
+	(setq new-buffer skipped)
 	(set-window-buffer-start-and-point window new-buffer)))
 
     (if bury-or-kill
@@ -4547,7 +4621,15 @@ This function is called by `prev-buffer'."
   "In WINDOW switch to next buffer.
 WINDOW must be a live window and defaults to the selected one.
 Return the buffer switched to, nil if no suitable buffer could be
-found.  This function is called by `next-buffer'."
+found.
+
+The option `switch-to-prev-buffer-skip' can be used to not switch
+to certain buffers, for example, to those already shown in
+another window.  Also, if WINDOW's frame has a `buffer-predicate'
+parameter, that predicate may inhibit switching to certain
+buffers.
+
+This function is called by `next-buffer'."
   (interactive)
   (let* ((window (window-normalize-window window t))
 	 (frame (window-frame window))
@@ -4555,7 +4637,15 @@ found.  This function is called by `next-buffer'."
 	 (old-buffer (window-buffer window))
 	 (next-buffers (window-next-buffers window))
          (pred (frame-parameter frame 'buffer-predicate))
-	 new-buffer entry killed-buffers visible)
+         (skip
+          (cond
+           ((or (functionp switch-to-prev-buffer-skip)
+                (memq switch-to-prev-buffer-skip '(t visible 0)))
+            switch-to-prev-buffer-skip)
+           ((or switch-to-prev-buffer-skip
+                (not switch-to-visible-buffer))
+            frame)))
+	 new-buffer entry killed-buffers skipped)
     (when (window-minibuffer-p window)
       ;; Don't switch in minibuffer window.
       (unless (setq window (minibuffer-selected-window))
@@ -4574,10 +4664,12 @@ found.  This function is called by `next-buffer'."
 		   (not (eq buffer old-buffer))
                    (or (null pred) (funcall pred buffer))
 		   (setq entry (assq buffer (window-prev-buffers window))))
-	  (setq new-buffer buffer)
-	  (set-window-buffer-start-and-point
-	   window new-buffer (nth 1 entry) (nth 2 entry))
-	  (throw 'found t)))
+          (if (switch-to-prev-buffer-skip-p skip window buffer)
+	      (setq skipped buffer)
+	    (setq new-buffer buffer)
+	    (set-window-buffer-start-and-point
+	     window new-buffer (nth 1 entry) (nth 2 entry))
+	    (throw 'found t))))
       ;; Scan the buffer list of WINDOW's frame next, skipping previous
       ;; buffers entries.  Skip this step for side windows.
       (unless window-side
@@ -4585,14 +4677,13 @@ found.  This function is called by `next-buffer'."
           (when (and (buffer-live-p buffer)
                      (not (eq buffer old-buffer))
                      (or (null pred) (funcall pred buffer))
+                     ;; Skip buffers whose names start with a space.
                      (not (eq (aref (buffer-name buffer) 0) ?\s))
-                     ;; Don't show a buffer shown in a side window before.
+                     ;; Skip buffers shown in a side window before.
                      (not (buffer-local-value 'window--sides-shown buffer))
                      (not (assq buffer (window-prev-buffers window))))
-            (if (and (not switch-to-visible-buffer)
-                     (get-buffer-window buffer frame))
-                ;; Try to avoid showing a buffer visible in some other window.
-                (setq visible buffer)
+            (if (switch-to-prev-buffer-skip-p skip window buffer)
+	        (setq skipped (or skipped buffer))
               (setq new-buffer buffer)
               (set-window-buffer-start-and-point window new-buffer)
               (throw 'found t)))))
@@ -4605,18 +4696,15 @@ found.  This function is called by `next-buffer'."
 				  (cons new-buffer killed-buffers))))
 		   (not (eq new-buffer old-buffer))
                    (or (null pred) (funcall pred new-buffer)))
-	  (if (and (not switch-to-visible-buffer)
-		   (get-buffer-window new-buffer frame))
-	      ;; Try to avoid showing a buffer visible in some other window.
-	      (unless visible
-		(setq visible new-buffer))
+          (if (switch-to-prev-buffer-skip-p skip window new-buffer)
+	      (setq skipped (or skipped new-buffer))
 	    (set-window-buffer-start-and-point
 	     window new-buffer (nth 1 entry) (nth 2 entry))
 	    (throw 'found t))))
 
-      ;; Show a buffer visible in another window.
-      (when visible
-	(setq new-buffer visible)
+      (when skipped
+        ;; Show first skipped buffer.
+	(setq new-buffer skipped)
 	(set-window-buffer-start-and-point window new-buffer)))
 
     ;; Remove `new-buffer' from and restore WINDOW's next buffers.

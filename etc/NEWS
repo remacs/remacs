@@ -414,6 +414,16 @@ When non-nil, 'switch-to-buffer' uses 'pop-to-buffer-same-window' that
 respects display actions specified by 'display-buffer-alist' and
 'display-buffer-overriding-action'.
 
++++
+** The option 'switch-to-visible-buffer' is now obsolete.
+Customize 'switch-to-prev-buffer-skip' instead.
+
++++
+** New option 'switch-to-prev-buffer-skip'.
+This option allows to specify the set of buffers that may be shown by
+'switch-to-prev-buffer' and 'switch-to-next-buffer' more stringently
+than the now obsolete 'switch-to-visible-buffer'.
+
 ** New 'flex' completion style
 An implementation of popular "flex/fuzzy/scatter" completion which
 matches strings where the pattern appears as a subsequence.  Put
