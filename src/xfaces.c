@@ -68,17 +68,25 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
    On the other hand, if one of the other font-related attributes are
    specified, the corresponding specs in this attribute is set to nil.
 
-   15. A face name or list of face names from which to inherit attributes.
-
-   16. A specified average font width, which is invisible from Lisp,
-   and is used to ensure that a font specified on the command line,
-   for example, can be matched exactly.
+   16. A face name or list of face names from which to inherit attributes.
 
    17. A fontset name.  This is another special attribute.
 
    A fontset is a mappings from characters to font-specs, and the
    specs overwrite the font-spec in the 14th attribute.
 
+   18. A "distant background" color, to be used when the foreground is
+   too close to the background and is hard to read.
+
+   19. Whether to extend the face to end of line when the face
+   "covers" the newline that ends the line.
+
+   On the C level, a Lisp face is completely represented by its array
+   of attributes.  In that array, the zeroth element is Qface, and the
+   rest are the 19 face attributes described above.  The
+   lface_attribute_index enumeration, defined on dispextern.h, with
+   values given by the LFACE_*_INDEX constants, is used to reference
+   the individual attributes.
 
    Faces are frame-local by nature because Emacs allows you to define the
    same named face (face names are symbols) differently for different
@@ -100,10 +108,18 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
    The display style of a given character in the text is determined by
    combining several faces.  This process is called `face merging'.
-   Any aspect of the display style that isn't specified by overlays or
-   text properties is taken from the `default' face.  Since it is made
-   sure that the default face is always fully-specified, face merging
-   always results in a fully-specified face.
+   Face merging combines the attributes of each of the faces being
+   merged such that the attributes of the face that is merged later
+   override those of a face merged earlier in the process.  In
+   particular, this replaces any 'unspecified' attributes with
+   non-'unspecified' values.  Also, if a face inherits from another
+   (via the :inherit attribute), the attributes of the parent face,
+   recursively, are applied where the inheriting face doesn't specify
+   non-'unspecified' values.  Any aspect of the display style that
+   isn't specified by overlays or text properties is taken from the
+   'default' face.  Since it is made sure that the default face is
+   always fully-specified, face merging always results in a
+   fully-specified face.
 
 
    Face realization.
@@ -1604,6 +1620,9 @@ the WIDTH times as wide as FACE on FRAME.  */)
       && EQ (AREF (LFACE, 0), Qface))
 
 
+/* Face attribute symbols for each value of LFACE_*_INDEX.  */
+static Lisp_Object face_attr_sym[LFACE_VECTOR_SIZE];
+
 #ifdef GLYPH_DEBUG
 
 /* Check consistency of Lisp face attribute vector ATTRS.  */
@@ -2397,6 +2416,58 @@ merge_face_ref (struct window *w,
 	       && *SDATA (SYMBOL_NAME (first)) == ':')
 	{
 	  /* Assume this is the property list form.  */
+	  if (attr_filter > 0)
+	    {
+	      eassert (attr_filter < LFACE_VECTOR_SIZE);
+	      /* ATTR_FILTER positive means don't merge this face if
+		 the corresponding attribute is nil, or not mentioned,
+		 or if it's unspecified and the face doesn't inherit
+		 from a face whose attribute is non-nil.  The code
+		 below determines whether a face given as a property
+		 list shall be merged.  */
+	      Lisp_Object parent_face = Qnil;
+	      bool attr_filter_seen = false;
+	      Lisp_Object face_ref_tem = face_ref;
+	      while (CONSP (face_ref_tem) && CONSP (XCDR (face_ref_tem)))
+		{
+		  Lisp_Object keyword = XCAR (face_ref_tem);
+		  Lisp_Object value = XCAR (XCDR (face_ref_tem));
+
+		  if (EQ (keyword, face_attr_sym[attr_filter])
+		      || (attr_filter == LFACE_INVERSE_INDEX
+			  && EQ (keyword, QCreverse_video)))
+		    {
+		      attr_filter_seen = true;
+		      if (NILP (value))
+			return true;
+		    }
+		  else if (EQ (keyword, QCinherit))
+		    parent_face = value;
+		  face_ref_tem = XCDR (XCDR (face_ref_tem));
+		}
+	      if (!attr_filter_seen)
+		{
+		  if (NILP (parent_face))
+		    return true;
+
+		  Lisp_Object scratch_attrs[LFACE_VECTOR_SIZE];
+		  int i;
+
+		  scratch_attrs[0] = Qface;
+		  for (i = 1; i < LFACE_VECTOR_SIZE; i++)
+		    scratch_attrs[i] = Qunspecified;
+		  if (!merge_face_ref (w, f, parent_face, scratch_attrs,
+				       err_msgs, named_merge_points, 0))
+		    {
+		      add_to_log ("Invalid face attribute %S %S",
+				  QCinherit, parent_face);
+		      return false;
+		    }
+		  if (NILP (scratch_attrs[attr_filter])
+		      || UNSPECIFIEDP (scratch_attrs[attr_filter]))
+		    return true;
+		}
+	    }
 	  while (CONSP (face_ref) && CONSP (XCDR (face_ref)))
 	    {
 	      Lisp_Object keyword = XCAR (face_ref);
@@ -6590,6 +6661,25 @@ init_xfaces (void)
 	  lface_id_to_name[i--] = XCAR (lface);
 	}
     }
+  face_attr_sym[0] = Qface;
+  face_attr_sym[LFACE_FOUNDRY_INDEX] = QCfoundry;
+  face_attr_sym[LFACE_SWIDTH_INDEX] = QCwidth;
+  face_attr_sym[LFACE_HEIGHT_INDEX] = QCheight;
+  face_attr_sym[LFACE_WEIGHT_INDEX] = QCweight;
+  face_attr_sym[LFACE_SLANT_INDEX] = QCslant;
+  face_attr_sym[LFACE_UNDERLINE_INDEX] = QCunderline;
+  face_attr_sym[LFACE_INVERSE_INDEX] = QCinverse_video;
+  face_attr_sym[LFACE_FOREGROUND_INDEX] = QCforeground;
+  face_attr_sym[LFACE_BACKGROUND_INDEX] = QCbackground;
+  face_attr_sym[LFACE_STIPPLE_INDEX] = QCstipple;
+  face_attr_sym[LFACE_OVERLINE_INDEX] = QCoverline;
+  face_attr_sym[LFACE_STRIKE_THROUGH_INDEX] = QCstrike_through;
+  face_attr_sym[LFACE_BOX_INDEX] = QCbox;
+  face_attr_sym[LFACE_FONT_INDEX] = QCfont;
+  face_attr_sym[LFACE_INHERIT_INDEX] = QCinherit;
+  face_attr_sym[LFACE_FONTSET_INDEX] = QCfontset;
+  face_attr_sym[LFACE_DISTANT_FOREGROUND_INDEX] = QCdistant_foreground;
+  face_attr_sym[LFACE_EXTEND_INDEX] = QCextend;
 }
 #endif
 
