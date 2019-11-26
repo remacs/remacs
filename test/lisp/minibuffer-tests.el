@@ -80,5 +80,26 @@
     (should (equal (try-completion "B-hel" subvtable)
                    "B-hello"))))
 
+(ert-deftest completion-table-test-quoting ()
+  (let ((process-environment
+         `("CTTQ1=ed" "CTTQ2=et/" ,@process-environment)))
+    (pcase-dolist (`(,input ,output)
+                   '(
+                     ;; Test that $ in files is properly $$ quoted.
+                     ("data/m-cttq" "data/minibuffer-test-cttq$$tion")
+                     ;; Test that $$ in input is properly unquoted.
+                     ("data/m-cttq$$t" "data/minibuffer-test-cttq$$tion")
+                     ;; Test that env-vars are preserved.
+                     ("lisp/c${CTTQ1}et/se-u" "lisp/c${CTTQ1}et/semantic-utest")
+                     ("lisp/ced${CTTQ2}se-u" "lisp/ced${CTTQ2}semantic-utest")
+                     ;; Test that env-vars don't prevent partial-completion.
+                     ;; FIXME: Ideally we'd like to keep the ${CTTQ}!
+                     ("lis/c${CTTQ1}/se-u" "lisp/cedet/semantic-utest")
+                     ))
+      (should (equal (completion-try-completion input
+                                                #'completion--file-name-table
+                                                nil (length input))
+                     (cons output (length output)))))))
+
 (provide 'completion-tests)
 ;;; completion-tests.el ends here
