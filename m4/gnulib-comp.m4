@@ -118,6 +118,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module malloca:
   # Code from module manywarnings:
   # Code from module memmem-simple:
+  # Code from module mempcpy:
   # Code from module memrchr:
   # Code from module minmax:
   # Code from module mkostemp:
@@ -327,6 +328,12 @@ AC_DEFUN([gl_INIT],
     AC_LIBOBJ([memmem])
   fi
   gl_STRING_MODULE_INDICATOR([memmem])
+  gl_FUNC_MEMPCPY
+  if test $HAVE_MEMPCPY = 0; then
+    AC_LIBOBJ([mempcpy])
+    gl_PREREQ_MEMPCPY
+  fi
+  gl_STRING_MODULE_INDICATOR([mempcpy])
   gl_FUNC_MEMRCHR
   if test $ac_cv_func_memrchr = no; then
     AC_LIBOBJ([memrchr])
@@ -954,6 +961,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/md5.c
   lib/md5.h
   lib/memmem.c
+  lib/mempcpy.c
   lib/memrchr.c
   lib/minmax.h
   lib/mkostemp.c
@@ -1094,6 +1102,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/mbstate_t.m4
   m4/md5.m4
   m4/memmem.m4
+  m4/mempcpy.m4
   m4/memrchr.m4
   m4/minmax.m4
   m4/mkostemp.m4

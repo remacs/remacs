@@ -116,6 +116,7 @@
 #  lstat \
 #  manywarnings \
 #  memmem-simple \
+#  mempcpy \
 #  memrchr \
 #  minmax \
 #  mkostemp \
@@ -2026,6 +2027,17 @@ EXTRA_libgnu_a_SOURCES += memmem.c
 
 endif
 ## end   gnulib module memmem-simple
+
+## begin gnulib module mempcpy
+ifeq (,$(OMIT_GNULIB_MODULE_mempcpy))
+
+
+EXTRA_DIST += mempcpy.c
+
+EXTRA_libgnu_a_SOURCES += mempcpy.c
+
+endif
+## end   gnulib module mempcpy
 
 ## begin gnulib module memrchr
 ifeq (,$(OMIT_GNULIB_MODULE_memrchr))
