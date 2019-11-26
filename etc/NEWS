@@ -2620,10 +2620,6 @@ scrolling.
 ** help-follow-symbol now signals 'user-error' if point (or the
 position pointed to by the argument POS) is not in a symbol.
 
----
-*** next-buffer and previous-buffer now signal 'user-error' if there
-is no buffer to switch to.
-
 
 * Lisp Changes in Emacs 27.1
 
@@ -3258,6 +3254,10 @@ conversions via 'substitute-command-keys'.
 by setting 'undo-inhibit-region' symbol property of that command to
 non-nil.  This is used by 'mouse-drag-region' to make the effect
 easier to undo immediately afterwards.
+
+---
+** When called interactively, next-buffer and previous-buffer now
+signal 'user-error' if there is no buffer to switch to.
 
 
 * Changes in Emacs 27.1 on Non-Free Operating Systems

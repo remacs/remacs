@@ -4850,7 +4850,8 @@ minibuffer window or is dedicated to its buffer."
     (user-error "Window is strongly dedicated to its buffer"))
    (t
     (dotimes (_ (or arg 1))
-      (unless (switch-to-next-buffer)
+      (when (and (not (switch-to-next-buffer))
+                 (called-interactively-p 'interactive))
         (user-error "No next buffer"))))))
 
 (defun previous-buffer (&optional arg)
@@ -4865,7 +4866,8 @@ minibuffer window or is dedicated to its buffer."
     (user-error "Window is strongly dedicated to its buffer"))
    (t
     (dotimes (_ (or arg 1))
-      (unless (switch-to-prev-buffer)
+      (when (and (not (switch-to-prev-buffer))
+                 (called-interactively-p 'interactive))
         (user-error "No previous buffer"))))))
 
 (defun delete-windows-on (&optional buffer-or-name frame)
