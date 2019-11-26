@@ -1956,7 +1956,7 @@ pub fn move_overlay(
     // This puts it in the right list, and in the right order.
     unsafe { recenter_overlay_lists(buf.as_mut(), buf.overlay_center) };
 
-    return unbind_to(count, overlay);
+    unbind_to(count, overlay)
 }
 
 // Debugging
