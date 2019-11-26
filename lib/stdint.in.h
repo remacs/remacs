@@ -299,16 +299,26 @@ typedef gl_uint_fast32_t gl_uint_fast16_t;
 
 /* 7.18.1.4. Integer types capable of holding object pointers */
 
-/* kLIBC's stdint.h defines _INTPTR_T_DECLARED and needs its own
+/* kLIBC's <stdint.h> defines _INTPTR_T_DECLARED and needs its own
    definitions of intptr_t and uintptr_t (which use int and unsigned)
-   to avoid clashes with declarations of system functions like sbrk.  */
-# ifndef _INTPTR_T_DECLARED
-# undef intptr_t
-# undef uintptr_t
+   to avoid clashes with declarations of system functions like sbrk.
+   Similarly, mingw 5.22 <crtdefs.h> defines _INTPTR_T_DEFINED and
+   _UINTPTR_T_DEFINED and needs its own definitions of intptr_t and
+   uintptr_t to avoid conflicting declarations of system functions like
+   _findclose in <io.h>.  */
+# if !((defined __KLIBC__ && defined _INTPTR_T_DECLARED) \
+       || (defined __MINGW32__ && defined _INTPTR_T_DEFINED && defined _UINTPTR_T_DEFINED))
+#  undef intptr_t
+#  undef uintptr_t
+#  ifdef _WIN64
+typedef long long int gl_intptr_t;
+typedef unsigned long long int gl_uintptr_t;
+#  else
 typedef long int gl_intptr_t;
 typedef unsigned long int gl_uintptr_t;
-# define intptr_t gl_intptr_t
-# define uintptr_t gl_uintptr_t
+#  endif
+#  define intptr_t gl_intptr_t
+#  define uintptr_t gl_uintptr_t
 # endif
 
 /* 7.18.1.5. Greatest-width integer types */
@@ -485,9 +495,15 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
 # undef INTPTR_MIN
 # undef INTPTR_MAX
 # undef UINTPTR_MAX
-# define INTPTR_MIN  LONG_MIN
-# define INTPTR_MAX  LONG_MAX
-# define UINTPTR_MAX  ULONG_MAX
+# ifdef _WIN64
+#  define INTPTR_MIN  LLONG_MIN
+#  define INTPTR_MAX  LLONG_MAX
+#  define UINTPTR_MAX  ULLONG_MAX
+# else
+#  define INTPTR_MIN  LONG_MIN
+#  define INTPTR_MAX  LONG_MAX
+#  define UINTPTR_MAX  ULONG_MAX
+# endif
 
 /* 7.18.2.5. Limits of greatest-width integer types */
 
@@ -586,17 +602,21 @@ typedef int _verify_intmax_size[sizeof (intmax_t) == sizeof (uintmax_t)
    _STDINT_MAX (@HAVE_SIGNED_WCHAR_T@, @BITSIZEOF_WCHAR_T@, 0@WCHAR_T_SUFFIX@)
 
 /* wint_t limits */
-# undef WINT_MIN
-# undef WINT_MAX
-# if @HAVE_SIGNED_WINT_T@
-#  define WINT_MIN  \
-    _STDINT_SIGNED_MIN (@BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
-# else
-#  define WINT_MIN  \
-    _STDINT_UNSIGNED_MIN (@BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
+/* If gnulib's <wchar.h> or <wctype.h> overrides wint_t, @WINT_T_SUFFIX@ is not
+   accurate, therefore use the definitions from above.  */
+# if !@GNULIB_OVERRIDES_WINT_T@
+#  undef WINT_MIN
+#  undef WINT_MAX
+#  if @HAVE_SIGNED_WINT_T@
+#   define WINT_MIN  \
+     _STDINT_SIGNED_MIN (@BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
+#  else
+#   define WINT_MIN  \
+     _STDINT_UNSIGNED_MIN (@BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
+#  endif
+#  define WINT_MAX  \
+    _STDINT_MAX (@HAVE_SIGNED_WINT_T@, @BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
 # endif
-# define WINT_MAX  \
-   _STDINT_MAX (@HAVE_SIGNED_WINT_T@, @BITSIZEOF_WINT_T@, 0@WINT_T_SUFFIX@)
 
 /* 7.18.4. Macros for integer constants */
 

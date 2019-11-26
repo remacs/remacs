@@ -295,11 +295,11 @@ _GL_FUNCDECL_RPL (select, int,
                    struct timeval *restrict));
 _GL_CXXALIAS_RPL (select, int,
                   (int, fd_set *restrict, fd_set *restrict, fd_set *restrict,
-                   struct timeval *restrict));
+                   timeval *restrict));
 # else
 _GL_CXXALIAS_SYS (select, int,
                   (int, fd_set *restrict, fd_set *restrict, fd_set *restrict,
-                   struct timeval *restrict));
+                   timeval *restrict));
 # endif
 _GL_CXXALIASWARN (select);
 #elif @HAVE_WINSOCK2_H@

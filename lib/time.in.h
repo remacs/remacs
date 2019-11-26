@@ -37,6 +37,12 @@
 
 # define _@GUARD_PREFIX@_TIME_H
 
+/* mingw's <time.h> provides the functions asctime_r, ctime_r, gmtime_r,
+   localtime_r only if <unistd.h> or <pthread.h> has been included before.  */
+# if defined __MINGW32__
+#  include <unistd.h>
+# endif
+
 # @INCLUDE_NEXT@ @NEXT_TIME_H@
 
 /* NetBSD 5.0 mis-defines NULL.  */
@@ -149,7 +155,9 @@ _GL_CXXALIAS_RPL (mktime, time_t, (struct tm *__tp));
 #  else
 _GL_CXXALIAS_SYS (mktime, time_t, (struct tm *__tp));
 #  endif
+#  if __GLIBC__ >= 2
 _GL_CXXALIASWARN (mktime);
+#  endif
 # endif
 
 /* Convert TIMER to RESULT, assuming local time and UTC respectively.  See
@@ -217,7 +225,9 @@ _GL_CXXALIAS_RPL (localtime, struct tm *, (time_t const *__timer));
 #  else
 _GL_CXXALIAS_SYS (localtime, struct tm *, (time_t const *__timer));
 #  endif
+#  if __GLIBC__ >= 2
 _GL_CXXALIASWARN (localtime);
+#  endif
 # endif
 
 # if 0 || @REPLACE_GMTIME@
@@ -264,7 +274,9 @@ _GL_CXXALIAS_RPL (ctime, char *, (time_t const *__tp));
 #  else
 _GL_CXXALIAS_SYS (ctime, char *, (time_t const *__tp));
 #  endif
+#  if __GLIBC__ >= 2
 _GL_CXXALIASWARN (ctime);
+#  endif
 # endif
 
 /* Convert *TP to a date and time string.  See
@@ -283,7 +295,9 @@ _GL_CXXALIAS_RPL (strftime, size_t, (char *__buf, size_t __bufsize,
 _GL_CXXALIAS_SYS (strftime, size_t, (char *__buf, size_t __bufsize,
                                      const char *__fmt, const struct tm *__tp));
 #  endif
+#  if __GLIBC__ >= 2
 _GL_CXXALIASWARN (strftime);
+#  endif
 # endif
 
 # if defined _GNU_SOURCE && @GNULIB_TIME_RZ@ && ! @HAVE_TIMEZONE_T@

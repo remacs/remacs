@@ -112,8 +112,12 @@ _GL_CXXALIASWARN (gettimeofday);
 # if defined __cplusplus && defined GNULIB_NAMESPACE
 namespace GNULIB_NAMESPACE {
   typedef ::timeval
-#undef timeval
+#  undef timeval
     timeval;
+#  if @REPLACE_STRUCT_TIMEVAL@
+#   define timeval rpl_timeval
+  typedef ::timeval timeval;
+#  endif
 }
 # endif
 #elif defined GNULIB_POSIXCHECK

@@ -749,7 +749,9 @@ _GL_CXXALIAS_RPL (getdtablesize, int, (void));
 #  if !@HAVE_GETDTABLESIZE@
 _GL_FUNCDECL_SYS (getdtablesize, int, (void));
 #  endif
-_GL_CXXALIAS_SYS (getdtablesize, int, (void));
+/* Need to cast, because on AIX, the parameter list is
+                                           (...).  */
+_GL_CXXALIAS_SYS_CAST (getdtablesize, int, (void));
 # endif
 _GL_CXXALIASWARN (getdtablesize);
 #elif defined GNULIB_POSIXCHECK

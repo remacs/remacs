@@ -1266,10 +1266,13 @@ proceed_next_node (const re_match_context_t *mctx, Idx nregs, regmatch_t *regs,
       if (type == OP_BACK_REF)
 	{
 	  Idx subexp_idx = dfa->nodes[node].opr.idx + 1;
-	  naccepted = regs[subexp_idx].rm_eo - regs[subexp_idx].rm_so;
+	  if (subexp_idx < nregs)
+	    naccepted = regs[subexp_idx].rm_eo - regs[subexp_idx].rm_so;
 	  if (fs != NULL)
 	    {
-	      if (regs[subexp_idx].rm_so == -1 || regs[subexp_idx].rm_eo == -1)
+	      if (subexp_idx >= nregs
+		  || regs[subexp_idx].rm_so == -1
+		  || regs[subexp_idx].rm_eo == -1)
 		return -1;
 	      else if (naccepted)
 		{
