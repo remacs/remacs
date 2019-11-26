@@ -35,6 +35,7 @@ use crate::{
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
     remacs_sys::Fmake_marker,
+    remacs_sys::Fmarker_buffer,
     remacs_sys::{
         alloc_buffer_text, allocate_buffer, allocate_misc, block_input, bset_update_mode_line,
         buffer_fundamental_string, buffer_local_flags, buffer_local_value, buffer_memory_full,
@@ -1822,6 +1823,32 @@ pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRe
 
     // Refetch since that last call may have done GC.
     ThreadState::current_buffer_unchecked().name_.into()
+}
+
+/// Set the endpoints of OVERLAY to BEG and END in BUFFER.
+/// If BUFFER is omitted, leave OVERLAY in the same buffer it inhabits now.
+/// If BUFFER is omitted, and OVERLAY is in no buffer, put it in the current
+/// buffer.
+#[lisp_fn(min = "3")]
+pub fn move_overlay(
+    overlay: LispObject,
+    beg: LispObject,
+    end: LispObject,
+    buffer: LispObject,
+) -> LispObject {
+    let overlay_ref = LispOverlayRef::from(overlay);
+    let buf = buffer
+        .as_buffer()
+        .or(marker_buffer(overlay_start(overlay_ref)))
+        .unwrap_or(ThreadState::current_buffer_unchecked());
+
+    if !buffer.is_live() {
+        error!("Apttempt to move overlay to a dead buffer");
+    }
+
+    if beg.is_marker() && !buffer.eq(marker_buffer(beg.into())) {
+        xsignal!(Qerror, "Marker points into wrong buffer", beg);
+    }
 }
 
 // Debugging
