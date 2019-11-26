@@ -73,8 +73,6 @@
     ;; Note that the comment character isn't set up until asm-mode is called.
     (define-key map ":"		'asm-colon)
     (define-key map "\C-c;"	'comment-region)
-    (define-key map "\C-j"	'newline-and-indent)
-    (define-key map "\C-m"	'newline-and-indent)
     (define-key map [menu-bar asm-mode] (cons "Asm" (make-sparse-keymap)))
     (define-key map [menu-bar asm-mode comment-region]
       '(menu-item "Comment Region" comment-region
@@ -135,7 +133,7 @@ Special commands:
   ;; Make our own local child of asm-mode-map
   ;; so we can define our own comment character.
   (use-local-map (nconc (make-sparse-keymap) asm-mode-map))
-  (local-set-key (vector asm-comment-char) 'asm-comment)
+  (local-set-key (vector asm-comment-char) #'asm-comment)
   (set-syntax-table (make-syntax-table asm-mode-syntax-table))
   (modify-syntax-entry	asm-comment-char "< b")
 
@@ -185,7 +183,7 @@ Special commands:
       (delete-horizontal-space)
       (tab-to-tab-stop))))
 
-(define-obsolete-function-alias 'asm-newline 'newline-and-indent "27.1")
+(define-obsolete-function-alias 'asm-newline #'newline-and-indent "27.1")
 
 (defun asm-comment ()
   "Convert an empty comment to a `larger' kind, or start a new one.
