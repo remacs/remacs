@@ -30,6 +30,9 @@ use crate::{
 #[cfg(not(feature = "window-system"))]
 use crate::fns::copy_sequence;
 
+/// LispFrameRef is a reference to the LispFrame
+/// However a reference is guaranteed to point to an existing frame
+/// therefore no NULL checks are needed while using it
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
@@ -732,9 +735,12 @@ pub fn last_nonminibuffer_frame() -> LispObject {
     unsafe { last_non_minibuffer_frame.into() }
 }
 
-/// A frame to a guaranteed existing frame which is not just a mini-buffer,
+/// A reference (Some) to a guaranteed existing frame which is not just a mini-buffer,
 /// or None if there are no such frames.
 /// This is usually the most recent such frame that was selected.
+///
+/// Option<LispFrameRef> is used in order to clear out the confusion around references,
+/// since LispFrameRef (as any other reference) is used for an existing reference (not NULL)
 static mut last_non_minibuffer_frame: Option<LispFrameRef> = None;
 
 /// Return current last non-minibuffer frame reference
@@ -743,7 +749,7 @@ static mut last_non_minibuffer_frame: Option<LispFrameRef> = None;
 pub extern "C" fn get_last_nonminibuffer_frame() -> LispFrameRef {
     unsafe {
         match last_non_minibuffer_frame {
-            Some(frame) => frame,
+            Some(frame_ref) => frame_ref,
             None => LispFrameRef::new(std::ptr::null_mut()),
         }
     }
@@ -751,13 +757,13 @@ pub extern "C" fn get_last_nonminibuffer_frame() -> LispFrameRef {
 
 /// Set current last non-minibuffer frame reference
 #[no_mangle]
-pub extern "C" fn set_last_nonminibuffer_frame(frame: LispFrameRef) {
+pub extern "C" fn set_last_nonminibuffer_frame(frame_ref: LispFrameRef) {
     unsafe {
         // frame reference may be null, since it is called from C
-        if frame.is_null() {
+        if frame_ref.is_null() {
             last_non_minibuffer_frame = None
         } else {
-            last_non_minibuffer_frame = Some(frame)
+            last_non_minibuffer_frame = Some(frame_ref)
         }
     }
 }
