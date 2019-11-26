@@ -1842,8 +1842,8 @@ pub fn move_overlay(
     let mut overlay_ref = LispOverlayRef::from(overlay);
     let mut buf = buffer
         .as_buffer()
-        .or(overlay_buffer(overlay_ref))
-        .unwrap_or(ThreadState::current_buffer_unchecked());
+        .or_else(|| overlay_buffer(overlay_ref))
+        .unwrap_or_else(ThreadState::current_buffer_unchecked);
 
     if !buf.is_live() {
         error!("Apttempt to move overlay to a dead buffer");
