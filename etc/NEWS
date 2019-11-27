@@ -2623,6 +2623,9 @@ pointer is over.  To change this behaviour, you can customize the user
 option 'mouse-wheel-follow-mouse'.  Note that this will also affect
 scrolling.
 
+** Mouse scroll up and down with control key modifier also works on images
+where it scales the image under the mouse pointer.
+
 ---
 ** help-follow-symbol now signals 'user-error' if point (or the
 position pointed to by the argument POS) is not in a symbol.

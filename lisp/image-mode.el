@@ -599,6 +599,10 @@ Key bindings:
 
   (add-hook 'change-major-mode-hook #'image-toggle-display-text nil t)
   (add-hook 'after-revert-hook #'image-after-revert-hook nil t)
+  (add-hook 'window-size-change-functions #'image--window-change nil t)
+  (add-hook 'window-state-change-functions #'image--window-change nil t)
+  (add-hook 'window-selection-change-functions #'image--window-change nil t)
+
   (run-mode-hooks 'image-mode-hook)
   (let ((image (image-get-display-property))
 	(msg1 (substitute-command-keys
@@ -855,6 +859,27 @@ Otherwise, display the image by calling `image-mode'."
     (mapc (lambda (window) (redraw-frame (window-frame window)))
           (get-buffer-window-list (current-buffer) 'nomini 'visible))
     (image-toggle-display-image)))
+
+(defvar image--window-change-function
+  (debounce 1.0
+    (lambda (window)
+      (when (window-live-p window)
+        (with-current-buffer (window-buffer)
+          (when (derived-mode-p 'image-mode)
+            (let ((spec (image-get-display-property)))
+              (when (eq (car-safe spec) 'image)
+                (let* ((image-width  (plist-get (cdr spec) :max-width))
+                       (image-height (plist-get (cdr spec) :max-height))
+                       (edges (window-inside-pixel-edges window))
+                       (window-width  (- (nth 2 edges) (nth 0 edges)))
+                       (window-height (- (nth 3 edges) (nth 1 edges))))
+                  (when (and image-width image-height
+                             (or (not (= image-width  window-width))
+                                 (not (= image-height window-height))))
+                    (image-toggle-display-image)))))))))))
+
+(defun image--window-change (window)
+  (funcall image--window-change-function window))
 
 
 ;;; Animated images
