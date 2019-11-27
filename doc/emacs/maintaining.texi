@@ -991,7 +991,10 @@ file listed on the current line.
 @file{*vc-change-log*} buffer showing the history of the entire
 version-controlled directory tree (RCS, SCCS, CVS, and SRC do not
 support this feature).  With a prefix argument, the command prompts
-for the maximum number of revisions to display.
+for the maximum number of revisions to display.  A numeric prefix
+argument specifies the maximum number of revisions without prompting.
+When the numeric prefix argument is @kbd{M-1}, the command prompts
+for the revision ID, and displays its log entry with a diff of changes.
 
   The @kbd{C-x v L} history is shown in a compact form, usually
 showing only the first line of each log entry.  However, you can type

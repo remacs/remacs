@@ -708,7 +708,7 @@ or an empty string if none."
       '(menu-item "Snapshot Stash" vc-git-stash-snapshot
 		  :help "Snapshot stash"))
     (define-key map [cr]
-      '(menu-item "Create Samed Stash" vc-git-stash
+      '(menu-item "Create Named Stash" vc-git-stash
 		  :help "Create named stash"))
     (define-key map [de]
       '(menu-item "Delete Stash" vc-git-stash-delete-at-point
@@ -1134,8 +1134,7 @@ If LIMIT is a revision string, use it as an end-revision."
     ;; If the buffer exists from a previous invocation it might be
     ;; read-only.
     (let ((inhibit-read-only t))
-      (with-current-buffer
-          buffer
+      (with-current-buffer buffer
 	(apply 'vc-git-command buffer
 	       'async files
 	       (append
@@ -1161,6 +1160,8 @@ If LIMIT is a revision string, use it as an end-revision."
                                                             "HEAD"
                                                           limit)))
                     (list start-revision)))
+                (when (eq vc-log-view-type 'with-diff)
+                  (list "-p"))
 		'("--")))))))
 
 (defun vc-git-log-outgoing (buffer remote-location)
@@ -1226,7 +1227,7 @@ log entries."
   (set (make-local-variable 'log-view-file-re) regexp-unmatchable)
   (set (make-local-variable 'log-view-per-file-logs) nil)
   (set (make-local-variable 'log-view-message-re)
-       (if (not (memq vc-log-view-type '(long log-search)))
+       (if (not (memq vc-log-view-type '(long log-search with-diff)))
 	   (cadr vc-git-root-log-format)
 	 "^commit *\\([0-9a-z]+\\)"))
   ;; Allow expanding short log entries.
@@ -1235,7 +1236,7 @@ log entries."
     (set (make-local-variable 'log-view-expanded-log-entry-function)
 	 'vc-git-expanded-log-entry))
   (set (make-local-variable 'log-view-font-lock-keywords)
-       (if (not (memq vc-log-view-type '(long log-search)))
+       (if (not (memq vc-log-view-type '(long log-search with-diff)))
 	   (list (cons (nth 1 vc-git-root-log-format)
 		       (nth 2 vc-git-root-log-format)))
 	 (append

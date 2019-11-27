@@ -993,6 +993,9 @@ With a prefix argument asks for a command, so for example,
 'C-u M-x vc-log-search RET git log -1 f302475 RET' will display
 just one log entry found by its revision number.
 
++++
+*** 'C-1 C-x v L' asks for a revision and shows its log entry with diff.
+
 *** 'C-x v =' can now mimic Magit's diff format.
 Set the new user option 'diff-font-lock-prettify' to t for that, see
 below under "Diff mode".

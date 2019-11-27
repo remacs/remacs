@@ -2361,7 +2361,7 @@ or if PL-RETURN is `limit-unsupported'."
                         'help-echo "Show the log again, including all entries")))
 
 (defun vc-print-log-internal (backend files working-revision
-                                      &optional is-start-revision limit)
+                                      &optional is-start-revision limit type)
   "For specified BACKEND and FILES, show the VC log.
 Leave point at WORKING-REVISION, if it is non-nil.
 If IS-START-REVISION is non-nil, start the log from WORKING-REVISION
@@ -2377,7 +2377,7 @@ earlier revisions.  Show up to LIMIT entries (non-nil means unlimited)."
          (shortlog (not (null (memq (if dir-present 'directory 'file)
                                     vc-log-short-style))))
 	(buffer-name "*vc-change-log*")
-         (type (if shortlog 'short 'long)))
+         (type (or type (if shortlog 'short 'long))))
       (vc-log-internal-common
        backend buffer-name files type
        (lambda (bk buf _type-arg files-arg)
@@ -2393,7 +2393,7 @@ earlier revisions.  Show up to LIMIT entries (non-nil means unlimited)."
            (vc-call-backend bk 'show-log-entry working-revision)))
        (lambda (_ignore-auto _noconfirm)
 	 (vc-print-log-internal backend files working-revision
-                              is-start-revision limit)))))
+                              is-start-revision limit type)))))
 
 (defvar vc-log-view-type nil
   "Set this to differentiate the different types of logs.")
@@ -2416,7 +2416,12 @@ earlier revisions.  Show up to LIMIT entries (non-nil means unlimited)."
       (let ((inhibit-read-only t))
 	;; log-view-mode used to be called with inhibit-read-only bound
 	;; to t, so let's keep doing it, just in case.
-	(vc-call-backend backend 'log-view-mode)
+	(vc-call-backend backend
+                         (if (and (eq type 'with-diff)
+                                  (vc-find-backend-function
+                                   backend 'region-history-mode))
+                             'region-history-mode
+                           'log-view-mode))
 	(set (make-local-variable 'log-view-vc-backend) backend)
 	(set (make-local-variable 'log-view-vc-fileset) files)
 	(set (make-local-variable 'revert-buffer-function)
@@ -2475,13 +2480,26 @@ WORKING-REVISION and LIMIT."
     (vc-print-log-internal backend files working-revision nil limit)))
 
 ;;;###autoload
-(defun vc-print-root-log (&optional limit)
+(defun vc-print-root-log (&optional limit revision)
   "List the change log for the current VC controlled tree in a window.
 If LIMIT is non-nil, it should be a number specifying the maximum
 number of revisions to show; the default is `vc-log-show-limit'.
-When called interactively with a prefix argument, prompt for LIMIT."
+When called interactively with a prefix argument, prompt for LIMIT.
+When the prefix argument is a number, use it as LIMIT.
+A special case is when the prefix argument is 1, in this case
+it asks for the revision and shows it with its diff."
   (interactive
    (cond
+    ((eq current-prefix-arg 1)
+     (let* ((default (thing-at-point 'word))
+	    (revision (read-string
+		       (if default
+			   (format "Revision to show (default %s): " default)
+			 "Revision to show: ")
+		       nil nil default)))
+       (list 1 revision)))
+    ((numberp current-prefix-arg)
+     (list current-prefix-arg))
     (current-prefix-arg
      (let ((lim (string-to-number
 		 (read-from-minibuffer
@@ -2492,9 +2510,11 @@ When called interactively with a prefix argument, prompt for LIMIT."
        (list lim)))
     (t
      (list (when (> vc-log-show-limit 0) vc-log-show-limit)))))
-  (let ((backend (vc-deduce-backend))
-	(default-directory default-directory)
-	rootdir)
+  (let* ((backend (vc-deduce-backend))
+	 (default-directory default-directory)
+	 (with-diff (and (eq limit 1) revision))
+	 (vc-log-short-style (unless with-diff vc-log-short-style))
+	 rootdir)
     (if backend
 	(setq rootdir (vc-call-backend backend 'root default-directory))
       (setq rootdir (read-directory-name "Directory for VC root-log: "))
@@ -2502,7 +2522,8 @@ When called interactively with a prefix argument, prompt for LIMIT."
       (unless backend
         (error "Directory is not version controlled")))
     (setq default-directory rootdir)
-    (vc-print-log-internal backend (list rootdir) nil nil limit)))
+    (vc-print-log-internal backend (list rootdir) revision revision limit
+                           (when with-diff 'with-diff))))
 
 ;;;###autoload
 (defun vc-print-branch-log (branch)
