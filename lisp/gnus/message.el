@@ -4247,9 +4247,9 @@ It should typically alter the sending method in some way or other."
 		(let ((fcc (message-fetch-field "Fcc"))
 		      (gcc (message-fetch-field "Gcc")))
 		  (when (or fcc gcc)
-		    (or (eq message-allow-no-recipients 'always)
-			(and (not (eq message-allow-no-recipients 'never))
-			     (setq dont-barf-on-no-method
+		    (setq dont-barf-on-no-method
+			  (or (eq message-allow-no-recipients 'always)
+			      (and (not (eq message-allow-no-recipients 'never))
 				   (y-or-n-p
 				    (format "No receiver, perform %s anyway? "
 					    (cond ((and fcc gcc) "Fcc and Gcc")
