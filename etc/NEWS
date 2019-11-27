@@ -509,6 +509,10 @@ RGB triplets with a single hexadecimal digit per component.
 ** The toolbar now shows the equivalent key binding in its tooltips.
 
 ---
+** The File menu-bar menu was re-arranged: Print menu items moved to
+submenu, and also added the new entries for tabs.
+
+---
 ** 'scroll-lock-mode' is now bound to the 'Scroll_Lock' key globally.
 Note that this key binding will not work on MS-Windows systems if
 'w32-scroll-lock-modifier' is non-nil.

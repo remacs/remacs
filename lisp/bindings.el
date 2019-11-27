@@ -933,9 +933,11 @@ if `inhibit-field-text-motion' is non-nil."
 (define-key ctl-x-map [right] 'next-buffer)
 (define-key ctl-x-map [C-right] 'next-buffer)
 (define-key global-map [XF86Forward] 'next-buffer)
+(put 'next-buffer :advertised-binding [?\C-x right])
 (define-key ctl-x-map [left] 'previous-buffer)
 (define-key ctl-x-map [C-left] 'previous-buffer)
 (define-key global-map [XF86Back] 'previous-buffer)
+(put 'previous-buffer :advertised-binding [?\C-x left])
 
 (let ((map minibuffer-local-map))
   (define-key map "\en"   'next-history-element)

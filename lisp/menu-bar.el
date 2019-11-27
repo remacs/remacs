@@ -49,6 +49,36 @@
 ;; It gets modified in place when menu-bar-update-buffers is called.
 (defvar global-buffers-menu-map (make-sparse-keymap "Buffers"))
 
+(defvar menu-bar-print-menu
+  (let ((menu (make-sparse-keymap "Print")))
+    (bindings--define-key menu [ps-print-region]
+      '(menu-item "PostScript Print Region (B+W)" ps-print-region
+                  :enable mark-active
+                  :help "Pretty-print marked region in black and white to PostScript printer"))
+    (bindings--define-key menu [ps-print-buffer]
+      '(menu-item "PostScript Print Buffer (B+W)" ps-print-buffer
+                  :enable (menu-bar-menu-frame-live-and-visible-p)
+                  :help "Pretty-print current buffer in black and white to PostScript printer"))
+    (bindings--define-key menu [ps-print-region-faces]
+      '(menu-item "PostScript Print Region"
+                  ps-print-region-with-faces
+                  :enable mark-active
+                  :help "Pretty-print marked region to PostScript printer"))
+    (bindings--define-key menu [ps-print-buffer-faces]
+      '(menu-item "PostScript Print Buffer"
+                  ps-print-buffer-with-faces
+                  :enable (menu-bar-menu-frame-live-and-visible-p)
+                  :help "Pretty-print current buffer to PostScript printer"))
+    (bindings--define-key menu [print-region]
+      '(menu-item "Print Region" print-region
+                  :enable mark-active
+                  :help "Print region between mark and current position"))
+    (bindings--define-key menu [print-buffer]
+      '(menu-item "Print Buffer" print-buffer
+                  :enable (menu-bar-menu-frame-live-and-visible-p)
+                  :help "Print current buffer with page headings"))
+    menu))
+
 ;; Only declared obsolete (and only made a proper alias) in 23.3.
 (define-obsolete-variable-alias
   'menu-bar-files-menu 'menu-bar-file-menu "22.1")
@@ -63,6 +93,25 @@
     (bindings--define-key menu [separator-exit]
       menu-bar-separator)
 
+    (bindings--define-key menu [print]
+      `(menu-item "Print" ,menu-bar-print-menu))
+
+    (bindings--define-key menu [separator-print]
+      menu-bar-separator)
+
+    (unless (featurep 'ns)
+      (bindings--define-key menu [close-tab]
+        '(menu-item "Close Tab" tab-close
+                    :visible (fboundp 'tab-close)
+                    :help "Close currently selected tab"))
+      (bindings--define-key menu [make-tab]
+        '(menu-item "New Tab" tab-new
+                    :visible (fboundp 'tab-new)
+                    :help "Open a new tab"))
+
+      (bindings--define-key menu [separator-tab]
+        menu-bar-separator))
+
     ;; Don't use delete-frame as event name because that is a special
     ;; event.
     (bindings--define-key menu [delete-this-frame]
@@ -70,6 +119,10 @@
                   :visible (fboundp 'delete-frame)
                   :enable (delete-frame-enabled-p)
                   :help "Delete currently selected frame"))
+    (bindings--define-key menu [make-frame-on-monitor]
+      '(menu-item "New Frame on Monitor..." make-frame-on-monitor
+                  :visible (fboundp 'make-frame-on-monitor)
+                  :help "Open a new frame on another monitor"))
     (bindings--define-key menu [make-frame-on-display]
       '(menu-item "New Frame on Display..." make-frame-on-display
                   :visible (fboundp 'make-frame-on-display)
@@ -100,36 +153,6 @@
                   :help "Make new window below selected one"))
 
     (bindings--define-key menu [separator-window]
-      menu-bar-separator)
-
-    (bindings--define-key menu [ps-print-region]
-      '(menu-item "PostScript Print Region (B+W)" ps-print-region
-                  :enable mark-active
-                  :help "Pretty-print marked region in black and white to PostScript printer"))
-    (bindings--define-key menu [ps-print-buffer]
-      '(menu-item "PostScript Print Buffer (B+W)" ps-print-buffer
-                  :enable (menu-bar-menu-frame-live-and-visible-p)
-                  :help "Pretty-print current buffer in black and white to PostScript printer"))
-    (bindings--define-key menu [ps-print-region-faces]
-      '(menu-item "PostScript Print Region"
-                  ps-print-region-with-faces
-                  :enable mark-active
-                  :help "Pretty-print marked region to PostScript printer"))
-    (bindings--define-key menu [ps-print-buffer-faces]
-      '(menu-item "PostScript Print Buffer"
-                  ps-print-buffer-with-faces
-                  :enable (menu-bar-menu-frame-live-and-visible-p)
-                  :help "Pretty-print current buffer to PostScript printer"))
-    (bindings--define-key menu [print-region]
-      '(menu-item "Print Region" print-region
-                  :enable mark-active
-                  :help "Print region between mark and current position"))
-    (bindings--define-key menu [print-buffer]
-      '(menu-item "Print Buffer" print-buffer
-                  :enable (menu-bar-menu-frame-live-and-visible-p)
-                  :help "Print current buffer with page headings"))
-
-    (bindings--define-key menu [separator-print]
       menu-bar-separator)
 
     (bindings--define-key menu [recover-session]
@@ -1228,6 +1251,12 @@ mail status in mode line"))
                                   (frame-visible-p
                                    (symbol-value 'speedbar-frame))))))
 
+    (bindings--define-key menu [showhide-tab-line-mode]
+      '(menu-item "Window Tab Line" global-tab-line-mode
+                  :help "Turn window-local tab-lines on/off"
+                  :visible (fboundp 'global-tab-line-mode)
+                  :button (:toggle . global-tab-line-mode)))
+
     (bindings--define-key menu [showhide-window-divider]
       `(menu-item "Window Divider" ,menu-bar-showhide-window-divider-menu
                   :visible (memq (window-system) '(x w32))))
@@ -1254,13 +1283,14 @@ mail status in mode line"))
                               (frame-parameter (menu-bar-frame-for-menubar)
                                                'menu-bar-lines)))))
 
-    (bindings--define-key menu [showhide-tab-bar]
-      '(menu-item "Tab Bar" toggle-tab-bar-mode-from-frame
-                  :help "Turn tab bar on/off"
-                  :button
-                  (:toggle . (menu-bar-positive-p
-                              (frame-parameter (menu-bar-frame-for-menubar)
-                                               'tab-bar-lines)))))
+    (unless (featurep 'ns)
+      (bindings--define-key menu [showhide-tab-bar]
+        '(menu-item "Tab Bar" toggle-tab-bar-mode-from-frame
+                    :help "Turn tab bar on/off"
+                    :button
+                    (:toggle . (menu-bar-positive-p
+                                (frame-parameter (menu-bar-frame-for-menubar)
+                                                 'tab-bar-lines))))))
 
     (if (and (boundp 'menu-bar-showhide-tool-bar-menu)
              (keymapp menu-bar-showhide-tool-bar-menu))
@@ -1720,6 +1750,9 @@ mail status in mode line"))
     (bindings--define-key menu [compile]
       '(menu-item "Compile..." compile
                   :help "Invoke compiler or Make, view compilation errors"))
+    (bindings--define-key menu [rgrep]
+      '(menu-item "Recursive Grep..." rgrep
+                  :help "Interactively ask for parameters and search recursively"))
     (bindings--define-key menu [grep]
       '(menu-item "Search Files (Grep)..." grep
                   :help "Search files for strings or regexps (with Grep)"))
