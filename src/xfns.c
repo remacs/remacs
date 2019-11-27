@@ -5093,6 +5093,8 @@ Internal use only, use `display-monitor-attributes-list' instead.  */)
 #endif
       rec.width *= scale;
       rec.height *= scale;
+      work.x *= scale;
+      work.y *= scale;
       work.width *= scale;
       work.height *= scale;
 
