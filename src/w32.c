@@ -9642,8 +9642,7 @@ network_interface_list (bool full, unsigned short match)
 #else
 		  /* Kludge alert!  OnLinkPrefixLength is only defined
 		     when compiling for Vista and later.  */
-		  numbits = *(UINT8 *) (address->LeaseLifetime
-					+ sizeof (address->LeaseLifetime));
+		  numbits = *(UINT8 *) (&address->LeaseLifetime + 1);
 #endif
 		}
 	      else		/* Windows XP */
@@ -9652,14 +9651,14 @@ network_interface_list (bool full, unsigned short match)
 		  numbits = 0;
 		  for ( ; prefix; prefix = prefix->Next)
 		    {
-		      /* We want the longest matching prefix. */
-		      if (prefix->Address.lpSockaddr->sa_family
-			  != ifa_addr->sa_family
-			  || prefix->PrefixLength <= numbits)
-			continue;
-		      if (address_prefix_match (ifa_addr->sa_family, ifa_addr,
-						prefix->Address.lpSockaddr,
-						prefix->PrefixLength))
+		      /* We want the longest matching prefix.  */
+		      if ((prefix->Address.lpSockaddr->sa_family
+			   == ifa_addr->sa_family)
+			  && (prefix->PrefixLength > numbits)
+			  && address_prefix_match (ifa_addr->sa_family,
+						   ifa_addr,
+						   prefix->Address.lpSockaddr,
+						   prefix->PrefixLength))
 			numbits = prefix->PrefixLength;
 		    }
 		  if (!numbits)
