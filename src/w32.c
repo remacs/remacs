@@ -9540,8 +9540,23 @@ network_interface_list (bool full, unsigned short match)
       switch (adapter->IfType)
         {
         case IF_TYPE_ETHERNET_CSMACD:
-          ifmt_idx = ETHERNET;
-          if_num = eth_count++;
+          /* Windows before Vista reports wireless adapters as
+             Ethernet.  Work around by looking at the Description
+             string.  */
+          {
+          char description[MAX_UTF8_PATH];
+          if (filename_from_utf16 (adapter->Description, description) == 0
+              && strstr (description, "Wireless "))
+            {
+              ifmt_idx = WLAN;
+              if_num = wlan_count++;
+            }
+          else
+            {
+              ifmt_idx = ETHERNET;
+              if_num = eth_count++;
+            }
+          }
           break;
         case IF_TYPE_ISO88025_TOKENRING:
           ifmt_idx = TOKENRING;
