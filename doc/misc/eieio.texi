@@ -1043,9 +1043,7 @@ make a slot unbound.
 @end defun
 
 @defun eieio-class-name class
-Return a string of the form @samp{#<class myclassname>} which should look
-similar to other Lisp objects like buffers and processes.  Printing a
-class results only in a symbol.
+Return the class name as a symbol.
 @end defun
 
 @defun class-option class option
