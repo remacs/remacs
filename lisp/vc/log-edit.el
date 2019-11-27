@@ -384,7 +384,7 @@ The first subexpression is the actual text of the field.")
          nil lax))
      ("^\n"
       (progn (goto-char (match-end 0)) (1+ (match-end 0))) nil
-      (0 '(:height 0.1 :inverse-video t))))
+      (0 '(:height 0.1 :inverse-video t :extend t))))
     (log-edit--match-first-line (0 'log-edit-summary))))
 
 (defvar log-edit-font-lock-gnu-style nil

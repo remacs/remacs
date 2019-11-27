@@ -1463,7 +1463,8 @@ current buffer and the selected frame, respectively."
                            (progn (skip-chars-backward " \t\n") (point)))
             (insert "\n\n"
                     (eval-when-compile
-                      (propertize "\n" 'face '(:height 0.1 :inverse-video t)))
+                      (propertize "\n" 'face
+                                  '(:height 0.1 :inverse-video t :extend t)))
                     "\n")
             (when name
               (insert (symbol-name symbol)

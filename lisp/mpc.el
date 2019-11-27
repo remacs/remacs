@@ -1606,7 +1606,7 @@ when constructing the set of constraints."
                 (make-overlay (point) (point)))
     (overlay-put mpc-separator-ol 'after-string
                  (propertize "\n"
-                             'face '(:height 0.05 :inverse-video t))))
+                             'face '(:height 0.05 :inverse-video t :extend t))))
   (goto-char (point-min))
   (forward-line 1)
   (while

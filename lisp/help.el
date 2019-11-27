@@ -869,7 +869,8 @@ current buffer."
                 (insert "\n\n"
                         ;; FIXME: Can't use eval-when-compile because purified
                         ;; strings lose their text properties :-(
-                        (propertize "\n" 'face '(:height 0.1 :inverse-video t))
+                        (propertize "\n" 'face
+                                    '(:height 0.1 :inverse-video t :extend t))
                         "\n")))
 
             (princ brief-desc)
