@@ -4623,7 +4623,7 @@ This function is called directly from the C code."
 					byte-compile-current-file
 					byte-compile-root-dir)))
 	    (byte-compile-warn "%s" msg)))
-         (noninteractive (funcall fun)) ;; No timer will be run!
+         (noninteractive (funcall fun msg)) ;; No timer will be run!
 	 (t (run-with-idle-timer 0 nil fun msg))))))
 
   ;; Finally, run any other hook.
