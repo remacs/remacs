@@ -3832,10 +3832,10 @@ Returns the tracked buffer."
 
 (defun python-pdbtrack-unset-tracked-buffer ()
   "Untrack currently tracked buffer."
-  (when python-pdbtrack-tracked-buffer
+  (when (buffer-live-p python-pdbtrack-tracked-buffer)
     (with-current-buffer python-pdbtrack-tracked-buffer
-      (set-marker overlay-arrow-position nil))
-    (setq python-pdbtrack-tracked-buffer nil)))
+      (set-marker overlay-arrow-position nil)))
+  (setq python-pdbtrack-tracked-buffer nil))
 
 (defun python-pdbtrack-tracking-finish ()
   "Finish tracking."
