@@ -2876,7 +2876,7 @@ Intended to be added to `isearch-mode-hook'."
   (dired-isearch-filenames-mode -1)
   (remove-hook 'isearch-mode-end-hook #'dired-isearch-filenames-end t)
   (unless isearch-suspended
-    (custom-reevaluate-setting 'dired-isearch-filenames)))
+    (kill-local-variable 'dired-isearch-filenames)))
 
 (defun dired-isearch-filter-filenames (beg end)
   "Test whether some part of the current search match is inside a file name.
@@ -2889,14 +2889,14 @@ is part of a file name (i.e., has the text property `dired-filename')."
 (defun dired-isearch-filenames ()
   "Search for a string using Isearch only in file names in the Dired buffer."
   (interactive)
-  (setq dired-isearch-filenames t)
+  (set (make-local-variable 'dired-isearch-filenames) t)
   (isearch-forward nil t))
 
 ;;;###autoload
 (defun dired-isearch-filenames-regexp ()
   "Search for a regexp using Isearch only in file names in the Dired buffer."
   (interactive)
-  (setq dired-isearch-filenames t)
+  (set (make-local-variable 'dired-isearch-filenames) t)
   (isearch-forward-regexp nil t))
 
 
