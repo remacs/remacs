@@ -404,7 +404,7 @@ bidi_mirror_char (int c)
 static bidi_bracket_type_t
 bidi_paired_bracket_type (int c)
 {
-  if (c == BIDI_EOB)
+  if (c == BIDI_EOB || bidi_inhibit_bpa)
     return BIDI_BRACKET_NONE;
   if (c < 0 || c > MAX_CHAR)
     emacs_abort ();

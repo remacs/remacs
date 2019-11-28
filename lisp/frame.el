@@ -2736,7 +2736,8 @@ See also `toggle-frame-maximized'."
         display-fill-column-indicator-column
         display-fill-column-indicator-character
         bidi-paragraph-direction
-        bidi-display-reordering))
+        bidi-display-reordering
+        bidi-inhibit-bpa))
 
 (provide 'frame)
 

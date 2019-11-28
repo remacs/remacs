@@ -34839,6 +34839,14 @@ Intended for use during debugging and for testing bidi display;
 see biditest.el in the test suite.  */);
   inhibit_bidi_mirroring = false;
 
+  DEFVAR_BOOL ("bidi-inhibit-bpa", bidi_inhibit_bpa,
+    doc: /* Non-nil means inhibit the Bidirectional Parentheses Algorithm.
+Disabling the BPA makes redisplay faster, but might produce incorrect
+display reordering of bidirectional text with embedded parentheses and
+other bracket characters whose 'paired-bracket' Unicode property is
+non-nil, see `get-char-code-property'.  */);
+  bidi_inhibit_bpa = false;
+
 #ifdef GLYPH_DEBUG
   DEFVAR_BOOL ("inhibit-try-window-id", inhibit_try_window_id,
 	       doc: /* Inhibit try_window_id display optimization.  */);
