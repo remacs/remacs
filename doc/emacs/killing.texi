@@ -219,6 +219,8 @@ Kill to the end of the sentence (@code{kill-sentence}).
 Kill the following balanced expression (@code{kill-sexp}).  @xref{Expressions}.
 @item M-z @var{char}
 Kill through the next occurrence of @var{char} (@code{zap-to-char}).
+@item M-x zap-up-to-char @var{char}
+Kill up to, but not including, the next occurrence of @var{char}.
 @end table
 
 @kindex C-w
@@ -248,6 +250,10 @@ search backward and kill text before point.  A history of previously
 used characters is maintained and can be accessed via the
 @kbd{M-p}/@kbd{M-n} keystrokes.  This is mainly useful if the
 character to be used has to be entered via a complicated input method.
+@findex zap-up-to-char
+A similar command @code{zap-up-to-char} kills from point up to, but
+not including the next occurrence of a character, with numeric
+argument acting as a repeat count.
 
 @node Kill Options
 @subsection Options for Killing

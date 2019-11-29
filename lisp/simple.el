@@ -5191,7 +5191,8 @@ and KILLP is t if a prefix arg was specified."
 (defun zap-to-char (arg char)
   "Kill up to and including ARGth occurrence of CHAR.
 Case is ignored if `case-fold-search' is non-nil in the current buffer.
-Goes backward if ARG is negative; error if CHAR not found."
+Goes backward if ARG is negative; error if CHAR not found.
+See also `zap-up-to-char'."
   (interactive (list (prefix-numeric-value current-prefix-arg)
 		     (read-char-from-minibuffer "Zap to char: "
 						nil 'read-char-history)))
