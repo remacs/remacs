@@ -762,6 +762,7 @@ If LIMIT is non-nil, show no more than this many entries."
 			   ;; Is -c any different to -r in this case?
 			   "-r%s"
 			 "-r..%s") start-revision)))
+            (if (eq vc-log-view-type 'with-diff) (list "-p"))
 	    (when limit (list "-l" (format "%s" limit)))
 	    ;; There is no sensible way to combine --limit and --forward,
 	    ;; and it breaks the meaning of START-REVISION as the
