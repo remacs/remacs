@@ -395,16 +395,19 @@ Any terminating `>' or `/' is not matched.")
                         (car (sgml--syntax-propertize-ppss
                               (match-beginning 0)))))
                (string-to-syntax ".")))))
-     )))
+     )
+    "Syntax-propertize rules for sgml text.
+These have to be run via `sgml-syntax-propertize'"))
 
-(defun sgml-syntax-propertize (start end)
+(defconst sgml--syntax-propertize
+  (syntax-propertize-rules sgml-syntax-propertize-rules))
+
+(defun sgml-syntax-propertize (start end &optional rules-function)
   "Syntactic keywords for `sgml-mode'."
   (setq sgml--syntax-propertize-ppss (cons start (syntax-ppss start)))
   (cl-assert (>= (cadr sgml--syntax-propertize-ppss) 0))
   (sgml-syntax-propertize-inside end)
-  (funcall
-   (syntax-propertize-rules sgml-syntax-propertize-rules)
-   start end)
+  (funcall (or rules-function sgml--syntax-propertize) (point) end)
   ;; Catch any '>' after the last quote.
   (sgml--syntax-propertize-ppss end))
 
