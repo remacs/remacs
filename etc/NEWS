@@ -1555,6 +1555,12 @@ The maximum level is used by default; customize
 If non-nil, the default, buffers opened during pdbtracking session are
 killed when pdbtracking session is finished.
 
+---
+*** New function 'python-shell-send-region'.
+It send the statement delimited by 'python-nav-beginning-of-statement' and
+'python-nav-end-of-statement' to the inferior Python process.
+
+
 ** Help
 
 ---

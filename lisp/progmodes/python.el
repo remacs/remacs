@@ -329,6 +329,7 @@ It returns a file name which can be used directly as argument of
     ;; Shell interaction
     (define-key map "\C-c\C-p" 'run-python)
     (define-key map "\C-c\C-s" 'python-shell-send-string)
+    (define-key map "\C-c\C-e" 'python-shell-send-statement)
     (define-key map "\C-c\C-r" 'python-shell-send-region)
     (define-key map "\C-\M-x" 'python-shell-send-defun)
     (define-key map "\C-c\C-c" 'python-shell-send-buffer)
@@ -368,6 +369,8 @@ It returns a file name which can be used directly as argument of
          :help "Eval string in inferior Python session"]
         ["Eval buffer" python-shell-send-buffer
          :help "Eval buffer in inferior Python session"]
+        ["Eval statement" python-shell-send-statement
+         :help "Eval statement in inferior Python session"]
         ["Eval region" python-shell-send-region
          :help "Eval region in inferior Python session"]
         ["Eval defun" python-shell-send-defun
@@ -3161,6 +3164,25 @@ process running; defaults to t when called interactively."
          (_ (string-match "\\`\n*\\(.*\\)" original-string)))
     (message "Sent: %s..." (match-string 1 original-string))
     (python-shell-send-string string process)))
+
+(defun python-shell-send-statement (&optional send-main msg)
+  "Send the statement at point to inferior Python process.
+The statement is delimited by `python-nav-beginning-of-statement' and
+`python-nav-end-of-statement', but if the region  is active, the text
+in the region is sent instead via `python-shell-send-region'.
+Optional argument SEND-MAIN, if non-nil, means allow execution of code
+inside blocks delimited by \"if __name__ == \\='__main__\\=':\".
+Interactively, SEND-MAIN is the prefix argument.
+Optional argument MSG, if non-nil, forces display of a user-friendly
+message if there's no process running; it defaults to t when called
+interactively."
+  (interactive (list current-prefix-arg t))
+  (if (region-active-p)
+      (python-shell-send-region (region-beginning) (region-end) send-main msg)
+    (python-shell-send-region
+     (save-excursion (python-nav-beginning-of-statement))
+     (save-excursion (python-nav-end-of-statement))
+     send-main msg)))
 
 (defun python-shell-send-buffer (&optional send-main msg)
   "Send the entire buffer to inferior Python process.
