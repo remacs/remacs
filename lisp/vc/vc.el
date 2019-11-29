@@ -2492,7 +2492,7 @@ with its diffs (if the underlying VCS supports that)."
   (interactive
    (cond
     ((eq current-prefix-arg 1)
-     (let* ((default (thing-at-point 'word))
+     (let* ((default (thing-at-point 'word t))
 	    (revision (read-string
 		       (if default
 			   (format "Revision to show (default %s): " default)
