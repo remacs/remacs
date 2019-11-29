@@ -993,8 +993,14 @@ version-controlled directory tree (RCS, SCCS, CVS, and SRC do not
 support this feature).  With a prefix argument, the command prompts
 for the maximum number of revisions to display.  A numeric prefix
 argument specifies the maximum number of revisions without prompting.
-When the numeric prefix argument is @kbd{M-1}, the command prompts
-for the revision ID, and displays its log entry with a diff of changes.
+When the numeric prefix argument is 1, as in @w{@kbd{C-1 C-x v L}} or
+@w{@kbd{C-u 1 C-x v L}}, the command prompts for the revision ID, and
+displays the log entry of that revision together with the changes
+(diffs) it introduced.  (Some less capable version control systems,
+such as RCS and CVS, don't have commands to show a revision log with
+its diffs; for them the command displays only the log entry, and you
+can request to show the diffs by typing @kbd{d} or @kbd{D}, see
+below.)
 
   The @kbd{C-x v L} history is shown in a compact form, usually
 showing only the first line of each log entry.  However, you can type

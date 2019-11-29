@@ -998,7 +998,12 @@ With a prefix argument asks for a command, so for example,
 just one log entry found by its revision number.
 
 +++
-*** 'C-1 C-x v L' asks for a revision and shows its log entry with diff.
+*** It is now possible to display a specific revision given by its ID.
+If you invoke 'C-x v L' ('vc-print-root-log') with a numeric argument
+of 1, as in 'C-1 C-x v L' or 'C-u 1 C-x v L', it asks for a revision
+ID, and shows its log entry together with the diffs introduced by the
+revision's commit.  (For some less capable VCSes, only the log entry
+is shown.)
 
 *** 'C-x v =' can now mimic Magit's diff format.
 Set the new user option 'diff-font-lock-prettify' to t for that, see

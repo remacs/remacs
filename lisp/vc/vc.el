@@ -2481,13 +2481,14 @@ WORKING-REVISION and LIMIT."
 
 ;;;###autoload
 (defun vc-print-root-log (&optional limit revision)
-  "List the change log for the current VC controlled tree in a window.
+  "List the revision history for the current VC controlled tree in a window.
 If LIMIT is non-nil, it should be a number specifying the maximum
 number of revisions to show; the default is `vc-log-show-limit'.
 When called interactively with a prefix argument, prompt for LIMIT.
 When the prefix argument is a number, use it as LIMIT.
-A special case is when the prefix argument is 1, in this case
-it asks for the revision and shows it with its diff."
+A special case is when the prefix argument is 1: in this case
+the command asks for the ID of a revision, and shows that revision
+with its diffs (if the underlying VCS supports that)."
   (interactive
    (cond
     ((eq current-prefix-arg 1)
@@ -2517,7 +2518,7 @@ it asks for the revision and shows it with its diff."
 	 rootdir)
     (if backend
 	(setq rootdir (vc-call-backend backend 'root default-directory))
-      (setq rootdir (read-directory-name "Directory for VC root-log: "))
+      (setq rootdir (read-directory-name "Directory for VC revision log: "))
       (setq backend (vc-responsible-backend rootdir))
       (unless backend
         (error "Directory is not version controlled")))
