@@ -793,10 +793,10 @@ all.  This may very well take some time.")
 	  ;;(message "unread: %s" unread)
 	  (sit-for 1)
 	  (kill-buffer buf))
-	(setq unread (sort unread '<))
+	(setq unread (sort unread #'<))
 	(and unread
-	     (gnus-info-set-read info (gnus-update-read-articles
-				       (gnus-info-group info) unread t)))
+	     (setf (gnus-info-read info)
+		   (gnus-update-read-articles (gnus-info-group info) unread t)))
 	))
     (run-hook-with-args 'nndiary-request-update-info-functions
 			(gnus-info-group info))

@@ -711,29 +711,29 @@ Other back ends might or might not work.")
 	    (nnimap-request-update-info-internal folder folderinfo nnmairix-backend-server)
 	  (nnmairix-call-backend "request-update-info" folder folderinfo nnmairix-backend-server))
 	;; set range of read articles
-	(gnus-info-set-read
-	 info
-	 (if docorr
-	     (nnmairix-map-range
-	      `(lambda (x) (+ x ,(cadr corr)))
-	      (gnus-info-read folderinfo))
-	   (gnus-info-read folderinfo)))
+	(setf (gnus-info-read info)
+	      (if docorr
+	          (nnmairix-map-range
+		   ;; FIXME: Use lexical-binding.
+	           `(lambda (x) (+ x ,(cadr corr)))
+	           (gnus-info-read folderinfo))
+	        (gnus-info-read folderinfo)))
 	;; set other marks
-	(gnus-info-set-marks
-	 info
-	 (if docorr
-	     (mapcar (lambda (cur)
-			 (cons
-			  (car cur)
-			  (nnmairix-map-range
-			   `(lambda (x) (+ x ,(cadr corr)))
-			   (list (cadr cur)))))
-		     (gnus-info-marks folderinfo))
-	   (gnus-info-marks folderinfo))))
+	(setf (gnus-info-marks info)
+	      (if docorr
+		  (mapcar (lambda (cur)
+			    (cons
+			     (car cur)
+			     (nnmairix-map-range
+			      ;; FIXME: Use lexical-binding.
+			      `(lambda (x) (+ x ,(cadr corr)))
+			      (list (cadr cur)))))
+			  (gnus-info-marks folderinfo))
+		(gnus-info-marks folderinfo))))
       (when (eq readmarks 'unread)
-	(gnus-info-set-read info nil))
+	(setf (gnus-info-read info) nil))
       (when (eq readmarks 'read)
-	(gnus-info-set-read info (gnus-active qualgroup))))
+	(setf (gnus-info-read info) (gnus-active qualgroup))))
   t)
 
 (nnoo-define-skeleton nnmairix)

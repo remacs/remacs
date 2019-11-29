@@ -1212,26 +1212,24 @@ This can be added to `gnus-select-article-hook' or
 	      (marks (nth 2 action)))
 	  (dolist (mark marks)
 	    (cond ((eq mark 'read)
-		   (gnus-info-set-read
-		    info
-		    (funcall (if (eq what 'add)
-				 'gnus-range-add
-			       'gnus-remove-from-range)
-			     (gnus-info-read info)
-			     range))
+		   (setf (gnus-info-read info)
+			 (funcall (if (eq what 'add)
+				      #'gnus-range-add
+				    #'gnus-remove-from-range)
+				  (gnus-info-read info)
+				  range))
 		   (gnus-get-unread-articles-in-group
 		    info
 		    (gnus-active (gnus-info-group info))))
 		  ((memq mark '(tick))
 		   (let ((info-marks (assoc mark (gnus-info-marks info))))
 		     (unless info-marks
-                       (gnus-info-set-marks
-                        info (cons (setq info-marks (list mark))
-                                   (gnus-info-marks info))))
+                       (push (setq info-marks (list mark))
+                             (gnus-info-marks info)))
                      (setcdr info-marks
                              (funcall (if (eq what 'add)
-                                          'gnus-range-add
-                                        'gnus-remove-from-range)
+                                          #'gnus-range-add
+                                        #'gnus-remove-from-range)
                                       (cdr info-marks)
                                       range))))))))
 
@@ -1303,12 +1301,11 @@ downloaded into the agent."
           ;; file.
 
           (let ((read (gnus-info-read info)))
-            (gnus-info-set-read
-             info
-             (gnus-range-add
-              read
-              (list (cons (1+ agent-max)
-                          (1- active-min))))))
+            (setf (gnus-info-read info)
+                  (gnus-range-add
+                   read
+                   (list (cons (1+ agent-max)
+                               (1- active-min))))))
 
           ;; Lie about the agent's local range for this group to
           ;; disable the set read each time this server is opened.
@@ -2533,13 +2530,14 @@ modified) original contents, they are first saved to their own file."
 			       (assq mark (gnus-info-marks
 					   (setq info (gnus-get-info group))))))
                           (when (cdr marked-arts)
+                            ;; FIXME: Use `cl-callf'?
                             (setq marks
 				  (delq marked-arts (gnus-info-marks info)))
-                            (gnus-info-set-marks info marks)))))
+                            (setf (gnus-info-marks info) marks)))))
                     (let ((read (gnus-info-read
 				 (or info (setq info (gnus-get-info group))))))
-                      (gnus-info-set-read
-		       info (gnus-add-to-range read unfetched-articles)))
+                      (setf (gnus-info-read info)
+                            (gnus-add-to-range read unfetched-articles)))
 
                     (gnus-group-update-group group t)
                     (sit-for 0)

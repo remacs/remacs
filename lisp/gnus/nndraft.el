@@ -147,10 +147,10 @@ are generated if and only if they are also in `message-draft-headers'."
 
 (deffoo nndraft-request-update-info (group info &optional server)
   (nndraft-possibly-change-group group)
-  (gnus-info-set-read
-   info
-   (gnus-update-read-articles (gnus-group-prefixed-name group '(nndraft ""))
-			      (nndraft-articles) t))
+  (setf (gnus-info-read info)
+	(gnus-update-read-articles
+	 (gnus-group-prefixed-name group '(nndraft ""))
+	 (nndraft-articles) t))
   (let ((marks (nth 3 info)))
     (when marks
       ;; Nix out all marks except the `unsend'-able article marks.

@@ -1620,7 +1620,7 @@ If LIMIT, first try to limit the search to the N last articles."
 		       read)))
 	      (when (or (not (listp permanent-flags))
 			(memq '%Seen permanent-flags))
-		(gnus-info-set-read info read))
+		(setf (gnus-info-read info) read))
 	      ;; Update the marks.
 	      (setq marks (gnus-info-marks info))
 	      (dolist (type (cdr nnimap-mark-alist))
@@ -1680,14 +1680,13 @@ If LIMIT, first try to limit the search to the N last articles."
 
 (defun nnimap-update-qresync-info (info existing vanished flags)
   ;; Add all the vanished articles to the list of read articles.
-  (gnus-info-set-read
-   info
-   (gnus-add-to-range
-    (gnus-add-to-range
-     (gnus-range-add (gnus-info-read info)
-		     vanished)
-     (cdr (assq '%Flagged flags)))
-    (cdr (assq '%Seen flags))))
+  (setf (gnus-info-read info)
+        (gnus-add-to-range
+         (gnus-add-to-range
+          (gnus-range-add (gnus-info-read info)
+		          vanished)
+	  (cdr (assq '%Flagged flags)))
+	 (cdr (assq '%Seen flags))))
   (let ((marks (gnus-info-marks info)))
     (dolist (type (cdr nnimap-mark-alist))
       (let ((ticks (assoc (car type) marks))

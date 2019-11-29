@@ -1828,7 +1828,7 @@ The info element is shared with the same element of
       ;; Make the same select-methods identical Lisp objects.
       (when (setq method (gnus-info-method info))
 	(if (setq rest (member method methods))
-	    (gnus-info-set-method info (car rest))
+	    (setf (gnus-info-method info) (car rest))
 	  (push method methods)))
       ;; Check for encoded group names and decode them.
       (when (string-match-p "[^[:ascii:]]" (setq gname (car info)))
@@ -1890,8 +1890,8 @@ The info element is shared with the same element of
 	(push article news)))
     (when news
       ;; Enter this list into the group info.
-      (gnus-info-set-read
-       info (gnus-remove-from-range (gnus-info-read info) (nreverse news)))
+      (setf (gnus-info-read info)
+            (gnus-remove-from-range (gnus-info-read info) (nreverse news)))
 
       ;; Set the number of unread articles in gnus-newsrc-hashtb.
       (gnus-get-unread-articles-in-group info (gnus-active group))
@@ -1958,7 +1958,7 @@ The info element is shared with the same element of
       (when (eq modified 'remove-null)
         (setq r (delq nil r)))
       ;; Enter this list into the group info.
-      (gnus-info-set-read info r)
+      (setf (gnus-info-read info) r)
 
       ;; Set the number of unread articles in gnus-newsrc-hashtb.
       (gnus-get-unread-articles-in-group info (gnus-active group))
@@ -2362,12 +2362,11 @@ If FORCE is non-nil, the .newsrc file is read."
 	(setq dormant (cdr (assq 'dormant marks))
 	      ticked (cdr (assq 'tick marks)))
 	(when (or dormant ticked)
-	  (gnus-info-set-read
-	   info
-	   (gnus-add-to-range
-	    (gnus-info-read info)
-	    (nconc (gnus-uncompress-range dormant)
-		   (gnus-uncompress-range ticked)))))))))
+	  (setf (gnus-info-read info)
+	        (gnus-add-to-range
+	         (gnus-info-read info)
+	         (nconc (gnus-uncompress-range dormant)
+		        (gnus-uncompress-range ticked)))))))))
 
 (defun gnus-load (file)
   "Load FILE, but in such a way that read errors can be reported."
@@ -2438,9 +2437,9 @@ If FORCE is non-nil, the .newsrc file is read."
       (while (setq group (pop newsrc))
 	(if (setq info (gnus-get-info (car group)))
 	    (progn
-	      (gnus-info-set-read info (cddr group))
-	      (gnus-info-set-level
-	       info (if (nth 1 group) gnus-level-default-subscribed
+	      (setf (gnus-info-read info) (cddr group))
+	      (setf (gnus-info-level info)
+		    (if (nth 1 group) gnus-level-default-subscribed
 		      gnus-level-default-unsubscribed))
 	      (push info gnus-newsrc-alist))
 	  (push (setq info
@@ -2453,9 +2452,9 @@ If FORCE is non-nil, the .newsrc file is read."
 	(when (setq m (assoc (car group) marked))
 	  (unless (nthcdr 3 info)
 	    (nconc info (list nil)))
-	  (gnus-info-set-marks
-	   info (list (cons 'tick (gnus-compress-sequence
-				   (sort (cdr m) '<) t))))))
+	  (setf (gnus-info-marks info)
+		(list (cons 'tick (gnus-compress-sequence
+				   (sort (cdr m) #'<) t))))))
       (setq newsrc killed)
       (while newsrc
 	(setcar newsrc (caar newsrc))
@@ -2609,7 +2608,7 @@ If FORCE is non-nil, the .newsrc file is read."
 		;; There is an entry for this file in
 		;; `gnus-newsrc-hashtb'.
 		(progn
-		  (gnus-info-set-read info (nreverse reads))
+		  (setf (gnus-info-read info) (nreverse reads))
 		  ;; We update the level very gently.  In fact, we
 		  ;; only change it if there's been a status change
 		  ;; from subscribed to unsubscribed, or vice versa.
@@ -2621,7 +2620,7 @@ If FORCE is non-nil, the .newsrc file is read."
 				       (1+ gnus-level-default-unsubscribed))))
 			((and (> level gnus-level-subscribed) subscribed)
 			 (setq level gnus-level-default-subscribed)))
-		  (gnus-info-set-level info level))
+		  (setf (gnus-info-level info) level))
 	      ;; This is a new group.
 	      (setq info (list group
 			       (if subscribed

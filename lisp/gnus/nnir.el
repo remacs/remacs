@@ -874,8 +874,8 @@ A non-nil `specs' arg must be an alist with `nnir-query-spec' and
 (deffoo nnir-request-update-info (group info &optional server)
   (nnir-possibly-change-group group server)
   ;; clear out all existing marks.
-  (gnus-info-set-marks info nil)
-  (gnus-info-set-read info nil)
+  (setf (gnus-info-marks info) nil)
+  (setf (gnus-info-read info) nil)
   (let ((group (gnus-group-guess-full-name-from-command-method group))
 	(articles-by-group
 	 (nnir-categorize
@@ -889,15 +889,15 @@ A non-nil `specs' arg must be an alist with `nnir-query-spec' and
 	     (group-info (gnus-get-info (car group-articles)))
 	     (marks (gnus-info-marks group-info))
 	     (read (gnus-info-read group-info)))
-	(gnus-info-set-read
-	 info
-	 (gnus-add-to-range
-	  (gnus-info-read info)
-	  (delq nil
-		  (mapcar
-		   #'(lambda (art)
-		     (when (gnus-member-of-range (cdr art) read) (car art)))
-		   articleids))))
+	(setf (gnus-info-read info)
+	      (gnus-add-to-range
+	       (gnus-info-read info)
+	       (delq nil
+		     (mapcar
+		      #'(lambda (art)
+		          (when (gnus-member-of-range (cdr art) read)
+		            (car art)))
+		      articleids))))
 	(dolist (mark marks)
 	  (cl-destructuring-bind (type . range) mark
 	    (gnus-add-marked-articles

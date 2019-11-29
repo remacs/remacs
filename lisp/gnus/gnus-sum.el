@@ -6367,7 +6367,7 @@ The resulting hash table is returned, or nil if no Xrefs were found."
 	(gnus-undo-register
 	  `(progn
 	     (gnus-info-set-marks ',info ',(gnus-info-marks info) t)
-	     (gnus-info-set-read ',info ',(gnus-info-read info))
+	     (setf (gnus-info-read ',info) ',(gnus-info-read info))
 	     (gnus-get-unread-articles-in-group ',info (gnus-active ,group))
 	     (when ,set-marks
 	       (gnus-request-set-mark
@@ -6375,7 +6375,7 @@ The resulting hash table is returned, or nil if no Xrefs were found."
 	     (gnus-group-jump-to-group ,group)
 	     (gnus-group-update-group ,group t))))
       ;; Add the read articles to the range.
-      (gnus-info-set-read info range)
+      (setf (gnus-info-read info) range)
       (when set-marks
 	(gnus-request-set-mark group (list (list range 'add '(read)))))
       ;; Then we have to re-compute how many unread
@@ -10283,8 +10283,8 @@ ACTION can be either `move' (the default), `crosspost' or `copy'."
 	    (when (and (not (memq article gnus-newsgroup-unreads))
 		       (cdr art-group))
 	      (push 'read to-marks)
-	      (gnus-info-set-read
-	       info (gnus-add-to-range (gnus-info-read info)
+	      (setf (gnus-info-read info)
+		    (gnus-add-to-range (gnus-info-read info)
 				       (list (cdr art-group)))))
 
 	    ;; See whether the article is to be put in the cache.
@@ -12891,14 +12891,14 @@ UNREAD is a sorted list."
 	    (gnus-undo-register
 	      `(progn
 		 (gnus-info-set-marks ',info ',(gnus-info-marks info) t)
-		 (gnus-info-set-read ',info ',(gnus-info-read info))
+		 (setf (gnus-info-read ',info) ',(gnus-info-read info))
 		 (gnus-group-jump-to-group ,group)
 		 (gnus-get-unread-articles-in-group ',info
 						    (gnus-active ,group))
 		 (gnus-group-update-group ,group t)
 		 ,setmarkundo))))
 	;; Enter this list into the group info.
-	(gnus-info-set-read info read)
+	(setf (gnus-info-read info) read)
 	;; Set the number of unread articles in gnus-newsrc-hashtb.
 	(gnus-get-unread-articles-in-group info (gnus-active group))
 	t))))

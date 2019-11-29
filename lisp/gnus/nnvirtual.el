@@ -463,11 +463,10 @@ If UPDATE-P is not nil, call gnus-group-update-group on the components."
 	(dolist (group nnvirtual-component-groups)
 	  (when (and (setq info (gnus-get-info group))
 		     (gnus-info-marks info))
-	    (gnus-info-set-marks
-	     info
-	     (if (assq 'score (gnus-info-marks info))
-		 (list (assq 'score (gnus-info-marks info)))
-	       nil))))
+	    (setf (gnus-info-marks info)
+		  (if (assq 'score (gnus-info-marks info))
+		      (list (assq 'score (gnus-info-marks info)))
+		    nil))))
 
 	;; Ok, currently type-marks is an assq list with keys of a mark type,
 	;; with data of an assq list with keys of component group names

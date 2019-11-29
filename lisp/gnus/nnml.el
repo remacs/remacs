@@ -1067,7 +1067,7 @@ Use the nov database for the current group if available."
 		  (when (gnus-member-of-range old-number read)
 		    (setq read (gnus-remove-from-range read (list old-number)))
 		    (setq read (gnus-add-to-range read (list new-number))))
-		  (gnus-info-set-read info read))
+		  (setf (gnus-info-read info) read))
 		;; 2 b/ marked articles:
 		(let ((oldmarks (gnus-info-marks info))
 		      mark newmarks)
@@ -1080,7 +1080,7 @@ Use the nov database for the current group if available."
 		      (setcdr mark (gnus-add-to-range (cdr mark)
 						      (list new-number))))
 		    (push mark newmarks))
-		  (gnus-info-set-marks info newmarks))
+		  (setf (gnus-info-marks info) newmarks))
 		;; 3/ Update the NOV entry for this article:
 		(unless nnml-nov-is-evil
 		  (with-current-buffer (nnml-open-nov group)

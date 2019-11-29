@@ -2973,11 +2973,7 @@ and NEW-NAME will be prompted for."
       (setq info (copy-tree info))
       (setcar info new-group)
       (unless (gnus-server-equal method "native")
-	(unless (nthcdr 3 info)
-	  (nconc info (list nil nil)))
-	(unless (nthcdr 4 info)
-	  (nconc info (list nil)))
-	(gnus-info-set-method info method))
+	(gnus-info-set-method info method t))
       (gnus-group-set-info info))
     (gnus-group-update-group (or new-group group))
     (gnus-group-position-point)))
@@ -3374,14 +3370,12 @@ If REVERSE, sort in reverse order."
   "Sort only the selected GROUPS, using FUNC.
 If REVERSE is non-nil, reverse the sorting."
   (let ((infos (sort
-		(mapcar (lambda (g)
-			  (gnus-get-info g))
-			groups)
+		(mapcar #'gnus-get-info groups)
 		func))
 	sorted-groups)
     (when reverse
       (setq infos (nreverse infos)))
-    (setq sorted-groups (mapcar (lambda (i) (gnus-info-group i)) infos))
+    (setq sorted-groups (mapcar #'gnus-info-group infos))
 
     ;; Find the original locations of GROUPS in `gnus-group-list', and
     ;; replace each one, in order, with a group from SORTED-GROUPS.
@@ -3532,16 +3526,16 @@ Obeys the process/prefix convention."
       `(progn
 	 (gnus-request-set-mark ,group ',action)
 	 (gnus-info-set-marks ',info ',(gnus-info-marks info) t)
-	 (gnus-info-set-read ',info ',(gnus-info-read info))
+	 (setf (gnus-info-read ',info) ',(gnus-info-read info))
 	 (when (gnus-group-jump-to-group ,group)
 	   (gnus-get-unread-articles-in-group ',info ',(gnus-active group) t)
 	   (gnus-group-update-group-line))))
     (setq action (mapcar (lambda (el) (list (nth 0 el) 'del (nth 2 el)))
 			 action))
     (gnus-request-set-mark group action)
-    (gnus-info-set-read info nil)
+    (setf (gnus-info-read info) nil)
     (when (gnus-info-marks info)
-      (gnus-info-set-marks info nil))))
+      (setf (gnus-info-marks info) nil))))
 
 ;; Group catching up.
 
