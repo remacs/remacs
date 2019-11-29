@@ -432,6 +432,8 @@ If LIMIT is non-nil, show no more than this many entries."
 	     (nconc
 	      (when start-revision (list (format "-r%s:0" start-revision)))
 	      (when limit (list "-l" (format "%s" limit)))
+              (when (eq vc-log-view-type 'with-diff)
+                (list "-p"))
 	      (if shortlog
                   `(,@(if vc-hg-log-graph '("--graph"))
                     "--template"
