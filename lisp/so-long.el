@@ -764,7 +764,8 @@ they are in Emacs core, GNU ELPA, or elsewhere."
   :package-version '(so-long . "1.0"))
 
 (defcustom so-long-variable-overrides
-  '((bidi-paragraph-direction . left-to-right)
+  '((bidi-inhibit-bpa . t)
+    (bidi-paragraph-direction . left-to-right)
     (buffer-read-only . t)
     (global-hl-line-mode . nil)
     (line-move-visual . t)
@@ -785,7 +786,8 @@ extremely long line, as otherwise the full length of the line may need to be
 scanned to find the next position."
   :type '(alist :key-type (variable :tag "Variable")
                 :value-type (sexp :tag "Value"))
-  :options '((bidi-paragraph-direction (choice (const left-to-right)
+  :options '((bidi-inhibit-bpa boolean)
+             (bidi-paragraph-direction (choice (const left-to-right)
                                                (const right-to-left)
                                                (const nil)))
              (buffer-read-only boolean)
