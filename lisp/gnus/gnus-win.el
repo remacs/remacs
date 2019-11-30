@@ -367,11 +367,14 @@ See the Gnus manual for an explanation of the syntax used.")
 	    (setq result (or (gnus-configure-frame
 			      (car comp-subs) window)
 			     result))
-	    (select-window new-win)
-	    (setq window new-win)
+            (if (not (window-live-p new-win))
+                ;; pop-to-buffer might have deleted the original window
+                (setq window (selected-window))
+              (select-window new-win)
+	      (setq window new-win))
 	    (setq comp-subs (cdr comp-subs))))
 	;; Return the proper window, if any.
-	(when result
+	(when (window-live-p result)
 	  (select-window result)))))))
 
 (defvar gnus-frame-split-p nil)

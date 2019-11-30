@@ -813,6 +813,7 @@ Various
 * Symbolic Prefixes::           How to supply some Gnus functions with options.
 * Formatting Variables::        You can specify what buffers should look like.
 * Window Layout::               Configuring the Gnus buffer windows.
+* Tabbed Interface::            Configuring the Gnus tabs.
 * Faces and Fonts::             How to change how faces look.
 * Mode Lines::                  Displaying information in the mode lines.
 * Highlighting and Menus::      Making buffers look all nice and cozy.
@@ -22189,6 +22190,7 @@ to you, using @kbd{G b u} and updating the group will usually fix this.
 * Symbolic Prefixes::           How to supply some Gnus functions with options.
 * Formatting Variables::        You can specify what buffers should look like.
 * Window Layout::               Configuring the Gnus buffer windows.
+* Tabbed Interface::            Configuring the Gnus tabs.
 * Faces and Fonts::             How to change how faces look.
 * Mode Lines::                  Displaying information in the mode lines.
 * Highlighting and Menus::      Making buffers look all nice and cozy.
@@ -22983,6 +22985,36 @@ between summary buffer (top one-sixth) and article buffer (bottom).
 @end lisp
 
 @end itemize
+
+
+@node Tabbed Interface
+@section Tabbed Interface
+@cindex tabbed interface
+@cindex tabs
+
+Gnus supports display of different buffers in dedicated tabs
+that you can select using the tab bar.
+
+To open the group buffer in a new tab named @samp{Gnus}, use:
+
+@lisp
+(push '("\\`\\*Group\\*\\'" .
+        (display-buffer-in-tab
+         (name . "Gnus")))
+      display-buffer-alist)
+@end lisp
+
+To read every summary in a separate explicitly named tab, use:
+
+@lisp
+(push '("\\`\\*Summary .*\\*\\'" .
+        (display-buffer-in-tab
+         (name . (lambda (buffer _alist)
+                   (setq buffer (buffer-name buffer))
+                   (when (string-match "\\`\\*Summary \\(.*\\)\\*\\'" buffer)
+                     (format "Group %s" (match-string 1 buffer)))))))
+      display-buffer-alist)
+@end lisp
 
 
 @node Faces and Fonts
