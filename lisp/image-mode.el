@@ -599,9 +599,7 @@ Key bindings:
 
   (add-hook 'change-major-mode-hook #'image-toggle-display-text nil t)
   (add-hook 'after-revert-hook #'image-after-revert-hook nil t)
-  (add-hook 'window-size-change-functions #'image--window-change nil t)
-  (add-hook 'window-state-change-functions #'image--window-change nil t)
-  (add-hook 'window-selection-change-functions #'image--window-change nil t)
+  (add-hook 'window-state-change-functions #'image--window-state-change nil t)
 
   (run-mode-hooks 'image-mode-hook)
   (let ((image (image-get-display-property))
@@ -860,26 +858,31 @@ Otherwise, display the image by calling `image-mode'."
           (get-buffer-window-list (current-buffer) 'nomini 'visible))
     (image-toggle-display-image)))
 
-(defvar image--window-change-function
-  (debounce 1.0
-    (lambda (window)
-      (when (window-live-p window)
-        (with-current-buffer (window-buffer)
-          (when (derived-mode-p 'image-mode)
-            (let ((spec (image-get-display-property)))
-              (when (eq (car-safe spec) 'image)
-                (let* ((image-width  (plist-get (cdr spec) :max-width))
-                       (image-height (plist-get (cdr spec) :max-height))
-                       (edges (window-inside-pixel-edges window))
-                       (window-width  (- (nth 2 edges) (nth 0 edges)))
-                       (window-height (- (nth 3 edges) (nth 1 edges))))
-                  (when (and image-width image-height
-                             (or (not (= image-width  window-width))
-                                 (not (= image-height window-height))))
-                    (image-toggle-display-image)))))))))))
+(defun image--window-state-change (window)
+  ;; Wait for a bit of idle-time before actually performing the change,
+  ;; so as to batch together sequences of closely consecutive size changes.
+  ;; `image-fit-to-window' just changes one value in a plist.  The actual
+  ;; image resizing happens later during redisplay.  So if those
+  ;; consecutive calls happen without any redisplay between them,
+  ;; the costly operation of image resizing should happen only once.
+  (run-with-idle-timer 1 nil #'image-fit-to-window window))
 
-(defun image--window-change (window)
-  (funcall image--window-change-function window))
+(defun image-fit-to-window (window)
+  "Adjust size of image to display it exactly in WINDOW boundaries."
+  (when (window-live-p window)
+    (with-current-buffer (window-buffer)
+      (when (derived-mode-p 'image-mode)
+        (let ((spec (image-get-display-property)))
+          (when (eq (car-safe spec) 'image)
+            (let* ((image-width  (plist-get (cdr spec) :max-width))
+                   (image-height (plist-get (cdr spec) :max-height))
+                   (edges (window-inside-pixel-edges window))
+                   (window-width  (- (nth 2 edges) (nth 0 edges)))
+                   (window-height (- (nth 3 edges) (nth 1 edges))))
+              (when (and image-width image-height
+                         (or (not (= image-width  window-width))
+                             (not (= image-height window-height))))
+                (image-toggle-display-image)))))))))
 
 
 ;;; Animated images

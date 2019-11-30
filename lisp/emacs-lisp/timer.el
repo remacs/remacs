@@ -488,50 +488,6 @@ The argument should be a value previously returned by `with-timeout-suspend'."
 If the user does not answer after SECONDS seconds, return DEFAULT-VALUE."
   (with-timeout (seconds default-value)
     (y-or-n-p prompt)))
-
-(defmacro debounce (secs function)
-  "Call FUNCTION after SECS seconds have elapsed.
-Postpone FUNCTION call until after SECS seconds have elapsed since the
-last time it was invoked.  On consecutive calls within the interval of
-SECS seconds, cancel all previous calls that occur rapidly in quick succession,
-and execute only the last call.  This improves performance of event processing."
-  (declare (indent 1) (debug t))
-  (let ((timer-sym (make-symbol "timer")))
-    `(let (,timer-sym)
-       (lambda (&rest args)
-         (when (timerp ,timer-sym)
-           (cancel-timer ,timer-sym))
-         (setq ,timer-sym
-               (run-with-timer
-                ,secs nil (lambda ()
-                            (apply ,function args))))))))
-
-(defmacro debounce-reduce (secs initial-state state-function function)
-  "Call FUNCTION after SECS seconds have elapsed.
-Postpone FUNCTION call until after SECS seconds have elapsed since the
-last time it was invoked.  On consecutive calls within the interval of
-SECS seconds, cancel all previous calls that occur rapidly in quick succession,
-and execute only the last call.  This improves performance of event processing.
-
-STATE-FUNCTION can be used to accumulate the state on consecutive calls
-starting with the value of INITIAL-STATE, and then execute the last call
-with the collected state value."
-  (declare (indent 1) (debug t))
-  (let ((timer-sym (make-symbol "timer"))
-        (state-sym (make-symbol "state")))
-    `(let (,timer-sym (,state-sym ,initial-state))
-       (lambda (&rest args)
-         (setq ,state-sym (apply ,state-function ,state-sym args))
-         (when (timerp ,timer-sym)
-           (cancel-timer ,timer-sym))
-         (setq ,timer-sym
-               (run-with-timer
-                ,secs nil (lambda ()
-                            (apply ,function (if (listp ,state-sym)
-                                                 ,state-sym
-                                               (list ,state-sym)))
-                            (setq ,state-sym ,initial-state))))))))
-
 
 (defconst timer-duration-words
   (list (cons "microsec" 0.000001)

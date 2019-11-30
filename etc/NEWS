@@ -2849,11 +2849,6 @@ doing computations on a decoded time structure), 'make-decoded-time'
 filled out), and 'encoded-time-set-defaults' (which fills in nil
 elements as if it's midnight January 1st, 1970) have been added.
 
-** New macros 'debounce' and 'debounce-reduce' postpone function call
-until after specified time have elapsed since the last time it was invoked.
-This improves performance of processing events occurring rapidly
-in quick succession.
-
 ** 'define-minor-mode' automatically documents the meaning of ARG.
 
 +++

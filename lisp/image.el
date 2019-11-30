@@ -1017,20 +1017,34 @@ has no effect."
 If N is 3, then the image size will be increased by 30%.  The
 default is 20%."
   (interactive "P")
-  (funcall image--change-size-function
-           (if n
-               (1+ (/ (prefix-numeric-value n) 10.0))
-             1.2)))
+  ;; Wait for a bit of idle-time before actually performing the change,
+  ;; so as to batch together sequences of closely consecutive size changes.
+  ;; `image--change-size' just changes one value in a plist.  The actual
+  ;; image resizing happens later during redisplay.  So if those
+  ;; consecutive calls happen without any redisplay between them,
+  ;; the costly operation of image resizing should happen only once.
+  (run-with-idle-timer 0.3 nil
+                       #'image--change-size
+                       (if n
+                           (1+ (/ (prefix-numeric-value n) 10.0))
+                         1.2)))
 
 (defun image-decrease-size (&optional n)
   "Decrease the image size by a factor of N.
 If N is 3, then the image size will be decreased by 30%.  The
 default is 20%."
   (interactive "P")
-  (funcall image--change-size-function
-           (if n
-               (- 1 (/ (prefix-numeric-value n) 10.0))
-             0.8)))
+  ;; Wait for a bit of idle-time before actually performing the change,
+  ;; so as to batch together sequences of closely consecutive size changes.
+  ;; `image--change-size' just changes one value in a plist.  The actual
+  ;; image resizing happens later during redisplay.  So if those
+  ;; consecutive calls happen without any redisplay between them,
+  ;; the costly operation of image resizing should happen only once.
+  (run-with-idle-timer 0.3 nil
+                       #'image--change-size
+                       (if n
+                           (- 1 (/ (prefix-numeric-value n) 10.0))
+                         0.8)))
 
 (defun image-mouse-increase-size (&optional event)
   "Increase the image size using the mouse."
@@ -1065,16 +1079,12 @@ default is 20%."
       (plist-put (cdr image) :type 'imagemagick))
     image))
 
-(defvar image--change-size-function
-  (debounce-reduce 0.3 1
-    (lambda (state factor)
-      (* state factor))
-    (lambda (factor)
-      (let* ((image (image--get-imagemagick-and-warn))
-             (new-image (image--image-without-parameters image))
-             (scale (image--current-scaling image new-image)))
-        (setcdr image (cdr new-image))
-        (plist-put (cdr image) :scale (* scale factor))))))
+(defun image--change-size (factor)
+  (let* ((image (image--get-imagemagick-and-warn))
+         (new-image (image--image-without-parameters image))
+         (scale (image--current-scaling image new-image)))
+    (setcdr image (cdr new-image))
+    (plist-put (cdr image) :scale (* scale factor))))
 
 (defun image--image-without-parameters (image)
   (cons (pop image)
