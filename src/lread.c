@@ -4900,8 +4900,8 @@ When `load' is run and the file-name argument matches an element's
 REGEXP-OR-FEATURE, or when `provide' is run and provides the symbol
 REGEXP-OR-FEATURE, the FUNCS in the element are called.
 
-An error in FORMS does not undo the load, but does prevent execution of
-the rest of the FORMS.  */);
+An error in FUNCS does not undo the load, but does prevent calling
+the rest of the FUNCS.  */);
   Vafter_load_alist = Qnil;
 
   DEFVAR_LISP ("load-history", Vload_history,
