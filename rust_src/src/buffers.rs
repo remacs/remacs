@@ -1846,7 +1846,7 @@ pub fn move_overlay(
         .unwrap_or_else(ThreadState::current_buffer_unchecked);
 
     if !buf.is_live() {
-        error!("Apttempt to move overlay to a dead buffer");
+        error!("Attempt to move overlay to a dead buffer");
     }
 
     if beg.is_marker() && !buf.eq(&marker_buffer(beg.into()).unwrap()) {
@@ -1886,7 +1886,7 @@ pub fn move_overlay(
     );
     let n_beg = overlay_start(overlay_ref);
     let n_end = overlay_end(overlay_ref);
-    // If the overlay has changed buffers, do a through redisplay
+    // If the overlay has changed buffers, do a thorough redisplay
     if obuffer.is_some() && !buf.eq(&obuffer.unwrap()) {
         if let Some(mut ob) = obuffer {
             unsafe {
