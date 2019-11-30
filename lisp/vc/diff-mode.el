@@ -302,8 +302,8 @@ well."
     (((class color) (min-colors 88) (background dark))
      :background "grey45" :extend t)
     (((class color))
-     :foreground "blue1" :weight bold)
-    (t :weight bold))
+     :foreground "blue1" :weight bold :extend t)
+    (t :weight bold :extend t))
   "`diff-mode' face inherited by hunk and index header faces.")
 
 (defface diff-file-header
@@ -312,8 +312,8 @@ well."
     (((class color) (min-colors 88) (background dark))
      :background "grey60" :weight bold :extend t)
     (((class color))
-     :foreground "cyan" :weight bold)
-    (t :weight bold))			; :height 1.3
+     :foreground "cyan" :weight bold :extend t)
+    (t :weight bold :extend t))			; :height 1.3
   "`diff-mode' face used to highlight file header lines.")
 
 (defface diff-index
@@ -334,7 +334,7 @@ well."
     (((class color) (min-colors 88) (background dark))
      :background "#553333" :extend t)
     (((class color))
-     :foreground "red"))
+     :foreground "red" :extend t))
   "`diff-mode' face used to highlight removed lines.")
 
 (defface diff-added
@@ -347,7 +347,7 @@ well."
     (((class color) (min-colors 88) (background dark))
      :background "#335533" :extend t)
     (((class color))
-     :foreground "green"))
+     :foreground "green" :extend t))
   "`diff-mode' face used to highlight added lines.")
 
 (defface diff-changed

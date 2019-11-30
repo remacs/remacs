@@ -53,8 +53,8 @@ Semantic, and Ansi-Color faces are included.")
    ;; Highlighting faces
    `(fringe ((,class (:background ,alum-2))))
    `(highlight ((,class (:background ,alum-3))))
-   `(region ((,class (:background ,alum-3))))
-   `(secondary-selection ((,class (:background ,blue-0))))
+   `(region ((,class (:background ,alum-3 :extend t))))
+   `(secondary-selection ((,class (:background ,blue-0 :extend t))))
    `(isearch ((,class (:foreground "#ffffff" :background ,orange-3))))
    `(lazy-highlight ((,class (:background ,choc-1))))
    `(trailing-whitespace ((,class (:background ,red-1))))
@@ -117,9 +117,9 @@ Semantic, and Ansi-Color faces are included.")
    ;; SMerge
    `(smerge-refined-change ((,class (:background ,plum-1))))
    ;; Ediff
-   `(ediff-current-diff-A ((,class (:background ,blue-1))))
+   `(ediff-current-diff-A ((,class (:background ,blue-1 :extend t))))
    `(ediff-fine-diff-A ((,class (:background ,plum-1))))
-   `(ediff-current-diff-B ((,class (:background ,butter-1))))
+   `(ediff-current-diff-B ((,class (:background ,butter-1 :extend t))))
    `(ediff-fine-diff-B ((,class (:background ,orange-1))))
    ;; Flyspell
    `(flyspell-duplicate ((,class (:underline ,orange-1))))

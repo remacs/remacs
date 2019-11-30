@@ -197,14 +197,14 @@ If it is nil, `log-view-toggle-entry-display' does nothing.")
 (defface log-view-file
   '((((class color) (background light))
      (:background "grey70" :weight bold :extend t))
-    (t (:weight bold)))
+    (t (:weight bold :extend t)))
   "Face for the file header line in `log-view-mode'."
   :group 'log-view)
 
 (defface log-view-message
   '((((class color) (background light))
      (:background "grey85" :extend t))
-    (t (:weight bold)))
+    (t (:weight bold :extend t)))
   "Face for the message header line in `log-view-mode'."
   :group 'log-view)
 
