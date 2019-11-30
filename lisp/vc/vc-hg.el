@@ -109,6 +109,8 @@
   (require 'vc-dir))
 
 (declare-function vc-compilation-mode "vc-dispatcher" (backend))
+(declare-function vc-read-revision "vc"
+                  (prompt &optional files backend default initial-input))
 
 ;;; Customization options
 
