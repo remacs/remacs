@@ -482,10 +482,10 @@ the selected tab visible."
 (defun tab-line-auto-hscroll (strings hscroll)
   (with-temp-buffer
     (let ((truncate-partial-width-windows nil)
-          (truncate-lines nil)
           (inhibit-modification-hooks t)
-          (buffer-undo-list t)
           show-arrows)
+      (setq truncate-lines nil
+            buffer-undo-list t)
       (apply 'insert strings)
       (goto-char (point-min))
       (add-face-text-property (point-min) (point-max) 'tab-line)
