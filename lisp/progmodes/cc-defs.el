@@ -1340,6 +1340,29 @@ nil; point is then left undefined."
        (search-forward-regexp "\\(\n\\|.\\)")	; to set the match-data.
        (point))))
 
+(defmacro c-search-backward-char-property-with-value-on-char
+    (property value char &optional limit)
+  "Search backward for a text-property PROPERTY having value VALUE on a
+character with value CHAR.
+LIMIT bounds the search.  The value comparison is done with `equal'.
+PROPERTY must be a constant.
+
+Leave point just before the character, and set the match data on
+this character, and return point.  If the search fails, return
+nil; point is then left undefined."
+  `(let ((char-skip (concat "^" (char-to-string ,char)))
+	 (-limit- (or ,limit (point-min)))
+	 (-value- ,value))
+     (while
+	 (and
+	  (progn (skip-chars-backward char-skip -limit-)
+		 (> (point) -limit-))
+	  (not (equal (c-get-char-property (1- (point)) ,property) -value-)))
+       (backward-char))
+     (when (> (point) -limit-)
+       (search-backward-regexp "\\(\n\\|.\\)")	; to set the match-data.
+       (point))))
+
 (defmacro c-search-forward-char-property-without-value-on-char
     (property value char &optional limit)
   "Search forward for a character CHAR without text property PROPERTY having
