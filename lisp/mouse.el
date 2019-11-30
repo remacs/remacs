@@ -1964,6 +1964,10 @@ When there is no region, this function does nothing."
     (move-overlay mouse-secondary-overlay (region-beginning) (region-end))))
 
 
+(defconst mouse--rectangle-track-cursor t
+  "Whether the mouse tracks the cursor when selecting a rectangle.
+If nil, the mouse tracks the rectangle corner instead.")
+
 (defun mouse-drag-region-rectangle (start-event)
   "Set the region to the rectangle that the mouse is dragged over.
 This must be bound to a button-down mouse event."
@@ -1980,6 +1984,7 @@ This must be bound to a button-down mouse event."
          (bottom (if (window-minibuffer-p start-window)
                      (nth 3 bounds)
                    (1- (nth 3 bounds))))
+         (extra-margin (round (line-number-display-width 'columns)))
          (dragged nil)
          (old-track-mouse track-mouse)
          (old-mouse-fine-grained-tracking mouse-fine-grained-tracking)
@@ -1988,8 +1993,9 @@ This must be bound to a button-down mouse event."
          (adjusted-col (lambda (col)
                          (if (eq (current-bidi-paragraph-direction)
                                  'right-to-left)
-                             (- (frame-text-cols) col -1)
-                           col)))
+                             (- (window-width) col extra-margin
+                                (if mouse--rectangle-track-cursor 1 -1))
+                           (- col extra-margin))))
          (map (make-sparse-keymap)))
     (define-key map [switch-frame] #'ignore)
     (define-key map [select-window] #'ignore)
@@ -2018,13 +2024,15 @@ This must be bound to a button-down mouse event."
                (hscroll (if (window-live-p window)
                             (window-hscroll window)
                           0))
-               (mouse-pos (mouse-position))
-               (mouse-col (+ (cadr mouse-pos) hscroll))
-               (mouse-row (cddr mouse-pos))
+               (mouse-row (cddr (mouse-position)))
+               (mouse-col (+ (car (posn-col-row posn)) hscroll
+                             (if mouse--rectangle-track-cursor 0 1)))
                (set-col (lambda ()
                           (if (or (eolp) (eq (following-char) ?\t))
                               (rectangle--col-pos
                                (funcall adjusted-col mouse-col) 'point)
+                            (unless mouse--rectangle-track-cursor
+                              (forward-char))
                             (rectangle--reset-point-crutches)))))
           (if (and (eq window start-window)
                    mouse-row
