@@ -1439,12 +1439,12 @@ Mercurial in its normal mode of operation, each branch has its own
 working directory tree, so switching between branches just involves
 switching directories.  On Git, branches are normally @dfn{co-located}
 in the same directory, and switching between branches is done using
-the @command{git checkout} command, which changes the contents of the
+the @kbd{git checkout} command, which changes the contents of the
 working tree to match the branch you switch to.  Bazaar also supports
-co-located branches, in which case the @command{bzr switch} command
+co-located branches, in which case the @kbd{bzr switch} command
 will switch branches in the current directory.  With Subversion, you
-switch to another branch using the @command{svn switch} command.  With
-Mercurial, command @command{hg update} is used to swith to another
+switch to another branch using the @kbd{svn switch} command.  With
+Mercurial, command @kbd{hg update} is used to swith to another
 branch.
 
   The VC command to switch to another branch in the current directory
@@ -1492,8 +1492,8 @@ On a decentralized version control system, the command @kbd{C-x v P}
 (@code{vc-push}) updates another location with changes from the
 current branch.  With a prefix argument, it prompts for the exact
 version control command to run, which lets you specify where to push
-changes; the default is @command{bzr push} with Bazaar, @command{git
-push} with Git, and @command{hg push} with Mercurial.  The default
+changes; the default is @kbd{bzr push} with Bazaar, @kbd{git
+push} with Git, and @kbd{hg push} with Mercurial.  The default
 commands always push to a default location determined by the version
 control system from your branch configuration.
 
@@ -1522,11 +1522,11 @@ control system.
 
   Amongst decentralized version control systems, @kbd{C-x v +} is
 currently supported only by Bazaar, Git, and Mercurial.  With Bazaar,
-it calls @command{bzr pull} for ordinary branches (to pull from a
-master branch into a mirroring branch), and @command{bzr update} for a
+it calls @kbd{bzr pull} for ordinary branches (to pull from a
+master branch into a mirroring branch), and @kbd{bzr update} for a
 bound branch (to pull from a central repository).  With Git, it calls
-@command{git pull} to fetch changes from a remote repository and merge
-it into the current branch.  With Mercurial, it calls @command{hg pull
+@kbd{git pull} to fetch changes from a remote repository and merge
+it into the current branch.  With Mercurial, it calls @kbd{hg pull
 -u} to fetch changesets from the default remote repository and update
 the working directory.
 
@@ -1557,11 +1557,11 @@ two branches.
 
   On a decentralized version control system, merging is done with the
 command @kbd{C-x v m} (@code{vc-merge}).  On Bazaar, this prompts for
-the exact arguments to pass to @command{bzr merge}, offering a
+the exact arguments to pass to @kbd{bzr merge}, offering a
 sensible default if possible.  On Git, this prompts for the name of a
 branch to merge from, with completion (based on the branch names known
 to the current repository).  With Mercurial, this prompts for argument
-to pass to @command{hg merge}.  The output from running the merge
+to pass to @kbd{hg merge}.  The output from running the merge
 command is shown in a separate buffer.
 
   On a centralized version control system like CVS, @kbd{C-x v m}
