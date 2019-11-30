@@ -2695,6 +2695,7 @@ Also discard all previous input in the minibuffer."
   (interactive)
   (delete-minibuffer-contents)
   (ding)
+  (discard-input)
   (minibuffer-message "Wrong answer")
   (sit-for 2))
 
@@ -2794,6 +2795,7 @@ Also discard all previous input in the minibuffer."
   (interactive)
   (delete-minibuffer-contents)
   (ding)
+  (discard-input)
   (minibuffer-message "Please answer y or n")
   (sit-for 2))
 
@@ -4607,7 +4609,7 @@ This function is called directly from the C code."
 			               (string-match "\\.elc?\\>" file))
                             obarray))
 	   (msg (format "Package %s is deprecated" package))
-	   (fun (lambda (msg) (message "%s" msg))))
+	   (fun (lambda (msg) (discard-input) (message "%s" msg))))
       ;; Cribbed from cl--compiling-file.
       (when (or (not (fboundp 'byte-compile-warning-enabled-p))
                 (byte-compile-warning-enabled-p 'obsolete package))
