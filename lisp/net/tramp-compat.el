@@ -327,6 +327,11 @@ A nil value for either argument stands for the current time."
 	    (unload-feature 'tramp-loaddefs 'force)
 	    (unload-feature 'tramp-compat 'force)))
 
+;;; TODO:
+;;
+;; * Starting with Emacs 25.1, replace `tramp-message-show-message' by
+;;   the reverse of `inhibit-message'.
+
 (provide 'tramp-compat)
 
 ;;; tramp-compat.el ends here

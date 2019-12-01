@@ -2233,7 +2233,8 @@ This checks also `file-name-as-directory', `file-name-directory',
   (skip-unless (tramp--test-enabled))
 
   (dolist (quoted (if (tramp--test-expensive-test) '(nil t) '(nil)))
-    (let ((tmp-name (tramp--test-make-temp-name nil quoted)))
+    (let ((tmp-name (tramp--test-make-temp-name nil quoted))
+          (inhibit-message t))
       (unwind-protect
 	  (progn
             ;; Write buffer.  Use absolute and relative file name.
@@ -2332,6 +2333,7 @@ This checks also `file-name-as-directory', `file-name-directory',
   (skip-unless (tramp--test-emacs27-p))
 
   (let* ((tmp-name (tramp--test-make-temp-name))
+         (inhibit-message t)
          written-files
          (advice (lambda (_start _end filename &rest _r)
                    (push filename written-files))))
@@ -4566,6 +4568,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	 (tmp-name2 (expand-file-name "foo" tmp-name1))
 	 (enable-local-variables :all)
 	 (enable-remote-dir-locals t)
+         (inhibit-message t)
 	 kill-buffer-query-functions
 	 connection-local-profile-alist connection-local-criteria-alist)
     (unwind-protect
@@ -4797,6 +4800,7 @@ This tests also `make-symbolic-link', `file-truename' and `add-name-to-file'."
 	   (tmp-name1 (tramp--test-make-temp-name nil quoted))
 	   (tmp-name2 (expand-file-name "foo" tmp-name1))
 	   (tramp-remote-process-environment tramp-remote-process-environment)
+           (inhibit-message t)
 	   (vc-handled-backends
 	    (with-parsed-tramp-file-name tramp-test-temporary-file-directory nil
 	      (cond
