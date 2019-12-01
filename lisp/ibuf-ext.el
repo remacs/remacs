@@ -1861,8 +1861,9 @@ Otherwise buffers whose name matches an element of
          (cond ((and (not all-buffers)
                      (or
                       (memq mode ibuffer-never-search-content-mode)
-                      (cl-some (lambda (x) (string-match x (buffer-name buf)))
-                               ibuffer-never-search-content-name)))
+                      (cl-dolist (x ibuffer-never-search-content-name nil)
+                        (when-let ((found (string-match x (buffer-name buf))))
+                          (cl-return found)))))
                 (setq res nil))
                (t
                 (with-current-buffer buf
