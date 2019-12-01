@@ -2007,6 +2007,10 @@ This must be bound to a button-down mouse event."
           (setq dragged t)
           (mouse-minibuffer-check start-event)
           (deactivate-mark)
+          (setq-local transient-mark-mode
+                      (if (eq transient-mark-mode 'lambda)
+                          '(only)
+                        (cons 'only transient-mark-mode)))
           (posn-set-point start-pos)
           (rectangle-mark-mode)
           ;; Only tell rectangle about the exact column if we are possibly
