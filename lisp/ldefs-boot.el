@@ -16778,6 +16778,29 @@ buffer `*icalendar-errors*'.
 ;;;### (autoloads nil "icomplete" "icomplete.el" (0 0 0 0))
 ;;; Generated autoloads from icomplete.el
 
+(defvar fido-mode nil "\
+Non-nil if Fido mode is enabled.
+See the `fido-mode' command
+for a description of this minor mode.
+Setting this variable directly does not take effect;
+either customize it (see the info node `Easy Customization')
+or call the function `fido-mode'.")
+
+(custom-autoload 'fido-mode "icomplete" nil)
+
+(autoload 'fido-mode "icomplete" "\
+An enhanced `icomplete-mode' that emulates `ido-mode'.
+
+If called interactively, enable Fido mode if ARG is positive, and
+disable it if ARG is zero or negative.  If called from Lisp, also
+enable the mode if ARG is omitted or nil, and toggle it if ARG is
+`toggle'; disable the mode otherwise.
+
+This global minor mode makes minibuffer completion behave
+more like `ido-mode' than regular `icomplete-mode'.
+
+\(fn &optional ARG)" t nil)
+
 (defvar icomplete-mode nil "\
 Non-nil if Icomplete mode is enabled.
 See the `icomplete-mode' command
@@ -17383,7 +17406,11 @@ Optional TYPE is a symbol describing the image type.  If TYPE is omitted
 or nil, try to determine the image type from its first few bytes
 of image data.  If that doesn't work, and SOURCE is a file name,
 use its file extension as image type.
-Optional DATA-P non-nil means SOURCE is a string containing image data.
+
+Optional DATA-P non-nil means SOURCE is a string containing image
+data.  If DATA-P is a symbol with a name on the format
+`image/jpeg', that may be used as a hint to determine the image
+type if we can't otherwise guess it.
 
 \(fn SOURCE &optional TYPE DATA-P)" nil nil)
 
@@ -18907,7 +18934,7 @@ one of the aforementioned options instead of using this mode.
 
 ;;;### (autoloads nil "jsonrpc" "jsonrpc.el" (0 0 0 0))
 ;;; Generated autoloads from jsonrpc.el
-(push (purecopy '(jsonrpc 1 0 7)) package--builtin-versions)
+(push (purecopy '(jsonrpc 1 0 8)) package--builtin-versions)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "jsonrpc" '("jrpc-default-request-timeout" "jsonrpc-")))
 
@@ -21637,7 +21664,6 @@ Display a list of all coding categories." nil nil)
 
 (autoload 'describe-font "mule-diag" "\
 Display information about a font whose name is FONTNAME.
-The font must be already used by Emacs.
 
 \(fn FONTNAME)" t nil)
 
@@ -22053,10 +22079,12 @@ values:
 
 :client-certificate should either be a list where the first
   element is the certificate key file name, and the second
-  element is the certificate file name itself, or t, which
-  means that `auth-source' will be queried for the key and the
+  element is the certificate file name itself, or t, which means
+  that `auth-source' will be queried for the key and the
   certificate.  This parameter will only be used when doing TLS
-  or STARTTLS connections.
+  or STARTTLS connections.  To enable automatic queries of
+  `auth-source' when `:client-certificate' is not specified
+  customize `network-stream-use-client-certificates' to t.
 
 :use-starttls-if-possible is a boolean that says to do opportunistic
 STARTTLS upgrades even if Emacs doesn't have built-in TLS functionality.
@@ -24198,13 +24226,13 @@ call (package-initialize) in your init-file.")
 
 (custom-autoload 'package-enable-at-startup "package" t)
 
+(defvar package--activated nil "\
+Non-nil if `package-activate-all' has been run.")
+
 (autoload 'package-initialize "package" "\
 Load Emacs Lisp packages, and activate them.
 The variable `package-load-list' controls which packages to load.
 If optional arg NO-ACTIVATE is non-nil, don't activate packages.
-If called as part of loading `user-init-file', set
-`package-enable-at-startup' to nil, to prevent accidentally
-loading packages twice.
 
 It is not necessary to adjust `load-path' or `require' the
 individual packages after calling `package-initialize' -- this is
@@ -25145,7 +25173,7 @@ to make output that `read' can handle, whenever this is possible.
 \(fn OBJECT)" nil nil)
 
 (autoload 'pp-buffer "pp" "\
-Prettify the current buffer with printed representation of a Lisp object." nil nil)
+Prettify the current buffer with printed representation of a Lisp object." t nil)
 
 (autoload 'pp "pp" "\
 Output the pretty-printed representation of OBJECT, any Lisp object.
@@ -29530,6 +29558,18 @@ Return a list of all the elements for which (PRED element) is nil in SEQUENCE.
 
 \(fn PRED SEQUENCE)" nil nil)
 
+(autoload 'seq-reduce "seq" "\
+Reduce the function FUNCTION across SEQUENCE, starting with INITIAL-VALUE.
+
+Return the result of calling FUNCTION with INITIAL-VALUE and the
+first element of SEQUENCE, then calling FUNCTION with that result and
+the second element of SEQUENCE, then with that result and the third
+element of SEQUENCE, etc.
+
+If SEQUENCE is empty, return INITIAL-VALUE and FUNCTION is not called.
+
+\(fn FUNCTION SEQUENCE INITIAL-VALUE)" nil nil)
+
 (autoload 'seq-find "seq" "\
 Return the first element for which (PRED element) is non-nil in SEQUENCE.
 If no element is found, return DEFAULT.
@@ -30369,11 +30409,11 @@ enabled, and `so-long-predicate' has detected that the file contains long lines.
 Many Emacs modes struggle with buffers which contain excessively long lines,
 and may consequently cause unacceptable performance issues.
 
-This is commonly on account of 'minified' code (i.e. code has been compacted
-into the smallest file size possible, which often entails removing newlines
-should they not be strictly necessary).  These kinds of files are typically
-not intended to be edited, so not providing the usual editing mode in these
-cases will rarely be an issue.
+This is commonly on account of \"minified\" code (i.e. code that has been
+compacted into the smallest file size possible, which often entails removing
+newlines should they not be strictly necessary).  These kinds of files are
+typically not intended to be edited, so not providing the usual editing mode
+in these cases will rarely be an issue.
 
 This major mode disables any active minor modes listed in `so-long-minor-modes'
 for the current buffer, and buffer-local values are assigned to variables in
@@ -30384,7 +30424,7 @@ values), despite potential performance issues, type \\[so-long-revert].
 
 Use \\[so-long-commentary] for more information.
 
-Use \\[so-long-customize] to configure the behavior.
+Use \\[so-long-customize] to configure the behaviour.
 
 \(fn)" t nil)
 
@@ -30396,8 +30436,12 @@ This command is called automatically when long lines are detected, when
 
 The effects of the action can be undone by calling `so-long-revert'.
 
-If ACTION is provided, it is used instead of `so-long-action'.  With a prefix
-argument, select the action to use interactively.
+If ACTION is provided, it is used instead of `so-long-action'.
+
+With a prefix argument, select the action to use interactively.
+
+If an action was already active in the buffer, it will be reverted before
+invoking the new action.
 
 \(fn &optional ACTION)" t nil)
 
@@ -30427,7 +30471,7 @@ ARG is `toggle'; disable the mode otherwise.
 Many Emacs modes struggle with buffers which contain excessively long lines,
 and may consequently cause unacceptable performance issues.
 
-This is commonly on account of 'minified' code (i.e. code that has been
+This is commonly on account of \"minified\" code (i.e. code that has been
 compacted into the smallest file size possible, which often entails removing
 newlines should they not be strictly necessary).
 
@@ -31243,7 +31287,7 @@ The default comes from `process-coding-system-alist' and
 your might try undecided-dos as a coding system.  If this doesn't help,
 Try to set `comint-output-filter-functions' like this:
 
-\(add-hook 'comint-output-filter-functions #\\='comint-strip-ctrl-m 'append)
+\(add-hook \\='comint-output-filter-functions #\\='comint-strip-ctrl-m \\='append)
 
 \(Type \\[describe-mode] in the SQL buffer for a list of commands.)
 
@@ -35425,7 +35469,7 @@ in any way you like.
 (autoload 'userlock--ask-user-about-supersession-threat "userlock" "\
 
 
-\(fn FN)" nil nil)
+\(fn FILENAME)" nil nil)
 
 (autoload 'ask-user-about-supersession-threat "userlock" "\
 Ask a user who is about to modify an obsolete buffer what to do.
@@ -35436,7 +35480,7 @@ in which case the proposed buffer modification will not be made.
 You can rewrite this to use any criterion you like to choose which one to do.
 The buffer in question is current when this function is called.
 
-\(fn FN)" nil nil)
+\(fn FILENAME)" nil nil)
 
 (if (fboundp 'register-definition-prefixes) (register-definition-prefixes "userlock" '("ask-user-about-" "file-" "userlock--check-content-unchanged")))
 
@@ -35724,12 +35768,16 @@ WORKING-REVISION and LIMIT.
 \(fn &optional WORKING-REVISION LIMIT)" t nil)
 
 (autoload 'vc-print-root-log "vc" "\
-List the change log for the current VC controlled tree in a window.
+List the revision history for the current VC controlled tree in a window.
 If LIMIT is non-nil, it should be a number specifying the maximum
 number of revisions to show; the default is `vc-log-show-limit'.
 When called interactively with a prefix argument, prompt for LIMIT.
+When the prefix argument is a number, use it as LIMIT.
+A special case is when the prefix argument is 1: in this case
+the command asks for the ID of a revision, and shows that revision
+with its diffs (if the underlying VCS supports that).
 
-\(fn &optional LIMIT)" t nil)
+\(fn &optional LIMIT REVISION)" t nil)
 
 (autoload 'vc-print-branch-log "vc" "\
 Show the change log for BRANCH in a window.
@@ -36192,7 +36240,7 @@ Key bindings:
 ;;;### (autoloads nil "verilog-mode" "progmodes/verilog-mode.el"
 ;;;;;;  (0 0 0 0))
 ;;; Generated autoloads from progmodes/verilog-mode.el
-(push (purecopy '(verilog-mode 2019 9 23 4801067)) package--builtin-versions)
+(push (purecopy '(verilog-mode 2019 11 21 248091482)) package--builtin-versions)
 
 (autoload 'verilog-mode "verilog-mode" "\
 Major mode for editing Verilog code.
@@ -36871,8 +36919,8 @@ Known problems:
 
 - XEmacs: Incorrect start-up when automatically opening speedbar.
 - XEmacs: Indentation in XEmacs 21.4 (and higher).
-- Indentation incorrect for new 'postponed' VHDL keyword.
-- Indentation incorrect for 'protected body' construct.
+- Indentation incorrect for new `postponed' VHDL keyword.
+- Indentation incorrect for `protected body' construct.
 
 
                                                 The VHDL Mode Authors
