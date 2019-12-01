@@ -384,9 +384,9 @@ well."
   "`diff-mode' face used to highlight function names produced by \"diff -p\".")
 
 (defface diff-context
-  '((t nil))
+  '((t :extend t))
   "`diff-mode' face used to highlight context and other side-information."
-  :version "25.1")
+  :version "27.1")
 
 (defface diff-nonexistent
   '((t :inherit diff-file-header))
