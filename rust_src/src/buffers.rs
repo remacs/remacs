@@ -24,10 +24,9 @@ use crate::{
     lists,
     lists::{car, cdr, list, member, rassq, setcar},
     lists::{CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks, TailsIter},
-    marker::set_marker,
     marker::{
-        build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker_both,
-        LispMarkerRef, MARKER_DEBUG,
+        build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker,
+        set_marker_both, LispMarkerRef, MARKER_DEBUG,
     },
     math::{max, min},
     multibyte::MAX_MULTIBYTE_LENGTH,
