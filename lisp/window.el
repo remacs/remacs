@@ -6231,6 +6231,15 @@ windows can get as small as `window-safe-min-height' and
 	    (delete-window window))))
       (window--check frame))))
 
+(defun window-state-buffers (state)
+  "Return all buffers saved to the given window state STATE."
+  (let ((buffer (cadr (assq 'buffer state)))
+        (buffers (mapcan (lambda (item)
+                           (when (memq (car item) '(leaf vc hc))
+                             (window-state-buffers item)))
+                         (if (consp (car state)) (list (cdr state)) (cdr state)))))
+    (if buffer (cons buffer buffers) buffers)))
+
 (defun window-swap-states (&optional window-1 window-2 size)
   "Swap the states of live windows WINDOW-1 and WINDOW-2.
 WINDOW-1 must specify a live window and defaults to the selected

@@ -348,6 +348,7 @@ If SEQUENCE is empty, return INITIAL-VALUE and FUNCTION is not called."
           (throw 'seq--break nil)))
     t))
 
+;;;###autoload
 (cl-defgeneric seq-some (pred sequence)
   "Return non-nil if PRED is satisfied for at least one element of SEQUENCE.
 If so, return the first non-nil value returned by PRED."

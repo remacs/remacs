@@ -946,7 +946,9 @@ which means to truncate VAR's value to at most MAX-SIZE elements
 	      ")\n"))))
 
 ;; ----------------------------------------------------------------------------
-(defun desktop-save-buffer-p (filename bufname mode &rest _dummy)
+(defvar desktop-buffers-not-to-save-function nil)
+
+(defun desktop-save-buffer-p (filename bufname mode &rest rest)
   "Return t if buffer should have its state saved in the desktop file.
 FILENAME is the visited file name, BUFNAME is the buffer name, and
 MODE is the major mode.
@@ -970,6 +972,9 @@ MODE is the major mode.
 	     (and (null filename)
 		  (null dired-skip)  ; bug#5755
 		  (with-current-buffer bufname desktop-save-buffer)))
+	 (or (null desktop-buffers-not-to-save-function)
+	     (funcall desktop-buffers-not-to-save-function
+		      filename bufname mode rest))
 	 t)))
 
 ;; ----------------------------------------------------------------------------

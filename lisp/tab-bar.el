@@ -1244,7 +1244,8 @@ in the selected frame."
     (kill-buffer (current-buffer))
     ;; Delete the current window configuration of tab list
     ;; without storing it in the undo list of closed tabs
-    (let (tab-bar-closed-tabs)
+    (let ((tab-bar-mode t) ; avoid message about deleted tab
+          tab-bar-closed-tabs)
       (tab-bar-close-tab nil (1+ (tab-bar--tab-index to-tab))))))
 
 (defun tab-bar-list-mouse-select (event)
@@ -1283,6 +1284,47 @@ indirectly called by the latter."
               (tab-bar-new-tab)
               (tab-bar-rename-tab name))))
       (tab-bar-new-tab))))
+
+(defun tab-bar-get-buffer-tab (buffer-or-name &optional all-frames)
+  "Return a tab whose window contains BUFFER-OR-NAME, or nil if none.
+BUFFER-OR-NAME may be a buffer or a buffer name and defaults to
+the current buffer.
+
+The optional argument ALL-FRAMES specifies the frames to consider:
+
+- t means consider all tabs on all existing frames.
+
+- `visible' means consider all tabs on all visible frames.
+
+- A frame means consider all tabs on that frame only.
+
+Any other value of ALL-FRAMES means consider all tabs on the
+selected frame and no others."
+  (let ((buffer (if buffer-or-name
+                    (get-buffer buffer-or-name)
+                  (current-buffer))))
+    (when (bufferp buffer)
+      (let ((frames (cond
+                     ((eq all-frames t) (frame-list))
+                     ((eq all-frames 'visible) (visible-frame-list))
+                     ((framep all-frames) (list all-frames))
+                     (t (list (selected-frame))))))
+        (seq-some (lambda (frame)
+                    (with-selected-frame frame
+                      (seq-some (lambda (tab)
+                                  (when (if (eq (car tab) 'current-tab)
+                                            (get-buffer-window buffer frame)
+                                          (let* ((state (cdr (assq 'ws tab)))
+                                                 (buffers (when state
+                                                            (window-state-buffers state))))
+                                            (or
+                                             ;; non-writable window-state
+                                             (memq buffer buffers)
+                                             ;; writable window-state
+                                             (member (buffer-name buffer) buffers))))
+                                    (append tab `((frame . ,frame)))))
+                                (funcall tab-bar-tabs-function))))
+                  frames)))))
 
 
 (defun switch-to-buffer-other-tab (buffer-or-name &optional norecord)
