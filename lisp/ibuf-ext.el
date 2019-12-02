@@ -760,7 +760,7 @@ specification, with the same structure as an element of the list
 	  (i 0))
       (dolist (filtergroup filter-group-alist)
 	(let ((filterset (cdr filtergroup)))
-	  (cl-multiple-value-bind (hip-crowd lamers)
+	  (cl-destructuring-bind (hip-crowd lamers)
 	      (ibuffer-split-list (lambda (bufmark)
 				    (ibuffer-included-in-filters-p (car bufmark)
 								   filterset))
