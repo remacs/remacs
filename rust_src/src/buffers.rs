@@ -1865,13 +1865,15 @@ pub fn move_overlay(
     };
     unsafe { specbind(Qinhibit_quit, Qt) };
     let obuffer = overlay_buffer(overlay_ref);
-    let mut o_beg = None;
-    let mut o_end = None;
-    if let Some(mut ob) = obuffer {
-        o_beg = overlay_start(overlay_ref);
-        o_end = overlay_end(overlay_ref);
-        unsafe { unchain_both(ob.as_mut(), overlay_ref.into()) };
-    }
+    let (o_beg, o_end) = match obuffer {
+        Some(mut ob) => {
+            let o_beg = overlay_start(overlay_ref);
+            let o_end = overlay_end(overlay_ref);
+            unsafe { unchain_both(ob.as_mut(), overlay_ref.into()) };
+            (o_beg, o_end)
+        }
+        None => (None, None),
+    };
     // Set the overlay boundaries, which may clip them
     set_marker(
         LispMarkerRef::from(overlay_ref.start),
