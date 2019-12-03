@@ -3120,7 +3120,7 @@ syms_of_ftfont_for_pdumper (void)
 #ifdef HAVE_HARFBUZZ
   fthbfont_driver = ftfont_driver;
   fthbfont_driver.type = Qfreetypehb;
-  fthbfont_driver.otf_capability = hbfont_otf_capability,
+  fthbfont_driver.otf_capability = hbfont_otf_capability;
   fthbfont_driver.shape = hbfont_shape;
   fthbfont_driver.combining_capability = hbfont_combining_capability;
   fthbfont_driver.begin_hb_font = fthbfont_begin_hb_font;

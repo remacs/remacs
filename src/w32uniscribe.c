@@ -1549,7 +1549,7 @@ syms_of_w32uniscribe_for_pdumper (void)
   harfbuzz_font_driver.list = w32hb_list;
   harfbuzz_font_driver.match = w32hb_match;
   harfbuzz_font_driver.encode_char = w32hb_encode_char;
-  harfbuzz_font_driver.otf_capability = hbfont_otf_capability,
+  harfbuzz_font_driver.otf_capability = hbfont_otf_capability;
   harfbuzz_font_driver.shape = hbfont_shape;
   harfbuzz_font_driver.get_variation_glyphs = w32hb_get_variation_glyphs;
   harfbuzz_font_driver.combining_capability = hbfont_combining_capability;

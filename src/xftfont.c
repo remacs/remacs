@@ -702,7 +702,7 @@ syms_of_xftfont_for_pdumper (void)
   xfthbfont_driver.type = Qxfthb;
   xfthbfont_driver.list = xfthbfont_list;
   xfthbfont_driver.match = xfthbfont_match;
-  xfthbfont_driver.otf_capability = hbfont_otf_capability,
+  xfthbfont_driver.otf_capability = hbfont_otf_capability;
   xfthbfont_driver.shape = hbfont_shape;
   xfthbfont_driver.combining_capability = hbfont_combining_capability;
   xfthbfont_driver.begin_hb_font = xfthbfont_begin_hb_font;
