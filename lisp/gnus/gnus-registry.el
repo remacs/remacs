@@ -340,7 +340,7 @@ Encode names if ENCODE is non-nil, otherwise decode."
                   :precious nil
                   :tracked nil)))
 
-(defvar gnus-registry-db (gnus-registry-make-db)
+(defvar gnus-registry-db nil
   "The article registry by Message ID.  See `registry-db'.")
 
 ;; top-level registry data management
@@ -352,40 +352,33 @@ This is not required after changing `gnus-registry-cache-file'."
     (gnus-message 4 "Remaking the Gnus registry")
     (setq gnus-registry-db (gnus-registry-make-db))))
 
-(defun gnus-registry-load (&optional force)
-  "Load the registry from the cache file.
-If the registry is already loaded, don't reload unless FORCE is
-non-nil."
+(defun gnus-registry-load ()
+  "Load the registry from the cache file."
   (interactive)
-  (when (or force
-	    ;; The registry is loaded by both
-	    ;; `gnus-registry-initialize' and the read-newsrc hook.
-	    ;; Don't load twice.
-	    (null (eieio-object-p gnus-registry-db)))
-    (let ((file gnus-registry-cache-file))
-      (condition-case nil
-          (gnus-registry-read file)
-	(file-error
-	 ;; Fix previous mis-naming of the registry file.
-	 (let ((old-file-name
-		(concat (file-name-sans-extension
-			 gnus-registry-cache-file)
-			".eioio")))
-	   (if (and (file-exists-p old-file-name)
-		    (yes-or-no-p
-		     (format "Rename registry file from %s to %s? "
-			     old-file-name file)))
-	       (progn
-		 (gnus-registry-read old-file-name)
-		 (setf (oref gnus-registry-db file) file)
-		 (gnus-message 1 "Registry filename changed to %s" file))
-	     (gnus-registry-remake-db t))))
-	(error
-	 (gnus-message
-          1
-          "The Gnus registry could not be loaded from %s, creating a new one"
-          file)
-	 (gnus-registry-remake-db t))))))
+  (let ((file gnus-registry-cache-file))
+    (condition-case nil
+        (gnus-registry-read file)
+      (file-error
+       ;; Fix previous mis-naming of the registry file.
+       (let ((old-file-name
+	      (concat (file-name-sans-extension
+		       gnus-registry-cache-file)
+		      ".eioio")))
+	 (if (and (file-exists-p old-file-name)
+		  (yes-or-no-p
+		   (format "Rename registry file from %s to %s? "
+			   old-file-name file)))
+	     (progn
+	       (gnus-registry-read old-file-name)
+	       (setf (oref gnus-registry-db file) file)
+	       (gnus-message 1 "Registry filename changed to %s" file))
+	   (gnus-registry-remake-db t))))
+      (error
+       (gnus-message
+        1
+        "The Gnus registry could not be loaded from %s, creating a new one"
+        file)
+       (gnus-registry-remake-db t)))))
 
 (defun gnus-registry-read (file)
   "Do the actual reading of the registry persistence file."
@@ -1178,13 +1171,12 @@ only the last one's marks are returned."
   (gnus-message 5 "Initializing the registry")
   (gnus-registry-install-hooks)
   (gnus-registry-install-shortcuts)
-  (gnus-registry-load))
+  (if (gnus-alive-p)
+      (gnus-registry-load)
+    (add-hook 'gnus-read-newsrc-el-hook 'gnus-registry-load)))
 
-;; FIXME: Why autoload this function?
-;;;###autoload
 (defun gnus-registry-install-hooks ()
   "Install the registry hooks."
-  (interactive)
   (setq gnus-registry-enabled t)
   (add-hook 'gnus-summary-article-move-hook 'gnus-registry-action)
   (add-hook 'gnus-summary-article-delete-hook 'gnus-registry-action)
@@ -1192,13 +1184,11 @@ only the last one's marks are returned."
   (add-hook 'nnmail-spool-hook 'gnus-registry-spool-action)
 
   (add-hook 'gnus-save-newsrc-hook 'gnus-registry-save)
-  (add-hook 'gnus-read-newsrc-el-hook 'gnus-registry-load)
 
   (add-hook 'gnus-summary-prepare-hook 'gnus-registry-register-message-ids))
 
 (defun gnus-registry-unload-hook ()
   "Uninstall the registry hooks."
-  (interactive)
   (remove-hook 'gnus-summary-article-move-hook 'gnus-registry-action)
   (remove-hook 'gnus-summary-article-delete-hook 'gnus-registry-action)
   (remove-hook 'gnus-summary-article-expire-hook 'gnus-registry-action)
