@@ -128,7 +128,9 @@
   (should (equal (rx (any) (not (any)))
                  "\\`a\\`[^z-a]"))
   (should (equal (rx (any "") (not (any "")))
-                 "\\`a\\`[^z-a]")))
+                 "\\`a\\`[^z-a]"))
+  (should (equal (rx (any space ?a digit space))
+                 "[a[:space:][:digit:]]")))
 
 (ert-deftest rx-pcase ()
   (should (equal (pcase "a 1 2 3 1 1 b"
