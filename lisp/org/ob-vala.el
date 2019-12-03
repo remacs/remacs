@@ -39,8 +39,7 @@
 ;;; Code:
 
 (require 'ob)
-
-(declare-function org-trim "org" (s &optional keep-lead))
+(require 'org-macs)
 
 ;; File extension.
 (add-to-list 'org-babel-tangle-lang-exts '("vala" . "vala"))

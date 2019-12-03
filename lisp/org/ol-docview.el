@@ -1,4 +1,4 @@
-;;; org-docview.el --- Support for links to doc-view-mode buffers -*- lexical-binding: t; -*-
+;;; ol-docview.el --- Links to Docview mode buffers  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
@@ -43,11 +43,12 @@
 ;;; Code:
 
 
-(require 'org)
 (require 'doc-view)
+(require 'ol)
 
 (declare-function doc-view-goto-page "doc-view" (page))
 (declare-function image-mode-window-get "image-mode" (prop &optional winprops))
+(declare-function org-open-file "org" (path &optional in-emacs line search))
 
 (org-link-set-parameters "docview"
 			 :follow #'org-docview-open
@@ -56,11 +57,11 @@
 
 (defun org-docview-export (link description format)
   "Export a docview link from Org files."
-  (let* ((path (if (string-match "\\(.+\\)::.+" link) (match-string 1 link)
-		 link))
-         (desc (or description link)))
+  (let ((path (if (string-match "\\(.+\\)::.+" link) (match-string 1 link)
+		link))
+        (desc (or description link)))
     (when (stringp path)
-      (setq path (org-link-escape (expand-file-name path)))
+      (setq path (expand-file-name path))
       (cond
        ((eq format 'html) (format "<a href=\"%s\">%s</a>" path desc))
        ((eq format 'latex) (format "\\href{%s}{%s}" path desc))
@@ -84,7 +85,7 @@
     (let* ((path buffer-file-name)
 	   (page (image-mode-window-get 'page))
 	   (link (concat "docview:" path "::" (number-to-string page))))
-      (org-store-link-props
+      (org-link-store-props
        :type "docview"
        :link link
        :description path))))
@@ -93,11 +94,11 @@
   "Use the existing file name completion for file.
 Links to get the file name, then ask the user for the page number
 and append it."
-  (concat (replace-regexp-in-string "^file:" "docview:" (org-file-complete-link))
+  (concat (replace-regexp-in-string "^file:" "docview:" (org-link-complete-file))
 	  "::"
 	  (read-from-minibuffer "Page:" "1")))
 
 
-(provide 'org-docview)
+(provide 'ol-docview)
 
-;;; org-docview.el ends here
+;;; ol-docview.el ends here

@@ -1,4 +1,4 @@
-;;; org-mhe.el --- Support for Links to MH-E Messages -*- lexical-binding: t; -*-
+;;; ol-mhe.el --- Links to MH-E Messages             -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
@@ -31,7 +31,7 @@
 ;;; Code:
 
 (require 'org-macs)
-(require 'org)
+(require 'ol)
 
 ;; Customization variables
 
@@ -88,12 +88,12 @@ supported by MH-E."
 	     (subject (org-mhe-get-header "Subject:"))
 	     (date (org-mhe-get-header "Date:"))
 	     link desc)
-	(org-store-link-props :type "mh" :from from :to to :date date
+	(org-link-store-props :type "mh" :from from :to to :date date
 			      :subject subject :message-id message-id)
-	(setq desc (org-email-link-description))
+	(setq desc (org-link-email-description))
 	(setq link (concat "mhe:" (org-mhe-get-message-real-folder) "#"
 			   (org-unbracket-string "<" ">" message-id)))
-	(org-add-link-props :link link :description desc)
+	(org-link-add-props :link link :description desc)
 	link))))
 
 (defun org-mhe-open (path)
@@ -199,7 +199,7 @@ folders."
     (mh-search-choose)
     (if (eq mh-searcher 'pick)
 	(progn
-	  (setq article (org-add-angle-brackets article))
+	  (setq article (org-link-add-angle-brackets article))
 	  (mh-search folder (list "--message-id" article))
 	  (when (and org-mhe-search-all-folders
 		     (not (org-mhe-get-message-real-folder)))
@@ -214,6 +214,6 @@ folders."
       (kill-buffer)
       (error "Message not found"))))
 
-(provide 'org-mhe)
+(provide 'ol-mhe)
 
-;;; org-mhe.el ends here
+;;; ol-mhe.el ends here

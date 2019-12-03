@@ -27,6 +27,7 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
 (require 'calc)
 (require 'calc-trail)
 (require 'calc-store)
@@ -34,7 +35,6 @@
 (declare-function calc-store-into    "calc-store" (&optional var))
 (declare-function calc-recall        "calc-store" (&optional var))
 (declare-function math-evaluate-expr "calc-ext"   (x))
-(declare-function org-trim "org" (s &optional keep-lead))
 
 (defvar org-babel-default-header-args:calc nil
   "Default arguments for evaluating a calc source block.")

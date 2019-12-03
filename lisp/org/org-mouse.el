@@ -422,7 +422,7 @@ SCHEDULED: or DEADLINE: or ANYTHINGLIKETHIS:"
 (defun org-mouse-tag-menu ()		;todo
   "Create the tags menu."
   (append
-   (let ((tags (org-get-tags)))
+   (let ((tags (org-get-tags nil t)))
      (org-mouse-keyword-menu
       (sort (mapcar 'car (org-get-buffer-tags)) 'string-lessp)
       `(lambda (tag)
@@ -434,22 +434,12 @@ SCHEDULED: or DEADLINE: or ANYTHINGLIKETHIS:"
       `(lambda (tag) (member tag (quote ,tags)))
       ))
    '("--"
-     ["Align Tags Here" (org-set-tags nil t) t]
-     ["Align Tags in Buffer" (org-set-tags t t) t]
-     ["Set Tags ..." (org-set-tags) t])))
+     ["Align Tags Here" (org-align-tags) t]
+     ["Align Tags in Buffer" (org-align-tags t) t]
+     ["Set Tags ..." (org-set-tags-command) t])))
 
 (defun org-mouse-set-tags (tags)
-  (save-excursion
-    ;; remove existing tags first
-    (beginning-of-line)
-    (when (org-mouse-re-search-line ":\\(\\([A-Za-z_]+:\\)+\\)")
-      (replace-match ""))
-
-    ;; set new tags if any
-    (when tags
-      (end-of-line)
-      (insert " :" (mapconcat 'identity tags ":") ":")
-      (org-set-tags nil t))))
+  (org-set-tags tags))
 
 (defun org-mouse-insert-checkbox ()
   (interactive)
@@ -498,7 +488,7 @@ SCHEDULED: or DEADLINE: or ANYTHINGLIKETHIS:"
    `("Main Menu"
      ["Show Overview" org-mouse-show-overview t]
      ["Show Headlines" org-mouse-show-headlines t]
-     ["Show All" outline-show-all t]
+     ["Show All" org-show-all t]
      ["Remove Highlights" org-remove-occur-highlights
       :visible org-occur-highlights]
      "--"

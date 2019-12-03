@@ -28,7 +28,6 @@
 ;;; Code:
 (require 'ob)
 
-(declare-function org-fill-template "org" (template alist))
 (declare-function org-table-convert-region "org-table"
 		  (beg0 end0 &optional separator))
 (declare-function orgtbl-to-csv "org-table" (table params))

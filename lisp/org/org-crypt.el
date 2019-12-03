@@ -190,7 +190,7 @@ See `org-crypt-disable-auto-save'."
 	     (error (insert contents) (error (nth 1 err)))))
 	 (when folded
 	   (goto-char start-heading)
-	   (outline-hide-subtree))
+	   (org-flag-subtree t))
 	 nil)))))
 
 (defun org-decrypt-entry ()

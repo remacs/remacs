@@ -1,4 +1,4 @@
-;;; org-bibtex.el --- Org links to BibTeX entries    -*- lexical-binding: t; -*-
+;;; ol-bibtex.el --- Links to BibTeX entries        -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2007-2019 Free Software Foundation, Inc.
 ;;
@@ -107,20 +107,36 @@
 
 ;;; Code:
 
-(require 'org)
 (require 'bibtex)
 (require 'cl-lib)
 (require 'org-compat)
+(require 'org-macs)
+(require 'ol)
 
 (defvar org-agenda-overriding-header)
 (defvar org-agenda-search-view-always-boolean)
 (defvar org-bibtex-description nil) ; dynamically scoped from org.el
 (defvar org-id-locations)
+(defvar org-property-end-re)
+(defvar org-special-properties)
+(defvar org-window-config-before-follow-link)
 
 (declare-function bibtex-beginning-of-entry "bibtex" ())
 (declare-function bibtex-generate-autokey "bibtex" ())
 (declare-function bibtex-parse-entry "bibtex" (&optional content))
 (declare-function bibtex-url "bibtex" (&optional pos no-browse))
+
+(declare-function org-back-to-heading "org" (&optional invisible-ok))
+(declare-function org-entry-get "org" (pom property &optional inherit literal-nil))
+(declare-function org-entry-properties "org" (&optional pom which))
+(declare-function org-get-tags "org" (&optional pos local))
+(declare-function org-heading-components "org" ())
+(declare-function org-insert-heading "org" (&optional arg invisible-ok top))
+(declare-function org-map-entries "org" (func &optional match scope &rest skip))
+(declare-function org-narrow-to-subtree "org" ())
+(declare-function org-open-file "org" (path &optional in-emacs line search))
+(declare-function org-set-property "org" (property value))
+(declare-function org-toggle-tag "org" (tag &optional onoff))
 
 
 ;;; Bibtex data
@@ -354,9 +370,8 @@ and `org-exclude-tags-from-inheritance'."
 					    (append org-bibtex-tags
 						    org-bibtex-no-export-tags))
 			      tag))
-			  (if org-bibtex-inherit-tags
-			      (org-get-tags-at)
-			    (org-get-local-tags-at)))))))
+			  (if org-bibtex-inherit-tags (org-get-tags)
+			    (org-get-tags nil t)))))))
     (when type
       (let ((entry (format
 		    "@%s{%s,\n%s\n}\n" type id
@@ -489,7 +504,7 @@ With optional argument OPTIONAL, also prompt for optional fields."
 		   (save-excursion
 		     (bibtex-beginning-of-entry)
 		     (bibtex-parse-entry)))))
-      (org-store-link-props
+      (org-link-store-props
        :key (cdr (assoc "=key=" entry))
        :author (or (cdr (assoc "author" entry)) "[no author]")
        :editor (or (cdr (assoc "editor" entry)) "[no editor]")
@@ -743,6 +758,6 @@ This function relies `org-search-view' to locate results."
 			     string (or org-bibtex-prefix "")
 			     org-bibtex-type-property-name))))
 
-(provide 'org-bibtex)
+(provide 'ol-bibtex)
 
-;;; org-bibtex.el ends here
+;;; ol-bibtex.el ends here

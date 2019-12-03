@@ -69,6 +69,8 @@ This function is called by `org-babel-execute-src-block'."
 	 (cmdline (or (cdr (assq :cmdline params))
 		      (format "-T%s" (file-name-extension out-file))))
 	 (cmd (or (cdr (assq :cmd params)) "dot"))
+	 (coding-system-for-read 'utf-8) ;use utf-8 with sub-processes
+	 (coding-system-for-write 'utf-8)
 	 (in-file (org-babel-temp-file "dot-")))
     (with-temp-file in-file
       (insert (org-babel-expand-body:dot body params)))

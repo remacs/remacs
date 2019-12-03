@@ -1,4 +1,4 @@
-;;; org-eshell.el - Support for Links to Working Directories in Eshell -*- lexical-binding: t; -*-
+;;; ol-eshell.el - Links to Working Directories in Eshell -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2011-2019 Free Software Foundation, Inc.
 
@@ -23,16 +23,18 @@
 
 ;;; Code:
 
-(require 'org)
 (require 'eshell)
 (require 'esh-mode)
+(require 'ol)
+
+(declare-function eshell/pwd "em-dirs.el" (&rest args))
 
 (org-link-set-parameters "eshell"
 			 :follow #'org-eshell-open
 			 :store #'org-eshell-store-link)
 
 (defun org-eshell-open (link)
-  "Switch to am eshell buffer and execute a command line.
+  "Switch to an eshell buffer and execute a command line.
    The link can be just a command line (executed in the default
    eshell buffer) or a command line prefixed by a buffer name
    followed by a colon."
@@ -55,12 +57,12 @@
   "Store a link that, when opened, switches back to the current eshell buffer
    and the current working directory."
   (when (eq major-mode 'eshell-mode)
-    (let* ((command (concat "cd " dired-directory))
+    (let* ((command (concat "cd " (eshell/pwd)))
            (link  (concat (buffer-name) ":" command)))
-      (org-store-link-props
+      (org-link-store-props
        :link (concat "eshell:" link)
        :description command))))
 
-(provide 'org-eshell)
+(provide 'ol-eshell)
 
-;;; org-eshell.el ends here
+;;; ol-eshell.el ends here

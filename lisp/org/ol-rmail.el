@@ -1,4 +1,4 @@
-;;; org-rmail.el --- Support for Links to Rmail Messages -*- lexical-binding: t; -*-
+;;; ol-rmail.el --- Links to Rmail Messages          -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
@@ -30,7 +30,7 @@
 
 ;;; Code:
 
-(require 'org)
+(require 'ol)
 
 ;; Declare external functions and variables
 (declare-function rmail-show-message  "rmail" (&optional n no-summary))
@@ -65,13 +65,13 @@
 	       (subject (mail-fetch-field "subject"))
 	       (date (mail-fetch-field "date"))
 	       desc link)
-	  (org-store-link-props
+	  (org-link-store-props
 	   :type "rmail" :from from :to to :date date
 	   :subject subject :message-id message-id)
 	  (setq message-id (org-unbracket-string "<" ">" message-id))
-	  (setq desc (org-email-link-description))
+	  (setq desc (org-link-email-description))
 	  (setq link (concat "rmail:" folder "#" message-id))
-	  (org-add-link-props :link link :description desc)
+	  (org-link-add-props :link link :description desc)
 	  (rmail-show-message rmail-current-message)
 	  link)))))
 
@@ -89,7 +89,7 @@
   (require 'rmail)
   (cond ((null article) (setq article ""))
 	((stringp article)
-	 (setq article (org-add-angle-brackets article)))
+	 (setq article (org-link-add-angle-brackets article)))
 	(t (user-error "Wrong RMAIL link format")))
   (let (message-number)
     (save-excursion
@@ -110,6 +110,6 @@
 	  message-number)
       (error "Message not found"))))
 
-(provide 'org-rmail)
+(provide 'ol-rmail)
 
-;;; org-rmail.el ends here
+;;; ol-rmail.el ends here

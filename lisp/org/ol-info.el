@@ -1,4 +1,4 @@
-;;; org-info.el --- Support for Links to Info Nodes -*- lexical-binding: t; -*-
+;;; ol-info.el --- Links to Info Nodes               -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
@@ -30,7 +30,7 @@
 
 ;;; Code:
 
-(require 'org)
+(require 'ol)
 
 ;; Declare external functions and variables
 
@@ -54,7 +54,7 @@
 			"#" Info-current-node))
 	  (desc (concat (file-name-nondirectory Info-current-file)
 			"#" Info-current-node)))
-      (org-store-link-props :type "info" :file Info-current-file
+      (org-link-store-props :type "info" :file Info-current-file
 			    :node Info-current-node
 			    :link link :desc desc)
       link)))
@@ -66,7 +66,7 @@
 
 (defun org-info-follow-link (name)
   "Follow an Info file and node link specified by NAME."
-  (if (or (string-match "\\(.*\\)[#:]:?\\(.*\\)" name)
+  (if (or (string-match "\\(.*\\)\\(?:#\\|::\\)\\(.*\\)" name)
           (string-match "\\(.*\\)" name))
       (let ((filename (match-string 1 name))
 	    (nodename-or-index (or (match-string 2 name) "Top")))
@@ -129,7 +129,7 @@ See `org-info-emacs-documents' and `org-info-other-documents' for details."
 (defun org-info-export (path desc format)
   "Export an info link.
 See `org-link-parameters' for details about PATH, DESC and FORMAT."
-  (let* ((parts (split-string path "[#:]:?"))
+  (let* ((parts (split-string path "#\\|::"))
 	 (manual (car parts))
 	 (node (or (nth 1 parts) "Top")))
     (pcase format
@@ -143,6 +143,6 @@ See `org-link-parameters' for details about PATH, DESC and FORMAT."
 	 (format "@ref{%s,%s,,%s,}" node title manual)))
       (_ nil))))
 
-(provide 'org-info)
+(provide 'ol-info)
 
-;;; org-info.el ends here
+;;; ol-info.el ends here

@@ -424,7 +424,7 @@ CONTENTS is nil.  INFO is a plist holding contextual information."
 CONTENTS is nil.  INFO is a plist holding contextual information."
   (org-man--wrap-label
    fixed-width
-   (format "\\fC\n%s\\fP"
+   (format "\\fC\n%s\n\\fP"
            (org-remove-indentation
             (org-element-property :value fixed-width)))))
 

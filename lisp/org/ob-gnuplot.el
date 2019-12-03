@@ -39,9 +39,9 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
 
 (declare-function org-time-string-to-time "org" (s))
-(declare-function org-combine-plists "org" (&rest plists))
 (declare-function orgtbl-to-generic "org-table" (table params))
 (declare-function gnuplot-mode "ext:gnuplot-mode" ())
 (declare-function gnuplot-send-string-to-gnuplot "ext:gnuplot-mode" (str txt))

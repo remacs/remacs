@@ -40,10 +40,9 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
 (require 'comint)
 
-(declare-function org-remove-indentation "org" (code &optional n))
-(declare-function org-trim "org" (s &optional keep-lead))
 (declare-function haskell-mode "ext:haskell-mode" ())
 (declare-function run-haskell "ext:inf-haskell" (&optional arg))
 (declare-function inferior-haskell-load-file
@@ -75,17 +74,16 @@
 		     (org-babel-variable-assignments:haskell params)))
          (session (org-babel-haskell-initiate-session session params))
 	 (comint-preoutput-filter-functions
-	       (cons 'ansi-color-filter-apply comint-preoutput-filter-functions))
+	  (cons 'ansi-color-filter-apply comint-preoutput-filter-functions))
          (raw (org-babel-comint-with-output
 		  (session org-babel-haskell-eoe t full-body)
                 (insert (org-trim full-body))
                 (comint-send-input nil t)
                 (insert org-babel-haskell-eoe)
                 (comint-send-input nil t)))
-         (results (mapcar
-                   #'org-babel-strip-quotes
-                   (cdr (member org-babel-haskell-eoe
-                                (reverse (mapcar #'org-trim raw)))))))
+         (results (mapcar #'org-strip-quotes
+			  (cdr (member org-babel-haskell-eoe
+                                       (reverse (mapcar #'org-trim raw)))))))
     (org-babel-reassemble-table
      (let ((result
             (pcase result-type

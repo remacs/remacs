@@ -1,4 +1,4 @@
-;;; org-eww.el --- Store url and kill from Eww mode for Org  -*- lexical-binding: t -*-
+;;; ol-eww.el --- Store URL and kill from Eww mode    -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2014-2019 Free Software Foundation, Inc.
 
@@ -44,7 +44,7 @@
 
 
 ;;; Code:
-(require 'org)
+(require 'ol)
 (require 'cl-lib)
 
 (defvar eww-current-title)
@@ -55,12 +55,12 @@
 (declare-function eww-current-url "eww")
 
 
-;; Store Org-link in eww-mode buffer
+;; Store Org link in Eww mode buffer
 (org-link-set-parameters "eww" :follow #'eww :store #'org-eww-store-link)
 (defun org-eww-store-link ()
   "Store a link to the url of an EWW buffer."
   (when (eq major-mode 'eww-mode)
-    (org-store-link-props
+    (org-link-store-props
      :type "eww"
      :link (if (< emacs-major-version 25)
 	       eww-current-url
@@ -72,7 +72,7 @@
 			(eww-current-url))))))
 
 
-;; Some auxiliary functions concerning links in eww buffers
+;; Some auxiliary functions concerning links in Eww buffers
 (defun org-eww-goto-next-url-property-change ()
   "Move to the start of next link if exists.
 Otherwise point is not moved.  Return point."
@@ -93,11 +93,12 @@ Otherwise point is not moved.  Return point."
 (defun org-eww-copy-for-org-mode ()
   "Copy current buffer content or active region with `org-mode' style links.
 This will encode `link-title' and `link-location' with
-`org-make-link-string', and insert the transformed test into the kill ring,
-so that it can be yanked into an Org mode buffer with links working correctly.
+`org-link-make-string' and insert the transformed text into the
+kill ring, so that it can be yanked into an Org mode buffer with
+links working correctly.
 
-Further lines starting with a star get quoted with a comma to keep
-the structure of the Org file."
+Further lines starting with a star get quoted with a comma to
+keep the structure of the Org file."
   (interactive)
   (let* ((regionp (org-region-active-p))
          (transform-start (point-min))
@@ -140,13 +141,13 @@ the structure of the Org file."
               ;; concat `org-mode' style url to `return-content'.
 	      (setq return-content
 		    (concat return-content
-			    (if (stringp link-location)
-				;; hint: link-location is different for form-elements.
-				(org-make-link-string link-location link-title)
+			    (if (org-string-nw-p link-location)
+				;; Hint: link-location is different
+				;; for form-elements.
+				(org-link-make-string link-location link-title)
 			      link-title))))
 	  (goto-char temp-position) ; reset point before jump next anchor
-	  (setq out-bound t)	    ; for break out `while' loop
-	  ))
+	  (setq out-bound t)))	    ; for break out `while' loop
       ;; Add the rest until end of the region to be copied.
       (when (< (point) transform-end)
 	(setq return-content
@@ -170,6 +171,6 @@ the structure of the Org file."
 (add-hook 'eww-mode-hook #'org-eww-extend-eww-keymap)
 
 
-(provide 'org-eww)
+(provide 'ol-eww)
 
-;;; org-eww.el ends here
+;;; ol-eww.el ends here

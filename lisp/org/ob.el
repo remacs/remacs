@@ -24,11 +24,11 @@
 ;;; Code:
 (require 'org-macs)
 (require 'org-compat)
+(require 'org-keys)
 (require 'ob-eval)
 (require 'ob-core)
 (require 'ob-comint)
 (require 'ob-exp)
-(require 'ob-keys)
 (require 'ob-table)
 (require 'ob-lob)
 (require 'ob-ref)

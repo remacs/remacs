@@ -28,13 +28,12 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
 (require 'cc-mode)
 (require 'cl-lib)
 
 (declare-function org-entry-get "org"
 		  (pom property &optional inherit literal-nil))
-(declare-function org-remove-indentation "org" (code &optional n))
-(declare-function org-trim "org" (s &optional keep-lead))
 
 (defvar org-babel-tangle-lang-exts)
 (add-to-list 'org-babel-tangle-lang-exts '("fortran" . "F90"))
@@ -109,7 +108,7 @@ its header arguments."
   "Wrap body in a \"program ... end program\" block if none exists."
   (if (string-match "^[ \t]*program[ \t]*.*" (capitalize body))
       (let ((vars (org-babel--get-vars params)))
-	(if vars (error "Cannot use :vars if `program' statement is present"))
+	(when vars (error "Cannot use :vars if `program' statement is present"))
 	body)
     (format "program main\n%s\nend program main\n" body)))
 

@@ -33,9 +33,9 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
 
 (declare-function forth-proc "ext:gforth" ())
-(declare-function org-trim "org" (s &optional keep-lead))
 
 (defvar org-babel-default-header-args:forth '((:session . "yes"))
   "Default header arguments for forth code blocks.")

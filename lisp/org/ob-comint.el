@@ -36,7 +36,7 @@
 
 (defun org-babel-comint-buffer-livep (buffer)
   "Check if BUFFER is a comint buffer with a live process."
-  (let ((buffer (if buffer (get-buffer buffer))))
+  (let ((buffer (when buffer (get-buffer buffer))))
     (and buffer (buffer-live-p buffer) (get-buffer-process buffer) buffer)))
 
 (defmacro org-babel-comint-in-buffer (buffer &rest body)

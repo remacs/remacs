@@ -89,6 +89,21 @@ It will be green even if it was done after the deadline."
   :group 'org-habit
   :type 'boolean)
 
+(defcustom org-habit-scheduled-past-days nil
+  "Value to use instead of `org-scheduled-past-days', for habits only.
+
+If nil, `org-scheduled-past-days' is used.
+
+Setting this to say 10000 is a way to make habits always show up
+as a reminder, even if you set `org-scheduled-past-days' to a
+small value because you regard scheduled items as a way of
+\"turning on\" TODO items on a particular date, rather than as a
+means of creating calendar-based reminders."
+  :group 'org-habit
+  :type '(choice integer (const nil))
+  :package-version '(Org . "9.3")
+  :safe (lambda (v) (or (integerp v) (null v))))
+
 (defface org-habit-clear-face
   '((((background light)) (:background "#8270f9"))
     (((background dark)) (:background "blue")))
@@ -373,31 +388,30 @@ current time."
 				    (throw :exit s))))))))))
 		 donep)))
 	     markedp face)
-	(if donep
-	    (let ((done-time (time-add
-			      starting
-			      (days-to-time
-			       (- start (time-to-days starting))))))
-
-	      (aset graph index org-habit-completed-glyph)
-	      (setq markedp t)
-	      (put-text-property
-	       index (1+ index) 'help-echo
-	       (format-time-string (org-time-stamp-format) done-time) graph)
-	      (while (and done-dates
-			  (= start (car done-dates)))
-		(setq last-done-date (car done-dates)
-		      done-dates (cdr done-dates))))
-	  (if todayp
-	      (aset graph index org-habit-today-glyph)))
+	(cond
+	 (donep
+	  (aset graph index org-habit-completed-glyph)
+	  (setq markedp t)
+	  (while (and done-dates (= start (car done-dates)))
+	    (setq last-done-date (car done-dates))
+	    (setq done-dates (cdr done-dates))))
+	 (todayp
+	  (aset graph index org-habit-today-glyph)))
 	(setq face (if (or in-the-past-p todayp)
 		       (car faces)
 		     (cdr faces)))
-	(if (and in-the-past-p
-		 (not (eq face 'org-habit-overdue-face))
-		 (not markedp))
-	    (setq face (cdr faces)))
-	(put-text-property index (1+ index) 'face face graph))
+	(when (and in-the-past-p
+		   (not (eq face 'org-habit-overdue-face))
+		   (not markedp))
+	  (setq face (cdr faces)))
+	(put-text-property index (1+ index) 'face face graph)
+	(put-text-property index (1+ index)
+			   'help-echo
+			   (concat (format-time-string
+				    (org-time-stamp-format)
+                                    (time-add starting (days-to-time (- start (time-to-days starting)))))
+				   (if donep " DONE" ""))
+			   graph))
       (setq start (1+ start)
 	    index (1+ index)))
     graph))
@@ -406,7 +420,8 @@ current time."
   "Insert consistency graph for any habitual tasks."
   (let ((inhibit-read-only t)
 	(buffer-invisibility-spec '(org-link))
-	(moment (time-since (* 3600 org-extend-today-until))))
+	(moment (org-time-subtract nil
+				   (* 3600 org-extend-today-until))))
     (save-excursion
       (goto-char (if line (point-at-bol) (point-min)))
       (while (not (eobp))
@@ -421,7 +436,7 @@ current time."
 	      habit
 	      (time-subtract moment (days-to-time org-habit-preceding-days))
 	      moment
-	      (time-add moment (days-to-time org-habit-following-days))))))
+              (time-add moment (days-to-time org-habit-following-days))))))
 	(forward-line)))))
 
 (defun org-habit-toggle-habits ()
@@ -434,7 +449,18 @@ current time."
   (message "Habits turned %s"
 	   (if org-habit-show-habits "on" "off")))
 
-(org-defkey org-agenda-mode-map "K" 'org-habit-toggle-habits)
+(defun org-habit-toggle-display-in-agenda (arg)
+  "Toggle display of habits in agenda.
+With ARG toggle display of all vs. undone scheduled habits.
+See `org-habit-show-all-today'."
+  (interactive "P")
+  (if (not arg)
+      (org-habit-toggle-habits)
+    (org-agenda-check-type t 'agenda)
+    (setq org-habit-show-all-today (not org-habit-show-all-today))
+    (when org-habit-show-habits (org-agenda-redo))))
+
+(org-defkey org-agenda-mode-map "K" 'org-habit-toggle-display-in-agenda)
 
 (provide 'org-habit)
 

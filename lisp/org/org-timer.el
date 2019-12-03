@@ -139,7 +139,7 @@ the region 0:00:00."
 		   (format "Restart timer with offset [%s]: " def)))
 	  (unless (string-match "\\S-" s) (setq s def))
 	  (setq delta (org-timer-hms-to-secs (org-timer-fix-incomplete s)))))
-	(setq org-timer-start-time (time-since delta)))
+	(setq org-timer-start-time (org-time-since delta)))
       (setq org-timer-pause-time nil)
       (org-timer-set-mode-line 'on)
       (message "Timer start time set to %s, current value is %s"
@@ -147,6 +147,7 @@ the region 0:00:00."
 	       (org-timer-secs-to-hms (or delta 0)))
       (run-hooks 'org-timer-start-hook)))))
 
+;;;###autoload
 (defun org-timer-pause-or-continue (&optional stop)
   "Pause or continue the relative or countdown timer.
 With prefix arg STOP, stop it entirely."
@@ -162,9 +163,9 @@ With prefix arg STOP, stop it entirely."
 	    (setq org-timer-countdown-timer
 		  (org-timer--run-countdown-timer
 		   new-secs org-timer-countdown-timer-title))
-	    (setq org-timer-start-time (time-add nil new-secs)))
+	    (setq org-timer-start-time (org-time-add nil new-secs)))
 	(setq org-timer-start-time
-	      (time-since (- pause-secs start-secs))))
+	      (org-time-since (- pause-secs start-secs))))
       (setq org-timer-pause-time nil)
       (org-timer-set-mode-line 'on)
       (run-hooks 'org-timer-continue-hook)
@@ -179,6 +180,7 @@ With prefix arg STOP, stop it entirely."
     (org-timer-set-mode-line 'paused)
     (message "Timer paused at %s" (org-timer-value-string)))))
 
+;;;###autoload
 (defun org-timer-stop ()
   "Stop the relative or countdown timer."
   (interactive)
@@ -217,15 +219,12 @@ it in the buffer."
       (insert (org-timer-value-string)))))
 
 (defun org-timer-value-string ()
-  "Set the timer string."
+  "Return current timer string."
   (format org-timer-format
 	  (org-timer-secs-to-hms
-	   (abs (floor (org-timer-seconds))))))
-
-(defun org-timer-seconds ()
-  (let ((s (float-time (time-subtract org-timer-pause-time
-				      org-timer-start-time))))
-    (if org-timer-countdown-timer (- s) s)))
+	   (let ((time (- (float-time org-timer-pause-time)
+			  (float-time org-timer-start-time))))
+	     (abs (floor (if org-timer-countdown-timer (- time) time)))))))
 
 ;;;###autoload
 (defun org-timer-change-times-in-region (beg end delta)
@@ -385,7 +384,10 @@ VALUE can be `on', `off', or `paused'."
        "No timer set"
      (format-seconds
       "%m minute(s) %s seconds left before next time out"
-      (time-subtract (timer--time org-timer-countdown-timer) nil)))))
+      ;; Note: Once our minimal require is Emacs 27, we can drop this
+      ;; org-time-convert-to-integer call.
+      (org-time-convert-to-integer
+       (org-time-subtract (timer--time org-timer-countdown-timer) nil))))))
 
 ;;;###autoload
 (defun org-timer-set-timer (&optional opt)
@@ -417,7 +419,9 @@ using three `C-u' prefix arguments."
 	   (if (numberp org-timer-default-timer)
 	       (number-to-string org-timer-default-timer)
 	     org-timer-default-timer))
-	 (effort-minutes (ignore-errors (floor (org-get-at-eol 'effort-minutes 1))))
+	 (effort-minutes (let ((effort (org-entry-get nil org-effort-property)))
+			   (when (org-string-nw-p effort)
+			     (floor (org-duration-to-minutes effort)))))
 	 (minutes (or (and (numberp opt) (number-to-string opt))
 		      (and (not (equal opt '(64)))
 			   effort-minutes
@@ -444,7 +448,7 @@ using three `C-u' prefix arguments."
 		(org-timer--run-countdown-timer
 		 secs org-timer-countdown-timer-title))
 	  (run-hooks 'org-timer-set-hook)
-	  (setq org-timer-start-time (time-add nil secs))
+	  (setq org-timer-start-time (org-time-add nil secs))
 	  (setq org-timer-pause-time nil)
 	  (org-timer-set-mode-line 'on))))))
 
@@ -462,7 +466,8 @@ time is up."
 		 (run-hooks 'org-timer-done-hook)))))
 
 (defun org-timer--get-timer-title ()
-  "Construct timer title from heading or file name of Org buffer."
+  "Construct timer title.
+Try to use an Org header, otherwise use the buffer name."
   (cond
    ((derived-mode-p 'org-agenda-mode)
     (let* ((marker (or (get-text-property (point) 'org-marker)
@@ -478,7 +483,7 @@ time is up."
    ((derived-mode-p 'org-mode)
     (or (ignore-errors (org-get-heading))
 	(buffer-name (buffer-base-buffer))))
-   (t (error "Not in an Org buffer"))))
+   (t (buffer-name (buffer-base-buffer)))))
 
 (provide 'org-timer)
 

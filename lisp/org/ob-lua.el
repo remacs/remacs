@@ -34,10 +34,9 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
 (require 'cl-lib)
 
-(declare-function org-remove-indentation "org" (code &optional n))
-(declare-function org-trim "org" (s &optional keep-lead))
 (declare-function lua-shell "ext:lua-mode" (&optional argprompt))
 (declare-function lua-toggle-shells "ext:lua-mode" (arg))
 (declare-function run-lua "ext:lua" (cmd &optional dedicated show))
@@ -149,7 +148,7 @@ specifying a variable of the same value."
     (if (eq var 'hline)
         org-babel-lua-hline-to
       (format
-       (if (and (stringp var) (string-match "[\n\r]" var)) "\"\"%S\"\"" "%S")
+       (if (and (stringp var) (string-match "[\n\r]" var)) "[=[%s]=]" "%S")
        (if (stringp var) (substring-no-properties var) var)))))
 
 (defun org-babel-lua-table-or-string (results)
@@ -291,13 +290,13 @@ last statement in BODY, as elisp."
   (let ((raw
          (pcase result-type
            (`output (org-babel-eval org-babel-lua-command
-				    (concat (if preamble (concat preamble "\n"))
+				    (concat preamble (and preamble "\n")
 					    body)))
            (`value (let ((tmp-file (org-babel-temp-file "lua-")))
 		     (org-babel-eval
 		      org-babel-lua-command
 		      (concat
-		       (if preamble (concat preamble "\n") "")
+		       preamble (and preamble "\n")
 		       (format
 			(if (member "pp" result-params)
 			    org-babel-lua-pp-wrapper-method

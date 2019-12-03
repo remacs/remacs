@@ -54,8 +54,7 @@
 
 ;;; Code:
 (require 'ob-core)
-
-(declare-function org-trim "org" (s &optional keep-lead))
+(require 'org-macs)
 
 (defun org-babel-table-truncate-at-newline (string)
   "Replace newline character with ellipses.

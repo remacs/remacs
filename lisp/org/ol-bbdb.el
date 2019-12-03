@@ -1,4 +1,4 @@
-;;; org-bbdb.el --- Support for links to BBDB entries -*- lexical-binding: t; -*-
+;;; ol-bbdb.el --- Links to BBDB entries             -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2004-2019 Free Software Foundation, Inc.
 
@@ -93,23 +93,22 @@
 ;;
 ;;; Code:
 
-(require 'org)
 (require 'cl-lib)
+(require 'org-compat)
+(require 'org-macs)
+(require 'ol)
 
-;; Declare external functions and variables
+;; Declare functions and variables
 
 (declare-function bbdb "ext:bbdb-com" (string elidep))
 (declare-function bbdb-company "ext:bbdb-com" (string elidep))
-(declare-function bbdb-current-record "ext:bbdb-com"
-		  (&optional planning-on-modifying))
+(declare-function bbdb-current-record "ext:bbdb-com" (&optional planning-on-modifying))
 (declare-function bbdb-name "ext:bbdb-com" (string elidep))
-(declare-function bbdb-completing-read-record "ext:bbdb-com"
-		  (prompt &optional omit-records))
+(declare-function bbdb-completing-read-record "ext:bbdb-com" (prompt &optional omit-records))
 (declare-function bbdb-record-field "ext:bbdb" (record field))
 (declare-function bbdb-record-getprop "ext:bbdb" (record property))
 (declare-function bbdb-record-name "ext:bbdb" (record))
-(declare-function bbdb-records "ext:bbdb"
-		  (&optional dont-check-disk already-in-db-buffer))
+(declare-function bbdb-records "ext:bbdb" (&optional dont-check-disk already-in-db-buffer))
 (declare-function bbdb-split "ext:bbdb" (string separators))
 (declare-function bbdb-string-trim "ext:bbdb" (string))
 (declare-function bbdb-record-get-field "ext:bbdb" (record field))
@@ -121,10 +120,13 @@
 ;; `bbdb-record-xfield' replaces it in recent BBDB v3.x+
 (declare-function bbdb-record-xfield "ext:bbdb" (record label))
 
+(declare-function calendar-absolute-from-gregorian "calendar" (date))
+(declare-function calendar-gregorian-from-absolute "calendar" (date))
 (declare-function calendar-leap-year-p "calendar" (year))
+
 (declare-function diary-ordinal-suffix "diary-lib" (n))
 
-(with-no-warnings (defvar date)) ;; unprefixed, from calendar.el
+(with-no-warnings (defvar date))	;unprefixed, from calendar.el
 
 ;; Customization
 
@@ -160,13 +162,13 @@ used."
   '(("birthday" .
      (lambda (name years suffix)
        (concat "Birthday: [[bbdb:" name "][" name " ("
-    	       (format "%s" years)        ; handles numbers as well as strings
-    	       suffix ")]]")))
+               (format "%s" years) ; handles numbers as well as strings
+               suffix ")]]")))
     ("wedding" .
      (lambda (name years suffix)
        (concat "[[bbdb:" name "][" name "'s "
-    	       (format "%s" years)
-    	       suffix " wedding anniversary]]"))))
+               (format "%s" years)
+               suffix " wedding anniversary]]"))))
   "How different types of anniversaries should be formatted.
 An alist of elements (STRING . FORMAT) where STRING is the name of an
 anniversary class and format is either:
@@ -230,7 +232,7 @@ date year)."
                         (bbdb-record-getprop rec 'company)
                       (car (bbdb-record-field rec 'organization))))
 	   (link (concat "bbdb:" name)))
-      (org-store-link-props :type "bbdb" :name name :company company
+      (org-link-store-props :type "bbdb" :name name :company company
 			    :link link :description name)
       link)))
 
@@ -300,7 +302,7 @@ italicized, in all other cases it is left unchanged."
 Argument TIME-STR is the value retrieved from BBDB.  If YYYY- is omitted
 it will be considered unknown."
   (pcase (org-split-string time-str "-")
-    (`(,a ,b nil) (list (string-to-number a) (string-to-number b) nil))
+    (`(,a ,b) (list (string-to-number a) (string-to-number b) nil))
     (`(,a ,b ,c) (list (string-to-number b)
 		       (string-to-number c)
 		       (string-to-number a)))))
@@ -532,10 +534,10 @@ END:VEVENT\n"
 		     (concat (capitalize categ) " " (nth 1 rec))
 		     categ)))))
 
-(provide 'org-bbdb)
+(provide 'ol-bbdb)
 
 ;; Local variables:
 ;; generated-autoload-file: "org-loaddefs.el"
 ;; End:
 
-;;; org-bbdb.el ends here
+;;; ol-bbdb.el ends here

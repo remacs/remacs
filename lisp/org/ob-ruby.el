@@ -37,8 +37,8 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
 
-(declare-function org-trim "org" (s &optional keep-lead))
 (declare-function run-ruby "ext:inf-ruby" (&optional command name))
 (declare-function xmp "ext:rcodetools" (&optional option))
 

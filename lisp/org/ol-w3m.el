@@ -1,4 +1,4 @@
-;;; org-w3m.el --- Support from Copy and Paste From w3m -*- lexical-binding: t; -*-
+;;; ol-w3m.el --- Copy and Paste From W3M            -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2008-2019 Free Software Foundation, Inc.
 
@@ -41,7 +41,7 @@
 
 ;;; Code:
 
-(require 'org)
+(require 'ol)
 
 (defvar w3m-current-url)
 (defvar w3m-current-title)
@@ -50,7 +50,7 @@
 (defun org-w3m-store-link ()
   "Store a link to a w3m buffer."
   (when (eq major-mode 'w3m-mode)
-    (org-store-link-props
+    (org-link-store-props
      :type "w3m"
      :link w3m-current-url
      :url (url-view-url t)
@@ -59,7 +59,7 @@
 (defun org-w3m-copy-for-org-mode ()
   "Copy current buffer content or active region with Org style links.
 This will encode `link-title' and `link-location' with
-`org-make-link-string', and insert the transformed test into the kill ring,
+`org-link-make-string', and insert the transformed test into the kill ring,
 so that it can be yanked into an Org  buffer with links working correctly."
   (interactive)
   (let* ((regionp (org-region-active-p))
@@ -72,40 +72,41 @@ so that it can be yanked into an Org  buffer with links working correctly."
       (setq transform-start (region-beginning))
       (setq transform-end (region-end))
       ;; Deactivate mark if current mark is activate.
-      (if (fboundp 'deactivate-mark) (deactivate-mark)))
+      (when (fboundp 'deactivate-mark) (deactivate-mark)))
     (message "Transforming links...")
     (save-excursion
       (goto-char transform-start)
-      (while (and (not out-bound)                 ; still inside region to copy
+      (while (and (not out-bound)	; still inside region to copy
                   (not (org-w3m-no-next-link-p))) ; no next link current buffer
         ;; store current point before jump next anchor
         (setq temp-position (point))
         ;; move to next anchor when current point is not at anchor
         (or (get-text-property (point) 'w3m-href-anchor) (org-w3m-get-next-link-start))
-        (if (<= (point) transform-end)  ; if point is inside transform bound
+        (if (<= (point) transform-end) ; if point is inside transform bound
             (progn
               ;; get content between two links.
-              (if (> (point) temp-position)
-                  (setq return-content (concat return-content
-                                               (buffer-substring
-                                                temp-position (point)))))
+              (when (> (point) temp-position)
+                (setq return-content (concat return-content
+                                             (buffer-substring
+                                              temp-position (point)))))
               ;; get link location at current point.
               (setq link-location (get-text-property (point) 'w3m-href-anchor))
               ;; get link title at current point.
               (setq link-title (buffer-substring (point)
                                                  (org-w3m-get-anchor-end)))
               ;; concat Org style url to `return-content'.
-              (setq return-content (concat return-content
-                                           (org-make-link-string
-                                            link-location link-title))))
-          (goto-char temp-position)     ; reset point before jump next anchor
-          (setq out-bound t)            ; for break out `while' loop
-          ))
+              (setq return-content
+		    (concat return-content
+			    (if (org-string-nw-p link-location)
+				(org-link-make-string link-location link-title)
+			      link-title))))
+          (goto-char temp-position) ; reset point before jump next anchor
+          (setq out-bound t)))	    ; for break out `while' loop
       ;; add the rest until end of the region to be copied
-      (if (< (point) transform-end)
-          (setq return-content
-                (concat return-content
-                        (buffer-substring (point) transform-end))))
+      (when (< (point) transform-end)
+        (setq return-content
+              (concat return-content
+                      (buffer-substring (point) transform-end))))
       (org-kill-new return-content)
       (message "Transforming links...done, use C-y to insert text into Org file")
       (message "Copy with link transformation complete."))))
@@ -178,6 +179,6 @@ Return t if there is no previous link; otherwise, return nil."
    (define-key w3m-minor-mode-map "\C-c\C-x\M-w" 'org-w3m-copy-for-org-mode)
    (define-key w3m-minor-mode-map "\C-c\C-x\C-w" 'org-w3m-copy-for-org-mode)))
 
-(provide 'org-w3m)
+(provide 'ol-w3m)
 
-;;; org-w3m.el ends here
+;;; ol-w3m.el ends here

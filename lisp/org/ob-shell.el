@@ -27,6 +27,7 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
 (require 'shell)
 (require 'cl-lib)
 
@@ -36,7 +37,6 @@
 (declare-function org-babel-comint-buffer-livep "ob-comint" (buffer))
 (declare-function org-babel-comint-with-output "ob-comint" (meta &rest body)
 		  t)
-(declare-function org-trim "org" (s &optional keep-lead))
 (declare-function orgtbl-to-generic "org-table" (table params))
 
 (defvar org-babel-default-header-args:shell '())
@@ -57,10 +57,11 @@ is modified outside the Customize interface."
 	     'org-babel-variable-assignments:shell
 	     ,(format "Return list of %s statements assigning to the block's \
 variables."
-		      name)))))
+		      name)))
+    (eval `(defvar ,(intern (concat "org-babel-default-header-args:" name)) '()))))
 
 (defcustom org-babel-shell-names
-  '("sh" "bash" "csh" "ash" "dash" "ksh" "mksh" "posh")
+  '("sh" "bash" "zsh" "fish" "csh" "ash" "dash" "ksh" "mksh" "posh")
   "List of names of shell supported by babel shell code blocks.
 Call `org-babel-shell-initialize' when modifying this variable
 outside the Customize interface."
@@ -206,62 +207,60 @@ var of the same value."
 If RESULT-TYPE equals `output' then return a list of the outputs
 of the statements in BODY, if RESULT-TYPE equals `value' then
 return the value of the last statement in BODY."
-  (let ((results
-         (cond
-          ((or stdin cmdline)	       ; external shell script w/STDIN
-           (let ((script-file (org-babel-temp-file "sh-script-"))
-                 (stdin-file (org-babel-temp-file "sh-stdin-"))
-                 (shebang (cdr (assq :shebang params)))
-                 (padline (not (string= "no" (cdr (assq :padline params))))))
-             (with-temp-file script-file
-               (when shebang (insert (concat shebang "\n")))
-               (when padline (insert "\n"))
-               (insert body))
-             (set-file-modes script-file #o755)
-             (with-temp-file stdin-file (insert (or stdin "")))
-             (with-temp-buffer
-               (call-process-shell-command
-                (concat (if shebang script-file
-			  (format "%s %s" shell-file-name script-file))
-			(and cmdline (concat " " cmdline)))
-                stdin-file
-		(current-buffer))
-               (buffer-string))))
-          (session                      ; session evaluation
-           (mapconcat
-            #'org-babel-sh-strip-weird-long-prompt
-            (mapcar
-             #'org-trim
-             (butlast
-              (org-babel-comint-with-output
-                  (session org-babel-sh-eoe-output t body)
-                (mapc
-                 (lambda (line)
-                   (insert line)
-                   (comint-send-input nil t)
-                   (while (save-excursion
-                            (goto-char comint-last-input-end)
-                            (not (re-search-forward
-                                  comint-prompt-regexp nil t)))
-                     (accept-process-output
-                      (get-buffer-process (current-buffer)))))
-                 (append
-                  (split-string (org-trim body) "\n")
-                  (list org-babel-sh-eoe-indicator))))
-              2)) "\n"))
-          ('otherwise                   ; external shell script
-           (if (and (cdr (assq :shebang params))
-                    (> (length (cdr (assq :shebang params))) 0))
-               (let ((script-file (org-babel-temp-file "sh-script-"))
-                     (shebang (cdr (assq :shebang params)))
-                     (padline (not (equal "no" (cdr (assq :padline params))))))
-                 (with-temp-file script-file
-                   (when shebang (insert (concat shebang "\n")))
-                   (when padline (insert "\n"))
-                   (insert body))
-                 (set-file-modes script-file #o755)
-                 (org-babel-eval script-file ""))
-             (org-babel-eval shell-file-name (org-trim body)))))))
+  (let* ((shebang (cdr (assq :shebang params)))
+	 (results
+	  (cond
+	   ((or stdin cmdline)	       ; external shell script w/STDIN
+	    (let ((script-file (org-babel-temp-file "sh-script-"))
+		  (stdin-file (org-babel-temp-file "sh-stdin-"))
+		  (padline (not (string= "no" (cdr (assq :padline params))))))
+	      (with-temp-file script-file
+		(when shebang (insert shebang "\n"))
+		(when padline (insert "\n"))
+		(insert body))
+	      (set-file-modes script-file #o755)
+	      (with-temp-file stdin-file (insert (or stdin "")))
+	      (with-temp-buffer
+		(call-process-shell-command
+		 (concat (if shebang script-file
+			   (format "%s %s" shell-file-name script-file))
+			 (and cmdline (concat " " cmdline)))
+		 stdin-file
+		 (current-buffer))
+		(buffer-string))))
+	   (session			; session evaluation
+	    (mapconcat
+	     #'org-babel-sh-strip-weird-long-prompt
+	     (mapcar
+	      #'org-trim
+	      (butlast
+	       (org-babel-comint-with-output
+		   (session org-babel-sh-eoe-output t body)
+		 (dolist (line (append (split-string (org-trim body) "\n")
+				       (list org-babel-sh-eoe-indicator)))
+		   (insert line)
+		   (comint-send-input nil t)
+		   (while (save-excursion
+			    (goto-char comint-last-input-end)
+			    (not (re-search-forward
+				  comint-prompt-regexp nil t)))
+		     (accept-process-output
+		      (get-buffer-process (current-buffer))))))
+	       2))
+	     "\n"))
+	   ;; External shell script, with or without a predefined
+	   ;; shebang.
+	   ((org-string-nw-p shebang)
+	    (let ((script-file (org-babel-temp-file "sh-script-"))
+		  (padline (not (equal "no" (cdr (assq :padline params))))))
+	      (with-temp-file script-file
+		(insert shebang "\n")
+		(when padline (insert "\n"))
+		(insert body))
+	      (set-file-modes script-file #o755)
+	      (org-babel-eval script-file "")))
+	   (t
+	    (org-babel-eval shell-file-name (org-trim body))))))
     (when results
       (let ((result-params (cdr (assq :result-params params))))
         (org-babel-result-cond result-params

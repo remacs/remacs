@@ -34,11 +34,9 @@
 
 (require 'cc-mode)
 (require 'ob)
-
+(require 'org-macs)
 
 (declare-function org-entry-get "org" (pom property &optional inherit literal-nil))
-(declare-function org-remove-indentation "org" (code &optional n))
-(declare-function org-trim "org" (s &optional keep-lead))
 
 (defvar org-babel-tangle-lang-exts)
 (add-to-list 'org-babel-tangle-lang-exts '("C++" . "cpp"))
@@ -375,8 +373,8 @@ FORMAT can be either a format string or a function which is called with VAL."
 	      (pcase (org-babel-C-val-to-base-type v)
 		(`stringp (setq type 'stringp))
 		(`floatp
-		 (if (or (not type) (eq type 'integerp))
-		     (setq type 'floatp)))
+		 (when (or (not type) (eq type 'integerp))
+		   (setq type 'floatp)))
 		(`integerp
 		 (unless type (setq type 'integerp)))))
 	    val)
@@ -395,9 +393,9 @@ of the same value."
 	(setq val (string-to-char val))))
     (let* ((type-data (org-babel-C-val-to-C-type val))
 	   (type (car type-data))
-	   (formated (org-babel-C-format-val type-data val))
-	   (suffix (car formated))
-	   (data (cdr formated)))
+	   (formatted (org-babel-C-format-val type-data val))
+	   (suffix (car formatted))
+	   (data (cdr formatted)))
       (format "%s %s%s = %s;"
 	      type
 	      var

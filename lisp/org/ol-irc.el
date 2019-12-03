@@ -1,4 +1,4 @@
-;;; org-irc.el --- Store Links to IRC Sessions -*- lexical-binding: t; -*-
+;;; ol-irc.el --- Links to IRC Sessions              -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2008-2019 Free Software Foundation, Inc.
 ;;
@@ -48,7 +48,7 @@
 
 ;;; Code:
 
-(require 'org)
+(require 'ol)
 
 (declare-function erc-buffer-filter "erc" (predicate &optional proc))
 (declare-function erc-channel-p "erc" (channel))
@@ -73,7 +73,10 @@
 
 ;; Generic functions/config (extend these for other clients)
 
-(org-link-set-parameters "irc" :follow #'org-irc-visit :store #'org-irc-store-link)
+(org-link-set-parameters "irc"
+			 :follow #'org-irc-visit
+			 :store #'org-irc-store-link
+			 :export #'org-irc-export)
 
 (defun org-irc-visit (link)
   "Parse LINK and dispatch to the correct function based on the client found."
@@ -152,7 +155,7 @@ the session itself."
 	     (parsed-line (org-irc-erc-get-line-from-log erc-line)))
 	(if (erc-logging-enabled nil)
 	    (progn
-	      (org-store-link-props
+	      (org-link-store-props
 	       :type "file"
 	       :description (concat "'" (org-irc-ellipsify-description
 					 (cadr parsed-line) 20)
@@ -165,7 +168,7 @@ the session itself."
 	   (link (org-irc-parse-link link-text)))
       (if link-text
 	  (progn
-	    (org-store-link-props
+	    (org-link-store-props
 	     :type "irc"
 	     :link (concat "irc:/" link-text)
 	     :description (concat "irc session `" link-text "'")
@@ -247,10 +250,20 @@ default."
       ;; no server match, make new connection
       (erc-select :server server :port port))))
 
-(provide 'org-irc)
+(defun org-irc-export (link description format)
+  "Export an IRC link.
+See `org-link-parameters' for details about LINK, DESCRIPTION and
+FORMAT."
+  (let ((desc (or description link)))
+    (pcase format
+      (`html (format "<a href=\"irc:%s\">%s</a>" link desc))
+      (`md (format "[%s](irc:%s)" desc link))
+      (_ nil))))
+
+(provide 'ol-irc)
 
 ;; Local variables:
 ;; generated-autoload-file: "org-loaddefs.el"
 ;; End:
 
-;;; org-irc.el ends here
+;;; ol-irc.el ends here

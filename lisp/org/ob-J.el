@@ -31,8 +31,8 @@
 ;;; Code:
 
 (require 'ob)
+(require 'org-macs)
 
-(declare-function org-trim "org" (s &optional keep-lead))
 (declare-function j-console-ensure-session "ext:j-console" ())
 
 (defcustom org-babel-J-command "jconsole"
