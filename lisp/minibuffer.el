@@ -2869,10 +2869,9 @@ Return the new suffix."
     suffix))
 
 (defun completion-basic--pattern (beforepoint afterpoint bounds)
-  (delete
-   "" (list (substring beforepoint (car bounds))
-            'point
-            (substring afterpoint 0 (cdr bounds)))))
+  (list (substring beforepoint (car bounds))
+        'point
+        (substring afterpoint 0 (cdr bounds))))
 
 (defun completion-basic-try-completion (string table pred point)
   (let* ((beforepoint (substring string 0 point))
@@ -2890,10 +2889,9 @@ Return the new suffix."
              (length completion))))
       (let* ((suffix (substring afterpoint (cdr bounds)))
              (prefix (substring beforepoint 0 (car bounds)))
-             (pattern (delete
-                       "" (list (substring beforepoint (car bounds))
-                                'point
-                                (substring afterpoint 0 (cdr bounds)))))
+             (pattern (completion-pcm--optimize-pattern
+                       (completion-basic--pattern
+                        beforepoint afterpoint bounds)))
              (all (completion-pcm--all-completions prefix pattern table pred)))
         (if minibuffer-completing-file-name
             (setq all (completion-pcm--filename-try-filter all)))
@@ -3008,9 +3006,24 @@ or a symbol, see `completion-pcm--merge-completions'."
       (when (> (length string) p0)
         (if pending (push pending pattern))
         (push (substring string p0) pattern))
-      ;; An empty string might be erroneously added at the beginning.
-      ;; It should be avoided properly, but it's so easy to remove it here.
-      (delete "" (nreverse pattern)))))
+      (nreverse pattern))))
+
+(defun completion-pcm--optimize-pattern (p)
+  ;; Remove empty strings in a separate phase since otherwise a ""
+  ;; might prevent some other optimization, as in '(any "" any).
+  (setq p (delete "" p))
+  (let ((n '()))
+    (while p
+      (pcase p
+        (`(,(or 'any 'any-delim) point . ,rest) (setq p `(point . ,rest)))
+        ;; This is not just a performance improvement: it also turns
+        ;; a terminating `point' into an implicit `any', which
+        ;; affects the final position of point (because `point' gets
+        ;; turned into a non-greedy ".*?" regexp whereas we need
+        ;; it the be greedy when it's at the end, see bug#38458).
+        (`(,(pred symbolp)) (setq p nil)) ;Implicit terminating `any'.
+        (_ (push (pop p) n))))
+    (nreverse n)))
 
 (defun completion-pcm--pattern->regex (pattern &optional group)
   (let ((re
@@ -3192,7 +3205,8 @@ filter out additional entries (because TABLE might not obey PRED)."
          firsterror)
     (setq string (substring string (car bounds) (+ point (cdr bounds))))
     (let* ((relpoint (- point (car bounds)))
-           (pattern (completion-pcm--string->pattern string relpoint))
+           (pattern (completion-pcm--optimize-pattern
+                     (completion-pcm--string->pattern string relpoint)))
            (all (condition-case-unless-debug err
                     (funcall filter
                              (completion-pcm--all-completions
@@ -3239,10 +3253,11 @@ filter out additional entries (because TABLE might not obey PRED)."
                                   (substring afterpoint 0 (cdr newbounds))))
                     (setq between (substring newbeforepoint leftbound
                                              (car newbounds)))
-                    (setq pattern (completion-pcm--string->pattern
-                                   string
-                                   (- (length newbeforepoint)
-                                      (car newbounds)))))
+                    (setq pattern (completion-pcm--optimize-pattern
+                                   (completion-pcm--string->pattern
+                                    string
+                                    (- (length newbeforepoint)
+                                       (car newbounds))))))
                   (dolist (submatch suball)
                     (setq all (nconc
                                (mapcar
@@ -3471,9 +3486,10 @@ that is non-nil."
          (pattern (if (not (stringp (car basic-pattern)))
                       basic-pattern
                     (cons 'prefix basic-pattern)))
-         (pattern (if transform-pattern-fn
-                      (funcall transform-pattern-fn pattern)
-                    pattern))
+         (pattern (completion-pcm--optimize-pattern
+                   (if transform-pattern-fn
+                       (funcall transform-pattern-fn pattern)
+                     pattern)))
          (all (completion-pcm--all-completions prefix pattern table pred)))
     (list all pattern prefix suffix (car bounds))))
 
