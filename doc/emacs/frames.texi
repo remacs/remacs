@@ -1302,9 +1302,9 @@ variable @code{tab-bar-tab-name-function}.
 @end table
 
 @vindex tab-bar-new-tab-choice
-  By default, a new tab starts with the current buffer that was
-current before calling the command that adds a new tab.  To start a
-new tab with other buffers, customize the variable
+  By default, a new tab starts with the buffer that was
+current before calling the command that adds a new tab.
+To start a new tab with other buffers, customize the variable
 @code{tab-bar-new-tab-choice}.
 
   The following commands are used to delete and operate on tabs:

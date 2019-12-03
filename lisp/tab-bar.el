@@ -243,7 +243,7 @@ keyboard commands `tab-list', `tab-new', `tab-close', `tab-next', etc."
 If t, start a new tab with the current buffer, i.e. the buffer
 that was current before calling the command that adds a new tab
 (this is the same what `make-frame' does by default).
-If the value is a string, use it as a buffer name switch to a buffer
+If the value is a string, use it as a buffer name to switch to
 if such buffer exists, or switch to a buffer visiting the file or
 directory that the string specifies.  If the value is a function,
 call it with no arguments and switch to the buffer that it returns.
@@ -348,17 +348,19 @@ Also add the number of windows in the window configuration."
 
 (defvar tab-bar-tabs-function #'tab-bar-tabs
   "Function to get a list of tabs to display in the tab bar.
-This function should return a list of alists with parameters
+This function should have one optional argument FRAME,
+defaulting to the selected frame when nil.
+It should return a list of alists with parameters
 that include at least the element (name . TAB-NAME).
 For example, \\='((tab (name . \"Tab 1\")) (current-tab (name . \"Tab 2\")))
 By default, use function `tab-bar-tabs'.")
 
-(defun tab-bar-tabs ()
+(defun tab-bar-tabs (&optional frame)
   "Return a list of tabs belonging to the selected frame.
 Ensure the frame parameter `tabs' is pre-populated.
 Update the current tab name when it exists.
 Return its existing value or a new value."
-  (let ((tabs (frame-parameter nil 'tabs)))
+  (let ((tabs (frame-parameter frame 'tabs)))
     (if tabs
         (let* ((current-tab (assq 'current-tab tabs))
                (current-tab-name (assq 'name current-tab))
@@ -370,7 +372,7 @@ Return its existing value or a new value."
                   (funcall tab-bar-tab-name-function))))
       ;; Create default tabs
       (setq tabs (list (tab-bar--current-tab)))
-      (set-frame-parameter nil 'tabs tabs))
+      (set-frame-parameter frame 'tabs tabs))
     tabs))
 
 
@@ -457,11 +459,11 @@ Return its existing value or a new value."
 
 (push '(tabs . frameset-filter-tabs) frameset-filter-alist)
 
-(defun tab-bar--tab ()
-  (let* ((tab (assq 'current-tab (frame-parameter nil 'tabs)))
+(defun tab-bar--tab (&optional frame)
+  (let* ((tab (assq 'current-tab (frame-parameter frame 'tabs)))
          (tab-explicit-name (cdr (assq 'explicit-name tab)))
-         (bl  (seq-filter #'buffer-live-p (frame-parameter nil 'buffer-list)))
-         (bbl (seq-filter #'buffer-live-p (frame-parameter nil 'buried-buffer-list))))
+         (bl  (seq-filter #'buffer-live-p (frame-parameter frame 'buffer-list)))
+         (bbl (seq-filter #'buffer-live-p (frame-parameter frame 'buried-buffer-list))))
     `(tab
       (name . ,(if tab-explicit-name
                    (cdr (assq 'name tab))
@@ -469,13 +471,13 @@ Return its existing value or a new value."
       (explicit-name . ,tab-explicit-name)
       (time . ,(time-convert nil 'integer))
       (ws . ,(window-state-get
-              (frame-root-window (selected-frame)) 'writable))
+              (frame-root-window (or frame (selected-frame))) 'writable))
       (wc . ,(current-window-configuration))
       (wc-point . ,(point-marker))
       (wc-bl . ,bl)
       (wc-bbl . ,bbl)
-      (wc-history-back . ,(gethash (selected-frame) tab-bar-history-back))
-      (wc-history-forward . ,(gethash (selected-frame) tab-bar-history-forward)))))
+      (wc-history-back . ,(gethash (or frame (selected-frame)) tab-bar-history-back))
+      (wc-history-forward . ,(gethash (or frame (selected-frame)) tab-bar-history-forward)))))
 
 (defun tab-bar--current-tab (&optional tab)
   ;; `tab` here is an argument meaning 'use tab as template'. This is
@@ -644,6 +646,36 @@ If a negative ARG, move the current tab ARG positions to the left."
          (from-index (or (tab-bar--current-tab-index tabs) 0))
          (to-index (mod (+ from-index arg) (length tabs))))
     (tab-bar-move-tab-to (1+ to-index) (1+ from-index))))
+
+(defun tab-bar-move-tab-to-frame (arg &optional from-frame from-index to-frame to-index)
+  "Move tab from FROM-INDEX position to new position at TO-INDEX.
+FROM-INDEX defaults to the current tab index.
+FROM-INDEX and TO-INDEX count from 1.
+FROM-FRAME specifies the source frame and defaults to the selected frame.
+TO-FRAME specifies the target frame and defaults the next frame.
+Interactively, ARG selects the ARGth different frame to move to."
+  (interactive "P")
+  (unless from-frame
+    (setq from-frame (selected-frame)))
+  (unless to-frame
+    (dotimes (_ (prefix-numeric-value arg))
+      (setq to-frame (next-frame to-frame))))
+  (unless (eq from-frame to-frame)
+    (let* ((from-tabs (funcall tab-bar-tabs-function from-frame))
+           (from-index (or from-index (1+ (tab-bar--current-tab-index from-tabs))))
+           (from-tab (nth (1- from-index) from-tabs))
+           (to-tabs (funcall tab-bar-tabs-function to-frame))
+           (to-index (max 0 (min (1- (or to-index 1)) (1- (length to-tabs))))))
+      (cl-pushnew (assq-delete-all
+                   'wc (if (eq (car from-tab) 'current-tab)
+                           (tab-bar--tab from-frame)
+                         from-tab))
+                  (nthcdr to-index to-tabs))
+      (let ((tab-bar-mode t) ; avoid message about deleted tab
+            tab-bar-closed-tabs)
+        (tab-bar-close-tab from-index))
+      (set-frame-parameter to-frame 'tabs to-tabs)
+      (force-mode-line-update t))))
 
 
 (defcustom tab-bar-new-tab-to 'right
@@ -1286,7 +1318,7 @@ indirectly called by the latter."
       (tab-bar-new-tab))))
 
 (defun tab-bar-get-buffer-tab (buffer-or-name &optional all-frames)
-  "Return a tab whose window contains BUFFER-OR-NAME, or nil if none.
+  "Return a tab owning a window whose buffer is BUFFER-OR-NAME.
 BUFFER-OR-NAME may be a buffer or a buffer name and defaults to
 the current buffer.
 
@@ -1309,22 +1341,23 @@ selected frame and no others."
                      ((eq all-frames 'visible) (visible-frame-list))
                      ((framep all-frames) (list all-frames))
                      (t (list (selected-frame))))))
-        (seq-some (lambda (frame)
-                    (with-selected-frame frame
-                      (seq-some (lambda (tab)
-                                  (when (if (eq (car tab) 'current-tab)
-                                            (get-buffer-window buffer frame)
-                                          (let* ((state (cdr (assq 'ws tab)))
-                                                 (buffers (when state
-                                                            (window-state-buffers state))))
-                                            (or
-                                             ;; non-writable window-state
-                                             (memq buffer buffers)
-                                             ;; writable window-state
-                                             (member (buffer-name buffer) buffers))))
-                                    (append tab `((frame . ,frame)))))
-                                (funcall tab-bar-tabs-function))))
-                  frames)))))
+        (seq-some
+         (lambda (frame)
+           (seq-some
+            (lambda (tab)
+              (when (if (eq (car tab) 'current-tab)
+                        (get-buffer-window buffer frame)
+                      (let* ((state (cdr (assq 'ws tab)))
+                             (buffers (when state
+                                        (window-state-buffers state))))
+                        (or
+                         ;; non-writable window-state
+                         (memq buffer buffers)
+                         ;; writable window-state
+                         (member (buffer-name buffer) buffers))))
+                (append tab `((frame . ,frame)))))
+            (funcall tab-bar-tabs-function frame)))
+         frames)))))
 
 
 (defun switch-to-buffer-other-tab (buffer-or-name &optional norecord)
