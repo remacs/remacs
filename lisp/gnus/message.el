@@ -861,7 +861,7 @@ If this is nil, use `user-mail-address'.  If it is the symbol
   :version "27.1"
   :type '(choice (string :tag "From name")
 		 (const :tag "Use From: header from message" header)
-		 (const :tag "Obey `sendmail-envelope-from'"
+		 (const :tag "Obey `mail-envelope-from'"
 		        obey-mail-envelope-from)
 		 (const :tag "Use `user-mail-address'" nil))
   :link '(custom-manual "(message)Mail Variables")
