@@ -854,17 +854,23 @@ Doing so would be even more evil than leaving it out."
   :type 'boolean)
 
 (defcustom message-sendmail-envelope-from
-  ;; `mail-envelope-from' is unavailable unless sendmail.el is loaded.
-  (if (boundp 'mail-envelope-from) mail-envelope-from)
+  'obey-mail-envelope-from
   "Envelope-from when sending mail with sendmail.
 If this is nil, use `user-mail-address'.  If it is the symbol
 `header', use the From: header of the message."
-  :version "23.2"
+  :version "27.1"
   :type '(choice (string :tag "From name")
 		 (const :tag "Use From: header from message" header)
+		 (const :tag "Obey `sendmail-envelope-from'"
+		        obey-mail-envelope-from)
 		 (const :tag "Use `user-mail-address'" nil))
   :link '(custom-manual "(message)Mail Variables")
   :group 'message-sending)
+
+(defun message--sendmail-envelope-from ()
+  (if (eq message-sendmail-envelope-from 'obey-mail-envelope-from)
+      (if (boundp 'mail-envelope-from) mail-envelope-from)
+    message-sendmail-envelope-from))
 
 (defcustom message-sendmail-extra-arguments nil
   "Additional arguments to `sendmail-program'."
@@ -5884,11 +5890,11 @@ give as trustworthy answer as possible."
 
 (defun message-sendmail-envelope-from ()
   "Return the envelope from."
-  (cond ((eq message-sendmail-envelope-from 'header)
+  (cond ((eq (message--sendmail-envelope-from) 'header)
 	 (nth 1 (mail-extract-address-components
 		 (message-fetch-field "from"))))
-	((stringp message-sendmail-envelope-from)
-	 message-sendmail-envelope-from)
+	((stringp (message--sendmail-envelope-from))
+	 (message--sendmail-envelope-from))
 	(t
 	 (message-make-address))))
 

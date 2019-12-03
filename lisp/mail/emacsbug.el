@@ -239,8 +239,8 @@ Prompts for bug subject.  Leaves you in a mail buffer."
       ;; Stop message-mode stealing the properties we will add.
       (set (make-local-variable 'message-strip-special-text-properties) nil)
       ;; Make sure we default to the From: address as envelope when sending
-      ;; through sendmail.
-      (when (and (not message-sendmail-envelope-from)
+      ;; through sendmail.  FIXME: Why?
+      (when (and (not (message--sendmail-envelope-from))
 		 (message-bogus-recipient-p (message-make-address)))
 	(set (make-local-variable 'message-sendmail-envelope-from) 'header)))
     (rfc822-goto-eoh)
