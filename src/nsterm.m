@@ -2475,7 +2475,7 @@ ns_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
    -------------------------------------------------------------------------- */
 {
   id view;
-  NSPoint position;
+  NSPoint view_position;
   Lisp_Object frame, tail;
   struct frame *f;
   struct ns_display_info *dpyinfo;
@@ -2498,31 +2498,55 @@ ns_mouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
       XFRAME (frame)->mouse_moved = 0;
 
   dpyinfo->last_mouse_scroll_bar = nil;
-  f = dpyinfo->ns_focus_frame ? dpyinfo->ns_focus_frame : SELECTED_FRAME ();
-  if (dpyinfo->last_mouse_frame
-      /* While dropping, use the last mouse frame only if there is no
-	 currently focused frame.  */
-      && (!EQ (track_mouse, Qdropping) || !f)
+
+#ifdef NS_IMPL_COCOA
+  /* Find the uppermost Emacs frame under the mouse pointer.
+
+     This doesn't work on GNUstep, although in recent versions there
+     is compatibility code that makes it a noop.  */
+
+  NSPoint screen_position = [NSEvent mouseLocation];
+  NSInteger window_number = 0;
+  do
+    {
+      NSWindow *w;
+
+      window_number = [NSWindow windowNumberAtPoint:screen_position
+                        belowWindowWithWindowNumber:window_number];
+      w = [NSApp windowWithWindowNumber:window_number];
+
+      if (w && [[w delegate] isKindOfClass:[EmacsView class]])
+        f = ((EmacsView *)[w delegate])->emacsframe;
+    }
+  while (window_number > 0 && !f);
+#endif
+
+  if (!f)
+    f = dpyinfo->ns_focus_frame ? dpyinfo->ns_focus_frame : SELECTED_FRAME ();
+
+  /* While dropping, use the last mouse frame only if there is no
+     currently focused frame.  */
+  if (!f
+      && EQ (track_mouse, Qdropping)
+      && dpyinfo->last_mouse_frame
       && FRAME_LIVE_P (dpyinfo->last_mouse_frame))
     f = dpyinfo->last_mouse_frame;
-  else
-    f = dpyinfo->ns_focus_frame ? dpyinfo->ns_focus_frame : SELECTED_FRAME ();
 
   if (f && FRAME_NS_P (f))
     {
       view = FRAME_NS_VIEW (f);
 
-      position = [[view window] mouseLocationOutsideOfEventStream];
-      position = [view convertPoint: position fromView: nil];
-      remember_mouse_glyph (f, position.x, position.y,
+      view_position = [[view window] mouseLocationOutsideOfEventStream];
+      view_position = [view convertPoint: view_position fromView: nil];
+      remember_mouse_glyph (f, view_position.x, view_position.y,
                             &dpyinfo->last_mouse_glyph);
-      NSTRACE_POINT ("position", position);
+      NSTRACE_POINT ("view_position", view_position);
 
       if (bar_window) *bar_window = Qnil;
       if (part) *part = scroll_bar_above_handle;
 
-      if (x) XSETINT (*x, lrint (position.x));
-      if (y) XSETINT (*y, lrint (position.y));
+      if (x) XSETINT (*x, lrint (view_position.x));
+      if (y) XSETINT (*y, lrint (view_position.y));
       if (time)
         *time = dpyinfo->last_mouse_movement_time;
       *fp = f;
