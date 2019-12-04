@@ -1599,7 +1599,7 @@ variables' values are 120.
   The timeclock package adds up time intervals, so you can (for
 instance) keep track of how much time you spend working on particular
 projects.  (A more advanced alternative is to use the Org Mode's
-facilities for clocking time, @pxref{Clocking work time,,,org, The Org
+facilities for clocking time, @pxref{Clocking Work Time,,,org, The Org
 Manual}).
 
 @findex timeclock-in
