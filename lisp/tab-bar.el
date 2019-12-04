@@ -1296,6 +1296,44 @@ in the selected frame."
    ((framep all-frames) (list all-frames))
    (t (list (selected-frame)))))
 
+(defun tab-bar-get-buffer-tab (buffer-or-name &optional all-frames)
+  "Return a tab owning a window whose buffer is BUFFER-OR-NAME.
+BUFFER-OR-NAME may be a buffer or a buffer name and defaults to
+the current buffer.
+
+The optional argument ALL-FRAMES specifies the frames to consider:
+
+- t means consider all tabs on all existing frames.
+
+- `visible' means consider all tabs on all visible frames.
+
+- A frame means consider all tabs on that frame only.
+
+Any other value of ALL-FRAMES means consider all tabs on the
+selected frame and no others."
+  (let ((buffer (if buffer-or-name
+                    (get-buffer buffer-or-name)
+                  (current-buffer))))
+    (when (bufferp buffer)
+      (seq-some
+       (lambda (frame)
+         (seq-some
+          (lambda (tab)
+            (when (if (eq (car tab) 'current-tab)
+                      (get-buffer-window buffer frame)
+                    (let* ((state (cdr (assq 'ws tab)))
+                           (buffers (when state
+                                      (window-state-buffers state))))
+                      (or
+                       ;; non-writable window-state
+                       (memq buffer buffers)
+                       ;; writable window-state
+                       (member (buffer-name buffer) buffers))))
+              (append tab `((index . ,(tab-bar--tab-index tab nil frame))
+                            (frame . ,frame)))))
+          (funcall tab-bar-tabs-function frame)))
+       (tab-bar--reusable-frames all-frames)))))
+
 (defun display-buffer-in-tab (buffer alist)
   "Display BUFFER in a tab.
 ALIST is an association list of action symbols and values.  See
@@ -1345,44 +1383,6 @@ indirectly called by the latter."
                 (tab-bar-rename-tab tab-name))))
         (let ((tab-bar-new-tab-choice t))
           (tab-bar-new-tab))))))
-
-(defun tab-bar-get-buffer-tab (buffer-or-name &optional all-frames)
-  "Return a tab owning a window whose buffer is BUFFER-OR-NAME.
-BUFFER-OR-NAME may be a buffer or a buffer name and defaults to
-the current buffer.
-
-The optional argument ALL-FRAMES specifies the frames to consider:
-
-- t means consider all tabs on all existing frames.
-
-- `visible' means consider all tabs on all visible frames.
-
-- A frame means consider all tabs on that frame only.
-
-Any other value of ALL-FRAMES means consider all tabs on the
-selected frame and no others."
-  (let ((buffer (if buffer-or-name
-                    (get-buffer buffer-or-name)
-                  (current-buffer))))
-    (when (bufferp buffer)
-      (seq-some
-       (lambda (frame)
-         (seq-some
-          (lambda (tab)
-            (when (if (eq (car tab) 'current-tab)
-                      (get-buffer-window buffer frame)
-                    (let* ((state (cdr (assq 'ws tab)))
-                           (buffers (when state
-                                      (window-state-buffers state))))
-                      (or
-                       ;; non-writable window-state
-                       (memq buffer buffers)
-                       ;; writable window-state
-                       (member (buffer-name buffer) buffers))))
-              (append tab `((index . ,(tab-bar--tab-index tab nil frame))
-                            (frame . ,frame)))))
-          (funcall tab-bar-tabs-function frame)))
-       (tab-bar--reusable-frames all-frames)))))
 
 (defun switch-to-buffer-other-tab (buffer-or-name &optional norecord)
   "Switch to buffer BUFFER-OR-NAME in another tab.
