@@ -23000,7 +23000,7 @@ To open the group buffer in a new tab named @samp{Gnus}, use:
 @lisp
 (push '("\\`\\*Group\\*\\'" .
         (display-buffer-in-tab
-         (name . "Gnus")))
+         (tab-name . "Gnus")))
       display-buffer-alist)
 @end lisp
 
@@ -23009,10 +23009,10 @@ To read every summary in a separate explicitly named tab, use:
 @lisp
 (push '("\\`\\*Summary .*\\*\\'" .
         (display-buffer-in-tab
-         (name . (lambda (buffer _alist)
-                   (setq buffer (buffer-name buffer))
-                   (when (string-match "\\`\\*Summary \\(.*\\)\\*\\'" buffer)
-                     (format "Group %s" (match-string 1 buffer)))))))
+         (tab-name . (lambda (buffer _alist)
+                       (setq buffer (buffer-name buffer))
+                       (when (string-match "\\`\\*Summary \\(.*\\)\\*\\'" buffer)
+                         (format "Group %s" (match-string 1 buffer)))))))
       display-buffer-alist)
 @end lisp
 
