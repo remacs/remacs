@@ -369,7 +369,7 @@ the (uncompressed, extracted) file residing in
 
 (defvar doc-view-doc-type nil
   "The type of document in the current buffer.
-Can be `dvi', `pdf', or `ps'.")
+Can be `dvi', `pdf', `ps', `djvu' or `odf'.")
 
 (defvar doc-view-single-page-converter-function nil
   "Function to call to convert a single page of the document to a bitmap file.
