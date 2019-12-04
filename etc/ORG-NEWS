@@ -10,16 +10,6 @@ See the end of the file for license conditions.
 
 Please send Org bug reports to mailto:emacs-orgmode@gnu.org.
 
-* Version Next
-** New features
-*** Property drawers before first headline, outline level 0
-Property drawers will now work before first headline and Org mode is
-moving more towards making things before the first headline behave
-just as if it was at outline level 0.  Inheritance for properties will
-work also for this level.  In other words; defining things in a
-property drawer before the first headline will make them "inheritable"
-for all headlines.
-
 * Version 9.3
 
 ** Incompatible changes
@@ -2226,7 +2216,7 @@ without changing the headline.
 
 *** Hierarchies of tags
 
-The functionality of nesting tags in hierarchies is added to Org mode.
+The functionality of nesting tags in hierarchies is added to org-mode.
 This is the generalization of what was previously called "Tag groups"
 in the manual.  That term is now changed to "Tag hierarchy".
 
