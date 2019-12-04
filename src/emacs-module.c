@@ -46,6 +46,11 @@ rules:
 - emacs-module.h should only depend on standard C headers.  In
   particular, don't include config.h or lisp.h from emacs-module.h.
 
+- The contents of emacs-module.h should be the same on all platforms
+  and architectures.
+
+- emacs-module.h may not depend on Emacs configuration options.
+
 - Prefix all names in emacs-module.h with "emacs_" or "EMACS_".
 
 To add a new module function, proceed as follows:
