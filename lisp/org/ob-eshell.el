@@ -29,6 +29,13 @@
 (require 'ob)
 (require 'eshell)
 
+(declare-function eshell-send-input "esh-mode"
+                  (&optional use-region queue-p no-newline))
+
+(defvar eshell-last-output-start)
+(defvar eshell-last-output-end)
+(defvar eshell-last-input-end)
+
 (defvar org-babel-default-header-args:eshell '())
 
 (defun org-babel-execute:eshell (body params)

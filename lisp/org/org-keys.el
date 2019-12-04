@@ -27,6 +27,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 (defvar org-outline-regexp)
 
 (declare-function org-add-note "org" ())
@@ -218,6 +220,8 @@
 (defvar org-mode-map (make-sparse-keymap)
   "Keymap fo Org mode.")
 
+(defvaralias 'org-CUA-compatible 'org-replace-disputed-keys)
+
 (defcustom org-replace-disputed-keys nil
   "Non-nil means use alternative key bindings for some keys.
 
@@ -243,8 +247,6 @@ loading Org."
   :group 'org-startup
   :type 'boolean
   :safe #'booleanp)
-
-(defvaralias 'org-CUA-compatible 'org-replace-disputed-keys)
 
 (defcustom org-disputed-keys
   '(([(shift up)]		. [(meta p)])
