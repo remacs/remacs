@@ -625,7 +625,21 @@ module_copy_string_contents (emacs_env *env, emacs_value value, char *buffer,
   Lisp_Object lisp_str = value_to_lisp (value);
   CHECK_STRING (lisp_str);
 
-  Lisp_Object lisp_str_utf8 = module_encode (lisp_str);
+  /* We can set NOCOPY to true here because we only use the byte
+     sequence starting at SDATA and don't modify the original string
+     before copying out the data.
+
+     We set HANDLE-8-BIT and HANDLE-OVER-UNI to nil to signal an error
+     if the argument is not a valid Unicode string.  While it isn't
+     documented how copy_string_contents behaves in this case,
+     signaling an error is the most defensive and obvious reaction. */
+  Lisp_Object lisp_str_utf8
+    = encode_string_utf_8 (lisp_str, Qnil, true, Qnil, Qnil);
+
+  /* Since we set HANDLE-8-BIT and HANDLE-OVER-UNI to nil, the return
+     value can be nil, and we have to check for that. */
+  CHECK_TYPE (!NILP (lisp_str_utf8), Qunicode_string_p, lisp_str_utf8);
+
   ptrdiff_t raw_size = SBYTES (lisp_str_utf8);
   ptrdiff_t required_buf_size = raw_size + 1;
 
@@ -1136,12 +1150,6 @@ module_out_of_memory (emacs_env *env)
 				  XCDR (Vmemory_signal_data));
 }
 
-static Lisp_Object
-module_encode (Lisp_Object string)
-{
-  return code_convert_string (string, Qutf_8_unix, Qt, true, true, true);
-}
-
 
 /* Value conversion.  */
 
@@ -1485,6 +1493,7 @@ syms_of_module (void)
         build_pure_c_string ("Invalid function arity"));
 
   DEFSYM (Qmodule_function_p, "module-function-p");
+  DEFSYM (Qunicode_string_p, "unicode-string-p");
 
   defsubr (&Smodule_load);
 }
