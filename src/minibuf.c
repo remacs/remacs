@@ -353,7 +353,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 	      Lisp_Object histvar, Lisp_Object histpos, Lisp_Object defalt,
 	      bool allow_props, bool inherit_input_method)
 {
-  Lisp_Object val;
+  Lisp_Object val, previous_buffer = Fcurrent_buffer ();
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object mini_frame, ambient_dir, minibuffer, input_method;
   Lisp_Object enable_multibyte;
@@ -698,7 +698,20 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 
   /* Add the value to the appropriate history list, if any.  */
   if (! (NILP (Vhistory_add_new_input) || NILP (histstring)))
-    call2 (intern ("add-to-history"), Vminibuffer_history_variable, histstring);
+    {
+      ptrdiff_t count2 = SPECPDL_INDEX ();
+
+      /* If possible, switch back to the previous buffer first, in
+	 case the history variable is buffer-local.  */
+      if (BUFFER_LIVE_P (XBUFFER (previous_buffer)))
+	{
+	  record_unwind_current_buffer ();
+	  Fset_buffer (previous_buffer);
+	}
+
+      call2 (intern ("add-to-history"), Vminibuffer_history_variable, histstring);
+      unbind_to (count2, Qnil);
+    }
 
   /* If Lisp form desired instead of string, parse it.  */
   if (expflag)
@@ -878,6 +891,9 @@ Fifth arg HIST, if non-nil, specifies a history list and optionally
   the history as the value of INITIAL-CONTENTS.  Positions are counted
   starting from 1 at the beginning of the list.  If HIST is the symbol
   `t', history is not recorded.
+
+  If `history-add-new-input' is non-nil (the default), the result will
+  be added to the history list using `add-to-history'.
 
 Sixth arg DEFAULT-VALUE, if non-nil, should be a string, which is used
   as the default to `read' if READ is non-nil and the user enters

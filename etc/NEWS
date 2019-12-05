@@ -522,6 +522,12 @@ Note that this key binding will not work on MS-Windows systems if
 key binding with an upper case letter - if you can type it, you can
 bind it.
 
++++
+** 'read-from-minibuffer' now works with buffer-local history variables.
+The HIST argument of 'read-from-minibuffer' now works correctly with
+buffer-local variables.  This means that different buffers can have
+their own separated input history list if desired.
+
 
 * Editing Changes in Emacs 27.1
 

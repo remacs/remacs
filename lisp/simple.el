@@ -2041,7 +2041,7 @@ See also `minibuffer-history-case-insensitive-variables'."
 	     (null minibuffer-text-before-history))
 	(setq minibuffer-text-before-history
 	      (minibuffer-contents-no-properties)))
-    (let ((history (symbol-value minibuffer-history-variable))
+    (let ((history (minibuffer-history-value))
 	  (case-fold-search
 	   (if (isearch-no-upper-case-p regexp t) ; assume isearch.el is dumped
 	       ;; On some systems, ignore case for file names.
@@ -2141,6 +2141,14 @@ the end of the list of defaults just after the default value."
 	(append def all)
       (cons def (delete def all)))))
 
+(defun minibuffer-history-value ()
+  "Return the value of the minibuffer input history list.
+If `minibuffer-history-variable' points to a buffer-local variable and
+the minibuffer is active, return the buffer-local value for the buffer
+that was current when the minibuffer was activated."
+  (buffer-local-value minibuffer-history-variable
+                      (window-buffer (minibuffer-selected-window))))
+
 (defun goto-history-element (nabs)
   "Puts element of the minibuffer history in the minibuffer.
 The argument NABS specifies the absolute history position in
@@ -2169,8 +2177,8 @@ negative number -N means the Nth entry of \"future history.\""
 	(user-error (if minibuffer-default
                         "End of defaults; no next item"
                       "End of history; no default available")))
-    (if (> nabs (if (listp (symbol-value minibuffer-history-variable))
-                    (length (symbol-value minibuffer-history-variable))
+    (if (> nabs (if (listp (minibuffer-history-value))
+                    (length (minibuffer-history-value))
                   0))
 	(user-error "Beginning of history; no preceding item"))
     (unless (memq last-command '(next-history-element
@@ -2192,7 +2200,7 @@ negative number -N means the Nth entry of \"future history.\""
 	   (setq minibuffer-returned-to-present t)
 	   (setq minibuffer-text-before-history nil))
 	  (t (setq elt (nth (1- minibuffer-history-position)
-			    (symbol-value minibuffer-history-variable)))))
+			    (minibuffer-history-value)))))
     (insert
      (if (and (eq minibuffer-history-sexp-flag (minibuffer-depth))
 	      (not minibuffer-returned-to-present))
@@ -2445,7 +2453,7 @@ or to the last history element for a backward search."
   ;; beginning/end of the history, wrap the search to the first/last
   ;; minibuffer history element.
   (if isearch-forward
-      (goto-history-element (length (symbol-value minibuffer-history-variable)))
+      (goto-history-element (length (minibuffer-history-value)))
     (goto-history-element 0))
   (setq isearch-success t)
   (goto-char (if isearch-forward (minibuffer-prompt-end) (point-max))))

@@ -547,7 +547,8 @@ to the minibuffer input function (@pxref{Initial Input}).
   If you don't specify @var{history}, then the default history list
 @code{minibuffer-history} is used.  For other standard history lists,
 see below.  You can also create your own history list variable; just
-initialize it to @code{nil} before the first use.
+initialize it to @code{nil} before the first use.  If the variable is
+buffer local, then each buffer will have its own input history list.
 
   Both @code{read-from-minibuffer} and @code{completing-read} add new
 elements to the history list automatically, and provide commands to
