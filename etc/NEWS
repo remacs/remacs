@@ -632,13 +632,6 @@ If the region is active, the command joins all the lines in the
 region.  When there's no active region, the command works on the
 current and the previous or the next line, as before.
 
----
-** New customizable variable 'jit-lock-antiblink-grace'.
-When typing strings, this helps avoid "blinking", an oscillation
-between string and non-string fontification.  The variable holds a
-number of seconds (default is 2) before a potentially unwanted
-fontification starts.  Set to nil to get back the old behavior.
-
 
 * Changes in Specialized Modes and Packages in Emacs 27.1
 
@@ -652,6 +645,17 @@ bound to 'C-c C-c #'.
 This is an interactive convenience function to be used when developing
 font locking for a mode.  It recomputes the font locking data and then
 re-fontifies the buffer.
+
+---
+** Font Lock is smarter about fontifying unterminated strings and comments.
+When you type a quote that starts a string, or a comment delimiter
+that starts a comment, font-lock will not immediately refontify the
+following characters in font-lock-string-face or
+font-lock-comment-face.  Instead, it will delay the fontification
+beyond the current line to give you a chance to close the string or
+comment.  This is controlled by the new customizable variable
+'jit-lock-antiblink-grace', which specifies the delay in seconds.  The
+default is 2 seconds; set to nil to get back the old behavior.
 
 ---
 ** The 'C' command in 'tar-mode' will now preserve the timestamp of
