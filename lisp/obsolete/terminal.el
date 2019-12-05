@@ -1166,7 +1166,7 @@ subprocess started."
 	 (let ((l ()) (p 0))
 	   (while p
 	     (setq l (cons (if (string-match
-				"\\([-a-zA-Z0-9+=_.@/:]+\\)\\([ \t]+\\)*"
+				"\\([-a-zA-Z0-9+=_.@/:]+\\)[ \t]*"
 				s p)
 			       (prog1 (substring s p (match-end 1))
 				 (setq p (match-end 0))

@@ -61,7 +61,7 @@
 ;; only an approximation?
 ;; see rfc 1738
 (defconst rfc2368-mailto-regexp
-  "^\\(mailto:\\)\\([^?]+\\)*\\(\\?\\(.*\\)\\)*"
+  "^\\(mailto:\\)\\([^?]+\\)?\\(\\?\\(.*\\)\\)*"
   "Regular expression to match and aid in parsing a mailto url.")
 
 ;; describes 'mailto:'

@@ -10973,7 +10973,7 @@ shown) will make this into:
 		(t
 		 ;; Delete identical interconnect
                  (let ((case-fold-search nil))  ; So we don't convert upper-to-lower, etc
-		   (while (verilog-re-search-forward-quick "\\.\\s *\\([a-zA-Z0-9`_$]+\\)*\\s *(\\s *\\1\\s *)\\s *" end-pt t)
+		   (while (verilog-re-search-forward-quick "\\.\\s *\\([a-zA-Z0-9`_$]+\\)?\\s *(\\s *\\1\\s *)\\s *" end-pt t)
 		     (delete-region (match-beginning 0) (match-end 0))
                      (setq end-pt (- end-pt (- (match-end 0) (match-beginning 0))))  ; Keep it correct
 		     (while (or (looking-at "[ \t\n\f,]+")

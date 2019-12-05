@@ -4642,7 +4642,7 @@ blank, and the content is appended to the field above."
 	(skip-chars-backward " ")
 	(insert " " (org-trim s))
 	(org-table-align)))
-     ((looking-at "\\([^|]+\\)+|")	; Split field.
+     ((looking-at "\\([^|]+\\)|")	; Split field.
       (let ((s (match-string 1)))
 	(replace-match " |")
 	(goto-char (match-beginning 0))

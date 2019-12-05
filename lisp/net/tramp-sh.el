@@ -3799,7 +3799,7 @@ Fall back to normal file name handler if no Tramp handler exists."
       (unless (string-match
 	       (eval-when-compile
 		 (concat "^[^[:blank:]]+"
-			 "[[:blank:]]+\\([^[:blank:]]+\\)+"
+			 "[[:blank:]]+\\([^[:blank:]]+\\)"
 			 "\\([[:blank:]]+\\([^\n\r]+\\)\\)?"))
 	       line)
 	(tramp-error proc 'file-notify-error "%s" line))
