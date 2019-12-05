@@ -401,7 +401,7 @@ extract_big_integer (emacs_env *env, emacs_value arg, mpz_t result)
       mpz_set_ui (result, 0);
       return true;
     }
-  enum { order = -1, size = sizeof (unsigned long), endian = 0, nails = 0 };
+  enum { order = -1, size = sizeof (emacs_limb_t), endian = 0, nails = 0 };
   assert (0 < count && count <= max_count);
   emacs_limb_t *magnitude = malloc (count * size);
   if (magnitude == NULL)
