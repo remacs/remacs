@@ -2163,11 +2163,31 @@ face_inherited_attr (struct window *w, struct frame *f,
 	 && !UNSPECIFIEDP (inherited_attrs[LFACE_INHERIT_INDEX]))
     {
       Lisp_Object parent_face = inherited_attrs[LFACE_INHERIT_INDEX];
-      bool ok = get_lface_attributes (w, f, parent_face, inherited_attrs,
-				      false, named_merge_points);
-      if (!ok)
-	break;
-      attr_val = inherited_attrs[attr_idx];
+      bool ok;
+
+      if (CONSP (parent_face))
+	{
+	  Lisp_Object tail;
+	  for (tail = parent_face; !NILP (tail); tail = XCDR (tail))
+	    {
+	      ok = get_lface_attributes (w, f, XCAR (tail), inherited_attrs,
+					 false, named_merge_points);
+	      if (!ok)
+		break;
+	      attr_val = face_inherited_attr (w, f, inherited_attrs, attr_idx,
+					      named_merge_points);
+	      if (!UNSPECIFIEDP (attr_val))
+		break;
+	    }
+	}
+      else
+	{
+	  ok = get_lface_attributes (w, f, parent_face, inherited_attrs,
+				     false, named_merge_points);
+	  if (!ok)
+	    break;
+	  attr_val = inherited_attrs[attr_idx];
+	}
     }
   return attr_val;
 }
