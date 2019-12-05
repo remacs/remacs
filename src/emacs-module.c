@@ -913,7 +913,7 @@ module_extract_big_integer (emacs_env *env, emacs_value arg, int *sign,
 
 static emacs_value
 module_make_big_integer (emacs_env *env, int sign,
-                         ptrdiff_t count, const unsigned long *magnitude)
+                         ptrdiff_t count, const emacs_limb_t *magnitude)
 {
   MODULE_FUNCTION_BEGIN (NULL);
   if (sign == 0)

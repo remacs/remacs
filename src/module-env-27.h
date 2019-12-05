@@ -10,9 +10,9 @@
     EMACS_ATTRIBUTE_NONNULL (1);
 
   bool (*extract_big_integer) (emacs_env *env, emacs_value arg, int *sign,
-                               ptrdiff_t *count, unsigned long *magnitude)
+                               ptrdiff_t *count, emacs_limb_t *magnitude)
     EMACS_ATTRIBUTE_NONNULL (1);
 
   emacs_value (*make_big_integer) (emacs_env *env, int sign, ptrdiff_t count,
-                                   const unsigned long *magnitude)
+                                   const emacs_limb_t *magnitude)
     EMACS_ATTRIBUTE_NONNULL (1);
