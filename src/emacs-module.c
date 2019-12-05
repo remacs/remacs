@@ -216,7 +216,6 @@ static void module_out_of_memory (emacs_env *);
 static void module_reset_handlerlist (struct handler **);
 static bool value_storage_contains_p (const struct emacs_value_storage *,
                                       emacs_value, ptrdiff_t *);
-static Lisp_Object module_encode (Lisp_Object);
 
 static bool module_assertions = false;
 
@@ -861,7 +860,7 @@ module_extract_big_integer (emacs_env *env, emacs_value arg, int *sign,
          suffice.  */
       EMACS_UINT u;
       enum { required = (sizeof u + size - 1) / size };
-      verify (0 < required && required <= module_bignum_count_max);
+      verify (0 < required && +required <= module_bignum_count_max);
       if (magnitude == NULL)
         {
           *count = required;
