@@ -1214,10 +1214,20 @@ Corresponding string regexp: @samp{[@dots{}]}
 @item @code{(not @var{charspec})}
 @cindex @code{not} in rx
 Match a character not included in @var{charspec}.  @var{charspec} can
-be an @code{any}, @code{not}, @code{syntax} or @code{category} form, or a
-character class.@*
+be an @code{any}, @code{not}, @code{union}, @code{intersection},
+@code{syntax} or @code{category} form, or a character class.@*
 Corresponding string regexp: @samp{[^@dots{}]}, @samp{\S@var{code}},
 @samp{\C@var{code}}
+
+@item @code{(union @var{charset}@dots{})}
+@itemx @code{(intersection @var{charset}@dots{})}
+@cindex @code{union} in rx
+@cindex @code{intersection} in rx
+Match a character that matches the union or intersection,
+respectively, of the @var{charset}s.  Each @var{charset} can be an
+@code{any} form without character classes, or a @code{union},
+@code{intersection} or @code{not} form whose arguments are also
+@var{charset}s.
 
 @item @code{not-newline}, @code{nonl}
 @cindex @code{not-newline} in rx

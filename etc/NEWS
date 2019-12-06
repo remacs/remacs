@@ -2110,8 +2110,13 @@ at run time, instead of a constant string.
 These macros add new forms to the rx notation.
 
 +++
-*** 'anychar' is now an alias for 'anything'
+*** 'anychar' is now an alias for 'anything'.
 Both match any single character; 'anychar' is more descriptive.
+
++++
+*** New 'union' and 'intersection' forms for character sets.
+These permit composing character-matching expressions from simpler
+parts.
 
 ** Frames
 
