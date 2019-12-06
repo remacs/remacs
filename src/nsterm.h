@@ -639,7 +639,8 @@ typedef id instancetype;
 + (instancetype)allocInitFromFile: (Lisp_Object)file;
 - (void)dealloc;
 - (instancetype)initFromXBM: (unsigned char *)bits width: (int)w height: (int)h
-                  fg: (unsigned long)fg bg: (unsigned long)bg;
+                         fg: (unsigned long)fg bg: (unsigned long)bg
+               reverseBytes: (BOOL)reverse;
 - (instancetype)setXBMColor: (NSColor *)color;
 - (instancetype)initForXPMWithDepth: (int)depth width: (int)width height: (int)height;
 - (void)setPixmapData;

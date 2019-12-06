@@ -52,7 +52,7 @@ ns_image_from_XBM (char *bits, int width, int height,
   NSTRACE ("ns_image_from_XBM");
   return [[EmacsImage alloc] initFromXBM: (unsigned char *) bits
                                    width: width height: height
-                                      fg: fg bg: bg];
+                                      fg: fg bg: bg reverseBytes: YES];
 }
 
 void *
@@ -228,7 +228,8 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 /* Create image from monochrome bitmap. If both FG and BG are 0
    (black), set the background to white and make it transparent.  */
 - (instancetype)initFromXBM: (unsigned char *)bits width: (int)w height: (int)h
-           fg: (unsigned long)fg bg: (unsigned long)bg
+                         fg: (unsigned long)fg bg: (unsigned long)bg
+               reverseBytes: (BOOL)reverse
 {
   unsigned char *planes[5];
   unsigned char bg_alpha = 0xff;
@@ -252,6 +253,8 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
 
   {
     /* Pull bits out to set the (bytewise) alpha mask.  */
+    unsigned char swt[16] = {0, 8, 4, 12, 2, 10, 6, 14,
+                             1, 9, 5, 13, 3, 11, 7, 15};
     int i, j, k;
     unsigned char *s = bits;
     unsigned char *rr = planes[0];
@@ -266,11 +269,18 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
     unsigned char bgb = bg & 0xff;
     unsigned char c;
 
-    int idx = 0;
     for (j = 0; j < h; ++j)
       for (i = 0; i < w; )
         {
           c = *s++;
+
+          /* XBM files have the bits in reverse order within each byte
+             as compared to our fringe bitmaps.  This function deals
+             with both so has to be able to handle the bytes in either
+             order.  */
+          if (reverse)
+            c = swt[c >> 4] | (swt[c & 0xf] << 4);
+
           for (k = 0; i < w && k < 8; ++k, ++i)
             {
               if (c & 0x80)
@@ -287,7 +297,6 @@ ns_set_alpha (void *img, int x, int y, unsigned char a)
                   *bb++ = bgb;
                   *alpha++ = bg_alpha;
                 }
-              idx++;
               c <<= 1;
             }
         }
