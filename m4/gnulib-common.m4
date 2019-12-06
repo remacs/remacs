@@ -1,4 +1,4 @@
-# gnulib-common.m4 serial 45
+# gnulib-common.m4 serial 46
 dnl Copyright (C) 2007-2019 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
@@ -19,7 +19,14 @@ AC_DEFUN([gl_COMMON_BODY], [
 #ifndef _Noreturn
 # if (defined __cplusplus \
       && ((201103 <= __cplusplus && !(__GNUC__ == 4 && __GNUC_MINOR__ == 7)) \
-          || (defined _MSC_VER && 1900 <= _MSC_VER)))
+          || (defined _MSC_VER && 1900 <= _MSC_VER)) \
+      && 0)
+    /* [[noreturn]] is not practically usable, because with it the syntax
+         extern _Noreturn void func (...);
+       would not be valid; such a declaration would only be valid with 'extern'
+       and '_Noreturn' swapped, or without the 'extern' keyword.  However, some
+       AIX system header files and several gnulib header files use precisely
+       this syntax with 'extern'.  */
 #  define _Noreturn [[noreturn]]
 # elif ((!defined __cplusplus || defined __clang__) \
         && (201112 <= (defined __STDC_VERSION__ ? __STDC_VERSION__ : 0)  \

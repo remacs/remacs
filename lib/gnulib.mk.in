@@ -51,6 +51,7 @@
 #  --avoid=nl_langinfo \
 #  --avoid=openat-die \
 #  --avoid=opendir \
+#  --avoid=pthread-h \
 #  --avoid=raise \
 #  --avoid=save-cwd \
 #  --avoid=select \
