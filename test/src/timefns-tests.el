@@ -121,6 +121,49 @@
                "2038-01-19 02:14:08")
               (timefns-tests--have-leap-seconds))))
 
+;;; Tests of format-time-string padding
+
+(ert-deftest format-time-string-padding-minimal-deletes-unneeded-zeros ()
+  (let ((ref-time (append (encode-time 0 0 0 15 2 2000) '(123450))))
+    (should (equal (format-time-string "%-:::z" ref-time "FJT-12") "+12"))
+    (should (equal (format-time-string "%-N" ref-time) "12345"))
+    (should (equal (format-time-string "%-6N" ref-time) "12345"))
+    (should (equal (format-time-string "%-m" ref-time) "2")))) ;not "02"
+
+(ert-deftest format-time-string-padding-minimal-retains-needed-zeros ()
+  (let ((ref-time (append (encode-time 0 0 0 20 10 2000) '(3450))))
+    (should (equal (format-time-string "%-z" ref-time "IST-5:30") "+530"))
+    (should (equal (format-time-string "%-4z" ref-time "IST-5:30") "+530"))
+    (should (equal (format-time-string "%4z" ref-time "IST-5:30") "+530"))
+    (should (equal (format-time-string "%-N" ref-time) "00345"))
+    (should (equal (format-time-string "%-3N" ref-time) "003"))
+    (should (equal (format-time-string "%3N" ref-time) "003"))
+    (should (equal (format-time-string "%-m" ref-time) "10")) ;not "1"
+    (should (equal (format-time-string "%-1m" ref-time) "10")) ;not "1"
+    (should (equal (format-time-string "%1m" ref-time) "10")))) ;not "1"
+
+(ert-deftest format-time-string-padding-spaces ()
+  (let ((ref-time (append (encode-time 0 0 0 10 12 2000) '(123000))))
+    (should (equal (format-time-string "%_7z" ref-time "CHA-12:45") "  +1245"))
+    (should (equal (format-time-string "%_6N" ref-time) "123   "))
+    (should (equal (format-time-string "%_9N" ref-time) "123      "))
+    (should (equal (format-time-string "%_12N" ref-time) "123         "))
+    (should (equal (format-time-string "%_m" ref-time) "12"))
+    (should (equal (format-time-string "%_2m" ref-time) "12"))
+    (should (equal (format-time-string "%_3m" ref-time) " 12"))))
+
+(ert-deftest format-time-string-padding-zeros-adds-on-insignificant-side ()
+  "Fractional seconds have a fixed place on the left,
+and any padding must happen on the right.  All other numbers have
+a fixed place on the right and are padded on the left."
+  (let ((ref-time (append (encode-time 0 0 0 10 12 2000) '(123000))))
+    (should (equal (format-time-string "%3m" ref-time) "012"))
+    (should (equal (format-time-string "%7z" ref-time "CHA-12:45") "+001245"))
+    (should (equal (format-time-string "%12N" ref-time) "123000000000"))
+    (should (equal (format-time-string "%9N" ref-time) "123000000"))
+    (should (equal (format-time-string "%6N" ref-time) "123000"))))
+
+
 (ert-deftest time-equal-p-nil-nil ()
   (should (time-equal-p nil nil)))
 
