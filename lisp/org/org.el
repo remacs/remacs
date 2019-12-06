@@ -7825,7 +7825,7 @@ with the original repeater."
 		"")))			;No time shift
 	 (doshift
 	  (and (org-string-nw-p shift)
-	       (or (string-match "\\`[ \t]*\\([\\+\\-]?[0-9]+\\)\\([dwmy]\\)[ \t]*\\'"
+	       (or (string-match "\\`[ \t]*\\([+-]?[0-9]+\\)\\([dwmy]\\)[ \t]*\\'"
 				 shift)
 		   (user-error "Invalid shift specification %s" shift)))))
     (goto-char end-of-tree)

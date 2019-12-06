@@ -7670,7 +7670,7 @@ the variable `org-agenda-auto-exclude-function'."
 		       (if negate "Negative filter" "Filter")
 		       " [+cat-tag<0:10-/regexp/]: ")
 		      'org-agenda-filter-completion-function))
-	   (keep (or (if (string-match "^+[-+]" f-string)
+	   (keep (or (if (string-match "^\\+[+-]" f-string)
 			 (progn (setq f-string (substring f-string 1)) t))
 		     (equal strip-or-accumulate '(16))))
 	   (fc (if keep org-agenda-category-filter))
