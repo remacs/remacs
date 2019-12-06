@@ -3171,18 +3171,21 @@ one-letter-long matches).")
            (funcall update-score start start)
            (while md
              (funcall update-score start (car md))
-             (put-text-property start (pop md)
-                                'face 'completions-common-part
-                                str)
+             (add-face-text-property
+              start (pop md)
+              'completions-common-part
+              nil str)
              (setq start (pop md)))
            (funcall update-score len len)
-           (put-text-property start end
-                              'face 'completions-common-part
-                              str)
+           (add-face-text-property
+            start end
+            'completions-common-part
+            nil str)
            (if (> (length str) pos)
-               (put-text-property pos (1+ pos)
-                                  'face 'completions-first-difference
-                                  str))
+               (add-face-text-property
+                pos (1+ pos)
+                'completions-first-difference
+                nil str))
            (unless (zerop (length str))
              (put-text-property
               0 1 'completion-score
