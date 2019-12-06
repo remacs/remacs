@@ -2893,7 +2893,7 @@ This function returns the name of the font of face @var{face}.
 
 If the optional argument @var{frame} is specified, it returns the name
 of the font of @var{face} for that frame.  If @var{frame} is omitted or
-@code{nil}, the selected frame is used.  And, in this case, if the
+@code{nil}, the selected frame is used.  In the latter case, if the
 optional third argument @var{character} is supplied, it returns the font
 name used for @var{character}.
 @end defun
@@ -3934,12 +3934,14 @@ was remapped.  @xref{Face Remapping}.
 
 @defun default-font-width
 This function returns the average width in pixels of the font used by
-the current buffer's default face.
+the current buffer's default face, as that face is defined for the
+selected frame.
 @end defun
 
 @defun default-font-height
 This function returns the height in pixels of the font used by the
-current buffer's default face.
+current buffer's default face, as that face is defined for the
+selected frame.
 @end defun
 
 @defun window-font-width &optional window face

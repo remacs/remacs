@@ -6194,7 +6194,9 @@ lines."
   "Return the height in pixels of the current buffer's default face font.
 
 If the default font is remapped (see `face-remapping-alist'), the
-function returns the height of the remapped face."
+function returns the height of the remapped face.
+This function uses the definition of the default face for the currently
+selected frame."
   (let ((default-font (face-font 'default)))
     (cond
      ((and (display-multi-font-p)
@@ -6209,7 +6211,9 @@ function returns the height of the remapped face."
   "Return the width in pixels of the current buffer's default face font.
 
 If the default font is remapped (see `face-remapping-alist'), the
-function returns the width of the remapped face."
+function returns the width of the remapped face.
+This function uses the definition of the default face for the currently
+selected frame."
   (let ((default-font (face-font 'default)))
     (cond
      ((and (display-multi-font-p)
@@ -6228,7 +6232,9 @@ function returns the width of the remapped face."
   "Return the pixel height of current buffer's default-face text line.
 
 The value includes `line-spacing', if any, defined for the buffer
-or the frame."
+or the frame.
+This function uses the definition of the default face for the currently
+selected frame."
   (let ((dfh (default-font-height))
 	(lsp (if (display-graphic-p)
 		 (or line-spacing
