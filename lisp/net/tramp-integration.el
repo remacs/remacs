@@ -31,12 +31,18 @@
 
 ;; Pacify byte-compiler.
 (require 'cl-lib)
+(declare-function info-lookup->cache "info-look")
+(declare-function info-lookup->mode-value "info-look")
+(declare-function info-lookup->other-modes "info-look")
+(declare-function info-lookup->topic-value "info-look")
+(declare-function info-lookup-maybe-add-help "info-look")
 (declare-function recentf-cleanup "recentf")
 (declare-function tramp-dissect-file-name "tramp")
 (declare-function tramp-file-name-equal-p "tramp")
 (declare-function tramp-tramp-file-p "tramp")
 (defvar eshell-path-env)
 (defvar ido-read-file-name-non-ido)
+(defvar info-lookup-cache)
 (defvar ivy-completing-read-handlers-alist)
 (defvar recentf-exclude)
 (defvar tramp-current-connection)
@@ -185,6 +191,35 @@ NAME must be equal to `tramp-current-connection'."
 	       '(tramp-rename-files . completing-read-default))
   (add-to-list 'ivy-completing-read-handlers-alist
 	       '(tramp-these-rename-files . completing-read-default)))
+
+;;; Integration of info-look.el:
+
+(with-eval-after-load 'info-look
+  ;; Create a pseudo mode `tramp-info-lookup-mode' for Tramp symbol lookup.
+  (info-lookup-maybe-add-help
+   :mode 'tramp-info-lookup-mode :topic 'symbol
+   :regexp "[^][()`'‘’,\" \t\n]+"
+   :doc-spec '(("(tramp)Function Index" nil "^ -+ .*: " "\\( \\|$\\)")
+	       ("(tramp)Variable Index" nil "^ -+ .*: " "\\( \\|$\\)")))
+
+  ;; Add it as `other-modes' to `emacs-lisp-mode' itself, and all
+  ;; modes which use it as `other-modes'.
+  (dolist (mode (mapcar 'car (info-lookup->topic-value 'symbol)))
+    (when (and (or (equal mode 'emacs-lisp-mode)
+		   (member
+		    'emacs-lisp-mode (info-lookup->other-modes 'symbol mode)))
+	       (not (member
+		     'tramp-info-lookup-mode
+		     (info-lookup->other-modes 'symbol mode))))
+      (setcdr
+       (info-lookup->mode-value 'symbol mode)
+       (append
+	(butlast (cdr (info-lookup->mode-value 'symbol mode)))
+	`(,(cons 'tramp-info-lookup-mode
+		 (info-lookup->other-modes 'symbol mode)))))))
+
+  ;; Reset cache.
+  (setq info-lookup-cache nil))
 
 ;;; Default connection-local variables for Tramp:
 
