@@ -529,7 +529,18 @@ set_marker_internal (Lisp_Object marker, Lisp_Object position,
 	 don't want to call buf_charpos_to_bytepos if POSITION
 	 is a marker and so we know the bytepos already.  */
       if (FIXNUMP (position))
-	charpos = XFIXNUM (position), bytepos = -1;
+	{
+#if EMACS_INT_MAX > PTRDIFF_MAX
+	  /* A --with-wide-int build.  */
+	  EMACS_INT cpos = XFIXNUM (position);
+	  if (cpos > PTRDIFF_MAX)
+	    cpos = PTRDIFF_MAX;
+	  charpos = cpos;
+	  bytepos = -1;
+#else
+	  charpos = XFIXNUM (position), bytepos = -1;
+#endif
+	}
       else if (MARKERP (position))
 	{
 	  charpos = XMARKER (position)->charpos;
