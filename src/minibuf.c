@@ -353,7 +353,7 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
 	      Lisp_Object histvar, Lisp_Object histpos, Lisp_Object defalt,
 	      bool allow_props, bool inherit_input_method)
 {
-  Lisp_Object val, previous_buffer = Fcurrent_buffer ();
+  Lisp_Object val;
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object mini_frame, ambient_dir, minibuffer, input_method;
   Lisp_Object enable_multibyte;
@@ -696,30 +696,21 @@ read_minibuf (Lisp_Object map, Lisp_Object initial, Lisp_Object prompt,
   else
     histstring = Qnil;
 
-  /* Add the value to the appropriate history list, if any.  */
-  if (! (NILP (Vhistory_add_new_input) || NILP (histstring)))
-    {
-      ptrdiff_t count2 = SPECPDL_INDEX ();
-
-      /* If possible, switch back to the previous buffer first, in
-	 case the history variable is buffer-local.  */
-      if (BUFFER_LIVE_P (XBUFFER (previous_buffer)))
-	{
-	  record_unwind_current_buffer ();
-	  Fset_buffer (previous_buffer);
-	}
-
-      call2 (intern ("add-to-history"), Vminibuffer_history_variable, histstring);
-      unbind_to (count2, Qnil);
-    }
-
   /* If Lisp form desired instead of string, parse it.  */
   if (expflag)
     val = string_to_object (val, defalt);
 
   /* The appropriate frame will get selected
      in set-window-configuration.  */
-  return unbind_to (count, val);
+  unbind_to (count, Qnil);
+
+  /* Add the value to the appropriate history list, if any.  This is
+     done after the previous buffer has been made current again, in
+     case the history variable is buffer-local.  */
+  if (! (NILP (Vhistory_add_new_input) || NILP (histstring)))
+    call2 (intern ("add-to-history"), histvar, histstring);
+
+  return val;
 }
 
 /* Return a buffer to be used as the minibuffer at depth `depth'.
