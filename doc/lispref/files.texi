@@ -489,8 +489,6 @@ its copyright notice.
 @c Emacs 19 feature
 @defopt after-save-hook
 This normal hook runs after a buffer has been saved in its visited file.
-One use of this hook is in Fast Lock mode; it uses this hook to save the
-highlighting information in a cache file.
 @end defopt
 
 @defopt file-precious-flag
