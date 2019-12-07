@@ -495,6 +495,36 @@ function to control that."
       (c-hungry-delete-forward)
     (c-hungry-delete-backwards)))
 
+(defvar c--unsafe-post-self-insert-hook-functions
+  '(electric-pair-post-self-insert-function)
+    "Known unsafe functions when members of `post-self-insert-hook' in CC Mode")
+
+(defun c--call-post-self-insert-hook-more-safely-1 ()
+  ;; Call post-self-insert-hook, having removed from `post-self-insert-hook'
+  ;; functions known not to be safe to CC Mode.  The result is of no
+  ;; significance.  Note that the hook call is NOT absolutely safe.
+  (let ((src post-self-insert-hook)
+	dest)
+    (while src
+      (cond
+       ((memq (car src) c--unsafe-post-self-insert-hook-functions))
+       ((eq (car src) t)
+	(let ((src (default-value 'post-self-insert-hook)))
+	  (while src
+	    (unless (memq (car src) c--unsafe-post-self-insert-hook-functions)
+	      (add-hook 'dest (car src) t)) ; Preserve the order of the functions.
+	    (setq src (cdr src)))))
+       (t (add-hook 'dest (car src) t))) ; Preserve the order of the functions.
+      (setq src (cdr src)))
+    (run-hooks 'dest)))
+
+(defmacro c--call-post-self-insert-hook-more-safely ()
+  ;; Call post-self-insert-hook, if such exists.  See comment for
+  ;; `c--call-post-self-insert-hook-more-safely-1'.
+  (if (boundp 'post-self-insert-hook)
+      '(c--call-post-self-insert-hook-more-safely-1)
+    '(progn)))
+
 (defun c-electric-pound (arg)
   "Insert a \"#\".
 If `c-electric-flag' is set, handle it specially according to the variable
@@ -524,7 +554,8 @@ inside a literal or a macro, nothing special happens."
       (insert (c-last-command-char))
       (and (not bolp)
 	   (goto-char (- (point-max) pos)))
-      )))
+      ))
+  (c--call-post-self-insert-hook-more-safely))
 
 (defun c-point-syntax ()
   ;; Return the syntactic context of the construct at point.  (This is NOT
@@ -905,7 +936,8 @@ settings of `c-cleanup-list' are done."
 	 (save-excursion
 	   (c-save-buffer-state nil
 	     (c-backward-syntactic-ws safepos))
-	   (funcall old-blink-paren)))))
+	   (funcall old-blink-paren)))
+    (c--call-post-self-insert-hook-more-safely)))
 
 (defun c-electric-slash (arg)
   "Insert a slash character.
@@ -957,7 +989,8 @@ is inhibited."
     (let (post-self-insert-hook)	; Disable random functionality.
       (self-insert-command (prefix-numeric-value arg)))
     (if indentp
-	(indent-according-to-mode))))
+	(indent-according-to-mode))
+    (c--call-post-self-insert-hook-more-safely)))
 
 (defun c-electric-star (arg)
   "Insert a star character.
@@ -987,7 +1020,8 @@ this indentation is inhibited."
 	       (bolp))))
       (let (c-echo-syntactic-information-p) ; shut this up
 	(indent-according-to-mode))
-    ))
+    )
+  (c--call-post-self-insert-hook-more-safely))
 
 (defun c-electric-semi&comma (arg)
   "Insert a comma or semicolon.
@@ -1059,8 +1093,8 @@ settings of `c-cleanup-list'."
 		(setq add-newline-p (not (eq answer 'stop)))
 		))
 	    (if add-newline-p
-		(c-newline-and-indent))
-	    )))))
+		(c-newline-and-indent)))))
+    (c--call-post-self-insert-hook-more-safely)))
 
 (defun c-electric-colon (arg)
   "Insert a colon.
@@ -1162,8 +1196,8 @@ reindented unless `c-syntactic-indentation' is nil.
 	  ;; does a newline go after the colon?
 	  (if (and (memq 'after (cdr-safe newlines))
 		   (not is-scope-op))
-	      (c-newline-and-indent))
-	  ))))
+	      (c-newline-and-indent))))
+    (c--call-post-self-insert-hook-more-safely)))
 
 (defun c-electric-lt-gt (arg)
   "Insert a \"<\" or \">\" character.
@@ -1253,7 +1287,8 @@ numeric argument is supplied, or the point is inside a literal."
 	;; From now (2016-01-01), the syntax-table text properties on < and >
 	;; are applied in an after-change function, not during redisplay.  Hence
 	;; we no longer need to call (sit-for 0) for blink paren to work.
-	(funcall blink-paren-function)))))
+	(funcall blink-paren-function))))
+  (c--call-post-self-insert-hook-more-safely))
 
 (defun c-electric-paren (arg)
   "Insert a parenthesis.
@@ -1372,7 +1407,8 @@ newline cleanups are done if appropriate; see the variable `c-cleanup-list'."
       ;; Apply `electric-pair-mode' stuff inside a string or comment.
       (when (and (boundp 'electric-pair-mode) electric-pair-mode)
 	(let (post-self-insert-hook)
-	  (electric-pair-post-self-insert-function))))))
+	  (electric-pair-post-self-insert-function))))
+    (c--call-post-self-insert-hook-more-safely)))
 
 (defun c-electric-continued-statement ()
   "Reindent the current line if appropriate.
