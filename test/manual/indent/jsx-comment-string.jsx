@@ -14,3 +14,10 @@ void 0
 
 "<Bar>"
 void 0
+
+<Chicken>
+  {/* <Pork> */}
+  <Beef attr="<Turkey>">
+    Yum!
+  </Beef>
+</Chicken>
