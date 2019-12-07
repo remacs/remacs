@@ -671,17 +671,6 @@ variables `minrow', `maxrow', `mincol', and `maxcol'."
                (let ((col (+ ,c mincol)))
                  ,@body))))))))
 
-;;Support for coverage testing.
-(defmacro 1value (form)
-  "For code-coverage testing, indicate that FORM is expected to always have
-the same value."
-  (declare (debug t))
-  form)
-(defmacro noreturn (form)
-  "For code-coverage testing, indicate that FORM will always signal an error."
-  (declare (debug t))
-  form)
-
 
 ;;----------------------------------------------------------------------------
 ;; Utility functions
