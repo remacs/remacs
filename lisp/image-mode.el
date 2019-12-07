@@ -870,7 +870,7 @@ Otherwise, display the image by calling `image-mode'."
 (defun image-fit-to-window (window)
   "Adjust size of image to display it exactly in WINDOW boundaries."
   (when (window-live-p window)
-    (with-current-buffer (window-buffer)
+    (with-current-buffer (window-buffer window)
       (when (derived-mode-p 'image-mode)
         (let ((spec (image-get-display-property)))
           (when (eq (car-safe spec) 'image)

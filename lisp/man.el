@@ -182,6 +182,18 @@ The value also can be a positive integer for a fixed width."
                  (integer :tag "Fixed width" :value 65))
   :group 'man)
 
+(defcustom Man-width-max 80
+  "Maximum number of columns allowed for the width of manual pages.
+It defines the maximum width for the case when `Man-width' is customized
+to a dynamically calculated value depending on the frame/window width.
+If the width calculated for `Man-width' is larger than the maximum width,
+it will be automatically reduced to the width defined by this variable.
+When nil, there is no limit on maximum width."
+  :type '(choice (const :tag "No limit" nil)
+                 (integer :tag "Max width" :value 80))
+  :version "27.1"
+  :group 'man)
+
 (defcustom Man-frame-parameters nil
   "Frame parameter list for creating a new frame for a manual page."
   :type '(repeat (cons :format "%v"
@@ -1022,6 +1034,22 @@ names or descriptions.  The pattern argument is usually an
       (error "No item under point")
     (man man-args)))
 
+(defvar Man-columns nil)
+
+(defun Man-columns ()
+  (let ((width (cond
+                ((and (integerp Man-width) (> Man-width 0))
+                 Man-width)
+                (Man-width
+                 (let ((window (get-buffer-window nil t)))
+                   (frame-width (and window (window-frame window)))))
+                (t
+                 (window-width (get-buffer-window nil t))))))
+    (when (and (integerp Man-width-max)
+               (> Man-width-max 0))
+      (setq width (min width Man-width-max)))
+    width))
+
 (defmacro Man-start-calling (&rest body)
   "Start the man command in `body' after setting up the environment."
   `(let ((process-environment (copy-sequence process-environment))
@@ -1058,20 +1086,8 @@ names or descriptions.  The pattern argument is usually an
 	      (not (or (getenv "MANWIDTH") (getenv "COLUMNS"))))
       ;; Since the page buffer is displayed beforehand,
       ;; we can select its window and get the window/frame width.
-      (setenv "COLUMNS" (number-to-string
-			 (cond
-			  ((and (integerp Man-width) (> Man-width 0))
-			   Man-width)
-			  (Man-width
-			   (if (window-live-p (get-buffer-window (current-buffer) t))
-			       (with-selected-window (get-buffer-window (current-buffer) t)
-				 (frame-width))
-			     (frame-width)))
-			  (t
-			   (if (window-live-p (get-buffer-window (current-buffer) t))
-			       (with-selected-window (get-buffer-window (current-buffer) t)
-				 (window-width))
-			     (window-width)))))))
+      (setq-local Man-columns (Man-columns))
+      (setenv "COLUMNS" (number-to-string Man-columns)))
     ;; Since man-db 2.4.3-1, man writes plain text with no escape
     ;; sequences when stdout is not a tty.	In 2.5.0, the following
     ;; env-var was added to allow control of this (see Debian Bug#340673).
@@ -1156,6 +1172,25 @@ Return the buffer in which the manpage will appear."
 	 (if (> old-size (buffer-size))
 	     (search-backward text nil t))
 	 (search-forward text nil t)))))
+
+(defvar Man--window-state-change-timer nil)
+
+(defun Man--window-state-change (window)
+  (unless (integerp Man-width)
+    (when (timerp Man--window-state-change-timer)
+      (cancel-timer Man--window-state-change-timer))
+    (setq Man--window-state-change-timer
+          (run-with-idle-timer 1 nil #'Man-fit-to-window window))))
+
+(defun Man-fit-to-window (window)
+  "Adjust width of the buffer to fit columns into WINDOW boundaries."
+  (when (window-live-p window)
+    (with-current-buffer (window-buffer window)
+      (when (and (derived-mode-p 'Man-mode)
+                 (not (eq Man-columns (Man-columns))))
+        (let ((proc (get-buffer-process (current-buffer))))
+          (unless (and proc (not (eq (process-status proc) 'exit)))
+            (Man-update-manpage)))))))
 
 (defun Man-notify-when-ready (man-buffer)
   "Notify the user when MAN-BUFFER is ready.
@@ -1543,7 +1578,8 @@ The following key bindings are currently in effect in the buffer:
   (set (make-local-variable 'outline-regexp) Man-heading-regexp)
   (set (make-local-variable 'outline-level) (lambda () 1))
   (set (make-local-variable 'bookmark-make-record-function)
-       'Man-bookmark-make-record))
+       'Man-bookmark-make-record)
+  (add-hook 'window-state-change-functions #'Man--window-state-change nil t))
 
 (defun Man-build-section-list ()
   "Build the list of manpage sections."
