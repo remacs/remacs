@@ -32,8 +32,10 @@
 ;; Pacify byte-compiler.
 (require 'cl-lib)
 (declare-function info-lookup->cache "info-look")
+(declare-function info-lookup->mode-cache "info-look")
 (declare-function info-lookup->mode-value "info-look")
 (declare-function info-lookup->other-modes "info-look")
+(declare-function info-lookup->topic-cache "info-look")
 (declare-function info-lookup->topic-value "info-look")
 (declare-function info-lookup-maybe-add-help "info-look")
 (declare-function recentf-cleanup "recentf")
@@ -42,7 +44,7 @@
 (declare-function tramp-tramp-file-p "tramp")
 (defvar eshell-path-env)
 (defvar ido-read-file-name-non-ido)
-(defvar info-lookup-cache)
+(defvar info-lookup-alist)
 (defvar ivy-completing-read-handlers-alist)
 (defvar recentf-exclude)
 (defvar tramp-current-connection)
@@ -182,7 +184,13 @@ NAME must be equal to `tramp-current-connection'."
 
 (with-eval-after-load 'ido
   (add-to-list 'ido-read-file-name-non-ido 'tramp-rename-files)
-  (add-to-list 'ido-read-file-name-non-ido 'tramp-these-rename-files))
+  (add-to-list 'ido-read-file-name-non-ido 'tramp-these-rename-files)
+  (add-hook 'tramp-integration-unload-hook
+	    (lambda ()
+	      (setq ido-read-file-name-non-ido
+		    (delq 'tramp-these-rename-files ido-read-file-name-non-ido)
+		    ido-read-file-name-non-ido
+		    (delq 'tramp-rename-files ido-read-file-name-non-ido)))))
 
 ;;; Integration of ivy.el:
 
@@ -190,7 +198,18 @@ NAME must be equal to `tramp-current-connection'."
   (add-to-list 'ivy-completing-read-handlers-alist
 	       '(tramp-rename-files . completing-read-default))
   (add-to-list 'ivy-completing-read-handlers-alist
-	       '(tramp-these-rename-files . completing-read-default)))
+	       '(tramp-these-rename-files . completing-read-default))
+  (add-hook
+   'tramp-integration-unload-hook
+   (lambda ()
+     (setq ivy-completing-read-handlers-alist
+	   (delete
+	    (assq 'tramp-these-rename-files ivy-completing-read-handlers-alist)
+	    ivy-completing-read-handlers-alist)
+	   ivy-completing-read-handlers-alist
+	   (delete
+	    (assq 'tramp-rename-files ivy-completing-read-handlers-alist)
+	    ivy-completing-read-handlers-alist)))))
 
 ;;; Integration of info-look.el:
 
@@ -202,24 +221,45 @@ NAME must be equal to `tramp-current-connection'."
    :doc-spec '(("(tramp)Function Index" nil "^ -+ .*: " "\\( \\|$\\)")
 	       ("(tramp)Variable Index" nil "^ -+ .*: " "\\( \\|$\\)")))
 
-  ;; Add it as `other-modes' to `emacs-lisp-mode' itself, and all
-  ;; modes which use it as `other-modes'.
-  (dolist (mode (mapcar 'car (info-lookup->topic-value 'symbol)))
-    (when (and (or (equal mode 'emacs-lisp-mode)
-		   (member
-		    'emacs-lisp-mode (info-lookup->other-modes 'symbol mode)))
-	       (not (member
-		     'tramp-info-lookup-mode
-		     (info-lookup->other-modes 'symbol mode))))
-      (setcdr
-       (info-lookup->mode-value 'symbol mode)
-       (append
-	(butlast (cdr (info-lookup->mode-value 'symbol mode)))
-	`(,(cons 'tramp-info-lookup-mode
-		 (info-lookup->other-modes 'symbol mode)))))))
+  (add-hook
+   'tramp-integration-unload-hook
+   (lambda ()
+     (setcdr (assq 'symbol info-lookup-alist)
+	     (delete (info-lookup->mode-value 'symbol 'tramp-info-lookup-mode)
+		     (info-lookup->topic-value 'symbol)))
+     (setcdr (info-lookup->cache 'symbol)
+	     (delete (info-lookup->mode-cache 'symbol 'tramp-info-lookup-mode)
+		     (info-lookup->topic-cache 'symbol)))))
 
-  ;; Reset cache.
-  (setq info-lookup-cache nil))
+  (dolist (mode (mapcar 'car (info-lookup->topic-value 'symbol)))
+    ;; Add `tramp-info-lookup-mode' to `other-modes' for either
+    ;; `emacs-lisp-mode' itself, or to modes which use
+    ;; `emacs-lisp-mode' as `other-modes'.  Reset `info-lookup-cache'.
+    (when (and (or (equal mode 'emacs-lisp-mode)
+		   (memq
+		    'emacs-lisp-mode (info-lookup->other-modes 'symbol mode)))
+	       (not (memq 'tramp-info-lookup-mode
+			  (info-lookup->other-modes 'symbol mode))))
+      (setcdr (info-lookup->mode-value 'symbol mode)
+	      (append (butlast (cdr (info-lookup->mode-value 'symbol mode)))
+		      `((tramp-info-lookup-mode
+			 . ,(info-lookup->other-modes 'symbol mode)))))
+      (setcdr (info-lookup->cache 'symbol)
+	      (delete (info-lookup->mode-cache 'symbol mode)
+		      (info-lookup->topic-cache 'symbol)))
+
+      (add-hook
+       'tramp-integration-unload-hook
+       `(lambda ()
+	  (setcdr (info-lookup->mode-value 'symbol ',mode)
+		  (append (butlast
+			   (cdr (info-lookup->mode-value 'symbol ',mode)))
+			  (list
+			   (delq 'tramp-info-lookup-mode
+				 (info-lookup->other-modes 'symbol ',mode)))))
+	  (setcdr (info-lookup->cache 'symbol)
+		  (delete (info-lookup->mode-cache 'symbol ',mode)
+			  (info-lookup->topic-cache 'symbol))))))))
 
 ;;; Default connection-local variables for Tramp:
 
