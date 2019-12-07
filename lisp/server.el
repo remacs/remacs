@@ -988,7 +988,7 @@ The following commands are accepted by the server:
 `-display DISPLAY'
   Set the display name to open X frames on.
 
-`-position LINE[:COLUMN]'
+`-position +LINE[:COLUMN]'
   Go to the given line and column number
   in the next file opened.
 
@@ -1184,7 +1184,7 @@ The following commands are accepted by the client:
                                 (eq window-system 'w32)))
                    (push "-window-system" args-left)))
 
-                ;; -position LINE[:COLUMN]:  Set point to the given
+                ;; -position +LINE[:COLUMN]:  Set point to the given
                 ;;  position in the next file.
                 ("-position"
                  (if (not (string-match "\\+\\([0-9]+\\)\\(?::\\([0-9]+\\)\\)?"
