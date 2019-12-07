@@ -68,7 +68,7 @@
 
 ;;; Constants
 
-(defconst js--name-start-re (concat "[[:alpha:]_$]")
+(defconst js--name-start-re "[[:alpha:]_$]"
   "Regexp matching the start of a JavaScript identifier, without grouping.")
 
 (defconst js--stmt-delim-chars "^;{}?:")
