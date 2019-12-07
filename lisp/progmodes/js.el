@@ -2011,7 +2011,7 @@ For use by `syntax-propertize-extend-region-functions'."
 ;; When applying syntax properties, since `js-syntax-propertize' uses
 ;; `syntax-propertize-rules' to parse JSXBoundaryElements iteratively
 ;; and statelessly, whenever we exit such an element, we need to
-;; determine the JSX depth.  If >0, then we know we to apply syntax
+;; determine the JSX depth.  If >0, then we know to apply syntax
 ;; properties to JSXText up until the next JSXBoundaryElement occurs.
 ;; But if the JSX depth is 0, then—importantly—we know to NOT parse
 ;; the following code as JSXText, rather propertize it as regular JS
