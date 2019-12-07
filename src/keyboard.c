@@ -9589,9 +9589,7 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
 		       Fcons (make_lispy_switch_frame (frame),
 			      KVAR (interrupted_kboard, kbd_queue)));
 		  }
-                if (FIXNUMP (key) && XFIXNUM (key) == -2)
-                  mock_input = 0;
-                else
+                if (FIXNUMP (key) && XFIXNUM (key) != -2)
                   {
                     /* If interrupted while initializing terminal, we
                        need to replay the interrupting key.  See
@@ -9599,6 +9597,8 @@ read_key_sequence (Lisp_Object *keybuf, Lisp_Object prompt,
                     mock_input = 1;
                     keybuf[0] = key;
                   }
+                else
+                  mock_input = 0;
 		goto replay_entire_sequence;
 	      }
 	  }
