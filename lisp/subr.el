@@ -2672,8 +2672,15 @@ floating point support."
 (defvar read-char-from-minibuffer-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map minibuffer-local-map)
-    (define-key map [remap self-insert-command]
-      'read-char-from-minibuffer-insert-char)
+
+    (define-key map [remap self-insert-command] 'read-char-from-minibuffer-insert-char)
+
+    (define-key map [remap recenter-top-bottom] 'minibuffer-recenter-top-bottom)
+    (define-key map [remap scroll-up-command] 'minibuffer-scroll-up-command)
+    (define-key map [remap scroll-down-command] 'minibuffer-scroll-down-command)
+    (define-key map [remap scroll-other-window] 'minibuffer-scroll-other-window)
+    (define-key map [remap scroll-other-window-down] 'minibuffer-scroll-other-window-down)
+
     map)
   "Keymap for the `read-char-from-minibuffer' function.")
 

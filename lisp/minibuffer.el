@@ -2244,12 +2244,6 @@ The completion method is determined by `completion-at-point-functions'."
   (define-key map "\C-g" 'abort-recursive-edit)
   (define-key map "\M-<" 'minibuffer-beginning-of-buffer)
 
-  (define-key map [remap recenter-top-bottom] 'minibuffer-recenter-top-bottom)
-  (define-key map [remap scroll-up-command] 'minibuffer-scroll-up-command)
-  (define-key map [remap scroll-down-command] 'minibuffer-scroll-down-command)
-  (define-key map [remap scroll-other-window] 'minibuffer-scroll-other-window)
-  (define-key map [remap scroll-other-window-down] 'minibuffer-scroll-other-window-down)
-
   (define-key map "\r" 'exit-minibuffer)
   (define-key map "\n" 'exit-minibuffer))
 
