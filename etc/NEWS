@@ -255,6 +255,10 @@ The default value is 30000, as the previously hard-coded threshold.
 +++
 ** The function 'read-passwd' uses "*" as default character to hide passwords.
 
+** The function 'read-answer' now accepts not only single character
+answers, but also function keys like F1, character events such as C-M-h,
+and control characters like C-h.
+
 ** Lexical binding is now used when evaluating interactive Elisp forms.
 More specifically, lexical-binding is now used for 'M-:', '--eval', as
 well as in the "*scratch*" and "*ielm*" buffers.
