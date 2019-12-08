@@ -1268,7 +1268,13 @@ them to the 'browse-url' function, like the other protocols: 'ftp',
 'http', and 'https'.  This allows to have references to local HTML
 files, for example.
 
-*** 'Man-width-max' (80 by default) limits the number of columns on man pages.
+---
+** Display of man pages now limits the width for formatting pages.
+The new user option 'Man-width-max' (80 by default) limits the number
+of columns passed to the 'man' program for formatting man pages.  This
+is to enhance readability when man pages are displayed in very wide
+windows (which are customary with today's large displays).
+
 
 ** Xref
 
