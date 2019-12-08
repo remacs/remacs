@@ -1199,7 +1199,7 @@ symbol-constituent character.
 matches any character whose syntax is @var{c}.  Here @var{c} is a
 character that designates a particular syntax class: thus, @samp{w}
 for word constituent, @samp{-} or @samp{ } for whitespace, @samp{.}
-for ordinary punctuation, etc.  @xref{Syntax Tables,, Syntax Tables,
+for ordinary punctuation, etc.  @xref{Syntax Class Table,, Syntax Class Table,
 elisp, The Emacs Lisp Reference Manual}.
 
 @item \S@var{c}
