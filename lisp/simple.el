@@ -3925,6 +3925,7 @@ interactively, this is t."
         ;; replacing its entire contents.
         (let ((buffer (get-buffer-create
                        (or output-buffer "*Shell Command Output*"))))
+          (set-buffer-major-mode buffer) ; Enable globalized modes (bug#38111)
           (unwind-protect
               (if (and (eq buffer (current-buffer))
                        (or (not shell-command-dont-erase-buffer)
