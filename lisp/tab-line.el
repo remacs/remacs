@@ -417,8 +417,7 @@ variable `tab-line-tabs-function'."
 
 (defun tab-line-format-template (tabs)
   "Template for displaying tab line for selected window."
-  (let* ((window (selected-window))
-         (selected-buffer (window-buffer window))
+  (let* ((selected-buffer (window-buffer))
          (separator (or tab-line-separator (if window-system " " "|")))
          (hscroll (window-parameter nil 'tab-line-hscroll))
          (strings
@@ -471,11 +470,15 @@ variable `tab-line-tabs-function'."
 
 (defun tab-line-format ()
   "Template for displaying tab line for selected window."
-  (let ((tabs (funcall tab-line-tabs-function))
-        (cache (window-parameter nil 'tab-line-cache)))
-    (or (and cache (equal (car cache) tabs) (cdr cache))
-        (cdr (set-window-parameter nil 'tab-line-cache
-               (cons tabs (tab-line-format-template tabs)))))))
+  (let* ((tabs (funcall tab-line-tabs-function))
+         (cache-key (list tabs
+                          (window-buffer)
+                          (window-parameter nil 'tab-line-hscroll)))
+         (cache (window-parameter nil 'tab-line-cache)))
+    (or (and cache (equal (car cache) cache-key) (cdr cache))
+        (cdr (set-window-parameter
+              nil 'tab-line-cache
+              (cons cache-key (tab-line-format-template tabs)))))))
 
 
 (defcustom tab-line-auto-hscroll t
