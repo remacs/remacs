@@ -345,7 +345,7 @@ When `use-dialog-box' is t, pop up a dialog window to get user input."
                                  (delete-minibuffer-contents)
                                  (insert (nth 0 a))
                                  (exit-minibuffer))))
-                           (define-key map [t]
+                           (define-key map [remap self-insert-command]
                              (lambda ()
                                (interactive)
                                (delete-minibuffer-contents)
