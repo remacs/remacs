@@ -389,7 +389,6 @@ DIRS must contain directory names."
 
 (declare-function grep-read-files "grep")
 (declare-function xref--show-xrefs "xref")
-(declare-function xref-backend-identifier-at-point "xref")
 (declare-function xref--find-ignores-arguments "xref")
 (declare-function xref--regexp-to-extended "xref")
 (declare-function xref--convert-hits "xref")
@@ -506,8 +505,8 @@ pattern to search for."
         (delete-file infile)))))
 
 (defun project--read-regexp ()
-  (let ((id (xref-backend-identifier-at-point (xref-find-backend))))
-    (read-regexp "Find regexp" (and id (regexp-quote id)))))
+  (let ((sym (thing-at-point 'symbol)))
+    (read-regexp "Find regexp" (and sym (regexp-quote sym)))))
 
 ;;;###autoload
 (defun project-find-file ()
