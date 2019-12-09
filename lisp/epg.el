@@ -2032,7 +2032,7 @@ If you are unsure, use synchronous version of this function
     (epg-reset context)))
 
 (defun epg--decode-percent-escape (string)
-  (setq string (string-to-unibyte string))
+  (setq string (encode-coding-string string 'raw-text))
   (let ((index 0))
     (while (string-match "%\\(\\(%\\)\\|\\([[:xdigit:]][[:xdigit:]]\\)\\)"
 			 string index)
