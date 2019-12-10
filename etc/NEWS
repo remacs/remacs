@@ -437,8 +437,8 @@ to 'completion-styles' or 'completion-category-overrides' to use it.
 ** The 'completion-common-part' face is now visible by default.
 
 +++
-** New face attribute ':extend' to control face extension at EOL.  The
-new face attribute ':extend' controls whether to use the face for
+** New face attribute ':extend' to control face extension at EOL.
+The new face attribute ':extend' controls whether to use the face for
 displaying the empty space beyond end of line (EOL) till the edge of
 the window.  By default, this attribute is non-nil only for a small
 number of faces, notably, 'region'; any other face that crosses end of
@@ -447,10 +447,10 @@ to make Emacs behave more like other GUI applications with respect to
 displaying faces that cross line boundaries.
 
 This attribute behaves specially when theme definitions are applied:
-if the theme doesn't specify an explicit value for a face, the value
-from the original face definition is inherited.  Consequently, a theme
-generally shouldn't specify this attribute unless it has a good reason
-to do so.
+if the theme doesn't specify an explicit value of this attribute for a
+face, the value from the original face definition is inherited.
+Consequently, a theme generally shouldn't specify this attribute
+unless it has a good reason to do so.
 
 ** Connection-local variables
 
