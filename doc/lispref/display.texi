@@ -2499,9 +2499,12 @@ space between end of line and edge of the window using this face, or
 @code{nil} to not use this face for the space between the end of the
 line and the edge of the window.  When Emacs merges several faces for
 displaying the empty space beyond end of line, only those faces with
-@code{:extend} non-@code{nil} will be merged.  By default, only
-@code{region} and @code{hl-line} faces have this attribute set to
-@code{t}.
+@code{:extend} non-@code{nil} will be merged.  By default, only a
+small number of faces, notably, @code{region}, have this attribute
+set.  This attribute is different from the others in that when a theme
+doesn't specify an explicit value for a face, the value from the
+original face definition by @code{defface} is inherited
+(@pxref{Defining Faces}).
 
 @end table
 

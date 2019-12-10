@@ -39,7 +39,7 @@ default look of the Gnome 3 desktop.")
    `(header-line ((,class (:foreground "#CCCCCC" :background "black"))))
 
    `(minibuffer-prompt ((,class (:foreground "#0084C8" :bold t))))
-   `(region ((,class (:foreground unspecified :background "#C2D5E9" :extend t))))
+   `(region ((,class (:foreground unspecified :background "#C2D5E9"))))
    `(dired-header ((,class (:bold t :foreground "#0084C8"))))
    `(widget-button ((,class (:bold t :foreground "#0084C8"))))
 
@@ -96,7 +96,7 @@ default look of the Gnome 3 desktop.")
    `(gnus-cite-1 ((,class (:foreground "#00578E"))))
    `(gnus-cite-2 ((,class (:foreground "#0084C8"))))
 
-   `(diff-added ((,class (:bold t :foreground "#4E9A06" :extend t))))
-   `(diff-removed ((,class (:bold t :foreground "#F5666D" :extend t))))))
+   `(diff-added ((,class (:bold t :foreground "#4E9A06"))))
+   `(diff-removed ((,class (:bold t :foreground "#F5666D"))))))
 
 ;;; adwaita-theme.el  ends here

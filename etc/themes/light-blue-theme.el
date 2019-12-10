@@ -36,8 +36,8 @@
    `(fringe ((,class (:background "gray85"))))
    ;; Highlighting faces
    `(highlight ((,class (:background "cyan"))))
-   `(region ((,class (:background "MediumAquamarine" :extend t))))
-   `(secondary-selection ((,class (:background "white" :foreground "black" :extend t))))
+   `(region ((,class (:background "MediumAquamarine"))))
+   `(secondary-selection ((,class (:background "white" :foreground "black"))))
    `(isearch ((,class (:background "green" :foreground "Black"))))
    `(lazy-highlight ((,class (:background "dark turquoise"))))
    `(query-replace ((,class (:inherit isearch :background "white" :foreground "black"))))

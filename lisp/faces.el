@@ -1669,7 +1669,7 @@ The following sources are applied in this order:
   ;; `theme-face' records.
   (let ((theme-faces (get face 'theme-face))
 	(no-match-found 0)
-	face-attrs theme-face-applied)
+        default-attrs face-attrs theme-face-applied)
     (if theme-faces
 	(dolist (elt (reverse theme-faces))
 	  (setq face-attrs (face-spec-choose (cadr elt) frame no-match-found))
@@ -1677,13 +1677,20 @@ The following sources are applied in this order:
 	    (face-spec-set-2 face frame face-attrs)
 	    (setq theme-face-applied t))))
     ;; If there was a spec applicable to FRAME, that overrides the
-    ;; defface spec entirely (rather than inheriting from it).  If
-    ;; there was no spec applicable to FRAME, apply the defface spec
-    ;; as well as any applicable X resources.
+    ;; defface spec entirely rather than inheriting from it, with the
+    ;; exception of the :extend attribute (which is inherited).
+    ;;
+    ;; If there was no spec applicable to FRAME, apply the defface
+    ;; spec as well as any applicable X resources.
+    (setq default-attrs (face-spec-choose (face-default-spec face) frame))
     (unless theme-face-applied
-      (setq face-attrs (face-spec-choose (face-default-spec face) frame))
-      (face-spec-set-2 face frame face-attrs)
+      (face-spec-set-2 face frame default-attrs)
       (make-face-x-resource-internal face frame))
+    (when (and theme-face-applied
+               (eq 'unspecified (face-attribute face :extend frame t)))
+      (let ((tail (plist-member default-attrs :extend)))
+        (and tail (face-spec-set-2 face frame
+                                   (list :extend (cadr tail))))))
     (setq face-attrs (face-spec-choose (get face 'face-override-spec) frame))
     (face-spec-set-2 face frame face-attrs)))
 

@@ -23,6 +23,11 @@
 (require 'ert)
 (require 'faces)
 
+(defvar faces--test-data-dir
+  (expand-file-name "../data/"
+                    (file-name-directory (or load-file-name
+                                             buffer-file-name))))
+
 (defgroup faces--test nil ""
   :group 'faces--test)
 
@@ -117,8 +122,9 @@
   (should (equal (face-attribute 'diff-changed-face :extend) t))
   (should (equal (face-attribute 'diff-added :extend) 'unspecified))
   (should (equal (face-attribute 'diff-file-header-face :extend) nil))
-  (load-theme 'manoj-dark t t)
-  (load-theme 'tsdh-light t t)
+  (add-to-list 'custom-theme-load-path (concat faces--test-data-dir "themes"))
+  (load-theme 'faces-test-dark t t)
+  (load-theme 'faces-test-light t t)
   (should (equal (face-attribute 'faces--test-inherit-extend :extend)
                  'unspecified))
   (should (equal (face-attribute 'faces--test-inherit-extend :extend nil t) t))
@@ -129,7 +135,7 @@
   (should (equal (face-attribute 'diff-changed-face :extend) t))
   (should (equal (face-attribute 'diff-added :extend) 'unspecified))
   (should (equal (face-attribute 'diff-file-header-face :extend) nil))
-  (enable-theme 'manoj-dark)
+  (enable-theme 'faces-test-dark)
   (should (equal (face-attribute 'faces--test-inherit-extend :extend)
                  'unspecified))
   (should (equal (face-attribute 'faces--test-inherit-extend :extend nil t) t))
@@ -137,14 +143,14 @@
                  'unspecified))
   (should (equal (face-attribute 'faces--test-inherit-no-extend :extend nil t)
                  nil))
-  (should (equal (face-attribute 'diff-changed-face :extend) 'unspecified)) ; should be t
+  (should (equal (face-attribute 'diff-changed-face :extend) t))
   (should (equal (face-attribute 'diff-added :extend) t))
-  (should (equal (face-attribute 'diff-file-header-face :extend) 'unspecified)) ; should be nil
+  (should (equal (face-attribute 'diff-file-header-face :extend) nil))
   (defface faces--test-face3
     '((t :inherit diff-added :weight bold))
     "")
   (should (equal (face-attribute 'faces--test-face3 :extend nil t) t))
-  (disable-theme 'manoj-dark)
+  (disable-theme 'faces-test-dark)
   (should (equal (face-attribute 'faces--test-inherit-extend :extend)
                  'unspecified))
   (should (equal (face-attribute 'faces--test-inherit-extend :extend nil t) t))
@@ -159,7 +165,7 @@
   (defface diff-indicator-changed
     '((t (:weight bold :extend t)))
     "")
-  (enable-theme 'tsdh-light)
+  (enable-theme 'faces-test-light)
   (should (equal (face-attribute 'faces--test-inherit-extend :extend)
                  'unspecified))
   (should (equal (face-attribute 'faces--test-inherit-extend :extend nil t) t))
@@ -170,7 +176,7 @@
   (should (equal (face-attribute 'diff-changed-face :extend) t))
   (should (equal (face-attribute 'diff-added :extend) t))
   (should (equal (face-attribute 'diff-file-header-face :extend) nil))
-  (should (equal (face-attribute 'diff-indicator-changed :extend) 'unspecified)) ; should be t
+  (should (equal (face-attribute 'diff-indicator-changed :extend) t))
   (should (equal (face-attribute 'faces--test-face3 :extend nil t) t))
   (frame-set-background-mode (selected-frame) 'dark)
   (should (equal (face-attribute 'faces--test-inherit-extend :extend)
@@ -183,7 +189,7 @@
   (should (equal (face-attribute 'diff-changed-face :extend) t))
   (should (equal (face-attribute 'diff-added :extend) t))
   (should (equal (face-attribute 'diff-file-header-face :extend) nil))
-  (should (equal (face-attribute 'diff-indicator-changed :extend) 'unspecified)) ; should be t
+  (should (equal (face-attribute 'diff-indicator-changed :extend) t))
   (should (equal (face-attribute 'faces--test-face3 :extend nil t) t))
   (or noninteractive
       (let ((fr (make-frame)))
@@ -200,11 +206,10 @@
         (should (equal (face-attribute 'diff-changed-face :extend fr) t))
         (should (equal (face-attribute 'diff-added :extend fr) t))
         (should (equal (face-attribute 'diff-file-header-face :extend fr) nil))
-        (should (equal (face-attribute 'diff-indicator-changed :extend fr)
-                       'unspecified)) ; should be t
+        (should (equal (face-attribute 'diff-indicator-changed :extend fr) t))
         (should (equal (face-attribute 'faces--test-face3 :extend nil t) t))
         ))
-  (disable-theme 'tsdh-light)
+  (disable-theme 'faces-test-light)
   (should (equal (face-attribute 'diff-indicator-changed :extend) t))
   (should (equal (face-attribute 'faces--test-face3 :extend nil t) 'unspecified))
   (or noninteractive

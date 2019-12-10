@@ -40,8 +40,8 @@ of green, brown, and blue.")
    `(compilation-info ((,class (:foreground "ForestGreen"))))
    ;; Highlighting faces
    `(highlight ((,class (:foreground "white" :background "dark green"))))
-   `(region ((,class (:foreground "white" :background "dark green" :extend t))))
-   `(secondary-selection ((,class (:background "dark slate gray" :extend t))))
+   `(region ((,class (:foreground "white" :background "dark green"))))
+   `(secondary-selection ((,class (:background "dark slate gray"))))
    `(isearch ((,class (:foreground "white" :background "dark goldenrod"))))
    `(lazy-highlight ((,class (:background "gray25"))))
    ;; Font lock faces
