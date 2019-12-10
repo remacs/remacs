@@ -100,7 +100,7 @@ A value of t means there is no limit--fontify regardless of the size."
   '("mailto:" "data:")
   "List of URI schemes to exclude from `goto-address-uri-schemes'.
 
-Customisations to this variable made after goto-addr is loaded
+Customizations to this variable made after goto-addr is loaded
 will have no effect.")
 
 (defvar goto-address-uri-schemes
@@ -111,7 +111,7 @@ will have no effect.")
               (copy-sequence thing-at-point-uri-schemes))
   "List of URI schemes matched by `goto-address-url-regexp'.
 
-Customisations to this variable made after goto-addr is loaded
+Customizations to this variable made after goto-addr is loaded
 will have no effect.")
 
 (defvar goto-address-url-regexp

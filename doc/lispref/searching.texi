@@ -1032,7 +1032,7 @@ In conventional string syntax, it would be written
 The @code{rx} notation is mainly useful in Lisp code; it cannot be
 used in most interactive situations where a regexp is requested, such
 as when running @code{query-replace-regexp} or in variable
-customisation.
+customization.
 
 @menu
 * Rx Constructs::       Constructs valid in rx forms.

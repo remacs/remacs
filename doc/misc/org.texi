@@ -8648,7 +8648,7 @@ takes precedence over an @samp{ID} property defined on the node itself.
 @item @code{org-attach-method}
 @vindex org-attach-method
 When attaching files using the dispatcher @kbd{C-c C-a} it
-defaults to copying files.  The behaviour can be changed by
+defaults to copying files.  The behavior can be changed by
 customizing @code{org-attach-method}.  Options are Copy, Move/Rename,
 Hard link or Symbolic link.
 

@@ -271,7 +271,7 @@ An existing calc stack is reused, otherwise a new one is created."
                (+ (- (* 2 (var y var-y)) (var x var-x)) (* 3 (var z var-z)))
                -3))
             '(vec (var x var-x) (var y var-y) (var z var-z)))
-           ;; The `float' forms in the result are just artefacts of Calc's
+           ;; The `float' forms in the result are just artifacts of Calc's
            ;; current solver; it should be fixed to produce exact (integral)
            ;; results in this case.
            '(vec (calcFunc-eq (var x var-x) (float 1 0))

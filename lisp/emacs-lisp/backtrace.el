@@ -709,7 +709,7 @@ line and recenter window line accordingly."
 (defun backtrace-print-to-string (obj &optional limit)
   "Return a printed representation of OBJ formatted for backtraces.
 Attempt to get the length of the returned string under LIMIT
-charcters with appropriate settings of `print-level' and
+characters with appropriate settings of `print-level' and
 `print-length.'  LIMIT defaults to `backtrace-line-length'."
   (backtrace--with-output-variables backtrace-view
     (backtrace--print-to-string obj limit)))

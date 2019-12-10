@@ -10008,7 +10008,7 @@ By default the available states are \"TODO\" and \"DONE\".  So, for this
 example: when the item starts with TODO, it is changed to DONE.
 When it starts with DONE, the DONE is removed.  And when neither TODO nor
 DONE are present, add TODO at the beginning of the heading.
-You can set up single-charcter keys to fast-select the new state.  See the
+You can set up single-character keys to fast-select the new state.  See the
 `org-todo-keywords' and `org-use-fast-todo-selection' for details.
 
 With `\\[universal-argument]' prefix ARG, force logging the state change \

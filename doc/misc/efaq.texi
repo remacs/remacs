@@ -3218,7 +3218,7 @@ You can tell Emacs the shell's current directory with the command
 @item
 Third party packages.
 
-Any package you install into Emacs can run arbtitrary code with the
+Any package you install into Emacs can run arbitrary code with the
 same privileges as the Emacs process itself.  Be aware of this when
 you use the package system (e.g. @code{M-x list-packages}) with third
 party archives.  Use only third parties that you can trust!

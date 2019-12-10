@@ -9432,8 +9432,8 @@ syms_of_nsterm (void)
 
   DEFVAR_LISP ("ns-alternate-modifier", ns_alternate_modifier,
                "This variable describes the behavior of the alternate or option key.\n\
-Either SYMBOL, describing the behaviour for any event,\n\
-or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+Either SYMBOL, describing the behavior for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behavior\n\
 separately for ordinary keys, function keys, and mouse events.\n\
 \n\
 Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
@@ -9442,8 +9442,8 @@ If `none', the key is ignored by Emacs and retains its standard meaning.");
 
   DEFVAR_LISP ("ns-right-alternate-modifier", ns_right_alternate_modifier,
                "This variable describes the behavior of the right alternate or option key.\n\
-Either SYMBOL, describing the behaviour for any event,\n\
-or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+Either SYMBOL, describing the behavior for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behavior\n\
 separately for ordinary keys, function keys, and mouse events.\n\
 It can also be `left' to use the value of `ns-alternate-modifier' instead.\n\
 \n\
@@ -9453,8 +9453,8 @@ If `none', the key is ignored by Emacs and retains its standard meaning.");
 
   DEFVAR_LISP ("ns-command-modifier", ns_command_modifier,
                "This variable describes the behavior of the command key.\n\
-Either SYMBOL, describing the behaviour for any event,\n\
-or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+Either SYMBOL, describing the behavior for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behavior\n\
 separately for ordinary keys, function keys, and mouse events.\n\
 \n\
 Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
@@ -9463,8 +9463,8 @@ If `none', the key is ignored by Emacs and retains its standard meaning.");
 
   DEFVAR_LISP ("ns-right-command-modifier", ns_right_command_modifier,
                "This variable describes the behavior of the right command key.\n\
-Either SYMBOL, describing the behaviour for any event,\n\
-or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+Either SYMBOL, describing the behavior for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behavior\n\
 separately for ordinary keys, function keys, and mouse events.\n\
 It can also be `left' to use the value of `ns-command-modifier' instead.\n\
 \n\
@@ -9474,8 +9474,8 @@ If `none', the key is ignored by Emacs and retains its standard meaning.");
 
   DEFVAR_LISP ("ns-control-modifier", ns_control_modifier,
                "This variable describes the behavior of the control key.\n\
-Either SYMBOL, describing the behaviour for any event,\n\
-or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+Either SYMBOL, describing the behavior for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behavior\n\
 separately for ordinary keys, function keys, and mouse events.\n\
 \n\
 Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\
@@ -9484,8 +9484,8 @@ If `none', the key is ignored by Emacs and retains its standard meaning.");
 
   DEFVAR_LISP ("ns-right-control-modifier", ns_right_control_modifier,
                "This variable describes the behavior of the right control key.\n\
-Either SYMBOL, describing the behaviour for any event,\n\
-or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+Either SYMBOL, describing the behavior for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behavior\n\
 separately for ordinary keys, function keys, and mouse events.\n\
 It can also be `left' to use the value of `ns-control-modifier' instead.\n\
 \n\
@@ -9495,8 +9495,8 @@ If `none', the key is ignored by Emacs and retains its standard meaning.");
 
   DEFVAR_LISP ("ns-function-modifier", ns_function_modifier,
                "This variable describes the behavior of the function (fn) key.\n\
-Either SYMBOL, describing the behaviour for any event,\n\
-or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behaviour\n\
+Either SYMBOL, describing the behavior for any event,\n\
+or (:ordinary SYMBOL :function SYMBOL :mouse SYMBOL), describing behavior\n\
 separately for ordinary keys, function keys, and mouse events.\n\
 \n\
 Each SYMBOL is `control', `meta', `alt', `super', `hyper' or `none'.\n\

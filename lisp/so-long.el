@@ -38,7 +38,7 @@
 ;; compacted into the smallest file size possible, which often entails removing
 ;; newlines should they not be strictly necessary).  This can result in lines
 ;; which are many thousands of characters long, and most programming modes
-;; simply aren't optimised (remotely) for this scenario, so performance can
+;; simply aren't optimized (remotely) for this scenario, so performance can
 ;; suffer significantly.
 ;;
 ;; When such files are detected, the command `so-long' is automatically called,
@@ -90,7 +90,7 @@
 ;; * Overview of modes and commands
 ;; --------------------------------
 ;; - `global-so-long-mode' - A global minor mode which enables the automated
-;;    behaviour, causing the user's preferred action to be invoked whenever a
+;;    behavior, causing the user's preferred action to be invoked whenever a
 ;;    newly-visited file contains excessively long lines.
 ;; - `so-long-mode' - A major mode, and the default action.
 ;; - `so-long-minor-mode' - A minor mode version of the major mode, and an
@@ -111,7 +111,7 @@
 ;;
 ;; On rare occasions you may choose to manually invoke the `so-long' command,
 ;; which invokes your preferred `so-long-action' (exactly as the automatic
-;; behaviour would do if it had detected long lines).  You might use this if a
+;; behavior would do if it had detected long lines).  You might use this if a
 ;; problematic file did not meet your configured criteria, and you wished to
 ;; trigger the performance improvements manually.
 ;;
@@ -120,7 +120,7 @@
 ;; available to `so-long' but, like any other mode, they can be invoked directly
 ;; if you have a need to do that (see also "Other ways of using so-long" below).
 ;;
-;; If the behaviour ever triggers when you did not want it to, you can use the
+;; If the behavior ever triggers when you did not want it to, you can use the
 ;; `so-long-revert' command to restore the buffer to its original state.
 
 ;; * Basic configuration
@@ -199,7 +199,7 @@
 ;;
 ;; Note that `so-long-minor-modes' is not useful for other global minor modes
 ;; (as distinguished from globalized minor modes), but in some cases it will be
-;; possible to inhibit or otherwise counter-act the behaviour of a global mode
+;; possible to inhibit or otherwise counter-act the behavior of a global mode
 ;; by overriding variables, or by employing hooks (see below).  You would need
 ;; to inspect the code for a given global mode (on a case by case basis) to
 ;; determine whether it's possible to inhibit it for a single buffer -- and if
@@ -211,7 +211,7 @@
 ;; If `so-long-action' is set to either `so-long-mode' or `so-long-minor-mode',
 ;; the buffer-local value for each variable in the list is set to the associated
 ;; value in the alist.  Use this to enforce values which will improve
-;; performance or otherwise avoid undesirable behaviours.  If `so-long-revert'
+;; performance or otherwise avoid undesirable behaviors.  If `so-long-revert'
 ;; is called, then the original values are restored.
 
 ;; * Hooks
@@ -325,7 +325,7 @@
 ;; meaning you would need to add to `safe-local-variable-values' in order to
 ;; avoid being queried about them.
 ;;
-;; Finally, the `so-long-predicate' user option enables the automated behaviour
+;; Finally, the `so-long-predicate' user option enables the automated behavior
 ;; to be determined by a custom function, if greater control is needed.
 
 ;; * Implementation notes
@@ -342,7 +342,7 @@
 
 ;; * Caveats
 ;; ---------
-;; The variables affecting the automated behaviour of this library (such as
+;; The variables affecting the automated behavior of this library (such as
 ;; `so-long-action') can be used as file- or dir-local values in Emacs 26+, but
 ;; not in previous versions of Emacs.  This is on account of improvements made
 ;; to `normal-mode' in 26.1, which altered the execution order with respect to
@@ -399,7 +399,7 @@
 ;; 0.6   - Added `so-long-minor-modes' and `so-long-hook'.
 ;; 0.5   - Renamed library to "so-long.el".
 ;;       - Added explicit `so-long-enable' command to activate our advice.
-;; 0.4   - Amended/documented behaviour with file-local 'mode' variables.
+;; 0.4   - Amended/documented behavior with file-local 'mode' variables.
 ;; 0.3   - Defer to a file-local 'mode' variable.
 ;; 0.2   - Initial release to EmacsWiki.
 ;; 0.1   - Experimental.
@@ -500,7 +500,7 @@ files would prevent Emacs from handling them correctly."
 (defcustom so-long-invisible-buffer-function #'so-long-deferred
   "Function called in place of `so-long' when the buffer is not displayed.
 
-This affects the behaviour of `global-so-long-mode'.
+This affects the behavior of `global-so-long-mode'.
 
 We treat invisible buffers differently from displayed buffers because, in
 cases where a library is using a buffer for behind-the-scenes processing,
@@ -548,7 +548,7 @@ Defaults to `so-long-detected-long-line-p'."
 (defun so-long--action-type ()
   "Generate a :type for `so-long-action' based on `so-long-action-alist'."
   ;; :type seemingly cannot be a form to be evaluated on demand, so we
-  ;; endeavour to keep it up-to-date with `so-long-action-alist' by
+  ;; endeavor to keep it up-to-date with `so-long-action-alist' by
   ;; calling this from `so-long--action-alist-setter'.
   `(radio ,@(mapcar (lambda (x) (list 'const :tag (cadr x) (car x)))
                     (assq-delete-all nil so-long-action-alist))
@@ -609,7 +609,7 @@ will be automatically processed; but custom actions can also do these things.
 The value `longlines-mode' causes that minor mode to be enabled.  See
 longlines.el for more details.
 
-Each action likewise determines the behaviour of `so-long-revert'.
+Each action likewise determines the behavior of `so-long-revert'.
 
 If the value is nil, or not defined in `so-long-action-alist', then no action
 will be taken."
@@ -756,7 +756,7 @@ By default this happens if `so-long-action' is set to either `so-long-mode'
 or `so-long-minor-mode'.  If `so-long-revert' is subsequently invoked, then the
 disabled modes are re-enabled by calling them with the numeric argument 1.
 
-`so-long-hook' can be used where more custom behaviour is desired.
+`so-long-hook' can be used where more custom behavior is desired.
 
 Please submit bug reports to recommend additional modes for this list, whether
 they are in Emacs core, GNU ELPA, or elsewhere."
@@ -833,7 +833,7 @@ If nil, no mode line indicator will be displayed."
 ;; Modes that go slowly and line lengths excessive
 ;; Font-lock performance becoming oppressive
 ;; All of my CPU tied up with strings
-;; These are a few of my least-favourite things
+;; These are a few of my least-favorite things
 
 (defvar-local so-long-original-values nil
   "Alist holding the buffer's original `major-mode' value, and other data.
@@ -916,7 +916,7 @@ If RESET is non-nil, remove any existing values before storing the new ones."
                  ;; triggered by mouse when some other window is selected.
                  "Revert the current action and invoke the chosen replacement.
 
-This commmand calls `so-long' with the selected action as an argument.")
+This command calls `so-long' with the selected action as an argument.")
                sym)
             :enable (not (and so-long--active
                               (eq ',actionfunc so-long-function)
@@ -1129,7 +1129,7 @@ This minor mode is a standard `so-long-action' option."
   (if so-long-minor-mode ;; We are enabling the mode.
       (progn
         ;; Housekeeping.  `so-long-minor-mode' might be invoked directly rather
-        ;; than via `so-long', so replicate the necessary behaviours.  The minor
+        ;; than via `so-long', so replicate the necessary behaviors.  The minor
         ;; mode also cares about whether `so-long' was already active, as we do
         ;; not want to remember values which were potentially overridden already.
         (unless (or so-long--calling so-long--active)
@@ -1201,9 +1201,9 @@ values), despite potential performance issues, type \\[so-long-revert].
 
 Use \\[so-long-commentary] for more information.
 
-Use \\[so-long-customize] to configure the behaviour."
+Use \\[so-long-customize] to configure the behavior."
   ;; Housekeeping.  `so-long-mode' might be invoked directly rather than via
-  ;; `so-long', so replicate the necessary behaviours.  We could use this same
+  ;; `so-long', so replicate the necessary behaviors.  We could use this same
   ;; test in `so-long-after-change-major-mode' to run `so-long-hook', but that's
   ;; not so obviously the right thing to do, so I've omitted it for now.
   (unless so-long--calling
@@ -1249,7 +1249,7 @@ Use \\[so-long-customize] to configure the behaviour."
 This advice acts before `so-long-mode', with the previous mode still active."
   (unless (derived-mode-p 'so-long-mode)
     ;; Housekeeping.  `so-long-mode' might be invoked directly rather than
-    ;; via `so-long', so replicate the necessary behaviours.
+    ;; via `so-long', so replicate the necessary behaviors.
     (unless so-long--calling
       (so-long-remember-all :reset))
     ;; Remember the original major mode, regardless.
@@ -1334,7 +1334,7 @@ This is the `so-long-revert-function' for `so-long-mode'."
     ;; Emacs 26+ has already called `hack-local-variables' (during
     ;; `run-mode-hooks'; provided there was a `buffer-file-name'), but for older
     ;; versions we need to call it here.  In Emacs 26+ the revised 'HANDLE-MODE'
-    ;; argument is set to `no-mode' (being the non-nil-and-non-t behaviour),
+    ;; argument is set to `no-mode' (being the non-nil-and-non-t behavior),
     ;; which we mimic here by binding `so-long--hack-local-variables-no-mode',
     ;; in order to prevent a local 'mode' variable from clobbering the major
     ;; mode we have just called.
@@ -1371,7 +1371,7 @@ because we do not want to downgrade the major mode in that scenario."
     ;; Act only if `so-long-mode' would be enabled by the current action.
     (when (and (symbolp (so-long-function))
                (provided-mode-derived-p (so-long-function) 'so-long-mode))
-      ;; Downgrade from `so-long-mode' to the `so-long-minor-mode' behaviour.
+      ;; Downgrade from `so-long-mode' to the `so-long-minor-mode' behavior.
       (setq so-long-function 'turn-on-so-long-minor-mode
             so-long-revert-function 'turn-off-so-long-minor-mode))))
 
@@ -1391,7 +1391,7 @@ and cannot be conveniently intercepted, so we are forced to replicate it here.
 
 This special-case code will ultimately be removed from Emacs, as it exists to
 deal with a deprecated feature; but until then we need to replicate it in order
-to inhibit our own behaviour in the presence of a header comment `mode'
+to inhibit our own behavior in the presence of a header comment `mode'
 declaration.
 
 If a file-local mode is detected in the header comment, then we call the
@@ -1526,7 +1526,7 @@ by testing the value against `major-mode'; but as we may have changed the
 major mode to `so-long-mode' by this point, that protection is insufficient
 and so we need to perform our own test.
 
-We likewise need to support an equivalent of the `no-mode' behaviour in 26.1+
+We likewise need to support an equivalent of the `no-mode' behavior in 26.1+
 to ensure that `so-long-mode-revert' will not restore a file-local mode again
 after it has already reverted to the original mode.
 
@@ -1673,7 +1673,7 @@ When such files are detected by `so-long-predicate', we invoke the selected
 
 Use \\[so-long-commentary] for more information.
 
-Use \\[so-long-customize] to configure the behaviour."
+Use \\[so-long-customize] to configure the behavior."
   :global t
   :group 'so-long
   (if global-so-long-mode

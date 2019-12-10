@@ -1039,7 +1039,7 @@
 	recursively sorted with the same mechanism.  That way variables tied
 	to a particular subdirectory override those in a parent directory.
 
-	Previously the behaviour didn’t seem to be well defined anyway and was
+	Previously the behavior didn’t seem to be well defined anyway and was
 	dependent on the order they appeared in the file.  However this order
 	was changed in version 26.1 and it probably also depended on the
 	number of dir-local files that are merged.
@@ -7238,7 +7238,8 @@
 
 2018-04-17  Andreas Schwab  <schwab@suse.de>
 
-	Fix undefined behaviour while looking for lexical-binding file variable (bug 31186)
+	Fix undefined behavior while looking for lexical-binding file
+	variable (bug 31186).
 
 	* src/lread.c (lisp_file_lexically_bound_p): Reset
 	beg_end_state before reading variable or value.
@@ -63858,7 +63859,7 @@
 
 2016-01-20  Eli Zaretskii  <eliz@gnu.org>
 
-	Anoter fix for problematic merge from emacs-25
+	Another fix for problematic merge from emacs-25
 
 	* src/w32fns.c (globals_of_w32fns): Move initialization of
 	resetstkoflw to a non-Cygwin part.

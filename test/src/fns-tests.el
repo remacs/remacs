@@ -237,7 +237,7 @@
   (apply 'concat (make-list o s)))
 
 (defmacro fns-tests--with-region (funcname string &rest args)
-  "Apply FUNCNAME in a temp bufer on the region produced by STRING."
+  "Apply FUNCNAME in a temp buffer on the region produced by STRING."
   (declare (indent 1))
   `(with-temp-buffer
      (insert ,string)

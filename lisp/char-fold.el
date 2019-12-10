@@ -253,7 +253,7 @@ Each entry is a list of a character and the strings that fold into it."
   :version "27.1")
 
 (defcustom char-fold-exclude char-fold--default-exclude
-  "Character foldings to remove from default decompisitions.
+  "Character foldings to remove from default decompositions.
 Each entry is a list of a character and the strings to remove from folding."
   :type '(alist :key-type (character :tag "Fold to character")
                 :value-type (repeat (string :tag "Fold from string")))

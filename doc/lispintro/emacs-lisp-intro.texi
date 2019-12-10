@@ -103,7 +103,7 @@
 @c number suitable for the title page, and update-date to be the date,
 @c in the preferred style for these.  E.g., run the shell command:
 @c   texi2any -D 'edition-number 3.11' \
-@c            -D 'titlepage-edition-number Revised Third Edtion' \
+@c            -D 'titlepage-edition-number Revised Third Edition' \
 @c            -D 'update-date 31 March 2020'
 @c This relates mainly to the published book sold by the FSF.
 
@@ -3832,7 +3832,7 @@ delimit them from the body of the @code{let}.
 @findex if
 @cindex Conditional with @code{if}
 
-Anoter special form is the conditional @code{if}.  This form is used
+Another special form is the conditional @code{if}.  This form is used
 to instruct the computer to make decisions.  You can write function
 definitions without using @code{if}, but it is used often enough, and
 is important enough, to be included here.  It is used, for example, in

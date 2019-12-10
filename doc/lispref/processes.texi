@@ -2990,7 +2990,7 @@ broadcast address, and network mask.
 Optional argument @var{family} specified as symbol @code{ipv4} or
 @code{ipv6} restricts the returned information to IPv4 and IPv6
 addresses respectively, independently of the value of @var{full}.
-Speficying @code{ipv6} when IPv6 support is not available will result
+Specifying @code{ipv6} when IPv6 support is not available will result
 in an error being signaled.
 
 Some examples:

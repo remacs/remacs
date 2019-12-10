@@ -230,7 +230,7 @@ inside a comment or string."
 	(electric-pair-mode nil)
         ;; When adding the "closer" delimiter, a job his function is
         ;; frequently used for, we don't want to munch any extra
-        ;; newlines above us.  That would be the default behaviour of
+        ;; newlines above us.  That would be the default behavior of
         ;; `electric-layout-mode', which potentially kicked in before
         ;; us to add these newlines, and is probably about to kick in
         ;; again after we add the closer.

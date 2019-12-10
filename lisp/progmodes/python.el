@@ -3737,9 +3737,9 @@ Pdbtracking would open the file for current stack frame found in pdb output by
 `python-pdbtrack-stacktrace-info-regexp' and add overlay arrow in currently
 inspected line in that file.
 
-After command listed in `python-pdbtrack-continue-command' or
-`python-pdbtrack-exit-command' is sent to pdb, pdbtracking session is
-considered over.  Overlay arrow will be removed from currentry tracked
+After the command listed in `python-pdbtrack-continue-command' or
+`python-pdbtrack-exit-command' is sent to pdb, the pdbtracking session is
+considered over.  The overlay arrow will be removed from the currently tracked
 buffer.  Additionally, if `python-pdbtrack-kill-buffers' is non-nil, all
 files opened by pdbtracking will be killed."
   :type 'boolean

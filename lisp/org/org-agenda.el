@@ -7636,7 +7636,7 @@ and deselects entries with tag `John' or matching the regexp `plot'.
 
 During entry of the filter, completion for tags, categories and effort
 values is offered.  Since the syntax for categories and tags is identical
-there should be no overlap between categoroes and tags.  If there is, tags
+there should be no overlap between categories and tags.  If there is, tags
 get priority.
 
 A single `\\[universal-argument]' prefix arg STRIP-OR-ACCUMULATE will negate the

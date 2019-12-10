@@ -5622,7 +5622,7 @@ area from the left of the original image, and if negative the offset
 from the right.  If @var{y} is a positive number it specifies the
 offset from the top of the original image, and if negative from the
 bottom.  If @var{x} or @var{y} are @code{nil} or unspecified the crop
-area will be centred on the original image.
+area will be centered on the original image.
 
 If the crop area is outside or overlaps the edge of the image it will
 be reduced to exclude any areas outside of the image.  This means it

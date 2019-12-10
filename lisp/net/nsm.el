@@ -384,7 +384,7 @@ Security (DTLS)\", \"(4.1.  General Guidelines)\"
 This check is a response to Logjam[1].  Logjam is an attack that
 allows an attacker with sufficient resource, and positioned
 between the user and the server, to downgrade vulnerable TLS
-connections to insecure 512-bit export grade crypotography.
+connections to insecure 512-bit export grade cryptography.
 
 The Logjam paper suggests using 1024-bit prime on the client to
 mitigate some effects of this attack, and upgrade to 2048-bit as
@@ -550,7 +550,7 @@ Security (TLS) and Datagram Transport Layer Security (DTLS)\",
 Due to its use of 64-bit block size, it is known that a
 ciphertext collision is highly likely when 2^32 blocks are
 encrypted with the same key bundle under 3-key 3DES.  Practical
-birthday attacks of this kind have been demostrated by Sweet32[1].
+birthday attacks of this kind have been demonstrated by Sweet32[1].
 As such, NIST is in the process of disallowing its use in TLS[2].
 
 [1]: Bhargavan, Leurent (2016).  \"On the Practical (In-)Security of
@@ -752,7 +752,7 @@ protocol."
         ;; Plain connection allowed.
         (memq :none saved-fingerprints)
         ;; We are pinning certs, and we have seen this host before,
-        ;; but the credientials for this host differs from the last
+        ;; but the credentials for this host differs from the last
         ;; times we saw it.
         (member (nsm-fingerprint status) saved-fingerprints))))
 

@@ -99,7 +99,7 @@ keys and the fullscreen behavior.  To see all such options, use
 
 @subsection Modifier keys
 
-The following variables control the behaviour of the actual modifier
+The following variables control the behavior of the actual modifier
 keys:
 
 @table @code
@@ -135,12 +135,12 @@ which describes the modifier when used with ordinary keys, function keys
 If the @var{symbol} is one of @code{control}, @code{meta}, @code{alt},
 @code{super} or @code{hyper}, this describes the Emacs modifier it
 represents.  If @var{symbol} is @code{none}, Emacs does not use the
-key, which retains its standard behaviour.  For instance, the
+key, which retains its standard behavior.  For instance, the
 @key{Option} key in macOS is then used for composing additional
 characters.
 
 The variables for right-hand keys, like @code{ns-right-alternate-modifier},
-may also be set to @code{left}, which means to use the same behaviour as
+may also be set to @code{left}, which means to use the same behavior as
 the corresponding left-hand key.
 
 @subsection Font Panel
@@ -210,7 +210,7 @@ the mouse.
 
 The sending application has some limited ability to decide how Emacs
 handles the sent object, but the user may override the default
-behaviour by holding one or more modifier key.
+behavior by holding one or more modifier key.
 
 @table @kbd
 @item control
@@ -220,7 +220,7 @@ will insert the filename.
 Attempt to open the object as though it is a file or URL.
 @item super/command
 Perform the default action for the type.  This can be useful when an
-application is overriding the default behaviour.
+application is overriding the default behavior.
 @end table
 
 The modifier keys listed above are defined by macOS and are unaffected

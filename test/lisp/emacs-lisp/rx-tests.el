@@ -79,7 +79,7 @@
   ;; Range of raw characters, multibyte.
   (should (equal (rx (any "Å\211\326-\377\177"))
                  "[\177Å\211\326-\377]"))
-  ;; Split range; \177-\377ÿ should not be optimised to \177-\377.
+  ;; Split range; \177-\377ÿ should not be optimized to \177-\377.
   (should (equal (rx (any "\177-\377" ?ÿ))
                  "[\177ÿ\200-\377]")))
 

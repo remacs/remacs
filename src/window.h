@@ -429,7 +429,7 @@ struct window
        i.e., always survive Fset_window_buffer.  */
     bool_bf fringes_persistent : 1;
 
-    /* True if this window's croll bar specifications are persistent,
+    /* True if this window's scroll bar specifications are persistent,
        i.e., always survive Fset_window_buffer.  */
     bool_bf scroll_bars_persistent : 1;
 

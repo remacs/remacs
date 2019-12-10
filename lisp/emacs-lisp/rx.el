@@ -275,7 +275,7 @@ Return (REGEXP . PRECEDENCE)."
   ;;        -> "[A-Z@%[:digit:][:space:][:word:]]"
   ;;
   ;; Problem: If a subpattern is carefully written to be
-  ;; optimisable by regexp-opt, how do we prevent the transforms
+  ;; optimizable by regexp-opt, how do we prevent the transforms
   ;; above from destroying that property?
   ;; Example: (or "a" (or "abc" "abd" "abe"))
   (cond

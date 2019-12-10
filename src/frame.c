@@ -3560,7 +3560,7 @@ window managers may refuse to honor a HEIGHT that is not an integer
 multiple of the default frame font height.
 
 When called interactively, HEIGHT is the numeric prefix and the
-currenly selected frame will be set to this height.  */)
+currently selected frame will be set to this height.  */)
   (Lisp_Object frame, Lisp_Object height, Lisp_Object pretend, Lisp_Object pixelwise)
 {
   struct frame *f = decode_live_frame (frame);
@@ -3589,7 +3589,7 @@ window managers may refuse to honor a WIDTH that is not an integer
 multiple of the default frame font width.
 
 When called interactively, WIDTH is the numeric prefix and the
-currenly selected frame will be set to this width.    */)
+currently selected frame will be set to this width.    */)
   (Lisp_Object frame, Lisp_Object width, Lisp_Object pretend, Lisp_Object pixelwise)
 {
   struct frame *f = decode_live_frame (frame);

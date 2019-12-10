@@ -92,7 +92,7 @@ the message to 30 characters in order to build the description of the
 link.  This behavior was considered as too surprising.  As
 a consequence, Org no longer truncates subjects.
 
-You can get the old behaviour back with the following:
+You can get the old behavior back with the following:
 
 : (setq org-email-link-description-format "Email %c: %.30s")
 
@@ -170,7 +170,7 @@ From now on inheritance requires no extra property and will adhere to
 customized to always be activated or never be activated in
 ~org-attach-use-inheritance~.
 
-The ATTACH_DIR property is deprecated in favour of the shorter
+The ATTACH_DIR property is deprecated in favor of the shorter
 property DIR.  Links to folders inside the DIR property can now be
 declared as relative links.  This is not enabled by default, but can
 be set in ~org-attach-dir-relative~.
@@ -178,7 +178,7 @@ be set in ~org-attach-dir-relative~.
 When adding new attachment to the outline node the preferred way of
 doing so can be customized.  Take a look at
 ~org-attach-preferred-new-method~.  It defaults to using ID since that
-was the behaviour before this change.
+was the behavior before this change.
 
 If both DIR and ID properties are set on the same node, DIR has
 precedence and will be used.
@@ -335,7 +335,7 @@ parameters in ~sql-connection-alist~.
 The builtin "latex" exporters now accept and use a =:scale= attribute,
 which scales an image by a given factor.
 
-This attribute is wrapped adound the =scale= parameter of LaTeX's
+This attribute is wrapped around the =scale= parameter of LaTeX's
 =\includegraphics= (bitmap images) or a TiKZ's =\scalebox=.
 Therefore, its value should be some string palatable to LaTeX as
 a positive float Its default value is an empty string (i.e. disabled).
@@ -386,7 +386,7 @@ You can install it back from MELPA.
 *** ~org-capture-insert-template-here~
 *** ~org-attach-directory~
 
-It has been deprecated in favour of ~org-attach-id-dir~ which is less
+It has been deprecated in favor of ~org-attach-id-dir~ which is less
 ambiguous given the restructured org-attach.
 
 *** ~org-enable-fixed-width-editor~
@@ -612,7 +612,7 @@ document, use =shrink= value instead, or in addition to align:
 
 Function ~org-get-tags~ used to return local tags to the current
 headline.  It now returns all the inherited tags in addition to the
-local tags.  In order to get the old behaviour back, you can use:
+local tags.  In order to get the old behavior back, you can use:
 
 : (org-get-tags nil t)
 

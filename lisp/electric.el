@@ -423,10 +423,10 @@ If multiple rules match, only first one is executed.")
                   ;; newlines, re-indentation is prevented.
                   ;;
                   ;; FIXME: when `newline'ing, we exceptionally
-                  ;; prevent a specific behaviour of
+                  ;; prevent a specific behavior of
                   ;; `eletric-pair-mode', that of opening an extra
                   ;; newline between newly inserted matching paris.
-                  ;; In theory that behaviour should be provided by
+                  ;; In theory that behavior should be provided by
                   ;; `electric-layout-mode' instead, which should be
                   ;; possible given the current API.
                   ;;

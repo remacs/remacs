@@ -743,7 +743,7 @@ column zero.
 ---
 *** The new 'compilation-transform-file-match-alist' user option can
 be used to transform file name matches compilation output, and remove
-known false positives being recognised as warnings/errors.
+known false positives being recognized as warnings/errors.
 
 ** cl-lib.el
 +++
@@ -1336,7 +1336,7 @@ Of course it will still find it if you have it in "~/.ecompleterc".
 
 ---
 *** 'mm-uu-diff-groups-regexp' now defaults to matching all groups,
-which means that "git am" diffs are recognised everywhere.
+which means that "git am" diffs are recognized everywhere.
 
 +++
 *** Two new Gnus summary mode navigation commands have been added,
@@ -1987,7 +1987,7 @@ exclude most headers when forwarding.
 
 *** 'mml-secure-openpgp-sign-with-sender' sets also "gpg --sender"
 When 'mml-secure-openpgp-sign-with-sender' is non-nil message sender's
-email address (in addition to its old behaviour) will also be used to
+email address (in addition to its old behavior) will also be used to
 set gpg's "--sender email@domain" option.
 
 The option is useful for two reasons when verifying the signature:
@@ -2661,14 +2661,14 @@ Previously, the control key modifier was used to scroll up or down by
 an amount which was close to near a full screen.  This is now instead
 available by scrolling with the meta modifier key.
 
-To get the old behaviour back, customize the user option
+To get the old behavior back, customize the user option
 'mouse-wheel-scroll-amount', or add the following to your init file:
 
 (customize-set-variable 'mouse-wheel-scroll-amount
                         '(5 ((shift) . 1) ((control) . nil)))
 
 By default, the font size will be changed in the window that the mouse
-pointer is over.  To change this behaviour, you can customize the user
+pointer is over.  To change this behavior, you can customize the user
 option 'mouse-wheel-follow-mouse'.  Note that this will also affect
 scrolling.
 
@@ -3319,8 +3319,8 @@ Previously it was supported only in the Cygwin-w32 build.
 ** Emacs now handles key combinations involving the macOS "command"
 and "option" modifier keys more correctly.
 
-** MacOS modifier key behaviour is now more adjustable.
-The behaviour of the macOS "Option", "Command", "Control" and
+** MacOS modifier key behavior is now more adjustable.
+The behavior of the macOS "Option", "Command", "Control" and
 "Function" keys can now be specified separately for use with
 ordinary keys, function keys and mouse clicks.  This allows using them
 in their standard macOS way for composing characters.
@@ -3370,9 +3370,9 @@ fonts.  See the documentation of this function and variable in the
 Emacs manual for more details.
 
 +++
-** On NS the behaviour of drag and drop can now be modified by use of
+** On NS the behavior of drag and drop can now be modified by use of
 modifier keys in line with Apples guidelines.  This makes the drag and
-drop behaviour more consistent, as previously the sending application
+drop behavior more consistent, as previously the sending application
 was able to 'set' modifiers without the knowledge of the user.
 
 ** On NS multicolor font display is enabled again since it is also

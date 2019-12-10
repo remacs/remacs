@@ -7333,7 +7333,7 @@ produce_annotation (struct coding_system *coding, ptrdiff_t pos)
    the text from the end of the gap (and GPT must be equal to PT).
 
    When the text is taken from the gap, it can't be at the beginning
-   of the gap because the new decoded text is progressively acumulated
+   of the gap because the new decoded text is progressively accumulated
    at the beginning of the gap before it gets inserted at PT (this way,
    as the output grows, the input shrinks, so we only need to allocate
    enough space for `max(IN, OUT)` instead of `IN + OUT`).
@@ -9876,7 +9876,7 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
    pure-ASCII; only use NOCOPY non-zero if the caller will only use
    the byte sequence of the decoded result accessed via SDATA or
    SSDATA, and if the original STRING will _not_ be modified after the
-   decoding.  When in dount, always pass NOCOPY as zero.  You _have_
+   decoding.  When in doubt, always pass NOCOPY as zero.  You _have_
    been warned!
 
    If STRING is Qnil, and the original string is passed via STR, NOCOPY
@@ -10180,7 +10180,7 @@ DEFUN ("internal-encode-string-utf-8", Finternal_encode_string_utf_8,
   int repeat_count;
   Lisp_Object val;
 
-  /* Check arguments.  Return Qnil when an argmement is invalid.  */
+  /* Check arguments.  Return Qnil when an argument is invalid.  */
   if (! STRINGP (string))
     return Qnil;
   if (! NILP (buffer)
@@ -10236,7 +10236,7 @@ DEFUN ("internal-decode-string-utf-8", Finternal_decode_string_utf_8,
   int repeat_count;
   Lisp_Object val;
 
-  /* Check arguments.  Return Qnil when an argmement is invalid.  */
+  /* Check arguments.  Return Qnil when an argument is invalid.  */
   if (! STRINGP (string))
     return Qnil;
   if (! NILP (buffer)

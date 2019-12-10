@@ -3168,7 +3168,7 @@ They might differ only in time attributes or directory size."
     (when (< start-time
 	     (float-time (tramp-compat-file-attribute-modification-time attr2)))
       (setcar (nthcdr 5 attr2) tramp-time-dont-know))
-    ;; Status change time.  Dito.
+    ;; Status change time.  Ditto.
     (when (or (tramp-compat-time-equal-p
 	       (tramp-compat-file-attribute-status-change-time attr1)
 	       tramp-time-dont-know)

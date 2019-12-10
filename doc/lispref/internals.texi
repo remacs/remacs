@@ -565,7 +565,7 @@ for threshold exhaustion regularly, for efficiency reasons it does not
 do so immediately after every change to the heap or to
 @code{gc-cons-threshold} or @code{gc-cons-percentage}, so exhausting
 the threshold does not immediately trigger garbage collection.  Also,
-for efficency in threshold calculations Emacs approximates the heap
+for efficiency in threshold calculations Emacs approximates the heap
 size, which counts the bytes used by currently-accessible objects in
 the heap.
 

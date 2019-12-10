@@ -646,7 +646,7 @@ with parameters from the *Messages* buffer modification."
 (deftest-overlays-at-1 R 50 (a) (a 1 60) (c 1 1) (b 30 30) (d 50 50))
 (deftest-overlays-at-1 S 60 () (a 1 60) (c 1 1) (b 30 30) (d 50 50))
 
-;; behaviour at point-min and point-max
+;; behavior at point-min and point-max
 (ert-deftest test-overlays-at-2 ()
   (cl-macrolet ((should-length (n list)
                                `(should (= ,n (length ,list)))))
@@ -743,7 +743,7 @@ with parameters from the *Messages* buffer modification."
 (deftest-overlays-in-1 af 10 11 (a) (a 10 10))
 
 
-;; behaviour at point-max
+;; behavior at point-max
 (ert-deftest test-overlays-in-2 ()
   (cl-macrolet ((should-length (n list)
                                `(should (= ,n (length ,list)))))

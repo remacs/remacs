@@ -1300,7 +1300,7 @@ renaming only, rather than modified in-place."
   (should (equal (file-size-human-readable-iec 72528034765) "67.5 GiB")))
 
 (ert-deftest files-test-magic-mode-alist-re-baseline ()
-  "Test magic-mode-alist with RE, expected behaviour for match."
+  "Test magic-mode-alist with RE, expected behavior for match."
   (let ((magic-mode-alist '(("my-tag" . text-mode))))
     (with-temp-buffer
       (insert "my-tag")
@@ -1308,7 +1308,7 @@ renaming only, rather than modified in-place."
       (should (eq major-mode 'text-mode)))))
 
 (ert-deftest files-test-magic-mode-alist-re-no-match ()
-  "Test magic-mode-alist with RE, expected behaviour for no match."
+  "Test magic-mode-alist with RE, expected behavior for no match."
   (let ((magic-mode-alist '(("my-tag" . text-mode))))
     (with-temp-buffer
       (insert "not-my-tag")

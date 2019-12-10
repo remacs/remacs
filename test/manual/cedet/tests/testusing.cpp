@@ -168,7 +168,7 @@ void func8()
     ; //#10# ( "four" "three" )
 }
 
-// Check convetional namespace aliases
+// Check conventional namespace aliases
 // - fully qualified -
 void func9()
 {

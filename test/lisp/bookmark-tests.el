@@ -38,7 +38,7 @@
   "Bookmark file used for testing.")
 
 (defvar bookmark-tests-example-file
-  ;; We use abbreviate-file-name here to match the behaviour of
+  ;; We use abbreviate-file-name here to match the behavior of
   ;; `bookmark-buffer-file-name'.
   (abbreviate-file-name (expand-file-name "example.txt" bookmark-tests-data-dir))
   "Example file used for testing.")

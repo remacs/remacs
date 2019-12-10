@@ -541,7 +541,7 @@ hbfont_shape (Lisp_Object lgstring, Lisp_Object direction)
 
 	     Implementation note: the character codepoint recorded in
 	     each glyph is not really used, except when we display the
-	     glyphs in descr-text.el.  So this is just an aeasthetic
+	     glyphs in descr-text.el.  So this is just an aesthetic
 	     issue.  */
 	  if (buf_reversed)
 	    cluster_offset = to - from;

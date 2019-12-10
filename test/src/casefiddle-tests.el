@@ -196,7 +196,7 @@
         ("ﬁsh" "FISH" "ﬁsh" "Fish" "Fish")
         ("Straße" "STRASSE" "straße" "Straße" "Straße")
 
-        ;; The word repeated twice to test behaviour at the end of a word
+        ;; The word repeated twice to test behavior at the end of a word
         ;; inside of an input string as well as at the end of the string.
         ("ΌΣΟΣ ΌΣΟΣ" "ΌΣΟΣ ΌΣΟΣ" "όσος όσος" "Όσος Όσος" "ΌΣΟΣ ΌΣΟΣ")
         ;; What should be done with sole sigma?  It is ‘final’ but on the

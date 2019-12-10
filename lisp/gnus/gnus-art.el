@@ -2088,7 +2088,7 @@ you're expecting some kind of apostrophe or quotation mark, then
 try this wash."
   (interactive)
   (article-translate-strings gnus-article-smartquotes-map))
-(define-obsolete-function-alias 'article-treat-dumquotes
+(define-obsolete-function-alias 'article-treat-dumbquotes
   #'article-treat-smartquotes "27.1")
 
 (defvar org-entities)

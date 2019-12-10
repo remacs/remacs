@@ -1709,7 +1709,7 @@ The function assumes `org-table-copy-increment' is non-nil."
 	 (number-suffix-regexp (rx (and (one-or-more digit) string-end)))
 	 (analyze
 	  (lambda (field)
-	    ;; Analyse string FIELD and return information related to
+	    ;; Analyze string FIELD and return information related to
 	    ;; increment or nil.  When non-nil, return value has the
 	    ;; following scheme: (TYPE VALUE PATTERN) where
 	    ;; - TYPE is a symbol among `number', `prefix', `suffix'

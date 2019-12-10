@@ -50,7 +50,7 @@ wait this many seconds after Emacs becomes idle before doing an update."
 The `undo' command will normally consider \"similar\" changes
 (like inserting characters) to be part of the same change.  This
 is called \"amalgamating\" the changes.  This variable says what
-the maximum number of changes condidered is when amalgamating.  A
+the maximum number of changes considered is when amalgamating.  A
 value of 1 means that nothing is amalgamated.")
 
 (defgroup killing nil
