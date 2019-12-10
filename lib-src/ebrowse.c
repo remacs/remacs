@@ -306,19 +306,19 @@ struct sym
 #define P_DEFN	1
 #define P_DECL  2
 
-int info_where;
-struct sym *info_cls = NULL;
-struct member *info_member = NULL;
+static int info_where;
+static struct sym *info_cls = NULL;
+static struct member *info_member = NULL;
 
 /* Experimental.  For option `--position-info', the buffer position we
    are interested in.  When this position is reached, print out
    information about what we know about that point.  */
 
-int info_position = -1;
+static int info_position = -1;
 
 /* Command line options structure for getopt_long.  */
 
-struct option options[] =
+static struct option const options[] =
 {
   {"append", 			no_argument, 	   NULL, 'a'},
   {"files", 			required_argument, NULL, 'f'},
@@ -339,28 +339,28 @@ struct option options[] =
 
 /* Semantic values of tokens.  Set by yylex..  */
 
-unsigned yyival;		/* Set for token CINT.  */
-char *yytext;			/* Set for token IDENT.  */
-char *yytext_end;
+static unsigned yyival;		/* Set for token CINT.  */
+static char *yytext;		/* Set for token IDENT.  */
+static char *yytext_end;
 
 /* Output file.  */
 
-FILE *yyout;
+static FILE *yyout;
 
 /* Current line number.  */
 
-int yyline;
+static int yyline;
 
 /* The name of the current input file.  */
 
-const char *filename;
+static const char *filename;
 
 /* Three character class vectors, and macros to test membership
    of characters.  */
 
-char is_ident[255];
-char is_digit[255];
-char is_white[255];
+static char is_ident[255];
+static char is_digit[255];
+static char is_white[255];
 
 #define IDENTP(C)	is_ident[(unsigned char) (C)]
 #define DIGITP(C)	is_digit[(unsigned char) (C)]
@@ -368,25 +368,25 @@ char is_white[255];
 
 /* Command line flags.  */
 
-int f_append;
-int f_verbose;
-int f_very_verbose;
-int f_structs = 1;
-int f_regexps = 1;
-int f_nested_classes = 1;
+static int f_append;
+static int f_verbose;
+static int f_very_verbose;
+static int f_structs = 1;
+static int f_regexps = 1;
+static int f_nested_classes = 1;
 
 /* Maximum and minimum lengths of regular expressions matching a
    member, class etc., for writing them to the output file.  These are
    overridable from the command line.  */
 
-int min_regexp = 5;
-int max_regexp = 50;
+static int min_regexp = 5;
+static int max_regexp = 50;
 
 /* Input buffer.  */
 
-char *inbuffer;
-char *in;
-size_t inbuffer_size;
+static char *inbuffer;
+static char *in;
+static size_t inbuffer_size;
 
 /* Return the current buffer position in the input file.  */
 
@@ -396,7 +396,7 @@ size_t inbuffer_size;
    first character in the string constant.  Used for recognizing
    extern "C".  */
 
-char *string_start;
+static char *string_start;
 
 /* The size of the hash tables for classes.and members.  Should be
    prime.  */
@@ -405,40 +405,40 @@ char *string_start;
 
 /* The hash table for class symbols.  */
 
-struct sym *class_table[TABLE_SIZE];
+static struct sym *class_table[TABLE_SIZE];
 
 /* Hash table containing all member structures.  This is generally
    faster for member lookup than traversing the member lists of a
    `struct sym'.  */
 
-struct member *member_table[TABLE_SIZE];
+static struct member *member_table[TABLE_SIZE];
 
 /* Hash table for namespace aliases */
 
-struct alias *namespace_alias_table[TABLE_SIZE];
+static struct alias *namespace_alias_table[TABLE_SIZE];
 
 /* The special class symbol used to hold global functions,
    variables etc.  */
 
-struct sym *global_symbols;
+static struct sym *global_symbols;
 
 /* The current namespace.  */
 
-struct sym *current_namespace;
+static struct sym *current_namespace;
 
 /* The list of all known namespaces.  */
 
-struct sym *all_namespaces;
+static struct sym *all_namespaces;
 
 /* Stack of namespaces we're currently nested in, during the parse.  */
 
-struct sym **namespace_stack;
-int namespace_stack_size;
-int namespace_sp;
+static struct sym **namespace_stack;
+static int namespace_stack_size;
+static int namespace_sp;
 
 /* The current lookahead token.  */
 
-int tk = -1;
+static int tk = -1;
 
 /* Structure describing a keyword.  */
 
@@ -452,7 +452,7 @@ struct kw
 /* Keywords are lookup up in a hash table of their own.  */
 
 #define KEYWORD_TABLE_SIZE 1001
-struct kw *keyword_table[KEYWORD_TABLE_SIZE];
+static struct kw *keyword_table[KEYWORD_TABLE_SIZE];
 
 /* Search path.  */
 
@@ -462,8 +462,8 @@ struct search_path
   struct search_path *next;
 };
 
-struct search_path *search_path;
-struct search_path *search_path_tail;
+static struct search_path *search_path;
+static struct search_path *search_path_tail;
 
 /* Function prototypes.  */
 
@@ -1132,9 +1132,9 @@ putstr (const char *s, FILE *fp)
 
 /* A dynamically allocated buffer for constructing a scope name.  */
 
-char *scope_buffer;
-int scope_buffer_size;
-int scope_buffer_len;
+static char *scope_buffer;
+static int scope_buffer_size;
+static int scope_buffer_len;
 
 
 /* Make sure scope_buffer has enough room to add LEN chars to it.  */
