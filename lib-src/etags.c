@@ -78,8 +78,6 @@ University of California, as described above. */
  * together with a configuration file containing regexp definitions for etags.
  */
 
-char pot_etags_version[] = "@(#) pot revision number is 17.38.1.4";
-
 #ifdef DEBUG
 #  undef DEBUG
 #  define DEBUG true
