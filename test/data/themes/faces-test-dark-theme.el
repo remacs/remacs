@@ -24,9 +24,9 @@
 
 (custom-theme-set-faces
  'faces-test-dark
- '(diff-added ((t (:foreground "Green" :extend t))))
- '(diff-changed-face ((t (:foreground "Khaki"))))
- '(diff-file-header-face ((t (:background "grey20" :foreground "ivory1")))))
+ '(spiff-added ((t (:foreground "Green" :extend t))))
+ '(spiff-changed-face ((t (:foreground "Khaki"))))
+ '(spiff-file-header-face ((t (:background "grey20" :foreground "ivory1")))))
 
 (provide-theme 'faces-test-dark)
 

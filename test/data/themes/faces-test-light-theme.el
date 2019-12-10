@@ -24,8 +24,8 @@
 
 (custom-theme-set-faces
  'faces-test-light
- '(diff-added ((t (:inherit diff-changed :background "light green" :extend t))))
- '(diff-changed ((t (:background "light steel blue")))))
+ '(spiff-added ((t (:inherit diff-changed :background "light green" :extend t))))
+ '(spiff-changed ((t (:background "light steel blue")))))
 
 (provide-theme 'faces-test-light)
 
