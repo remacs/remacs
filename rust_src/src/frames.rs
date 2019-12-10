@@ -30,6 +30,9 @@ use crate::{
 #[cfg(not(feature = "window-system"))]
 use crate::fns::copy_sequence;
 
+/// LispFrameRef is a reference to the LispFrame
+/// However a reference is guaranteed to point to an existing frame
+/// therefore no NULL checks are needed while using it
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
@@ -724,6 +727,44 @@ pub fn make_frame_invisible(frame: LispFrameLiveOrSelected, force: bool) {
     // Make menu bar update for the Buffers and Frames menus.
     unsafe {
         windows_or_buffers_changed = 16;
+    }
+}
+
+#[lisp_fn]
+pub fn last_nonminibuffer_frame() -> LispObject {
+    unsafe { last_non_minibuffer_frame.into() }
+}
+
+/// A reference (Some) to a guaranteed existing frame which is not just a mini-buffer,
+/// or None if there are no such frames.
+/// This is usually the most recent such frame that was selected.
+///
+/// Option<LispFrameRef> is used in order to clear out the confusion around references,
+/// since LispFrameRef (as any other reference) is used for an existing reference (not NULL)
+static mut last_non_minibuffer_frame: Option<LispFrameRef> = None;
+
+/// Return current last non-minibuffer frame reference
+/// or a pointer to null in case there are no such frames
+#[no_mangle]
+pub extern "C" fn get_last_nonminibuffer_frame() -> LispFrameRef {
+    unsafe {
+        match last_non_minibuffer_frame {
+            Some(frame_ref) => frame_ref,
+            None => LispFrameRef::new(std::ptr::null_mut()),
+        }
+    }
+}
+
+/// Set current last non-minibuffer frame reference
+#[no_mangle]
+pub extern "C" fn set_last_nonminibuffer_frame(frame_ref: LispFrameRef) {
+    unsafe {
+        // frame reference may be null, since it is called from C
+        if frame_ref.is_null() {
+            last_non_minibuffer_frame = None
+        } else {
+            last_non_minibuffer_frame = Some(frame_ref)
+        }
     }
 }
 
