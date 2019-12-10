@@ -640,7 +640,7 @@ defined in the file.";
 static const char *Erlang_interpreters [] =
   { "escript", NULL };
 
-const char *Forth_suffixes [] =
+static const char *Forth_suffixes [] =
   { "fth", "tok", NULL };
 static const char Forth_help [] =
 "In Forth code, tags are words defined by ':',\n\
