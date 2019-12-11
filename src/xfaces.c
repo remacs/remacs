@@ -2179,6 +2179,8 @@ face_inherited_attr (struct window *w, struct frame *f,
 	      if (!UNSPECIFIEDP (attr_val))
 		break;
 	    }
+	  if (!ok)	/* bad face? */
+	    break;
 	}
       else
 	{
