@@ -906,11 +906,18 @@ for the last tab on a frame is determined by
          (current-index (tab-bar--current-tab-index tabs)))
     (when current-index
       (dotimes (index (length tabs))
-        (unless (eq index current-index)
+        (unless (or (eq index current-index)
+                    (run-hook-with-args-until-success
+                     'tab-bar-tab-prevent-close-functions
+                     (nth index tabs)
+                     ; last-tab-p logically can't ever be true if we
+                     ; make it this far
+                     nil))
           (push `((frame . ,(selected-frame))
                   (index . ,index)
                   (tab . ,(nth index tabs)))
-                tab-bar-closed-tabs)))
+                tab-bar-closed-tabs)
+          (run-hook-with-args 'tab-bar-tab-pre-close-functions (nth index tabs) nil)))
       (set-frame-parameter nil 'tabs (list (nth current-index tabs)))
 
       (when (and tab-bar-mode
