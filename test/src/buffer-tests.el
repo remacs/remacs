@@ -565,7 +565,7 @@ with parameters from the *Messages* buffer modification."
 (deftest-previous-overlay-change-1 o 25 20 (30 30) (20 30))
 (deftest-previous-overlay-change-1 p 30 20 (20 20) (20 30))
 (deftest-previous-overlay-change-1 q 40 30 (20 20) (20 30))
-;; 1 empty, 1 non-empty, intersectig in the middle
+;; 1 empty, 1 non-empty, intersecting in the middle
 (deftest-previous-overlay-change-1 r 10 1 (25 25) (20 30))
 (deftest-previous-overlay-change-1 s 20 1 (25 25) (20 30))
 (deftest-previous-overlay-change-1 t 25 20 (25 25) (20 30))
@@ -969,7 +969,7 @@ with parameters from the *Messages* buffer modification."
       (should (= 25 (overlay-start right)))
       (should (= 75 (overlay-end right)))
       ;; Try to detect the error, by removing left.  The should fail
-      ;; an eassert, since it won't be found by a reular tree
+      ;; an eassert, since it won't be found by a regular tree
       ;; traversal - in theory.
       (delete-overlay left)
       (should (= 2 (length (overlays-in 1 (point-max))))))))
@@ -1045,7 +1045,7 @@ with parameters from the *Messages* buffer modification."
 ;; | make-indirect-buffer
 ;; +==========================================================================+
 
-;; Check if overlays are cloned/seperate from indirect buffer.
+;; Check if overlays are cloned/separate from indirect buffer.
 (ert-deftest test-make-indirect-buffer-1 ()
   (with-temp-buffer
     (dotimes (_ 10) (make-overlay 1 1))

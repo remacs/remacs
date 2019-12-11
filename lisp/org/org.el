@@ -9854,9 +9854,9 @@ Elements of length one have a tab appended.  Elements of length
 two are kept as is.  Longer elements are truncated to length two.
 
 If an element cannot be made unique, an error is raised."
-  (let ((orderd-keys (cl-sort (copy-sequence keys) #'< :key #'length))
+  (let ((ordered-keys (cl-sort (copy-sequence keys) #'< :key #'length))
 	menu-keys)
-    (dolist (key orderd-keys)
+    (dolist (key ordered-keys)
       (let ((potential-key
 	     (cl-case (length key)
 	       (1 (concat key "\t"))

@@ -243,7 +243,7 @@ overlay, a buffer position, or (for buttons in the mode-line or
 header-line) a string.
 
 If BUTTON has a `button-data' value, call the function with this
-value instad of BUTTON.
+value instead of BUTTON.
 
 This function only works when BUTTON is in the current buffer."
   (let ((action (or (and use-mouse-action (button-get button 'mouse-action))

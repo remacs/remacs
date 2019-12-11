@@ -56,12 +56,12 @@ struct moose {
  * ## uml-prototype "moose{} : struct"
  */
 
-struct moose strct_fcn ( struct moose in, char *out);
+struct moose struct_fcn ( struct moose in, char *out);
 /*
- * ## name "strct_fcn"
- * ## abbreviate "strct_fcn()"
- * ## prototype "struct moose strct_fcn (struct moose in,char* out)"
- * ## uml-prototype "strct_fcn (in : struct moose,out : char*) : struct moose"
+ * ## name "struct_fcn"
+ * ## abbreviate "struct_fcn()"
+ * ## prototype "struct moose struct_fcn (struct moose in,char* out)"
+ * ## uml-prototype "struct_fcn (in : struct moose,out : char*) : struct moose"
  */
 
 struct moose *var_one = NULL;

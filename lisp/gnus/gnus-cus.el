@@ -257,7 +257,7 @@ Server-assigned value attached to IMAP groups, used to maintain consistency.")
     (modseq (choice :tag "modseq"
 		    (const :tag "None" nil)
 		    (string :tag "Sequence number"))
-	    "Modification seqence number")
+	    "Modification sequence number")
     (active (cons :tag "active" (integer :tag "min") (integer :tag "max"))
 	    "active")
     (permanent-flags (repeat :tag "Permanent Flags" (symbol :tag "Flag"))

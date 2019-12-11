@@ -1416,7 +1416,7 @@ template opener followed by the \"::\" operator - usually."
 	       (c-lang-const c-<-pseudo-digraph-cont-regexp))
 
 (c-lang-defconst c-<-pseudo-digraph-cont-len
-  "The maximum length of the main bit of a `c-<pseudp-digraph-cont-regexp' match.
+  "The maximum length of the main bit of a `c-<-pseudo-digraph-cont-regexp' match.
 This doesn't count the merely contextual bits of the regexp match."
   t 0
   c++ 2)

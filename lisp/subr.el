@@ -1572,7 +1572,7 @@ be a list of the form returned by `event-start' and `event-end'."
 ;; individual bytes at known offsets from the string beginning.
 ;; (make-obsolete 'string-to-unibyte   "use `encode-coding-string'." "26.1")
 ;; string-to-multibyte is also sometimes useful (and there's no good
-;; general replacement for it), so it's also been unobsoleted in Emacs 27.1.
+;; general replacement for it), so it's also been revived in Emacs 27.1.
 ;; (make-obsolete 'string-to-multibyte "use `decode-coding-string'." "26.1")
 ;; bug#23850
 (make-obsolete 'string-as-unibyte   "use `encode-coding-string'." "26.1")

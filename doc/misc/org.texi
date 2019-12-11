@@ -8641,7 +8641,7 @@ image @samp{1.jpg}, since the link is inside a sub-heading to @samp{Chapter
 
 Inheritance works the same way for both @samp{ID} and @samp{DIR} property.  If
 both properties are defined on the same headline then @samp{DIR} takes
-precedance.  This is also true if inheritance is enabled.  If @samp{DIR}
+precedence.  This is also true if inheritance is enabled.  If @samp{DIR}
 is inherited from a parent node in the outline, that property still
 takes precedence over an @samp{ID} property defined on the node itself.
 
@@ -21389,7 +21389,7 @@ Before updating a dynamic block, Org removes content between the
 previous content of the dynamic block becomes erased from the buffer
 and appended to the plist under @code{:content}.
 
-The syntax for naming a writer function with a dynamic block labelled
+The syntax for naming a writer function with a dynamic block labeled
 @samp{myblock} is: @code{org-dblock-write:myblock}.
 
 The following is an example of a dynamic block and a block writer function

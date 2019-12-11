@@ -233,7 +233,7 @@ textual parts.")
     'headers))
 
 (defun nnimap-transform-headers ()
-  "Transform server's FETCH response into parseable headers."
+  "Transform server's FETCH response into parsable headers."
   (goto-char (point-min))
   (let (seen-articles article lines size string labels)
     (cl-block nil

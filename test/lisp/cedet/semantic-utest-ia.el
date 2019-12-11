@@ -115,7 +115,7 @@
     (should (file-exists-p tst))
     (should-not (semantic-ia-utest tst))))
 
-(ert-deftest semantic-utest-ia-varnamse.java ()
+(ert-deftest semantic-utest-ia-varnames.java ()
   (let ((tst (expand-file-name "testvarnames.java" semantic-utest-test-directory)))
     (should (file-exists-p tst))
     (should-not (semantic-ia-utest tst))))

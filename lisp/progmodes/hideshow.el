@@ -610,7 +610,7 @@ as cdr."
         (forward-comment (- (buffer-size)))
         (skip-chars-forward " \t\n\f")
         (let ((p (point))
-              (hidable t))
+              (hideable t))
           (beginning-of-line)
           (unless (looking-at (concat "[ \t]*" hs-c-start-regexp))
             ;; we are in this situation: (example)
@@ -636,13 +636,13 @@ as cdr."
             (when (or (not (looking-at hs-c-start-regexp))
                       (> (point) q))
               ;; we cannot hide this comment block
-              (setq hidable nil)))
+              (setq hideable nil)))
           ;; goto the end of the comment
           (forward-comment (buffer-size))
           (skip-chars-backward " \t\n\f")
           (end-of-line)
           (when (>= (point) q)
-            (list (and hidable p) (point))))))))
+            (list (and hideable p) (point))))))))
 
 (defun hs-grok-mode-type ()
   "Set up hideshow variables for new buffers.
@@ -741,7 +741,7 @@ and `case-fold-search' are both t."
   (save-excursion
     (let ((c-reg (hs-inside-comment-p)))
       (if (and c-reg (nth 0 c-reg))
-          ;; point is inside a comment, and that comment is hidable
+          ;; point is inside a comment, and that comment is hideable
           (goto-char (nth 0 c-reg))
         (end-of-line)
         (when (and (not c-reg)

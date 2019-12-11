@@ -21,7 +21,6 @@
 ;;
 ;; Unit tests for the getset inserter application.
 
-;;(require 'cedet-uutil)
 (require 'srecode/semantic)
 
 ;;; Code:

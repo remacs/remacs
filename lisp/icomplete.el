@@ -69,7 +69,7 @@ When nil, show candidates in full."
   :version "24.4")
 
 (defvar icomplete-tidy-shadowed-file-names nil
-  "If non-nil, automatically delete superflous parts of file names.
+  "If non-nil, automatically delete superfluous parts of file names.
 For example, if the user types ~/ after a long path name,
 everything preceding the ~/ is discarded so the interactive
 selection process starts again from the user's $HOME.")

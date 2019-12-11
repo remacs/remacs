@@ -187,7 +187,7 @@ attachment folders based on ID."
   "Hook that is invoked by `org-attach-open'.
 
 Created mostly to be compatible with org-attach-git after removing
-git-funtionality from this file.")
+git-functionality from this file.")
 
 (defcustom org-attach-commands
   '(((?a ?\C-a) org-attach-attach
@@ -231,7 +231,7 @@ directory in dired and delete from there.\n")
 Each entry in this list is a list of three elements:
 - A list of keys (characters) to select the command (the fist
   character in the list is shown in the attachment dispatcher's
-  splash buffer and minubuffer prompt).
+  splash buffer and minibuffer prompt).
 - A command that is called interactively when one of these keys
   is pressed.
 - A docstring for this command in the attachment dispatcher's

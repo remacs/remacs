@@ -376,7 +376,7 @@ case-insensitive.
 @defvar dired-omit-localp
 This variable determines the @var{localp} argument
 @code{dired-omit-expunge} passes to @code{dired-get-filename}.  If it
-is @code{no-dir}, teh default, omitting is much faster, but you can
+is @code{no-dir}, the default, omitting is much faster, but you can
 only match against the non-directory part of the file name.  Set it to
 @code{nil} if you need to match the whole file name or @code{t} to
 match the file name relative to the buffer's top-level directory.

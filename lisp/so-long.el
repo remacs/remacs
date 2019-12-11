@@ -69,7 +69,7 @@
 ;; the long lines.  In such circumstances you may find that `longlines-mode' is
 ;; the most helpful facility.
 ;;
-;; Note also that the mitigations are automatically triggered when visiting a
+;; Note also that the mitigation is automatically triggered when visiting a
 ;; file.  The library does not automatically detect if long lines are inserted
 ;; into an existing buffer (although the `so-long' command can be invoked
 ;; manually in such situations).
@@ -386,7 +386,7 @@
 ;;       - Added sgml-mode and nxml-mode to `so-long-target-modes'.
 ;; 0.7.4 - Refactored the handling of `whitespace-mode'.
 ;; 0.7.3 - Added customize group `so-long' with user options.
-;;       - Added `so-long-original-values' to generalise the storage and
+;;       - Added `so-long-original-values' to generalize the storage and
 ;;         restoration of values from the original mode upon `so-long-revert'.
 ;;       - Added `so-long-revert-hook'.
 ;; 0.7.2 - Remember the original major mode even with M-x `so-long-mode'.
@@ -421,7 +421,7 @@
 Has no effect if `global-so-long-mode' is not enabled.")
 
 (defvar-local so-long--active nil ; internal use
-  "Non-nil when `so-long' mitigations are in effect.")
+  "Non-nil when `so-long' mitigation is in effect.")
 
 (defvar so-long--set-auto-mode nil ; internal use
   "Non-nil while `set-auto-mode' is executing.")
@@ -740,7 +740,7 @@ was established."
     )
   ;; It's not clear to me whether all of these would be problematic, but they
   ;; seemed like reasonable targets.  Some are certainly excessive in smaller
-  ;; buffers of minified code, but we should be aiming to maximise performance
+  ;; buffers of minified code, but we should be aiming to maximize performance
   ;; by default, so that Emacs is as responsive as we can manage in even very
   ;; large buffers of minified code.
   "List of buffer-local minor modes to explicitly disable.
@@ -781,7 +781,7 @@ If `so-long-revert' is subsequently invoked, then the variables are restored
 to their original states.
 
 The combination of `line-move-visual' (enabled) and `truncate-lines' (disabled)
-is important for maximising responsiveness when moving vertically within an
+is important for maximizing responsiveness when moving vertically within an
 extremely long line, as otherwise the full length of the line may need to be
 scanned to find the next position."
   :type '(alist :key-type (variable :tag "Variable")
@@ -822,12 +822,12 @@ If nil, no mode line indicator will be displayed."
 
 (defface so-long-mode-line-active
   '((t :inherit mode-line-emphasis))
-  "Face for `so-long-mode-line-info' when mitigations are active."
+  "Face for `so-long-mode-line-info' when mitigation is active."
   :package-version '(so-long . "1.0"))
 
 (defface so-long-mode-line-inactive
   '((t :inherit mode-line-inactive))
-  "Face for `so-long-mode-line-info' when mitigations have been reverted."
+  "Face for `so-long-mode-line-info' when mitigation has been reverted."
   :package-version '(so-long . "1.0"))
 
 ;; Modes that go slowly and line lengths excessive
@@ -983,7 +983,7 @@ Displayed as part of `mode-line-misc-info'.
 
 `so-long-mode-line-label' defines the text to be displayed (if any).
 
-Face `so-long-mode-line-active' is used while mitigations are active, and
+Face `so-long-mode-line-active' is used while mitigation is active, and
 `so-long-mode-line-inactive' is used if `so-long-revert' is called.
 
 Not displayed when `so-long-mode' is enabled, as the major mode construct
@@ -1659,7 +1659,7 @@ Equivalent to calling (global-so-long-mode 0)"
 
 ;;;###autoload
 (define-minor-mode global-so-long-mode
-  "Toggle automated performance mitigations for files with long lines.
+  "Toggle automated performance mitigation for files with long lines.
 
 Many Emacs modes struggle with buffers which contain excessively long lines,
 and may consequently cause unacceptable performance issues.
@@ -1861,11 +1861,11 @@ If it appears in `%s', you should remove it."
 ; LocalWords:  initialized profiler boolean minified pre redisplay config keymap
 ; LocalWords:  noerror selectable mapc sgml nxml hl flydiff defs arg Phil Sainty
 ; LocalWords:  defadvice nadvice whitespace ie bos eos eobp origmode un Un setq
-; LocalWords:  docstring auf wiedersehen longlines alist autoload Refactored Inc
-; LocalWords:  MERCHANTABILITY RET REGEXP VAR ELPA WS mitigations EmacsWiki eval
+; LocalWords:  docstring auf Wiedersehen longlines alist autoload Refactored Inc
+; LocalWords:  MERCHANTABILITY RET REGEXP VAR ELPA WS EmacsWiki eval
 ; LocalWords:  rx filename filenames
 
-;; So long, farewell, auf wiedersehen, goodbye
+;; So long, farewell, auf Wiedersehen, goodbye
 ;; You have to go, this code is minified
 ;; Goodbye!
 

@@ -358,8 +358,8 @@ get_hb_unicode_funcs (void)
   hb_unicode_funcs_set_general_category_func (funcs, uni_general, NULL, NULL);
   hb_unicode_funcs_set_mirroring_func (funcs, uni_mirroring, NULL, NULL);
 
-  /* Use default implmentation for Unicode composition/decomposition, we might
-   * want to revisit this later.
+  /* Use default implementation for Unicode composition/decomposition.
+     We might want to revisit this later.
   hb_unicode_funcs_set_compose_func (funcs, uni_compose, NULL, NULL);
   hb_unicode_funcs_set_decompose_func (funcs, uni_decompose, NULL, NULL);
   */
@@ -379,7 +379,7 @@ get_hb_unicode_funcs (void)
    (N+1)th element of LGSTRING is nil, input of shaping is from the
    1st to (N)th elements.  In each input glyph, FROM, TO, CHAR, and
    CODE are already set, but FROM and TO need adjustments according
-   to the glyphs produced by the shaping fuinction.
+   to the glyphs produced by the shaping function.
    DIRECTION is either L2R or R2L, or nil if unknown.  During
    redisplay, this comes from applying the UBA, is passed from
    composition_reseat_it, and is used by the HarfBuzz shaper.

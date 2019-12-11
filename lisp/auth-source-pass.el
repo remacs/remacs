@@ -292,7 +292,7 @@ components, from longest to shortest."
 (defun auth-source-pass--name-port-user-suffixes (name user port)
   "Return a list of possible path suffixes for NAME, USER, & PORT.
 
-The resulting list is ordered from most specifc to least
+The resulting list is ordered from most specific to least
 specific, with paths matching all of NAME, USER, & PORT first,
 then NAME & USER, then NAME & PORT, then just NAME."
   (seq-mapcat

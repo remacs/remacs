@@ -569,14 +569,14 @@ collection clause."
                           finally return result)
                  '(2 1 0)))
 
-  ;; this nonintuitive result is replicated by clisp
+  ;; this unintuitive result is replicated by clisp
   (should (equal (cl-loop with result
                           for x below 3
                           and y = (progn (push x result))
                           finally return result)
                  '(2 1 0 0)))
 
-  ;; this nonintuitive result is replicated by clisp
+  ;; this unintuitive result is replicated by clisp
   (should (equal (cl-loop with result
                           for x below 3
                           and y = (progn (push x result)) then (progn (push (1+ x) result))

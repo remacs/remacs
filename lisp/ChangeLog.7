@@ -17104,8 +17104,8 @@
 	the rewrite of `hs-inside-comment-p'.
 	(hs-inside-comment-p): Rewritten from scratch.  Semantics changed
 	when returning non-nil.  We can be inside a comment, but that
-	comment might not be hidable (the car of the return value should
-	be non-nil to be hidable).
+	comment might not be hideable (the car of the return value should
+	be non-nil to be hideable).
 	(hs-grok-mode-type): Rewrite to be more understandable.
 	`hs-c-end-regexp' does not exist any more.
 	Initialize `hs-c-start-regexp' from the alist if specified there.
@@ -17117,7 +17117,7 @@
 	block, go to their end and look there for the overlays.
 	(java-hs-adjust-block-beginning): New function.
 	(hs-hide-all): Hide a comment block only if `hs-inside-comment-p'
-	says is hidable.
+	says is hideable.
 	(hs-hide-block): Simplify.  Handle properly the result of
 	`hs-inside-comment-p'.
 	(hs-show-block): Likewise.

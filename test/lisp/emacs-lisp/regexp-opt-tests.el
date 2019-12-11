@@ -66,7 +66,7 @@
          (opt (regexp-opt-test--match-all perm opt-re)))
     (concat "\n"
             (format "Naïve regexp:     %s\n" ref-re)
-            (format "Optimised regexp: %s\n" opt-re)
+            (format "Optimized regexp: %s\n" opt-re)
             (format "Got:      %s\n" opt)
             (format "Expected: %s\n" ref))))
 

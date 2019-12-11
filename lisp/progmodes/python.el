@@ -3856,8 +3856,8 @@ Returns the tracked buffer."
 
 (defun python-pdbtrack-comint-input-filter-function (input)
   "Finish tracking session depending on command in INPUT.
-Commands that must finish tracking session is listed in
-`python-pdbtrack-untracking-commands'."
+Commands that must finish the tracking session are listed in
+`python-pdbtrack-exit-command'."
   (when (and python-pdbtrack-tracked-buffer
              ;; Empty input is sent by C-d or `comint-send-eof'
              (or (string-empty-p input)

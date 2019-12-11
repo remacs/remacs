@@ -311,7 +311,7 @@ matches the same structures than 'latex but it calls
 org-src-font-lock-fontify-block instead, thus bringing about full
 LaTeX font locking.
 
-*** ~org-clone-subtree-with-time-shift~ learnt to shift backward in time
+*** ~org-clone-subtree-with-time-shift~ learned to shift backward in time
 
 =<C-c C-x c>= (~org-clone-subtree-with-time-shift~) now takes a
 negative value as a valid repeater to shift time stamps in backward

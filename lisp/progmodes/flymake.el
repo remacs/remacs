@@ -708,7 +708,7 @@ backend is operating normally.")
   "Tell if Flymake has running backends in this buffer."
   (flymake-running-backends))
 
-;; FIXME: clone of `isearch-intesects-p'! Make this an util.
+;; FIXME: clone of `isearch-intersects-p'! Make this an util.
 (defun flymake--intersects-p (start0 end0 start1 end1)
   "Return t if regions START0..END0 and START1..END1 intersect."
   (or (and (>= start0 start1) (<  start0 end1))

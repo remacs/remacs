@@ -7617,7 +7617,7 @@ set_window_fringes (struct window *w,
       else
 	failed = true;
 
-      /* Placing fringes ouside margins.  */
+      /* Placing fringes outside margins.  */
       if (outside != w->fringes_outside_margins)
 	{
 	  w->fringes_outside_margins = outside;

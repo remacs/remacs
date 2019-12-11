@@ -1551,7 +1551,7 @@ notation, @pxref{Extending Rx}.
 @subsubsection Defining new @code{rx} forms
 
 The @code{rx} notation can be extended by defining new symbols and
-parametrised forms in terms of other @code{rx} expressions.  This is
+parameterized forms in terms of other @code{rx} expressions.  This is
 handy for sharing parts between several regexps, and for making
 complex ones easier to build and understand by putting them together
 from smaller pieces.
@@ -1608,7 +1608,7 @@ defined as a plain symbol to be replaced with @var{rx-form}.  Example:
 @end example
 
 If @var{arglist} is present, it must be a list of zero or more
-argument names, and @var{name} is then defined as a parametrised form.
+argument names, and @var{name} is then defined as a parameterized form.
 When used in an @code{rx} expression as @code{(@var{name} @var{arg}@dots{})},
 each @var{arg} will replace the corresponding argument name inside
 @var{rx-form}.

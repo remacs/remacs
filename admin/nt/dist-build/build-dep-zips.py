@@ -78,7 +78,7 @@ def immediate_deps(pkg):
     ## Split into dependencies
     dependencies = dependencies.strip().split(" ")
 
-    ## Remove > signs TODO can we get any other punctation here?
+    ## Remove > signs TODO can we get any other punctuation here?
     dependencies = [d.split(">")[0] for d in dependencies if d]
     dependencies = [d for d in dependencies if not d == "None"]
 

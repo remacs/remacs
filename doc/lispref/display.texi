@@ -5917,7 +5917,7 @@ Draw vertical lines.
 @deffn Command curveto coordinate-sets
 Using the first element in @var{coordinate-sets}, draw a cubic Bézier
 curve from the current point.  If there are multiple coordinate sets,
-draw a polybézier.  Each coordinate set is a list of the form
+draw a polybezier.  Each coordinate set is a list of the form
 @code{(@var{x1} @var{y1} @var{x2} @var{y2} @var{x} @var{y})}, where
 @w{(@var{x}, @var{y})} is the curve’s end point.  @w{(@var{x1},
 @var{y1})} and @w{(@var{x2}, @var{y2})} are control points at the
@@ -5934,7 +5934,7 @@ beginning and at the end, respectively.
 @deffn Command smooth-curveto coordinate-sets
 Using the first element in @var{coordinate-sets}, draw a cubic Bézier
 curve from the current point.  If there are multiple coordinate sets,
-draw a polybézier.  Each coordinate set is a list of the form
+draw a polybezier.  Each coordinate set is a list of the form
 @code{(@var{x2} @var{y2} @var{x} @var{y})}, where @w{(@var{x},
 @var{y})} is the curve’s end point and @w{(@var{x2}, @var{y2})} is the
 corresponding control point.  The first control point is the
@@ -5954,7 +5954,7 @@ coincides with the current point.
 @deffn Command quadratic-bezier-curveto coordinate-sets
 Using the first element in @var{coordinate-sets}, draw a quadratic
 Bézier curve from the current point.  If there are multiple coordinate
-sets, draw a polybézier.  Each coordinate set is a list of the form
+sets, draw a polybezier.  Each coordinate set is a list of the form
 @code{(@var{x1} @var{y1} @var{x} @var{y})}, where @w{(@var{x},
 @var{y})} is the curve’s end point and @w{(@var{x1}, @var{y1})} is the
 control point.
@@ -5972,7 +5972,7 @@ control point.
 @deffn Command smooth-quadratic-bezier-curveto coordinate-sets
 Using the first element in @var{coordinate-sets}, draw a quadratic
 Bézier curve from the current point.  If there are multiple coordinate
-sets, draw a polybézier.  Each coordinate set is a list of the form
+sets, draw a polybezier.  Each coordinate set is a list of the form
 @code{(@var{x} @var{y})}, where @w{(@var{x}, @var{y})} is the curve’s
 end point.  The control point is the reflection of the control point
 of the previous command relative to the current point, if that command

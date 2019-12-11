@@ -2874,7 +2874,7 @@ Ordering}).
 A major client of this is @code{display-buffer-reuse-window}, but all
 other action functions that try to reuse a window are affected as
 well.  @code{display-buffer-in-previous-window} consults it when
-searching for a window that previosuly displayed the buffer on another
+searching for a window that previously displayed the buffer on another
 frame.
 
 @vindex inhibit-switch-frame@r{, a buffer display action alist entry}

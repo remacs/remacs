@@ -283,7 +283,7 @@
         (inverse-add-abbrev table "Global" 1)))
     (should (string= (abbrev-expansion "foo" table) "bar"))))
 
-(ert-deftest inverse-add-abbrev-skips-trailing-nonword/postiive-arg ()
+(ert-deftest inverse-add-abbrev-skips-trailing-nonword/positive-arg ()
   "Test that adding an inverse abbrev skips trailing nonword characters."
   (let ((table (make-abbrev-table)))
     (with-temp-buffer

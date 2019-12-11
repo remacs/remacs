@@ -16432,7 +16432,7 @@
 	Loading flymake-elisp.el doesn't setup flymake-mode to turn on
 	automatically, but it affects emacs-lisp-mode-hook so that
 	flymake-diagnostic-functions is setup with a suitable buffer-local
-	value.  The variable flymake-diagnostic-funtions in every live
+	value.  The variable flymake-diagnostic-functions in every live
 	emacs-lisp-mode buffer is also adjusted.
 
 	* lisp/progmodes/flymake.el (top): Require flymake-elisp.
@@ -66449,8 +66449,8 @@
 	(verilog-modi-cache-results, verilog-save-buffer-state)
 	(verilog-save-font-no-change-functions): When internally suppressing change
 	functions, use `inhibit-modification-hooks' and call
-	`after-change-funtions' to more nicely work with user hooks.  Reported by
-	Stefan Monnier.
+	`after-change-functions' to more nicely work with user hooks.
+	Reported by Stefan Monnier.
 
 	(verilog-auto, verilog-delete-auto, verilog-delete-auto-buffer):
 	Create `verilog-delete-auto-buffer' to avoid double-calling

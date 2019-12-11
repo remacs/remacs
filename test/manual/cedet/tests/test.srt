@@ -57,7 +57,7 @@ template testarea :blank
 ----
 
 ;; This is a bad hack - In order for the text to parse, but also get a completion
-;; monicker into the right spot, we need to pretend a comment is the same as the
+;; moniker into the right spot, we need to pretend a comment is the same as the
 ;; escape_end.
 ;; Local variables:
 ;; comment-start-skip: "}}"
