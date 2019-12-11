@@ -777,6 +777,45 @@ If REPLACE is non-nil, then this expansion replaces the name in the buffer.
 Multiple servers can be tried with the same query until one finds a match,
 see `eudc-inline-expansion-servers'."
   (interactive)
+  (let* ((end (point))
+	 (beg (save-excursion
+		(if (re-search-backward "\\([:,]\\|^\\)[ \t]*"
+					(point-at-bol) 'move)
+		    (goto-char (match-end 0)))
+		(point)))
+	 (query-words (split-string (buffer-substring-no-properties beg end)
+				    "[ \t]+"))
+	 (response-strings (eudc-query-with-words query-words)))
+    (if (null response-strings)
+        (error "No match")
+
+      (if (or
+	   (and replace (not eudc-expansion-overwrites-query))
+	   (and (not replace) eudc-expansion-overwrites-query))
+	  (kill-ring-save beg end))
+      (cond
+       ((or (= (length response-strings) 1)
+	    (null eudc-multiple-match-handling-method)
+	    (eq eudc-multiple-match-handling-method 'first))
+	(delete-region beg end)
+	(insert (car response-strings)))
+       ((eq eudc-multiple-match-handling-method 'select)
+	(eudc-select response-strings beg end))
+       ((eq eudc-multiple-match-handling-method 'all)
+	(delete-region beg end)
+	(insert (mapconcat #'identity response-strings ", ")))
+       ((eq eudc-multiple-match-handling-method 'abort)
+	(error "There is more than one match for the query"))))))
+
+;;;###autoload
+(defun eudc-query-with-words (query-words)
+  "Query the directory server, and return the matching responses.
+The variable `eudc-inline-query-format' controls how to associate the
+individual QUERY-WORDS with directory attribute names.
+After querying the server for the given string, the expansion specified by
+`eudc-inline-expansion-format' is applied to the matches before returning them.inserted in the buffer at point.
+Multiple servers can be tried with the same query until one finds a match,
+see `eudc-inline-expansion-servers'."
   (cond
    ((eq eudc-inline-expansion-servers 'current-server)
     (or eudc-server
@@ -792,103 +831,70 @@ see `eudc-inline-expansion-servers'."
    (t
     (error "Wrong value for `eudc-inline-expansion-servers': %S"
 	   eudc-inline-expansion-servers)))
-  (let* ((end (point))
-	 (beg (save-excursion
-		(if (re-search-backward "\\([:,]\\|^\\)[ \t]*"
-					(point-at-bol) 'move)
-		    (goto-char (match-end 0)))
-		(point)))
-	 (query-words (split-string (buffer-substring-no-properties beg end)
-				    "[ \t]+"))
-	 query-formats
-	 response
-	 response-strings
+  (let* (query-formats
 	 (eudc-former-server eudc-server)
 	 (eudc-former-protocol eudc-protocol)
-	 servers)
-
-    ;; Prepare the list of servers to query
-    (setq servers (copy-sequence eudc-server-hotlist))
-    (setq servers
+	 ;; Prepare the list of servers to query
+	 (servers
 	  (cond
 	   ((eq eudc-inline-expansion-servers 'hotlist)
 	    eudc-server-hotlist)
 	   ((eq eudc-inline-expansion-servers 'server-then-hotlist)
 	    (if eudc-server
 		(cons (cons eudc-server eudc-protocol)
-		      (delete (cons eudc-server eudc-protocol) servers))
+		      (delete (cons eudc-server eudc-protocol)
+		              (copy-sequence eudc-server-hotlist)))
 	      eudc-server-hotlist))
 	   ((eq eudc-inline-expansion-servers 'current-server)
-	    (list (cons eudc-server eudc-protocol)))))
+	    (list (cons eudc-server eudc-protocol))))))
+
     (if (and eudc-max-servers-to-query
 	     (> (length servers) eudc-max-servers-to-query))
 	(setcdr (nthcdr (1- eudc-max-servers-to-query) servers) nil))
 
     (unwind-protect
-	(progn
-	  (setq response
-		(catch 'found
-		  ;; Loop on the servers
-		  (while servers
-		    (eudc-set-server (caar servers) (cdar servers) t)
+	(let ((response
+	       (catch 'found
+		 ;; Loop on the servers
+		 (dolist (server servers)
+		   (eudc-set-server (car server) (cdr server) t)
 
-		    ;; Determine which formats apply in the query-format list
-		    (setq query-formats
-			  (or
-			   (eudc-extract-n-word-formats eudc-inline-query-format
-							(length query-words))
-			   (if (null eudc-protocol-has-default-query-attributes)
-			       '(name))))
+		   ;; Determine which formats apply in the query-format list
+		   (setq query-formats
+			 (or
+			  (eudc-extract-n-word-formats eudc-inline-query-format
+						       (length query-words))
+			  (if (null eudc-protocol-has-default-query-attributes)
+			      '(name))))
 
-		    ;; Loop on query-formats
-		    (while query-formats
-		      (setq response
+		   ;; Loop on query-formats
+		   (while query-formats
+		     (let ((response
 			    (eudc-query
 			     (eudc-format-query query-words (car query-formats))
 			     (eudc-translate-attribute-list
-			      (cdr eudc-inline-expansion-format))))
-		      (if response
-			  (throw 'found response))
-		      (setq query-formats (cdr query-formats)))
-		    (setq servers (cdr servers)))
-		  ;; No more servers to try... no match found
-		  nil))
+			      (cdr eudc-inline-expansion-format)))))
+		       (if response
+			   (throw 'found response)))
+		     (setq query-formats (cdr query-formats))))
+		 ;; No more servers to try... no match found
+		 nil))
+	      (response-strings '()))
 
-
-	  (if (null response)
-	      (error "No match")
-
-	    ;; Process response through eudc-inline-expansion-format
-	    (dolist (r response)
-	      (let ((response-string
-                     (apply #'format
-                            (car eudc-inline-expansion-format)
-                            (mapcar (function
-                                     (lambda (field)
-                                       (or (cdr (assq field r))
-                                           "")))
-                                    (eudc-translate-attribute-list
-                                     (cdr eudc-inline-expansion-format))))))
-	        (if (> (length response-string) 0)
-		    (push response-string response-strings))))
-
-	    (if (or
-		 (and replace (not eudc-expansion-overwrites-query))
-		 (and (not replace) eudc-expansion-overwrites-query))
-		(kill-ring-save beg end))
-	    (cond
-	     ((or (= (length response-strings) 1)
-		  (null eudc-multiple-match-handling-method)
-		  (eq eudc-multiple-match-handling-method 'first))
-	      (delete-region beg end)
-	      (insert (car response-strings)))
-	     ((eq eudc-multiple-match-handling-method 'select)
-	      (eudc-select response-strings beg end))
-	     ((eq eudc-multiple-match-handling-method 'all)
-	      (delete-region beg end)
-	      (insert (mapconcat #'identity response-strings ", ")))
-	     ((eq eudc-multiple-match-handling-method 'abort)
-	      (error "There is more than one match for the query")))))
+	  ;; Process response through eudc-inline-expansion-format
+	  (dolist (r response)
+	    (let ((response-string
+                   (apply #'format
+                          (car eudc-inline-expansion-format)
+                          (mapcar (function
+                                   (lambda (field)
+                                     (or (cdr (assq field r))
+                                         "")))
+                                  (eudc-translate-attribute-list
+                                   (cdr eudc-inline-expansion-format))))))
+	      (if (> (length response-string) 0)
+		  (push response-string response-strings))))
+	  response-strings)
       (or (and (equal eudc-server eudc-former-server)
 	       (equal eudc-protocol eudc-former-protocol))
 	  (eudc-set-server eudc-former-server eudc-former-protocol t)))))
