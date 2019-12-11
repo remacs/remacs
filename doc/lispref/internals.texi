@@ -1528,8 +1528,11 @@ following members:
 @item time_t tv_sec
 Whole number of seconds.
 @item long tv_nsec
-Fractional seconds as number of nanoseconds, always less than one
-billion.
+Fractional seconds as a number of nanoseconds.
+For timestamps returned by @code{extract_time},
+this is always nonnegative and less than one billion.
+(Although POSIX requires the type of @code{tv_nsec} to be @code{long},
+the type is @code{long long} on some nonstandard platforms.)
 @end table
 
 @noindent
