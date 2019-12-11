@@ -2290,19 +2290,24 @@ ns_lisp_to_color (Lisp_Object color, NSColor **col)
 
 /* Convert an index into the color table into an RGBA value.  Used in
    xdisp.c:extend_face_to_end_of_line when comparing faces and frame
-   color values.  */
+   color values.  No-op on non-gui frames.  */
 
 unsigned long
 ns_color_index_to_rgba(int idx, struct frame *f)
 {
-  NSColor *col;
-  col = ns_lookup_indexed_color (idx, f);
+  if (FRAME_DISPLAY_INFO (f))
+    {
+      NSColor *col;
+      col = ns_lookup_indexed_color (idx, f);
 
-  EmacsCGFloat r, g, b, a;
-  [col getRed: &r green: &g blue: &b alpha: &a];
+      EmacsCGFloat r, g, b, a;
+      [col getRed: &r green: &g blue: &b alpha: &a];
 
-  return ARGB_TO_ULONG((int)(a*255),
-                       (int)(r*255), (int)(g*255), (int)(b*255));
+      return ARGB_TO_ULONG((int)(a*255),
+                           (int)(r*255), (int)(g*255), (int)(b*255));
+    }
+  else
+    return idx;
 }
 
 void
