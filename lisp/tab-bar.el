@@ -704,7 +704,10 @@ called."
 (defun tab-bar-new-tab-to (&optional to-index)
   "Add a new tab at the absolute position TO-INDEX.
 TO-INDEX counts from 1.  If no TO-INDEX is specified, then add
-a new tab at the position specified by `tab-bar-new-tab-to'."
+a new tab at the position specified by `tab-bar-new-tab-to'.
+
+After the tab is created, the hooks in
+`tab-bar-tab-post-open-functions' are run."
   (interactive "P")
   (let* ((tabs (funcall tab-bar-tabs-function))
          (from-index (tab-bar--current-tab-index tabs))
@@ -819,7 +822,14 @@ ARG counts from 1.
 Optional TO-INDEX could be specified to override the value of
 `tab-bar-close-tab-select' programmatically with a position
 of an existing tab to select after closing the current tab.
-TO-INDEX counts from 1."
+TO-INDEX counts from 1.
+
+The functions in `tab-bar-tab-prevent-close-functions' will be
+run to determine whether or not to close the tab.
+Just before the tab is closed, the functions in
+`tab-bar-tab-pre-close-functions' will be run.  The base behavior
+for the last tab on a frame is determined by
+`tab-bar-close-last-tab-choice'."
   (interactive "P")
   (let* ((tabs (funcall tab-bar-tabs-function))
          (current-index (tab-bar--current-tab-index tabs))
