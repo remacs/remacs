@@ -1,10 +1,9 @@
 //! font support
 
+use std::ffi::CString;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-
-use std::{ffi::CString, mem};
 
 use crate::{
     data, fns,
@@ -161,7 +160,7 @@ impl From<LispObject> for Option<LispFontObjectRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| {
             if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_object() {
-                Some(unsafe { mem::transmute(o) })
+                Some(LispFontObjectRef::new(v.as_ptr() as *mut _))
             } else {
                 None
             }
@@ -190,7 +189,7 @@ impl From<LispObject> for Option<LispFontSpecRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| {
             if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_spec() {
-                Some(unsafe { mem::transmute(v) })
+                Some(LispFontSpecRef::new(v.as_ptr() as *mut _))
             } else {
                 None
             }
