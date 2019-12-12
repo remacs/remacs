@@ -4603,7 +4603,7 @@ instrumentation for, defaulting to all functions."
            (push symbol functions)))
        obarray)
       (unless functions
-        (error "Found no functions to remove instrumentation from"))
+        (user-error "Found no functions to remove instrumentation from"))
       (let ((name
              (completing-read
               "Remove instrumentation from (default all functions): "
