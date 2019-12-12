@@ -1214,20 +1214,19 @@ Corresponding string regexp: @samp{[@dots{}]}
 @item @code{(not @var{charspec})}
 @cindex @code{not} in rx
 Match a character not included in @var{charspec}.  @var{charspec} can
-be an @code{any}, @code{not}, @code{union}, @code{intersection},
-@code{syntax} or @code{category} form, or a character class.@*
+be an @code{any}, @code{not}, @code{or}, @code{intersection},
+@code{syntax} or @code{category} form, or a character class.
+If @var{charspec} is an @code{or} form, its arguments have the same
+restrictions as those of @code{intersection}; see below.@*
 Corresponding string regexp: @samp{[^@dots{}]}, @samp{\S@var{code}},
 @samp{\C@var{code}}
 
-@item @code{(union @var{charset}@dots{})}
-@itemx @code{(intersection @var{charset}@dots{})}
-@cindex @code{union} in rx
+@item @code{(intersection @var{charset}@dots{})}
 @cindex @code{intersection} in rx
-Match a character that matches the union or intersection,
-respectively, of the @var{charset}s.  Each @var{charset} can be an
-@code{any} form without character classes, or a @code{union},
-@code{intersection} or @code{not} form whose arguments are also
-@var{charset}s.
+Match a character included in all of the @var{charset}s.
+Each @var{charset} can be an @code{any} form without character
+classes, or an @code{intersection}, @code{or} or @code{not} form whose
+arguments are also @var{charset}s.
 
 @item @code{not-newline}, @code{nonl}
 @cindex @code{not-newline} in rx
@@ -1591,7 +1590,8 @@ when they are used, not when they are defined.
 User-defined forms are allowed wherever arbitrary @code{rx}
 expressions are expected; for example, in the body of a
 @code{zero-or-one} form, but not inside @code{any} or @code{category}
-forms.  They are also allowed inside @code{not} forms.
+forms.  They are also allowed inside @code{not} and
+@code{intersection} forms.
 @end itemize
 
 @defmac rx-define name [arglist] rx-form

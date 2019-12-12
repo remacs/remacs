@@ -2120,9 +2120,9 @@ These macros add new forms to the rx notation.
 Both match any single character; 'anychar' is more descriptive.
 
 +++
-*** New 'union' and 'intersection' forms for character sets.
-These permit composing character-matching expressions from simpler
-parts.
+*** New 'intersection' form for character sets.
+With 'or' and 'not', it can be used to compose character-matching
+expressions from simpler parts.
 
 ** Frames
 
