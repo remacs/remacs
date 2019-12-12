@@ -8043,15 +8043,12 @@ When FORCE, rebuild the tool bar."
   :type 'regexp)
 
 (defcustom message-completion-alist
-  ;; FIXME: Make it possible to use the standard completion UI.
-  (list (cons message-newgroups-header-regexp 'message-expand-group)
-	'("^\\(Resent-\\)?\\(To\\|B?Cc\\):" . message-expand-name)
-	'("^\\(Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\):"
-	  . message-expand-name)
-	'("^\\(Disposition-Notification-To\\|Return-Receipt-To\\):"
-	  . message-expand-name))
-  "Alist of (RE . FUN).  Use FUN for completion on header lines matching RE."
-  :version "22.1"
+  `((,message-newgroups-header-regexp . ,#'message-expand-group)
+    ("^\\([^ :]*-\\)?\\(To\\|B?Cc\\|From\\):" . ,#'message-expand-name))
+  "Alist of (RE . FUN).  Use FUN for completion on header lines matching RE.
+FUN should be a function that obeys the same rules as those
+of `completion-at-point-functions'."
+  :version "27.1"
   :group 'message
   :type '(alist :key-type regexp :value-type function))
 
@@ -8091,6 +8088,8 @@ regular text mode tabbing command."
 
 (defvar mail-abbrev-mode-regexp)
 
+(defvar message--old-style-completion-functions nil)
+
 (defun message-completion-function ()
   (let ((alist message-completion-alist))
     (while (and alist
@@ -8099,9 +8098,22 @@ regular text mode tabbing command."
       (setq alist (cdr alist)))
     (when (cdar alist)
       (let ((fun (cdar alist)))
-        ;; Even if completion fails, return a non-nil value, so as to avoid
-        ;; falling back to message-tab-body-function.
-        (lambda () (funcall fun) 'completion-attempted)))))
+        (if (member fun message--old-style-completion-functions)
+            (lambda ()
+              (funcall fun)
+              ;; Even if completion fails, return a non-nil value, so as to
+              ;; avoid falling back to message-tab-body-function.
+              'completion-attempted)
+          (let ((ticks-before (buffer-chars-modified-tick))
+                (data (funcall fun)))
+            (if (and (eq ticks-before (buffer-chars-modified-tick))
+                     (or (null data)
+                         (integerp (car-safe data))))
+                data
+              (push fun message--old-style-completion-functions)
+              ;; Completion was already performed, so just return a dummy
+              ;; function that prevents trying any further.
+              (lambda () 'completion-attempted))))))))
 
 (defun message-expand-group ()
   "Expand the group name under point."
@@ -8120,10 +8132,27 @@ regular text mode tabbing command."
 			       gnus-active-hashtb)
 		      (hash-table-keys gnus-active-hashtb))))
     (when collection
-      (completion-in-region b e collection))))
+      ;; FIXME: Add `category' metadata to the collection, so we can use
+      ;; substring matching on it.
+      (list b e collection))))
+
+(defcustom message-expand-name-standard-ui nil
+  "If non-nil, use the standard completion UI in `message-expand-name'.
+E.g. this means it will obey `completion-styles' and other such settings."
+  :version "27.1"
+  :type 'boolean)
 
 (defun message-expand-name ()
-  (cond ((and (memq 'eudc message-expand-name-databases)
+  (cond (message-expand-name-standard-ui
+	 (let ((beg (save-excursion
+                      (skip-chars-backward "^\n:,") (skip-chars-forward " \t")
+                      (point)))
+               (end (save-excursion
+                      (skip-chars-forward "^\n,") (skip-chars-backward " \t")
+                      (point))))
+           (when (< beg end)
+             (list beg end (message--name-table (buffer-substring beg end))))))
+	((and (memq 'eudc message-expand-name-databases)
 		    (boundp 'eudc-protocol)
 		    eudc-protocol)
 	 (eudc-expand-inline))
@@ -8137,6 +8166,58 @@ regular text mode tabbing command."
                (/= starttick (buffer-modified-tick)))))
 	(t
 	 (expand-abbrev))))
+
+(add-to-list 'completion-category-defaults '(email (styles substring)))
+
+(defun message--bbdb-query-with-words (words)
+  ;; FIXME: This (or something like this) should live on the BBDB side.
+  (when (fboundp 'bbdb-records)
+    (require 'bbdb)           ;FIXME: `bbdb-records' is incorrectly autoloaded!
+    (bbdb-records)            ;Make sure BBDB and its database is initialized.
+    (defvar bbdb-hashtable)
+    (declare-function bbdb-record-mail "bbdb" (record))
+    (declare-function bbdb-dwim-mail "bbdb-com" (record &optional mail))
+    (declare-function bbdb-completion-predicate "bbdb-com" (key records))
+    (let ((records '())
+          (responses '()))
+      (dolist (word words)
+	(dolist (c (all-completions word bbdb-hashtable
+	                            #'bbdb-completion-predicate))
+	  (dolist (record (gethash c bbdb-hashtable))
+	    (cl-pushnew record records))))
+      (dolist (record records)
+	(dolist (mail (bbdb-record-mail record))
+	  (push (bbdb-dwim-mail record mail) responses)))
+      responses)))
+
+(defun message--name-table (orig-string)
+  (let ((orig-words (split-string orig-string "[ \t]+"))
+        eudc-responses
+        bbdb-responses)
+    (lambda (string pred action)
+      (pcase action
+        ('metadata '(metadata (category . email)))
+        ('lambda t)
+        ((or 'nil 't)
+         (when orig-words
+           (when (and (memq 'eudc message-expand-name-databases)
+		      (boundp 'eudc-protocol)
+		      eudc-protocol)
+	     (setq eudc-responses (eudc-query-with-words orig-words)))
+	   (when (memq 'bbdb message-expand-name-databases)
+	     (setq bbdb-responses (message--bbdb-query-with-words orig-words)))
+	   (ecomplete-setup)
+	   (setq orig-words nil))
+         (let ((candidates
+	        ;; FIXME: Add `expand-abbrev'!
+	        (append (all-completions string eudc-responses pred)
+	                (all-completions string bbdb-responses pred)
+	                (when (and (bound-and-true-p ecomplete-database)
+	                           (fboundp 'ecomplete-completion-table))
+                          (all-completions string
+                                           (ecomplete-completion-table 'mail)
+                                           pred)))))
+	   (if action candidates (try-completion string candidates))))))))
 
 ;;; Help stuff.
 

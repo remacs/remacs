@@ -1961,6 +1961,12 @@ GnuTLS manual) is recommended instead.
 
 ** Message
 
+*** Completion of email addresses can use the standard completion UI
+This is controlled by 'message-expand-name-standard-ui'.
+With the standard UI the different sources (ecomplete, bbdb, and eudc)
+are matched together and try to obey 'completion-styles'.
+It should work for other completion front ends like Company.
+
 *** 'message-mode' now supports highlighting citations of different depths.
 This can be customized via the new user option
 'message-cite-level-function' and the new 'message-cited-text-*' faces.
