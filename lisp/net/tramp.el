@@ -4163,19 +4163,35 @@ for process communication also."
        (buffer-string))
       result)))
 
+(defun tramp-search-regexp (regexp)
+  "Search for REGEXP backwards, starting at point-max.
+If found, set point to the end of the occurrence found, and return point.
+Otherwise, return nil."
+  (goto-char (point-max))
+  ;; We restrict ourselves to the last 256 characters.  There were
+  ;; reports of 85kB output, which has blocked Tramp forever.
+  (re-search-backward regexp (max (point-min) (- (point) 256)) 'noerror))
+
 (defun tramp-check-for-regexp (proc regexp)
   "Check, whether REGEXP is contained in process buffer of PROC.
 Erase echoed commands if exists."
   (with-current-buffer (process-buffer proc)
     (goto-char (point-min))
 
-    ;; Check whether we need to remove echo output.
+    ;; Check whether we need to remove echo output.  The max length of
+    ;; the echo mark regexp is taken for search.  We restrict the
+    ;; search for the second echo mark to PIPE_BUF characters.
     (when (and (tramp-get-connection-property proc "check-remote-echo" nil)
-	       (re-search-forward tramp-echoed-echo-mark-regexp nil t))
+	       (re-search-forward
+		tramp-echoed-echo-mark-regexp
+		(+ (point) (* 5 tramp-echo-mark-marker-length)) t))
       (let ((begin (match-beginning 0)))
-	(when (re-search-forward tramp-echoed-echo-mark-regexp nil t)
+	(when
+	    (re-search-forward
+	     tramp-echoed-echo-mark-regexp
+	     (+ (point) (tramp-get-connection-property proc "pipe-buf" 4096)) t)
 	  ;; Discard echo from remote output.
-	  (tramp-set-connection-property proc "check-remote-echo" nil)
+	  (tramp-flush-connection-property proc "check-remote-echo")
 	  (tramp-message proc 5 "echo-mark found")
 	  (forward-line 1)
 	  (delete-region begin (point))
@@ -4196,8 +4212,7 @@ Erase echoed commands if exists."
       ;; overflow in regexp matcher".  For example, //DIRED// lines of
       ;; directory listings with some thousand files.  Therefore, we
       ;; look from the end.
-      (goto-char (point-max))
-      (ignore-errors (re-search-backward regexp nil t)))))
+      (tramp-search-regexp regexp))))
 
 (defun tramp-wait-for-regexp (proc timeout regexp)
   "Wait for a REGEXP to appear from process PROC within TIMEOUT seconds.
@@ -4285,8 +4300,7 @@ the remote host use line-endings as defined in the variable
         (tramp-flush-connection-properties proc)
         (tramp-flush-directory-properties vec ""))
       (with-current-buffer (process-buffer proc)
-        (goto-char (point-max))
-        (when (and prompt (re-search-backward (regexp-quote prompt) nil t))
+        (when (and prompt (tramp-search-regexp (regexp-quote prompt)))
 	  (delete-region (point) (point-max)))))))
 
 (defun tramp-get-inode (vec)

@@ -5102,9 +5102,8 @@ function waits for output unless NOOUTPUT is set."
 	      (forward-line 1)
 	      (delete-region (point-min) (point)))
 	    ;; Delete the prompt.
-	    (goto-char (point-max))
-	    (re-search-backward regexp nil t)
-	    (delete-region (point) (point-max)))
+	    (when (tramp-search-regexp regexp)
+	      (delete-region (point) (point-max))))
 	(if timeout
 	    (tramp-error
 	     proc 'file-error
@@ -5134,8 +5133,7 @@ DONT-SUPPRESS-ERR is non-nil, stderr won't be sent to /dev/null."
 	   "echo tramp_exit_status $?"
 	   (if subshell " )" "")))
   (with-current-buffer (tramp-get-connection-buffer vec)
-    (goto-char (point-max))
-    (unless (re-search-backward "tramp_exit_status [0-9]+" nil t)
+    (unless (tramp-search-regexp "tramp_exit_status [0-9]+")
       (tramp-error
        vec 'file-error "Couldn't find exit status of `%s'" command))
     (skip-chars-forward "^ ")

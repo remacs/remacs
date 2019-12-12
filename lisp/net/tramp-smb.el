@@ -1451,11 +1451,10 @@ component is used as the target of the symlink."
 		  (process-put p 'adjust-window-size-function #'ignore)
 		  (set-process-query-on-exit-flag p nil)
 		  (tramp-process-actions p v nil tramp-smb-actions-set-acl)
-		  (goto-char (point-max))
 		  ;; This is meant for traces, and returning from the
 		  ;; function.  No error is propagated outside, due to
 		  ;; the `ignore-errors' closure.
-		  (unless (re-search-backward "tramp_exit_status [0-9]+" nil t)
+		  (unless (tramp-search-regexp "tramp_exit_status [0-9]+")
 		    (tramp-error
 		     v 'file-error
 		     "Couldn't find exit status of `%s'" tramp-smb-acl-program))
