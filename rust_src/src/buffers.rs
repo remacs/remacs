@@ -232,7 +232,8 @@ impl LispBufferRef {
     }
 
     pub fn markers(self) -> Option<LispMarkerRef> {
-        unsafe { (*self.text).markers.as_ref().map(|m| mem::transmute(m)) }
+        let markers = unsafe { (*self.text).markers };
+        LispMarkerRef::from_ptr(markers as *mut _)
     }
 
     pub fn mark_active(self) -> LispObject {
@@ -720,11 +721,11 @@ impl LispBufferRef {
     }
 
     pub fn overlays_before(self) -> Option<LispOverlayRef> {
-        unsafe { self.overlays_before.as_ref().map(|m| mem::transmute(m)) }
+        LispOverlayRef::from_ptr(self.overlays_before as *mut _)
     }
 
     pub fn overlays_after(self) -> Option<LispOverlayRef> {
-        unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
+        LispOverlayRef::from_ptr(self.overlays_after as *mut _)
     }
 
     pub fn as_live(self) -> Option<Self> {
@@ -954,7 +955,7 @@ impl From<LispObject> for Option<LispOverlayRef> {
 impl LispMiscRef {
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
         if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
-            unsafe { Some(mem::transmute(self)) }
+            Some(LispOverlayRef::new(self.as_ptr() as *mut _))
         } else {
             None
         }
