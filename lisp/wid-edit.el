@@ -126,15 +126,19 @@ This exists as a variable so it can be set locally in certain buffers.")
 ;; background, at least on light-background TTYs.
 (defface widget-field '((((type tty))
 			 :background "yellow3"
-			 :foreground "black")
+			 :foreground "black"
+			 :extend t)
 			(((class grayscale color)
 			  (background light))
-			 :background "gray85")
+			 :background "gray85"
+			 :extend t)
 			(((class grayscale color)
 			  (background dark))
-			 :background "dim gray")
+			 :background "dim gray"
+			 :extend t)
 			(t
-			 :slant italic))
+			 :slant italic
+			 :extend t))
   "Face used for editable fields."
   :group 'widget-faces)
 
