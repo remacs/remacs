@@ -668,7 +668,7 @@ Redefining FUNCTION also cancels it."
 		#'(lambda (symbol)
 		    (and (fboundp symbol)
 			 (not (special-form-p symbol))))
-		t nil nil (symbol-name fn)))
+		'confirm nil nil (symbol-name fn)))
      (list (if (equal val "") fn (intern val)))))
   (advice-add function :before #'debug--implement-debug-on-entry
               '((depth . -100)))
