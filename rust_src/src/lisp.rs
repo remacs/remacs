@@ -120,7 +120,11 @@ impl<T> ExternalPtr<T> {
     }
 
     pub fn from_ptr(ptr: *mut c_void) -> Option<Self> {
-        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
+        if ptr.is_null() {
+            None
+        } else {
+            Some(Self(ptr as *mut T))
+        }
     }
 
     pub fn replace_ptr(&mut self, ptr: *mut T) {
