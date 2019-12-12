@@ -4180,7 +4180,7 @@ face_at_pos (const struct it *it, enum lface_attribute_index attr_filter)
     }
   else
     {
-      int base_face_id = 0;
+      int base_face_id;
       ptrdiff_t bufpos;
       int i;
       Lisp_Object from_overlay
@@ -4244,6 +4244,7 @@ face_at_pos (const struct it *it, enum lface_attribute_index attr_filter)
 	     but Emacs always did that since v21.1, so changing that
 	     might be a big deal.  */
 	  bool use_default = (it->string_from_prefix_prop_p != 0);
+	  base_face_id = DEFAULT_FACE_ID;
 	  if (!use_default)
 	    {
 	      base_face_id = underlying_face_id (it);
