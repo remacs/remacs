@@ -4180,7 +4180,7 @@ face_at_pos (const struct it *it, enum lface_attribute_index attr_filter)
     }
   else
     {
-      int base_face_id;
+      int base_face_id = 0;
       ptrdiff_t bufpos;
       int i;
       Lisp_Object from_overlay
