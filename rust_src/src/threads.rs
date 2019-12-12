@@ -1,7 +1,5 @@
 //! Threading code.
 
-use std::mem;
-
 use libc;
 
 use remacs_macros::lisp_fn;
@@ -22,7 +20,7 @@ pub struct ThreadState {}
 
 impl ThreadState {
     pub fn current_buffer_unchecked() -> LispBufferRef {
-        unsafe { mem::transmute((*current_thread_pointer).m_current_buffer) }
+        unsafe { LispBufferRef::new((*current_thread_pointer).m_current_buffer as *mut _) }
     }
 
     pub fn current_buffer() -> Option<LispBufferRef> {
@@ -32,7 +30,7 @@ impl ThreadState {
     }
 
     pub fn current_thread() -> ThreadStateRef {
-        unsafe { mem::transmute(current_thread_pointer) }
+        unsafe { ThreadStateRef::new(current_thread_pointer as *mut _) }
     }
 }
 
