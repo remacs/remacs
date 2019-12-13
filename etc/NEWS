@@ -2124,6 +2124,9 @@ Both match any single character; 'anychar' is more descriptive.
 With 'or' and 'not', it can be used to compose character-matching
 expressions from simpler parts.
 
++++
+*** 'not' argument can now be a character or single-char string.
+
 ** Frames
 
 +++

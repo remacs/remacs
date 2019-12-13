@@ -1214,8 +1214,9 @@ Corresponding string regexp: @samp{[@dots{}]}
 @item @code{(not @var{charspec})}
 @cindex @code{not} in rx
 Match a character not included in @var{charspec}.  @var{charspec} can
-be an @code{any}, @code{not}, @code{or}, @code{intersection},
-@code{syntax} or @code{category} form, or a character class.
+be a character, a single-character string, an @code{any}, @code{not},
+@code{or}, @code{intersection}, @code{syntax} or @code{category} form,
+or a character class.
 If @var{charspec} is an @code{or} form, its arguments have the same
 restrictions as those of @code{intersection}; see below.@*
 Corresponding string regexp: @samp{[^@dots{}]}, @samp{\S@var{code}},
@@ -1224,9 +1225,9 @@ Corresponding string regexp: @samp{[^@dots{}]}, @samp{\S@var{code}},
 @item @code{(intersection @var{charset}@dots{})}
 @cindex @code{intersection} in rx
 Match a character included in all of the @var{charset}s.
-Each @var{charset} can be an @code{any} form without character
-classes, or an @code{intersection}, @code{or} or @code{not} form whose
-arguments are also @var{charset}s.
+Each @var{charset} can be a character, a single-character string, an
+@code{any} form without character classes, or an @code{intersection},
+@code{or} or @code{not} form whose arguments are also @var{charset}s.
 
 @item @code{not-newline}, @code{nonl}
 @cindex @code{not-newline} in rx

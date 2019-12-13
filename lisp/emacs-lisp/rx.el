@@ -309,6 +309,8 @@ and set operations."
                     (rx--every (lambda (x) (not (symbolp x))) (cdr form)))
                (and (memq (car form) '(not or | intersection))
                     (rx--every #'rx--charset-p (cdr form)))))
+      (characterp form)
+      (and (stringp form) (= (length form) 1))
       (and (or (symbolp form) (consp form))
            (let ((expanded (rx--expand-def form)))
              (and expanded
@@ -521,6 +523,11 @@ If NEGATED, negate the sense (thus making it positive)."
      ((eq arg 'word-boundary)
       (rx--translate-symbol
        (if negated 'word-boundary 'not-word-boundary)))
+     ((characterp arg)
+      (rx--generate-alt (not negated) (list (cons arg arg)) nil))
+     ((and (stringp arg) (= (length arg) 1))
+      (let ((char (string-to-char arg)))
+        (rx--generate-alt (not negated) (list (cons char char)) nil)))
      ((let ((expanded (rx--expand-def arg)))
         (and expanded
              (rx--translate-not negated (list expanded)))))
@@ -571,8 +578,8 @@ If NEGATED, negate the sense (thus making it positive)."
 (defun rx--charset-intervals (charset)
   "Return a sorted list of non-adjacent disjoint intervals from CHARSET.
 CHARSET is any expression allowed in a character set expression:
-either `any' (no classes permitted), or `not', `or' or `intersection'
-forms whose arguments are charsets."
+characters, single-char strings, `any' forms (no classes permitted),
+or `not', `or' or `intersection' forms whose arguments are charsets."
   (pcase charset
     (`(,(or 'any 'in 'char) . ,body)
      (let ((parsed (rx--parse-any body)))
@@ -584,6 +591,11 @@ forms whose arguments are charsets."
     (`(not ,x) (rx--complement-intervals (rx--charset-intervals x)))
     (`(,(or 'or '|) . ,body) (rx--charset-union body))
     (`(intersection . ,body) (rx--charset-intersection body))
+    ((pred characterp)
+     (list (cons charset charset)))
+    ((guard (and (stringp charset) (= (length charset) 1)))
+     (let ((char (string-to-char charset)))
+       (list (cons char char))))
     (_ (let ((expanded (rx--expand-def charset)))
          (if expanded
              (rx--charset-intervals expanded)
@@ -1161,10 +1173,12 @@ CHAR           Match a literal character.
                 character, a string, a range as string \"A-Z\" or cons
                 (?A . ?Z), or a character class (see below).  Alias: in, char.
 (not CHARSPEC)  Match one character not matched by CHARSPEC.  CHARSPEC
-                can be (any ...), (or ...), (intersection ...),
-                (syntax ...), (category ...), or a character class.
-(intersection CHARSET...) Intersection of CHARSETs.
-                CHARSET is (any...), (not...), (or...) or (intersection...).
+                can be a character, single-char string, (any ...), (or ...),
+                (intersection ...), (syntax ...), (category ...),
+                or a character class.
+(intersection CHARSET...) Match all CHARSETs.
+                CHARSET is (any...), (not...), (or...) or (intersection...),
+                a character or a single-char string.
 not-newline     Match any character except a newline.  Alias: nonl.
 anychar         Match any character.  Alias: anything.
 unmatchable     Never match anything at all.
