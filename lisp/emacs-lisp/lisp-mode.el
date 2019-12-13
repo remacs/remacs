@@ -284,7 +284,7 @@ This will generate compile-time constants from BINDINGS."
   ;; Match a confusable character within a Lisp symbol.
   (catch 'matched
     (while t
-      (if (re-search-forward uni-confusables-regexp limit t)
+      (if (re-search-forward help-uni-confusables-regexp limit t)
           ;; Skip confusables which are backslash escaped, or inside
           ;; strings or comments.
           (save-match-data

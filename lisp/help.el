@@ -1511,7 +1511,7 @@ the same names as used in the original source code, when possible."
 
 ;; Just some quote-like characters for now.  TODO: generate this stuff
 ;; from official Unicode data.
-(defconst uni-confusables
+(defconst help-uni-confusables
   '((#x2018 . "'") ;; LEFT SINGLE QUOTATION MARK
     (#x2019 . "'") ;; RIGHT SINGLE QUOTATION MARK
     (#x201B . "'") ;; SINGLE HIGH-REVERSED-9 QUOTATION MARK
@@ -1521,25 +1521,32 @@ the same names as used in the original source code, when possible."
     (#x301E . "\"") ;; DOUBLE PRIME QUOTATION MARK
     (#xFF02 . "'") ;; FULLWIDTH QUOTATION MARK
     (#xFF07 . "'") ;; FULLWIDTH APOSTROPHE
-    ))
+    )
+  "An alist of confusable characters to give hints about.
+Each alist element is of the form (CHAR . REPLACEMENT), where
+CHAR is the potentially confusable character, and REPLACEMENT is
+the suggested string to use instead.  See
+`help-uni-confusable-suggestions'.")
 
-(defconst uni-confusables-regexp
-  (concat "[" (mapcar #'car uni-confusables) "]"))
+(defconst help-uni-confusables-regexp
+  (concat "[" (mapcar #'car help-uni-confusables) "]")
+  "Regexp matching any character listed in `help-uni-confusables'.")
 
 (defun help-uni-confusable-suggestions (string)
   "Return a message describing confusables in STRING."
   (let ((i 0)
         (confusables nil))
-    (while (setq i (string-match uni-confusables-regexp string i))
-      (let ((replacement (alist-get (aref string i) uni-confusables)))
+    (while (setq i (string-match help-uni-confusables-regexp string i))
+      (let ((replacement (alist-get (aref string i) help-uni-confusables)))
         (push (aref string i) confusables)
         (setq string (replace-match replacement t t string))
         (setq i (+ i (length replacement)))))
     (when confusables
       (format-message
-       (if (> (length confusables) 1)
-           "Found confusable characters: %s; perhaps you meant: `%s'?"
-         "Found confusable character: %s, perhaps you meant: `%s'?")
+       (ngettext
+        "Found confusable character: %s, perhaps you meant: `%s'?"
+        "Found confusable characters: %s; perhaps you meant: `%s'?"
+        (length confusables))
        (mapconcat (lambda (c) (format-message "`%c'" c))
                   confusables ", ")
        string))))
