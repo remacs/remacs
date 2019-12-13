@@ -4169,7 +4169,8 @@ If found, set point to the end of the occurrence found, and return point.
 Otherwise, return nil."
   (goto-char (point-max))
   ;; We restrict ourselves to the last 256 characters.  There were
-  ;; reports of 85kB output, which has blocked Tramp forever.
+  ;; reports of a shell command "git ls-files -zco --exclude-standard"
+  ;; with 85k files involved, which has blocked Tramp forever.
   (re-search-backward regexp (max (point-min) (- (point) 256)) 'noerror))
 
 (defun tramp-check-for-regexp (proc regexp)
@@ -4968,12 +4969,14 @@ name of a process or buffer, or nil to default to the current buffer."
 ;; - Reset `file-name-handler-alist'
 ;; - Cleanup hooks where Tramp functions are in
 ;; - Cleanup autoloads
+;; We must autoload the function body.  Otherwise, Tramp would be
+;; loaded unconditionally if somebody calls `tramp-unload-tramp'.
 ;;;###autoload
-(defun tramp-unload-tramp ()
+(progn (defun tramp-unload-tramp ()
   "Discard Tramp from loading remote files."
   (interactive)
   ;; Maybe it's not loaded yet.
-  (ignore-errors (unload-feature 'tramp 'force)))
+  (ignore-errors (unload-feature 'tramp 'force))))
 
 (provide 'tramp)
 
