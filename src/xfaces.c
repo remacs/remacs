@@ -6445,6 +6445,10 @@ face_at_string_position (struct window *w, Lisp_Object string,
 
   /* Begin with attributes from the base face.  */
   memcpy (attrs, base_face->lface, sizeof attrs);
+  /* Reset the attribute of the base face used as the filter, because
+     otherwise there's no way for faces to be merged to countermand that.  */
+  if (EQ (attrs[attr_filter], Qt))
+    attrs[attr_filter] = Qnil;
 
   /* Merge in attributes specified via text properties.  */
   if (!NILP (prop))
