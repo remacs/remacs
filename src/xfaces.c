@@ -2168,6 +2168,7 @@ face_inherited_attr (struct window *w, struct frame *f,
       if (CONSP (parent_face))
 	{
 	  Lisp_Object tail;
+	  ok = false;
 	  for (tail = parent_face; !NILP (tail); tail = XCDR (tail))
 	    {
 	      ok = get_lface_attributes (w, f, XCAR (tail), inherited_attrs,
