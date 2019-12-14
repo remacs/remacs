@@ -2825,12 +2825,14 @@ POSIX requires support only for values in the range @minus{}1 ..@:
 @code{SSIZE_MAX}.
 
 @item
-Prefer @code{intptr_t} for internal representations of pointers, or
+Normally, prefer @code{intptr_t} for internal representations of pointers, or
 for integers bounded only by the number of objects that can exist at
 any given time or by the total number of bytes that can be allocated.
-Currently Emacs sometimes uses other types when @code{intptr_t} would
-be better; fixing this is lower priority, as the code works as-is on
-Emacs's current porting targets.
+However, prefer @code{uintptr_t} to represent pointer arithmetic that
+could cross page boundaries.  For example, on a machine with a 32-bit
+address space an array could cross the 0x7fffffff/0x80000000 boundary,
+which would cause an integer overflow when adding 1 to
+@code{(intptr_t) 0x7fffffff}.
 
 @item
 Prefer the Emacs-defined type @code{EMACS_INT} for representing values
