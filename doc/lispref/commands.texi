@@ -1788,9 +1788,10 @@ additional data because signals do not carry additional information.
 They can be useful for debugging (@pxref{Error Debugging}).
 
 To catch a user signal, bind the corresponding event to an interactive
-command in the @code{special-event-map} (@pxref{Active Keymaps}).
+command in the @code{special-event-map} (@pxref{Controlling Active Maps}).
 The command is called with no arguments, and the specific signal event is
-available in @code{last-input-event}.  For example:
+available in @code{last-input-event} (@pxref{Event Input Misc}.  For
+example:
 
 @smallexample
 (defun sigusr-handler ()
@@ -3018,7 +3019,7 @@ definition to find the actual event.
 user signals like @code{sigusr1} are normally handled in this way.
 The keymap which defines how to handle special events---and which
 events are special---is in the variable @code{special-event-map}
-(@pxref{Active Keymaps}).
+(@pxref{Controlling Active Maps}).
 
 @node Waiting
 @section Waiting for Elapsed Time or Input
