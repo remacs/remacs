@@ -261,12 +261,17 @@ the memory space can be shared by all the Emacs jobs running on the
 machine at once.  Pure storage is not expandable; a fixed amount is
 allocated when Emacs is compiled, and if that is not sufficient for
 the preloaded libraries, @file{temacs} allocates dynamic memory for
-the part that didn't fit.  The resulting image will work, but garbage
-collection (@pxref{Garbage Collection}) is disabled in this situation,
-causing a memory leak.  Such an overflow normally won't happen unless
-you try to preload additional libraries or add features to the
-standard ones.  Emacs will display a warning about the overflow when
-it starts.  If this happens, you should increase the compilation
+the part that didn't fit.  If Emacs will be dumped using the
+@code{pdump} method (@pxref{Building Emacs}), the pure-space overflow
+is of no special importance (it just means some of the preloaded stuff
+cannot be shared with other Emacs jobs).  However, if Emacs will be
+dumped using the now obsolete @code{unexec} method, the resulting
+image will work, but garbage collection (@pxref{Garbage Collection})
+is disabled in this situation, causing a memory leak.  Such an
+overflow normally won't happen unless you try to preload additional
+libraries or add features to the standard ones.  Emacs will display a
+warning about the overflow when it starts, if it was dumped using
+@code{unexec}.  If this happens, you should increase the compilation
 parameter @code{SYSTEM_PURESIZE_EXTRA} in the file
 @file{src/puresize.h} and rebuild Emacs.
 
@@ -510,9 +515,11 @@ Total heap size, in @var{unit-size} units.
 Heap space which is not currently used, in @var{unit-size} units.
 @end table
 
-If there was overflow in pure space (@pxref{Pure Storage}),
-@code{garbage-collect} returns @code{nil}, because a real garbage
-collection cannot be done.
+If there was overflow in pure space (@pxref{Pure Storage}), and Emacs
+was dumped using the (now obsolete) @code{unexec} method
+(@pxref{Building Emacs}), then @code{garbage-collect} returns
+@code{nil}, because a real garbage collection cannot be done in that
+case.
 @end deffn
 
 @defopt garbage-collection-messages
