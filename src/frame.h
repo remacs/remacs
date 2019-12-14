@@ -573,7 +573,6 @@ struct frame
     struct x_output *x;         /* From xterm.h.  */
     struct w32_output *w32;     /* From w32term.h.  */
     struct ns_output *ns;       /* From nsterm.h.  */
-    intptr_t nothing;
   }
   output_data;
 

@@ -2099,7 +2099,6 @@ x_frame_of_widget (Widget widget)
     {
       f = XFRAME (frame);
       if (FRAME_X_P (f)
-	  && f->output_data.nothing != 1
 	  && FRAME_DISPLAY_INFO (f) == dpyinfo
 	  && f->output_data.x->widget == widget)
 	return f;

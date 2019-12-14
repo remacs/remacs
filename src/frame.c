@@ -1115,7 +1115,6 @@ make_initial_frame (void)
   f->output_method = terminal->type;
   f->terminal = terminal;
   f->terminal->reference_count++;
-  f->output_data.nothing = 0;
 
   FRAME_FOREGROUND_PIXEL (f) = FACE_TTY_DEFAULT_FG_COLOR;
   FRAME_BACKGROUND_PIXEL (f) = FACE_TTY_DEFAULT_BG_COLOR;
@@ -2136,7 +2135,6 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
     if (FRAME_TERMINAL (f)->delete_frame_hook)
       (*FRAME_TERMINAL (f)->delete_frame_hook) (f);
     terminal = FRAME_TERMINAL (f);
-    f->output_data.nothing = 0;
     f->terminal = 0;             /* Now the frame is dead.  */
     unblock_input ();
 
