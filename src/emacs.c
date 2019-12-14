@@ -2530,7 +2530,6 @@ You must run Emacs in batch mode in order to dump it.  */)
 	      "exec-shield in etc/PROBLEMS for more information.\n"
 	      "**************************************************\n"),
 	     heap_bss_diff);
-    }
 # endif
 
   /* Bind `command-line-processed' to nil before dumping,
