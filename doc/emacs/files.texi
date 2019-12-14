@@ -1394,6 +1394,10 @@ backup of.  In all other respects, this behaves like @kbd{M-x diff}.
 buffer with its corresponding file.  This shows you what changes you
 would make to the file if you save the buffer.
 
+@findex diff-buffers
+  The command @kbd{M-x diff-buffers} compares the contents of two
+specified buffers.
+
 @findex compare-windows
   The command @kbd{M-x compare-windows} compares the text in the
 current window with that in the window that was the selected window

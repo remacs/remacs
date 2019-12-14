@@ -1038,6 +1038,14 @@ is shown.)
 Set the new user option 'diff-font-lock-prettify' to t for that, see
 below under "Diff mode".
 
+---
+*** The 'diff' function arguments OLD and NEW may each be a buffer
+rather than a file, in non-interactive calls.  This change was made in
+Emacs 24.1, but wasn't documented until now.
+
++++
+*** New command 'diff-buffers' interactively diffs two buffers.
+
 ** Diff mode
 +++
 *** Hunks are now automatically refined by font-lock.
