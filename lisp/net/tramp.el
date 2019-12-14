@@ -1019,7 +1019,7 @@ See also `tramp-file-name-regexp'.")
   (car tramp-file-name-structure))
 
 ;;;###autoload
-(defconst tramp-initial-file-name-regexp "\\`/.+:.*:"
+(defconst tramp-initial-file-name-regexp "\\`/[^/:]+:[^/:]*:"
   "Value for `tramp-file-name-regexp' for autoload.
 It must match the initial `tramp-syntax' settings.")
 
