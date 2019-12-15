@@ -174,11 +174,14 @@ on a console which has no window system but does have a mouse."
     (when x-position
       (unless (catch 'done
                 (map-keymap
-                 (lambda (_key binding)
+                 (lambda (key binding)
                    (when (eq (car-safe binding) 'menu-item)
                      (when (> (+ column (length (nth 1 binding))) x-position)
-                       ;; TODO: handle close
-                       (unless (get-text-property (- x-position column) 'close-tab (nth 1 binding))
+                       (if (get-text-property (- x-position column) 'close-tab (nth 1 binding))
+                           (let* ((close-key (vector (intern (format "C-%s" key))))
+                                  (close-def (lookup-key keymap close-key)))
+                             (when close-def
+                               (call-interactively close-def)))
                          (call-interactively (nth 2 binding)))
                        (throw 'done t))
                      (setq column (+ column (length (nth 1 binding))))))
