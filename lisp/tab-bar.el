@@ -582,7 +582,10 @@ to the numeric argument.  ARG counts from 1."
 
         (when from-index
           (setf (nth from-index tabs) from-tab))
-        (setf (nth to-index tabs) (tab-bar--current-tab (nth to-index tabs))))
+        (setf (nth to-index tabs) (tab-bar--current-tab (nth to-index tabs)))
+
+        (unless tab-bar-mode
+          (message "Selected tab '%s'" (alist-get 'name to-tab))))
 
       (force-mode-line-update))))
 
@@ -869,7 +872,8 @@ for the last tab on a frame is determined by
                                           (1- current-index)))
                                 ('recent (tab-bar--tab-index-recent 1 tabs))))))
             (setq to-index (max 0 (min (or to-index 0) (1- (length tabs)))))
-            (tab-bar-select-tab (1+ to-index))
+            (let ((inhibit-message t)) ; avoid message about selected tab
+              (tab-bar-select-tab (1+ to-index)))
             ;; Re-read tabs after selecting another tab
             (setq tabs (funcall tab-bar-tabs-function))))
 
