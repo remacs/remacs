@@ -1780,11 +1780,11 @@ if it is necessary to ensure that a postfix operator appended to
 it will apply to the whole expression.
 @end table
 
-The optional argument @var{keep-order}, if @code{nil} or omitted,
-allows the returned regexp to match the strings in any order.  If
-non-@code{nil}, the match is guaranteed to be performed in the order
-given, as if the strings were made into a regexp by joining them with
-the @samp{\|} operator.
+The optional argument @var{keep-order}, if non-@code{nil}, forces the
+match to be performed in the order given, as if the strings were made
+into a regexp by joining them with the @samp{\|} operator.  If nil or
+omitted, the returned regexp will always match the longest string
+possible.
 
 Up to reordering, the resulting regexp of @code{regexp-opt} is
 equivalent to but usually more efficient than that of a simplified

@@ -114,11 +114,11 @@ nil
     necessary to ensure that a postfix operator appended to it will
     apply to the whole expression.
 
-The optional argument KEEP-ORDER, if nil or omitted, allows the
-returned regexp to match the strings in any order.  If non-nil,
-the match is guaranteed to be performed in the order given, as if
-the strings were made into a regexp by joining them with the
-`\\|' operator.
+The optional argument KEEP-ORDER, if non-nil, forces the match to
+be performed in the order given, as if the strings were made into
+a regexp by joining them with the `\\|' operator.  If nil or
+omitted, the returned regexp is will always match the longest
+string possible.
 
 Up to reordering, the resulting regexp is equivalent to but
 usually more efficient than that of a simplified version:
