@@ -276,13 +276,11 @@ followed by a newline.
 When @code{inhibit-message} is non-@code{nil}, no message will be displayed
 in the echo area, it will only be logged to @samp{*Messages*}.
 
-If the minibuffer is active, it uses the @code{minibuffer-message}
-function to display the message temporarily at the end of the
-minibuffer (@pxref{Minibuffer Misc}).
-
 If @var{format-string} is @code{nil} or the empty string,
 @code{message} clears the echo area; if the echo area has been
-expanded automatically, this brings it back to its normal size.
+expanded automatically, this brings it back to its normal size.  If
+the minibuffer is active, this brings the minibuffer contents back
+onto the screen immediately.
 
 @example
 @group

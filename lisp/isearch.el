@@ -2011,7 +2011,7 @@ Turning on character-folding turns off regexp mode.")
 (defun isearch--momentary-message (string)
   "Print STRING at the end of the isearch prompt for 1 second."
   (let ((message-log-max nil))
-    (message-in-echo-area "%s%s%s"
+    (message "%s%s%s"
              (isearch-message-prefix nil isearch-nonincremental)
              isearch-message
              (apply #'propertize (format " [%s]" string)
@@ -3168,7 +3168,7 @@ If there is no completion possible, say so and continue searching."
 	     (isearch-message-prefix ellipsis isearch-nonincremental)
 	     m
 	     (isearch-message-suffix c-q-hack)))
-    (if c-q-hack m (let ((message-log-max nil)) (message-in-echo-area "%s" m)))))
+    (if c-q-hack m (let ((message-log-max nil)) (message "%s" m)))))
 
 (defun isearch--describe-regexp-mode (regexp-function &optional space-before)
   "Make a string for describing REGEXP-FUNCTION.
