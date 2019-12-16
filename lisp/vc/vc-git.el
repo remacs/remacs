@@ -521,14 +521,19 @@ or an empty string if none."
       ('ls-files-up-to-date
        (setq next-stage 'ls-files-unknown)
        (while (re-search-forward "\\([0-7]\\{6\\}\\) [0-9a-f]\\{40\\} \\([0-3]\\)\t\\([^\0]+\\)\0" nil t)
-         (let ((perm (string-to-number (match-string 1) 8))
-               (state (match-string 2))
-               (name (match-string 3)))
-           (vc-git-dir-status-update-file
-            git-state name (if (equal state "0")
-                               'up-to-date
-                             'conflict)
-            (vc-git-create-extra-fileinfo perm perm)))))
+         (let* ((perm (string-to-number (match-string 1) 8))
+                (state (match-string 2))
+                (name (match-string 3))
+                (file-info (vc-git-create-extra-fileinfo perm perm)))
+           (if (equal state "0")
+               (unless (gethash name (vc-git-dir-status-state->hash git-state))
+                 ;; `diff-index' stage has not produced a more precise info.
+                 (vc-git-dir-status-update-file
+                  git-state name 'up-to-date file-info))
+             ;; `diff-index' assigns `edited' status to conflicted
+             ;; files, so we can't do the above in both cases.
+             (vc-git-dir-status-update-file
+              git-state name 'conflict file-info)))))
       ('ls-files-conflict
        (setq next-stage 'ls-files-unknown)
        ;; It's enough to look for "3" to notice a conflict.
