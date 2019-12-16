@@ -2037,7 +2037,11 @@ This must be bound to a button-down mouse event."
                                (funcall adjusted-col mouse-col) 'point)
                             (unless mouse--rectangle-track-cursor
                               (forward-char))
-                            (rectangle--reset-point-crutches)))))
+                            (rectangle--reset-point-crutches))))
+               (scroll-adjust (lambda ()
+                                (move-to-column
+                                 (funcall adjusted-col mouse-col))
+                                (funcall set-col))))
           (if (and (eq window start-window)
                    mouse-row
                    (<= top mouse-row (1- bottom)))
@@ -2051,11 +2055,11 @@ This must be bound to a button-down mouse event."
              ((< mouse-row top)
               (mouse-scroll-subr
                start-window (- mouse-row top) nil start-point
-               set-col))
+               scroll-adjust))
              ((>= mouse-row bottom)
               (mouse-scroll-subr
                start-window (1+ (- mouse-row bottom)) nil start-point
-               set-col)))))))
+               scroll-adjust)))))))
     (condition-case err
         (progn
           (setq track-mouse t)
