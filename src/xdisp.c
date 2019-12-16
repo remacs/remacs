@@ -4243,7 +4243,7 @@ face_at_pos (const struct it *it, enum lface_attribute_index attr_filter)
 	     the display string do.  This sounds like a design bug,
 	     but Emacs always did that since v21.1, so changing that
 	     might be a big deal.  */
-	  base_face_id = it->string_from_display_prop_p
+	  base_face_id = it->string_from_prefix_prop_p
 	    ? (!NILP (Vface_remapping_alist)
 	       ? lookup_basic_face (it->w, it->f, DEFAULT_FACE_ID)
 	       : DEFAULT_FACE_ID)
