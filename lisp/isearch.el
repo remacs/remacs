@@ -2508,10 +2508,12 @@ is bound to outside of Isearch."
 
 (declare-function xterm--pasted-text "term/xterm" ())
 
-(defun isearch-xterm-paste ()
+(defun isearch-xterm-paste (event)
   "Pull terminal paste into search string."
-  (interactive)
-  (isearch-yank-string (xterm--pasted-text)))
+  (interactive "e")
+  (when (eq (car-safe event) 'xterm-paste)
+    (let ((pasted-text (nth 1 event)))
+      (isearch-yank-string pasted-text))))
 
 (defun isearch-yank-internal (jumpform)
   "Pull the text from point to the point reached by JUMPFORM.
