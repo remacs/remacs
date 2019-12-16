@@ -620,8 +620,7 @@ or an empty string if none."
                        "ls-files" "-z" "-u" "--"))
       ('ls-files-unknown
        (vc-git-command (current-buffer) 'async files
-                       "ls-files" "-z" "-o" "--directory"
-                       "--no-empty-directory" "--exclude-standard" "--"))
+                       "ls-files" "-z" "-o" "--exclude-standard" "--"))
       ('ls-files-ignored
        (vc-git-command (current-buffer) 'async files
                        "ls-files" "-z" "-o" "-i" "--directory"
