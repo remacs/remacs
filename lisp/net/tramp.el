@@ -3259,10 +3259,16 @@ User is always nil."
 (defun tramp-handle-file-name-completion
   (filename directory &optional predicate)
   "Like `file-name-completion' for Tramp files."
-  (let (hits-ignored-extensions)
+  (let (hits-ignored-extensions fnac)
+    (setq fnac (file-name-all-completions filename directory))
+    ;; "." and ".." are never interesting as completions, and are
+    ;; actually in the way in a directory with only one file.  See
+    ;; file_name_completion() in dired.c.
+    (when (and (consp fnac) (= (length (delete "./" (delete "../" fnac))) 1))
+      (setq fnac (delete "./" (delete "../" fnac))))
     (or
      (try-completion
-      filename (file-name-all-completions filename directory)
+      filename fnac
       (lambda (x)
 	(when (funcall (or predicate #'identity) (expand-file-name x directory))
 	  (not
