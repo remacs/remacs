@@ -9,7 +9,7 @@
 ;; Keywords: languages
 ;; The "Version" is the date followed by the decimal rendition of the Git
 ;;     commit hex.
-;; Version: 2019.11.21.248091482
+;; Version: 2019.12.17.268053413
 
 ;; Yoni Rabkin <yoni@rabkins.net> contacted the maintainer of this
 ;; file on 19/3/2008, and the maintainer agreed that when a bug is
@@ -124,7 +124,7 @@
 ;;
 
 ;; This variable will always hold the version number of the mode
-(defconst verilog-mode-version "2019-11-21-ec9935a-vpo-GNU"
+(defconst verilog-mode-version "2019-12-17-ffa2ba5-vpo-GNU"
   "Version of this Verilog mode.")
 (defconst verilog-mode-release-emacs t
   "If non-nil, this version of Verilog mode was released with Emacs itself.")
@@ -2077,7 +2077,7 @@ find the errors."
       "`resetall" "`timescale" "`unconnected_drive" "`undef" "`undefineall"
       ;; compiler directives not covered by IEEE 1800
       "`case" "`default" "`endfor" "`endprotect" "`endswitch" "`endwhile" "`for"
-      "`format" "`if" "`let" "`protect" "`switch" "`time_scale"
+      "`format" "`if" "`let" "`protect" "`switch" "`time_scale" "`uselib"
       "`while"
       ))
   "List of Verilog compiler directives.")
@@ -8491,6 +8491,9 @@ Return an array of [outputs inouts inputs wire reg assign const]."
          ((looking-at "^\\s *`pragma\\s +protect\\s +begin_protected")
           (or (re-search-forward "^\\s *`pragma\\s +protect\\s +end_protected" nil t)
               (forward-line)))
+         ((looking-at "^\\s *`protected\\>")
+          (or (re-search-forward "^\\s *`endprotected\\>" nil t)
+              (forward-line)))
 	 ((looking-at "(\\*")
 	  ;; To advance past either "(*)" or "(* ... *)" don't forward past first *
 	  (forward-char 1)
@@ -9363,6 +9366,8 @@ Returns REGEXP and list of ( (signal_name connection_name)... )."
         (setq tpl-regexp (match-string-no-properties 1))
 	(goto-char (match-end 0)))
       (search-forward "(")
+      (while (verilog-within-string)  ;; e.g. inside a tpl-regexp spec
+        (search-forward "("))
       ;; Parse lines in the template
       (when (or verilog-auto-inst-template-numbers
 		verilog-auto-template-warn-unused)
@@ -14565,7 +14570,7 @@ Files are checked based on `verilog-library-flags'."
   (interactive)
   (let ((reporter-prompt-for-summary-p t))
     (reporter-submit-bug-report
-     "mac@verilog.com, wsnyder@wsnyder.org"
+     "wsnyder@wsnyder.org"
      (concat "verilog-mode v" verilog-mode-version)
      '(
        verilog-active-low-regexp
@@ -14645,7 +14650,7 @@ Files are checked based on `verilog-library-flags'."
        verilog-warn-fatal
        )
      nil nil
-     (concat "Hi Mac,
+     (concat "Hi,
 
 I want to report a bug.
 
