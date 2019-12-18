@@ -2936,21 +2936,15 @@ TRUE-DIRNAME is the `file-truename' of DIRNAME, if given."
       ;; Let's normalize it and look again.
       (let ((filename (car file))
 	    ;; Get the specified directory from FILE.
-	    (spec-directory (if (cdr file)
-				(file-truename (cdr file)))))
+	    (spec-directory
+             (if (cdr file)
+		 (file-truename (concat comint-file-name-prefix (cdr file))))))
 
 	;; Check for a comint-file-name-prefix and prepend it if appropriate.
 	;; (This is very useful for compilation-minor-mode in an rlogin-mode
 	;; buffer.)
-	(when (and (boundp 'comint-file-name-prefix)
-		   (not (equal comint-file-name-prefix "")))
-	  (if (file-name-absolute-p filename)
-	      (setq filename
-		    (concat comint-file-name-prefix filename))
-	    (if spec-directory
-		(setq spec-directory
-		      (file-truename
-		       (concat comint-file-name-prefix spec-directory))))))
+	(if (file-name-absolute-p filename)
+	    (setq filename (concat comint-file-name-prefix filename)))
 
 	;; If compilation-parse-errors-filename-function is
 	;; defined, use it to process the filename.  The result might be a
