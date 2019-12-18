@@ -6460,10 +6460,6 @@ not_in_argv (NSString *arg)
   if (!emacs_event)
     return;
 
-  /* First, clear any working text.  */
-  if (workingText != nil)
-    [self deleteWorkingText];
-
   /* It might be preferable to use getCharacters:range: below,
      cf. https://developer.apple.com/library/content/documentation/Cocoa/Conceptual/CocoaPerformance/Articles/StringDrawing.html#//apple_ref/doc/uid/TP40001445-112378.
      However, we probably can't use SAFE_NALLOCA here because it might
@@ -6492,6 +6488,10 @@ not_in_argv (NSString *arg)
       emacs_event->code = code;
       EV_TRAILER ((id)nil);
     }
+
+  /* Last, clear any working text.  */
+  if (workingText != nil)
+    [self deleteWorkingText];
 }
 
 
