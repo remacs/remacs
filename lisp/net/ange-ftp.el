@@ -39,8 +39,8 @@
 ;;
 ;;   /ange@anorman:/tmp/notes
 ;;
-;; then ange-ftp spawns an FTP process, connect to the host 'anorman' as
-;; user 'ange', get the file '/tmp/notes' and pop up a buffer containing the
+;; then ange-ftp spawns an FTP process, connects to the host 'anorman' as
+;; user 'ange', gets the file '/tmp/notes' and pops up a buffer containing the
 ;; contents of that file as if it were on the local filesystem.  If ange-ftp
 ;; needs a password to connect then it reads one in the echo area.
 
