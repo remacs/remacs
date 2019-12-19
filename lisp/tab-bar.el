@@ -508,13 +508,16 @@ Return its existing value or a new value."
 
 (defun tab-bar--tab-index-recent (nth &optional tabs frame)
   (let* ((tabs (or tabs (funcall tab-bar-tabs-function frame)))
-         (sorted-tabs
-          (seq-sort-by (lambda (tab) (cdr (assq 'time tab))) #'>
-                       (seq-remove (lambda (tab)
-                                     (eq (car tab) 'current-tab))
-                                   tabs)))
+         (sorted-tabs (tab-bar--tabs-recent tabs frame))
          (tab (nth (1- nth) sorted-tabs)))
     (tab-bar--tab-index tab tabs)))
+
+(defun tab-bar--tabs-recent (&optional tabs frame)
+  (let* ((tabs (or tabs (funcall tab-bar-tabs-function frame))))
+    (seq-sort-by (lambda (tab) (cdr (assq 'time tab))) #'>
+                 (seq-remove (lambda (tab)
+                               (eq (car tab) 'current-tab))
+                             tabs))))
 
 
 (defun tab-bar-select-tab (&optional arg)
@@ -621,10 +624,12 @@ to the numeric argument.  ARG counts from 1."
 
 (defun tab-bar-switch-to-tab (name)
   "Switch to the tab by NAME."
-  (interactive (list (completing-read "Switch to tab by name: "
-                                      (mapcar (lambda (tab)
-                                                (cdr (assq 'name tab)))
-                                              (funcall tab-bar-tabs-function)))))
+  (interactive
+   (let* ((recent-tabs (mapcar (lambda (tab)
+                                 (cdr (assq 'name tab)))
+                               (tab-bar--tabs-recent))))
+     (list (completing-read "Switch to tab by name (default recent): "
+                            recent-tabs nil nil nil nil recent-tabs))))
   (tab-bar-select-tab (1+ (tab-bar--tab-index-by-name name))))
 
 (defalias 'tab-bar-select-tab-by-name 'tab-bar-switch-to-tab)
@@ -900,10 +905,11 @@ for the last tab on a frame is determined by
 
 (defun tab-bar-close-tab-by-name (name)
   "Close the tab by NAME."
-  (interactive (list (completing-read "Close tab by name: "
-                                      (mapcar (lambda (tab)
-                                                (cdr (assq 'name tab)))
-                                              (funcall tab-bar-tabs-function)))))
+  (interactive
+   (list (completing-read "Close tab by name: "
+                          (mapcar (lambda (tab)
+                                    (cdr (assq 'name tab)))
+                                  (funcall tab-bar-tabs-function)))))
   (tab-bar-close-tab (1+ (tab-bar--tab-index-by-name name))))
 
 (defun tab-bar-close-other-tabs ()
@@ -1479,10 +1485,12 @@ Like \\[find-file-other-frame] (which see), but creates a new tab."
 (define-key tab-prefix-map "1" 'tab-close-other)
 (define-key tab-prefix-map "0" 'tab-close)
 (define-key tab-prefix-map "o" 'tab-next)
+(define-key tab-prefix-map "m" 'tab-move)
+(define-key tab-prefix-map "r" 'tab-rename)
+(define-key tab-prefix-map "\r" 'tab-bar-select-tab-by-name)
 (define-key tab-prefix-map "b" 'switch-to-buffer-other-tab)
 (define-key tab-prefix-map "f" 'find-file-other-tab)
 (define-key tab-prefix-map "\C-f" 'find-file-other-tab)
-(define-key tab-prefix-map "r" 'tab-rename)
 
 
 (provide 'tab-bar)
