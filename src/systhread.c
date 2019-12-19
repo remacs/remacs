@@ -98,10 +98,6 @@ sys_thread_yield (void)
 
 #include <sched.h>
 
-#ifdef HAVE_SYS_PRCTL_H
-#include <sys/prctl.h>
-#endif
-
 void
 sys_mutex_init (sys_mutex_t *mutex)
 {
@@ -227,9 +223,18 @@ sys_thread_create (sys_thread_t *thread_ptr, const char *name,
   if (!pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED))
     {
       result = pthread_create (thread_ptr, &attr, func, arg) == 0;
-#if defined (HAVE_SYS_PRCTL_H) && defined (HAVE_PRCTL) && defined (PR_SET_NAME)
+#ifdef HAVE_PTHREAD_SETNAME_NP
       if (result && name != NULL)
-	prctl (PR_SET_NAME, name);
+        {
+          /* We need to truncate here otherwise pthread_setname_np
+             fails to set the name.  TASK_COMM_LEN is what the length
+             is called in the Linux kernel headers (Bug#38632).  */
+#define TASK_COMM_LEN 16
+          char p_name[TASK_COMM_LEN];
+          strncpy (p_name, name, TASK_COMM_LEN - 1);
+          p_name[TASK_COMM_LEN - 1] = '\0';
+          pthread_setname_np (*thread_ptr, p_name);
+        }
 #endif
     }
 

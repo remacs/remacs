@@ -826,7 +826,7 @@ If NAME is given, it must be a string; it names the new thread.  */)
   new_thread->next_thread = all_threads;
   all_threads = new_thread;
 
-  char const *c_name = !NILP (name) ? SSDATA (ENCODE_UTF_8 (name)) : NULL;
+  char const *c_name = !NILP (name) ? SSDATA (ENCODE_SYSTEM (name)) : NULL;
   if (c_name)
     new_thread->thread_name = xstrdup (c_name);
   else
