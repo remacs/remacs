@@ -4301,14 +4301,16 @@ the remote host use line-endings as defined in the variable
   "Flush file caches and remove shell prompt."
   (unless (process-live-p proc)
     (let ((vec (process-get proc 'vector))
+	  (buf (process-buffer proc))
 	  (prompt (tramp-get-connection-property proc "prompt" nil)))
       (when vec
 	(tramp-message vec 5 "Sentinel called: `%S' `%s'" proc event)
         (tramp-flush-connection-properties proc)
         (tramp-flush-directory-properties vec ""))
-      (with-current-buffer (process-buffer proc)
-        (when (and prompt (tramp-search-regexp (regexp-quote prompt)))
-	  (delete-region (point) (point-max)))))))
+      (when (buffer-live-p buf)
+	(with-current-buffer buf
+          (when (and prompt (tramp-search-regexp (regexp-quote prompt)))
+	    (delete-region (point) (point-max))))))))
 
 (defun tramp-get-inode (vec)
   "Return the virtual inode number.
