@@ -169,6 +169,10 @@ struct thread_state
      interrupter should broadcast to this condition.  */
   sys_cond_t *wait_condvar;
 
+  /* Thread's name in the locale encoding.  Actually used only on
+     WINDOWSNT.  */
+  char *thread_name;
+
   /* This thread might have released the global lock.  If so, this is
      non-zero.  When a thread runs outside thread_select with this
      flag non-zero, it means it has been interrupted by SIGINT while

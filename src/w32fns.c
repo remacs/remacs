@@ -178,6 +178,10 @@ typedef BOOL (WINAPI * EnumDisplayMonitors_Proc)
 typedef BOOL (WINAPI * GetTitleBarInfo_Proc)
   (IN HWND hwnd, OUT TITLEBAR_INFO* info);
 
+typedef BOOL (WINAPI *IsDebuggerPresent_Proc) (void);
+typedef HRESULT (WINAPI *SetThreadDescription_Proc)
+  (HANDLE hThread, PCWSTR lpThreadDescription);
+
 TrackMouseEvent_Proc track_mouse_event_fn = NULL;
 ImmGetCompositionString_Proc get_composition_string_fn = NULL;
 ImmGetContext_Proc get_ime_context_fn = NULL;
@@ -188,6 +192,8 @@ GetMonitorInfo_Proc get_monitor_info_fn = NULL;
 MonitorFromWindow_Proc monitor_from_window_fn = NULL;
 EnumDisplayMonitors_Proc enum_display_monitors_fn = NULL;
 GetTitleBarInfo_Proc get_title_bar_info_fn = NULL;
+IsDebuggerPresent_Proc is_debugger_present = NULL;
+SetThreadDescription_Proc set_thread_description = NULL;
 
 extern AppendMenuW_Proc unicode_append_menu;
 
@@ -283,8 +289,6 @@ static struct
   char rwin_hooked[256]; /* hook right Win+[this key]? */
 } kbdhook;
 typedef HWND (WINAPI *GetConsoleWindow_Proc) (void);
-
-typedef BOOL (WINAPI *IsDebuggerPresent_Proc) (void);
 
 /* stdin, from w32console.c */
 extern HANDLE keyboard_handle;
@@ -2737,8 +2741,6 @@ setup_w32_kbdhook (void)
      hook if the process is being debugged. */
   if (w32_kbdhook_active)
     {
-      IsDebuggerPresent_Proc is_debugger_present = (IsDebuggerPresent_Proc)
-	get_proc_addr (GetModuleHandle ("kernel32.dll"), "IsDebuggerPresent");
       if (is_debugger_present && is_debugger_present ())
 	return;
     }
@@ -11030,6 +11032,12 @@ globals_of_w32fns (void)
     set_ime_composition_window_fn = (ImmSetCompositionWindow_Proc)
       get_proc_addr (imm32_lib, "ImmSetCompositionWindow");
   }
+
+  HMODULE hm_kernel32 = GetModuleHandle ("kernel32.dll");
+  is_debugger_present = (IsDebuggerPresent_Proc)
+    get_proc_addr (hm_kernel32, "IsDebuggerPresent");
+  set_thread_description = (SetThreadDescription_Proc)
+    get_proc_addr (hm_kernel32, "SetThreadDescription");
 
   except_code = 0;
   except_addr = 0;

@@ -248,7 +248,8 @@ sys_thread_yield (void)
 
 #elif defined (WINDOWSNT)
 
-#include <w32term.h>
+#include <mbctype.h>
+#include "w32term.h"
 
 /* Cannot include <process.h> because of the local header by the same
    name, sigh.  */
@@ -390,6 +391,65 @@ sys_thread_equal (sys_thread_t t, sys_thread_t u)
   return t == u;
 }
 
+/* Special exception used to communicate with a debugger.  The name is
+   taken from example code shown on MSDN.  */
+#define MS_VC_EXCEPTION 0x406d1388UL
+
+/* Structure used to communicate thread name to a debugger.  */
+typedef struct _THREADNAME_INFO
+{
+  DWORD_PTR  type;
+  LPCSTR name;
+  DWORD_PTR  thread_id;
+  DWORD_PTR  reserved;
+} THREADNAME_INFO;
+
+typedef BOOL (WINAPI *IsDebuggerPresent_Proc) (void);
+extern IsDebuggerPresent_Proc is_debugger_present;
+extern int (WINAPI *pMultiByteToWideChar)(UINT,DWORD,LPCSTR,int,LPWSTR,int);
+typedef HRESULT (WINAPI *SetThreadDescription_Proc)
+  (HANDLE hThread, PCWSTR lpThreadDescription);
+extern SetThreadDescription_Proc set_thread_description;
+
+/* Set the name of the thread identified by its thread ID.  */
+static void
+w32_set_thread_name (DWORD thread_id, const char *name)
+{
+  if (!name || !*name)
+    return;
+
+  /* Use the new API provided since Windows 10, if available.  */
+  if (set_thread_description)
+    {
+      /* GDB pulls only the first 1024 characters of thread's name.  */
+      wchar_t name_w[1025];
+      /* The thread name is encoded in locale's encoding, but
+	 SetThreadDescription wants a wchar_t string.  */
+      int codepage = _getmbcp ();
+      if (!codepage)
+	codepage = GetACP ();
+      int cnv_result = pMultiByteToWideChar (codepage, MB_ERR_INVALID_CHARS,
+					     name, -1,
+					     name_w, 1025);
+      if (cnv_result
+	  && set_thread_description (GetCurrentThread (), name_w) == S_OK)
+	return;
+    }
+  /* We can only support this fallback method when Emacs is being
+     debugged.  */
+  if (!(is_debugger_present && is_debugger_present ()))
+    return;
+
+  THREADNAME_INFO tninfo;
+
+  tninfo.type = 0x1000;	/* magic constant */
+  tninfo.name = name;
+  tninfo.thread_id = thread_id;
+  tninfo.reserved = 0;
+  RaiseException (MS_VC_EXCEPTION, 0, sizeof (tninfo) / sizeof (ULONG_PTR),
+		  (ULONG_PTR *) &tninfo);
+}
+
 static thread_creation_function *thread_start_address;
 
 /* _beginthread wants a void function, while we are passed a function
@@ -398,6 +458,14 @@ static thread_creation_function *thread_start_address;
 static void ALIGN_STACK
 w32_beginthread_wrapper (void *arg)
 {
+  /* FIXME: This isn't very clean: systhread.c is not supposed to know
+     that ARG is a pointer to a thread_state object, or be familiar
+     with thread_state object's structure in general.  */
+  struct thread_state *this_thread = arg;
+
+  if (this_thread->thread_name)
+    w32_set_thread_name (GetCurrentThreadId (), this_thread->thread_name);
+
   (void)thread_start_address (arg);
 }
 

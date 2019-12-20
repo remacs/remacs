@@ -756,6 +756,8 @@ run_thread (void *state)
       }
   }
 
+  xfree (self->thread_name);
+
   current_thread = NULL;
   sys_cond_broadcast (&self->thread_condvar);
 
@@ -825,6 +827,10 @@ If NAME is given, it must be a string; it names the new thread.  */)
   all_threads = new_thread;
 
   char const *c_name = !NILP (name) ? SSDATA (ENCODE_UTF_8 (name)) : NULL;
+  if (c_name)
+    new_thread->thread_name = xstrdup (c_name);
+  else
+    new_thread->thread_name = NULL;
   sys_thread_t thr;
   if (! sys_thread_create (&thr, c_name, run_thread, new_thread))
     {
