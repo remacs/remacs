@@ -295,10 +295,14 @@ wrong, use this command again to toggle back to the right mode."
 		(format "Coding system for following command (default %s): " default)
 	      "Coding system for following command: ")
 	    default))))
+  ;; FIXME: This "read-key-sequence + call-interactively" loop is trying to
+  ;; reproduce the normal command loop, but this "can't" be done faithfully so
+  ;; it necessarily suffers from breakage in corner cases (e.g. it fails to run
+  ;; pre/post-command-hook, doesn't properly set this-command/last-command, it
+  ;; doesn't handle keyboard macros, ...).
   (let* ((keyseq (read-key-sequence
 		  (format "Command to execute with %s:" coding-system)))
-	 (cmd (key-binding keyseq))
-	 prefix)
+	 (cmd (key-binding keyseq)))
     ;; read-key-sequence ignores quit, so make an explicit check.
     (if (equal last-input-event (nth 3 (current-input-mode)))
 	(keyboard-quit))
@@ -309,28 +313,21 @@ wrong, use this command again to toggle back to the right mode."
       (while (progn
 	       (setq keyseq (read-key-sequence nil t)
 		     cmd (key-binding keyseq t))
-	       (not (eq cmd 'universal-argument-other-key)))
-	(let ((current-prefix-arg prefix-arg)
-	      ;; Have to bind `last-command-event' here so that
-	      ;; `digit-argument', for instance, can compute the
-	      ;; `prefix-arg'.
-	      (last-command-event (aref keyseq 0)))
-	  (call-interactively cmd)))
-
-      ;; This is the final call to `universal-argument-other-key', which
-      ;; sets the final `prefix-arg'.
-      (let ((current-prefix-arg prefix-arg))
-	(call-interactively cmd))
-
-      ;; Read the command to execute with the given `prefix-arg'.
-      (setq prefix prefix-arg
-	    keyseq (read-key-sequence nil t)
-	    cmd (key-binding keyseq)))
+	       (memq cmd '(negative-argument digit-argument
+	                   universal-argument-more)))
+	(setq current-prefix-arg prefix-arg prefix-arg nil)
+	;; Have to bind `last-command-event' here so that
+	;; `digit-argument', for instance, can compute the
+	;; `prefix-arg'.
+	(setq last-command-event (aref keyseq 0))
+	(call-interactively cmd)))
 
     (let ((coding-system-for-read coding-system)
 	  (coding-system-for-write coding-system)
-	  (coding-system-require-warning t)
-	  (current-prefix-arg prefix))
+	  (coding-system-require-warning t))
+      (setq current-prefix-arg prefix-arg prefix-arg nil)
+      ;; Have to bind `last-command-event' e.g. for `self-insert-command'.
+      (setq last-command-event (aref keyseq 0))
       (message "")
       (call-interactively cmd))))
 

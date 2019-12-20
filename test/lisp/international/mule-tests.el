@@ -40,6 +40,14 @@
   (should (equal (encode-coding-char ?a 'ebcdic-int) "\201"))
   (should (not (multibyte-string-p (encode-coding-char ?a 'utf-8)))))
 
+(ert-deftest mule-cmds--test-universal-coding-system-argument ()
+  (skip-unless (not noninteractive))
+  (should (equal "ccccccccccccccccab"
+                 (let ((enable-recursive-minibuffers t)
+                       (unread-command-events
+                        (append (kbd "C-x RET c u t f - 8 RET C-u C-u c a b RET") nil)))
+                   (read-string "prompt:")))))
+
 ;; Stop "Local Variables" above causing confusion when visiting this file.
 
 
