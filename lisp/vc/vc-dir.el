@@ -390,19 +390,22 @@ If NOINSERT, ignore elements on ENTRIES which are not in the ewoc."
     ;; We assume the ewoc is sorted too, which should be the
     ;; case if we always add entries with vc-dir-update.
     (setq entries
+          (let ((entry-dirs
+                 (mapcar (lambda (entry)
+                           (cons (file-name-directory
+                                  (directory-file-name (expand-file-name (car entry))))
+                                 entry))
+                         entries)))
 	  ;; Sort: first files and then subdirectories.
-	  ;; XXX: this is VERY inefficient, it computes the directory
-	  ;; names too many times
-	  (sort entries
-		(lambda (entry1 entry2)
-		  (let ((dir1 (file-name-directory
-			        (directory-file-name (expand-file-name (car entry1)))))
-			(dir2 (file-name-directory
-			       (directory-file-name (expand-file-name (car entry2))))))
-		    (cond
-		     ((string< dir1 dir2) t)
-		     ((not (string= dir1 dir2)) nil)
-		     ((string< (car entry1) (car entry2))))))))
+            (mapcar #'cdr
+                    (sort entry-dirs
+                          (lambda (pair1 pair2)
+                            (let ((dir1 (car pair1))
+                                  (dir2 (car pair2)))
+                              (cond
+                               ((string< dir1 dir2) t)
+                               ((not (string= dir1 dir2)) nil)
+                               ((string< (cadr pair1) (cadr pair2))))))))))
     ;; Insert directory entries in the right places.
     (let ((entry (car entries))
 	  (node (ewoc-nth vc-ewoc 0))
