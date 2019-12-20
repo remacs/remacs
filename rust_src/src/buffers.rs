@@ -955,7 +955,7 @@ impl From<LispObject> for Option<LispOverlayRef> {
 impl LispMiscRef {
     pub fn as_overlay(self) -> Option<LispOverlayRef> {
         if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Overlay {
-            Some(LispOverlayRef::new(self.as_ptr() as *mut _))
+            unsafe { Some(mem::transmute(self)) }
         } else {
             None
         }
