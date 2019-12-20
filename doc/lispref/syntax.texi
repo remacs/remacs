@@ -797,12 +797,13 @@ Hooks}).
   A @dfn{parser state} is a list of (currently) eleven elements
 describing the state of the syntactic parser, after it parses the text
 between a specified starting point and a specified end point in the
-buffer.  Parsing functions such as @code{syntax-ppss}
+buffer using @code{parse-partial-sexp} (@pxref{Low-Level Parsing}).
+Parsing functions such as @code{syntax-ppss}
 @ifnottex
 (@pxref{Position Parse})
 @end ifnottex
-return a parser state as the value.  Some parsing functions accept a
-parser state as an argument, for resuming parsing.
+also return a parser state as the value.  @code{parse-partial-sexp}
+can accept a parser state as an argument, for resuming parsing.
 
   Here are the meanings of the elements of the parser state:
 
@@ -866,11 +867,11 @@ escaped/char-quoted character pair), the @var{syntax-code}
 @end enumerate
 
   Elements 1, 2, and 6 are ignored in a state which you pass as an
-argument to continue parsing.  Elements 9 and 10 are mainly used
-internally by the parser code.
+argument to @code{parse-partial-sexp} to continue parsing.  Elements 9
+and 10 are mainly used internally by the parser code.
 
-  One additional piece of useful information is available from a
-parser state using this function:
+  Some additional useful information is available from a parser state
+using these functions:
 
 @defun syntax-ppss-toplevel-pos state
 This function extracts, from parser state @var{state}, the last
@@ -883,8 +884,8 @@ arrived at a top level position.
 @end defun
 
 @defun syntax-ppss-context state
-Return @code{string} if @var{state} is a string and @code{comment} if
-it's a comment.
+Return @code{string} if the end position of the scan returning
+@var{state} is in a string, and @code{comment} if it's in a comment.
 @end defun
 
 @node Low-Level Parsing
