@@ -690,8 +690,9 @@ non-@code{nil} (the default is @code{t}), and renaming would change
 the file's owner or group, use copying.
 
 If you change @code{backup-by-copying-when-mismatch} to @code{nil},
-Emacs checks the numeric user-id of the file's owner.  If this is
-higher than @code{backup-by-copying-when-privileged-mismatch}, then it
+Emacs checks the numeric user-id of the file's owner and the numeric
+group-id of the file's group.  If either is
+no greater than @code{backup-by-copying-when-privileged-mismatch}, then it
 behaves as though @code{backup-by-copying-when-mismatch} is
 non-@code{nil} anyway.
 

@@ -134,10 +134,11 @@ This variable is relevant only if `backup-by-copying' is nil."
 (defcustom backup-by-copying-when-privileged-mismatch 200
   "Non-nil means create backups by copying to preserve a privileged owner.
 Renaming may still be used (subject to control of other variables)
-when it would not result in changing the owner of the file or if the owner
-has a user id greater than the value of this variable.  This is useful
-when low-numbered uid's are used for special system users (such as root)
-that must maintain ownership of certain files.
+when it would not result in changing the owner of the file or if the
+user id and group id of the file are both greater than the value of
+this variable.  This is useful when low-numbered uid's and gid's are
+used for special system users (such as root) that must maintain
+ownership of certain files.
 This variable is relevant only if `backup-by-copying' and
 `backup-by-copying-when-mismatch' are nil."
   :type '(choice (const nil) integer)
@@ -4634,8 +4635,10 @@ BACKUPNAME is the backup file name, which is the old file renamed."
 				      (let ((attr (file-attributes
 						   real-file-name
 						   'integer)))
-					(<= (file-attribute-user-id attr)
-					    copy-when-priv-mismatch))))
+                                        (or (<= (file-attribute-user-id attr)
+                                                copy-when-priv-mismatch)
+                                            (<= (file-attribute-group-id attr)
+                                                copy-when-priv-mismatch)))))
 			     (not (file-ownership-preserved-p real-file-name
 							      t)))))
 		   setmodes)

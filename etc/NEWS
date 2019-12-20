@@ -533,6 +533,11 @@ The HIST argument of 'read-from-minibuffer' now works correctly with
 buffer-local variables.  This means that different buffers can have
 their own separated input history list if desired.
 
+** 'backup-by-copying-when-privileged-mismatch' applies to file gid, too.
+In addition to checking the file owner uid, Emacs also checks that the
+group gid is not greater than backup-by-copying-when-privileged-mismatch;
+if so, backup-by-copying-when-mismatch will be forced on.
+
 
 * Editing Changes in Emacs 27.1
 
