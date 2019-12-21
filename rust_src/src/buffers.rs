@@ -233,7 +233,7 @@ impl LispBufferRef {
 
     pub fn markers(self) -> Option<LispMarkerRef> {
         let markers = unsafe { (*self.text).markers };
-        LispMarkerRef::from_ptr(markers as *mut _)
+        ExternalPtr::from_ptr(markers.cast())
     }
 
     pub fn mark_active(self) -> LispObject {
@@ -721,11 +721,11 @@ impl LispBufferRef {
     }
 
     pub fn overlays_before(self) -> Option<LispOverlayRef> {
-        LispOverlayRef::from_ptr(self.overlays_before as *mut _)
+        ExternalPtr::from_ptr(self.overlays_before.cast())
     }
 
     pub fn overlays_after(self) -> Option<LispOverlayRef> {
-        LispOverlayRef::from_ptr(self.overlays_after as *mut _)
+        ExternalPtr::from_ptr(self.overlays_after.cast())
     }
 
     pub fn as_live(self) -> Option<Self> {

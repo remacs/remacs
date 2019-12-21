@@ -58,7 +58,7 @@ impl LispMarkerRef {
     }
 
     pub fn buffer(self) -> Option<LispBufferRef> {
-        LispBufferRef::from_ptr(self.buffer as *mut _)
+        ExternalPtr::from_ptr(self.buffer.cast())
     }
 
     pub fn set_buffer(mut self, b: *mut Lisp_Buffer) {
@@ -72,7 +72,7 @@ impl LispMarkerRef {
     }
 
     pub fn next(self) -> Option<Self> {
-        Self::from_ptr(self.next as *mut _)
+        Self::from_ptr(self.next.cast())
     }
 
     pub fn set_next(mut self, m: *mut Lisp_Marker) {
