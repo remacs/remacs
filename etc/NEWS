@@ -2724,6 +2724,14 @@ overlays.  This is only done on 'display' properties that have the
 ** 'process-contact' now takes an optional NO-BLOCK argument to allow
 not waiting for a process to be set up.
 
+---
+** New variable 'read-process-output-max' controls sub-process throughput.
+This variable determines how many bytes can be read from a sub-process
+in one read operation.  The default, 4096 bytes, was previously a
+hard-coded constant.  Setting it to a larger value might enhance
+throughput of reading from sub-processes that produces vast
+(megabytes) amounts of data in one go.
+
 +++
 ** The new user option 'quit-window-hook' is now run first when
 executing the 'quit-window' command.

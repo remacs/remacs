@@ -6008,7 +6008,7 @@ read_and_dispose_of_process_output (struct Lisp_Process *p, char *chars,
    Yield number of decoded characters read,
    or -1 (setting errno) if there is a read error.
 
-   This function reads at most 4096 characters.
+   This function reads at most read_process_output_max bytes.
    If you want to read all available subprocess output,
    you must call it repeatedly until it returns zero.
 
@@ -6022,10 +6022,13 @@ read_process_output (Lisp_Object proc, int channel)
   struct Lisp_Process *p = XPROCESS (proc);
   struct coding_system *coding = proc_decode_coding_system[channel];
   int carryover = p->decoding_carryover;
-  enum { readmax = 4096 };
+  ptrdiff_t readmax = clip_to_bounds (1, read_process_output_max, PTRDIFF_MAX);
   ptrdiff_t count = SPECPDL_INDEX ();
   Lisp_Object odeactivate;
-  char chars[sizeof coding->carryover + readmax];
+  char *chars;
+
+  USE_SAFE_ALLOCA;
+  chars = SAFE_ALLOCA (sizeof coding->carryover + readmax);
 
   if (carryover)
     /* See the comment above.  */
@@ -6092,7 +6095,7 @@ read_process_output (Lisp_Object proc, int channel)
   if (nbytes <= 0)
     {
       if (nbytes < 0 || coding->mode & CODING_MODE_LAST_BLOCK)
-	return nbytes;
+	return SAFE_FREE_UNBIND_TO (count, nbytes);
       coding->mode |= CODING_MODE_LAST_BLOCK;
     }
 
@@ -6116,7 +6119,7 @@ read_process_output (Lisp_Object proc, int channel)
   /* Handling the process output should not deactivate the mark.  */
   Vdeactivate_mark = odeactivate;
 
-  unbind_to (count, Qnil);
+  SAFE_FREE_UNBIND_TO (count, Qnil);
   return nbytes;
 }
 
@@ -8441,6 +8444,12 @@ returns non-`nil'.  */);
   DEFVAR_LISP ("internal--daemon-sockname", Vinternal__daemon_sockname,
 	       doc: /* Name of external socket passed to Emacs, or nil if none.  */);
   Vinternal__daemon_sockname = Qnil;
+
+  DEFVAR_INT ("read-process-output-max", read_process_output_max,
+	      doc: /* Maximum number of bytes to read from subprocess in a single chunk.
+Enlarge the value only if the subprocess generates very large (megabytes)
+amounts of data in one go.  */);
+  read_process_output_max = 4096;
 
   DEFSYM (Qinternal_default_interrupt_process,
 	  "internal-default-interrupt-process");
