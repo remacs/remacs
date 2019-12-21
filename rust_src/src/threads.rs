@@ -20,7 +20,7 @@ pub struct ThreadState {}
 
 impl ThreadState {
     pub fn current_buffer_unchecked() -> LispBufferRef {
-        unsafe { LispBufferRef::new((*current_thread_pointer).m_current_buffer as *mut _) }
+        unsafe { (*current_thread_pointer).m_current_buffer.into() }
     }
 
     pub fn current_buffer() -> Option<LispBufferRef> {
@@ -30,7 +30,7 @@ impl ThreadState {
     }
 
     pub fn current_thread() -> ThreadStateRef {
-        unsafe { ThreadStateRef::new(current_thread_pointer as *mut _) }
+        unsafe { current_thread_pointer.into() }
     }
 }
 
