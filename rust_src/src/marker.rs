@@ -138,7 +138,7 @@ impl LispObject {
 impl LispMiscRef {
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {
-            LispMarkerRef::from_ptr(self.as_ptr() as *mut _)
+            Some(self.cast())
         } else {
             None
         }

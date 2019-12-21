@@ -36,7 +36,7 @@ impl LispTerminalRef {
 impl LispVectorlikeRef {
     pub fn as_terminal(self) -> Option<LispTerminalRef> {
         if self.is_pseudovector(pvec_type::PVEC_TERMINAL) {
-            Some(LispTerminalRef::new(self.as_ptr() as *mut _))
+            Some(self.cast())
         } else {
             None
         }

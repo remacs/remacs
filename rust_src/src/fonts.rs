@@ -160,7 +160,7 @@ impl From<LispObject> for Option<LispFontObjectRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| {
             if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_object() {
-                Some(LispFontObjectRef::new(v.as_ptr() as *mut _))
+                Some(v.cast())
             } else {
                 None
             }
@@ -189,7 +189,7 @@ impl From<LispObject> for Option<LispFontSpecRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| {
             if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_spec() {
-                Some(LispFontSpecRef::new(v.as_ptr() as *mut _))
+                Some(v.cast())
             } else {
                 None
             }
