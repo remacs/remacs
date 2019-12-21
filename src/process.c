@@ -6095,7 +6095,10 @@ read_process_output (Lisp_Object proc, int channel)
   if (nbytes <= 0)
     {
       if (nbytes < 0 || coding->mode & CODING_MODE_LAST_BLOCK)
-	return SAFE_FREE_UNBIND_TO (count, nbytes);
+	{
+	  SAFE_FREE_UNBIND_TO (count, Qnil);
+	  return nbytes;
+	}
       coding->mode |= CODING_MODE_LAST_BLOCK;
     }
 
