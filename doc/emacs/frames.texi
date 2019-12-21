@@ -1268,7 +1268,7 @@ and shows it again when more tabs are created.  The value @code{nil}
 always keeps the tab bar hidden; in this case it's still possible to
 use persistent named window configurations without using the tab bar
 by typing the related commands: @kbd{M-x tab-new}, @kbd{M-x tab-next},
-@kbd{M-x tab-list}, @kbd{M-x tab-close}, etc.
+@kbd{M-x tab-close}, @kbd{M-x tab-switcher}, etc.
 
 @kindex C-x t
   The prefix key @kbd{C-x t} is analogous to @kbd{C-x 5}.

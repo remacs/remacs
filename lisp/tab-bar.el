@@ -226,7 +226,7 @@ If the value is `1', then hide the tab bar when it has only one tab,
 and show it again once more tabs are created.
 If nil, always keep the tab bar hidden.  In this case it's still
 possible to use persistent named window configurations by relying on
-keyboard commands `tab-list', `tab-new', `tab-close', `tab-next', etc."
+keyboard commands `tab-new', `tab-close', `tab-next', `tab-switcher', etc."
   :type '(choice (const :tag "Always" t)
                  (const :tag "When more than one tab" 1)
                  (const :tag "Never" nil))
@@ -630,7 +630,7 @@ to the numeric argument.  ARG counts from 1."
                                (tab-bar--tabs-recent))))
      (list (completing-read "Switch to tab by name (default recent): "
                             recent-tabs nil nil nil nil recent-tabs))))
-  (tab-bar-select-tab (1+ (tab-bar--tab-index-by-name name))))
+  (tab-bar-select-tab (1+ (or (tab-bar--tab-index-by-name name) 0))))
 
 (defalias 'tab-bar-select-tab-by-name 'tab-bar-switch-to-tab)
 
@@ -1131,12 +1131,12 @@ function `tab-bar-tab-name-function'."
 (defalias 'tab-move        'tab-bar-move-tab)
 (defalias 'tab-move-to     'tab-bar-move-tab-to)
 (defalias 'tab-rename      'tab-bar-rename-tab)
-(defalias 'tab-list        'tab-bar-list)
+(defalias 'tab-list        'tab-switcher)
 
 
 ;;; Non-graphical access to frame-local tabs (named window configurations)
 
-(defun tab-bar-list ()
+(defun tab-switcher ()
   "Display a list of named window configurations.
 The list is displayed in the buffer `*Tabs*'.
 It's placed in the center of the frame to resemble a window list
@@ -1162,15 +1162,15 @@ marked for deletion."
     ;; its parameters left intact.
     (split-window) (delete-window)
     (let ((switch-to-buffer-preserve-window-point nil))
-      (switch-to-buffer (tab-bar-list-noselect)))
+      (switch-to-buffer (tab-switcher-noselect)))
     (setq default-directory dir))
   (message "Commands: d, x; RET; q to quit; ? for help."))
 
-(defun tab-bar-list-noselect ()
+(defun tab-switcher-noselect ()
   "Create and return a buffer with a list of window configurations.
 The list is displayed in a buffer named `*Tabs*'.
 
-For more information, see the function `tab-bar-list'."
+For more information, see the function `tab-switcher'."
   (let* ((tabs (seq-remove (lambda (tab)
                              (eq (car tab) 'current-tab))
                            (funcall tab-bar-tabs-function)))
@@ -1182,15 +1182,15 @@ For more information, see the function `tab-bar-list'."
                                                     (frame-parameter nil 'name))))
       (setq buffer-read-only nil)
       (erase-buffer)
-      (tab-bar-list-mode)
+      (tab-switcher-mode)
       ;; Vertical alignment to the center of the frame
       (insert-char ?\n (/ (- (frame-height) (length tabs) 1) 2))
       ;; Horizontal alignment to the center of the frame
-      (setq tab-bar-list-column (- (/ (frame-width) 2) 15))
+      (setq tab-switcher-column (- (/ (frame-width) 2) 15))
       (dolist (tab tabs)
         (insert (propertize
                  (format "%s %s\n"
-                         (make-string tab-bar-list-column ?\040)
+                         (make-string tab-switcher-column ?\040)
                          (propertize
                           (cdr (assq 'name tab))
                           'mouse-face 'highlight
@@ -1199,96 +1199,96 @@ For more information, see the function `tab-bar-list'."
       (goto-char (point-min))
       (goto-char (or (next-single-property-change (point) 'tab) (point-min)))
       (when (> (length tabs) 1)
-        (tab-bar-list-next-line))
-      (move-to-column tab-bar-list-column)
+        (tab-switcher-next-line))
+      (move-to-column tab-switcher-column)
       (set-buffer-modified-p nil)
       (setq buffer-read-only t)
       (current-buffer))))
 
-(defvar tab-bar-list-column 3)
-(make-variable-buffer-local 'tab-bar-list-column)
+(defvar tab-switcher-column 3)
+(make-variable-buffer-local 'tab-switcher-column)
 
-(defvar tab-bar-list-mode-map
+(defvar tab-switcher-mode-map
   (let ((map (make-keymap)))
     (suppress-keymap map t)
     (define-key map "q"    'quit-window)
-    (define-key map "\C-m" 'tab-bar-list-select)
-    (define-key map "d"    'tab-bar-list-delete)
-    (define-key map "k"    'tab-bar-list-delete)
-    (define-key map "\C-d" 'tab-bar-list-delete-backwards)
-    (define-key map "\C-k" 'tab-bar-list-delete)
-    (define-key map "x"    'tab-bar-list-execute)
-    (define-key map " "    'tab-bar-list-next-line)
-    (define-key map "n"    'tab-bar-list-next-line)
-    (define-key map "p"    'tab-bar-list-prev-line)
-    (define-key map "\177" 'tab-bar-list-backup-unmark)
+    (define-key map "\C-m" 'tab-switcher-select)
+    (define-key map "d"    'tab-switcher-delete)
+    (define-key map "k"    'tab-switcher-delete)
+    (define-key map "\C-d" 'tab-switcher-delete-backwards)
+    (define-key map "\C-k" 'tab-switcher-delete)
+    (define-key map "x"    'tab-switcher-execute)
+    (define-key map " "    'tab-switcher-next-line)
+    (define-key map "n"    'tab-switcher-next-line)
+    (define-key map "p"    'tab-switcher-prev-line)
+    (define-key map "\177" 'tab-switcher-backup-unmark)
     (define-key map "?"    'describe-mode)
-    (define-key map "u"    'tab-bar-list-unmark)
-    (define-key map [mouse-2] 'tab-bar-list-mouse-select)
+    (define-key map "u"    'tab-switcher-unmark)
+    (define-key map [mouse-2] 'tab-switcher-mouse-select)
     (define-key map [follow-link] 'mouse-face)
     map)
-  "Local keymap for `tab-bar-list-mode' buffers.")
+  "Local keymap for `tab-switcher-mode' buffers.")
 
-(define-derived-mode tab-bar-list-mode nil "Window Configurations"
+(define-derived-mode tab-switcher-mode nil "Window Configurations"
   "Major mode for selecting a window configuration.
 Each line describes one window configuration in Emacs.
 Letters do not insert themselves; instead, they are commands.
-\\<tab-bar-list-mode-map>
-\\[tab-bar-list-mouse-select] -- select window configuration you click on.
-\\[tab-bar-list-select] -- select current line's window configuration.
-\\[tab-bar-list-delete] -- mark that window configuration to be deleted, and move down.
-\\[tab-bar-list-delete-backwards] -- mark that window configuration to be deleted, and move up.
-\\[tab-bar-list-execute] -- delete marked window configurations.
-\\[tab-bar-list-unmark] -- remove all kinds of marks from current line.
+\\<tab-switcher-mode-map>
+\\[tab-switcher-mouse-select] -- select window configuration you click on.
+\\[tab-switcher-select] -- select current line's window configuration.
+\\[tab-switcher-delete] -- mark that window configuration to be deleted, and move down.
+\\[tab-switcher-delete-backwards] -- mark that window configuration to be deleted, and move up.
+\\[tab-switcher-execute] -- delete marked window configurations.
+\\[tab-switcher-unmark] -- remove all kinds of marks from current line.
   With prefix argument, also move up one line.
-\\[tab-bar-list-backup-unmark] -- back up a line and remove marks."
+\\[tab-switcher-backup-unmark] -- back up a line and remove marks."
   (setq truncate-lines t))
 
-(defun tab-bar-list-current-tab (error-if-non-existent-p)
+(defun tab-switcher-current-tab (error-if-non-existent-p)
   "Return window configuration described by this line of the list."
   (let* ((where (save-excursion
                   (beginning-of-line)
-                  (+ 2 (point) tab-bar-list-column)))
+                  (+ 2 (point) tab-switcher-column)))
          (tab (and (not (eobp)) (get-text-property where 'tab))))
     (or tab
         (if error-if-non-existent-p
             (user-error "No window configuration on this line")
           nil))))
 
-(defun tab-bar-list-next-line (&optional arg)
+(defun tab-switcher-next-line (&optional arg)
   (interactive "p")
   (forward-line arg)
   (beginning-of-line)
-  (move-to-column tab-bar-list-column))
+  (move-to-column tab-switcher-column))
 
-(defun tab-bar-list-prev-line (&optional arg)
+(defun tab-switcher-prev-line (&optional arg)
   (interactive "p")
   (forward-line (- arg))
   (beginning-of-line)
-  (move-to-column tab-bar-list-column))
+  (move-to-column tab-switcher-column))
 
-(defun tab-bar-list-unmark (&optional backup)
+(defun tab-switcher-unmark (&optional backup)
   "Cancel all requested operations on window configuration on this line and move down.
 Optional prefix arg means move up."
   (interactive "P")
   (beginning-of-line)
-  (move-to-column tab-bar-list-column)
+  (move-to-column tab-switcher-column)
   (let* ((buffer-read-only nil))
     (delete-char 1)
     (insert " "))
   (forward-line (if backup -1 1))
-  (move-to-column tab-bar-list-column))
+  (move-to-column tab-switcher-column))
 
-(defun tab-bar-list-backup-unmark ()
+(defun tab-switcher-backup-unmark ()
   "Move up and cancel all requested operations on window configuration on line above."
   (interactive)
   (forward-line -1)
-  (tab-bar-list-unmark)
+  (tab-switcher-unmark)
   (forward-line -1)
-  (move-to-column tab-bar-list-column))
+  (move-to-column tab-switcher-column))
 
-(defun tab-bar-list-delete (&optional arg)
-  "Mark window configuration on this line to be deleted by \\<tab-bar-list-mode-map>\\[tab-bar-list-execute] command.
+(defun tab-switcher-delete (&optional arg)
+  "Mark window configuration on this line to be deleted by \\<tab-switcher-mode-map>\\[tab-switcher-execute] command.
 Prefix arg is how many window configurations to delete.
 Negative arg means delete backwards."
   (interactive "p")
@@ -1305,15 +1305,15 @@ Negative arg means delete backwards."
       (insert ?D)
       (forward-line -1)
       (setq arg (1+ arg)))
-    (move-to-column tab-bar-list-column)))
+    (move-to-column tab-switcher-column)))
 
-(defun tab-bar-list-delete-backwards (&optional arg)
-  "Mark window configuration on this line to be deleted by \\<tab-bar-list-mode-map>\\[tab-bar-list-execute] command.
+(defun tab-switcher-delete-backwards (&optional arg)
+  "Mark window configuration on this line to be deleted by \\<tab-switcher-mode-map>\\[tab-switcher-execute] command.
 Then move up one line.  Prefix arg means move that many lines."
   (interactive "p")
-  (tab-bar-list-delete (- (or arg 1))))
+  (tab-switcher-delete (- (or arg 1))))
 
-(defun tab-bar-list-delete-from-list (tab)
+(defun tab-switcher-delete-from-list (tab)
   "Delete the window configuration from both lists."
   (push `((frame . ,(selected-frame))
           (index . ,(tab-bar--tab-index tab))
@@ -1321,31 +1321,31 @@ Then move up one line.  Prefix arg means move that many lines."
         tab-bar-closed-tabs)
   (set-frame-parameter nil 'tabs (delq tab (funcall tab-bar-tabs-function))))
 
-(defun tab-bar-list-execute ()
-  "Delete window configurations marked with \\<tab-bar-list-mode-map>\\[tab-bar-list-delete] commands."
+(defun tab-switcher-execute ()
+  "Delete window configurations marked with \\<tab-switcher-mode-map>\\[tab-switcher-delete] commands."
   (interactive)
   (save-excursion
     (goto-char (point-min))
     (let ((buffer-read-only nil))
       (while (re-search-forward
-              (format "^%sD" (make-string tab-bar-list-column ?\040))
+              (format "^%sD" (make-string tab-switcher-column ?\040))
               nil t)
         (forward-char -1)
-        (let ((tab (tab-bar-list-current-tab nil)))
+        (let ((tab (tab-switcher-current-tab nil)))
           (when tab
-            (tab-bar-list-delete-from-list tab)
+            (tab-switcher-delete-from-list tab)
             (beginning-of-line)
             (delete-region (point) (progn (forward-line 1) (point))))))))
   (beginning-of-line)
-  (move-to-column tab-bar-list-column)
+  (move-to-column tab-switcher-column)
   (force-mode-line-update))
 
-(defun tab-bar-list-select ()
+(defun tab-switcher-select ()
   "Select this line's window configuration.
 This command deletes and replaces all the previously existing windows
 in the selected frame."
   (interactive)
-  (let* ((to-tab (tab-bar-list-current-tab t)))
+  (let* ((to-tab (tab-switcher-current-tab t)))
     (kill-buffer (current-buffer))
     ;; Delete the current window configuration of tab list
     ;; without storing it in the undo list of closed tabs
@@ -1353,12 +1353,12 @@ in the selected frame."
           tab-bar-closed-tabs)
       (tab-bar-close-tab nil (1+ (tab-bar--tab-index to-tab))))))
 
-(defun tab-bar-list-mouse-select (event)
+(defun tab-switcher-mouse-select (event)
   "Select the window configuration whose line you click on."
   (interactive "e")
   (set-buffer (window-buffer (posn-window (event-end event))))
   (goto-char (posn-point (event-end event)))
-  (tab-bar-list-select))
+  (tab-switcher-select))
 
 
 (defun tab-bar--reusable-frames (all-frames)
