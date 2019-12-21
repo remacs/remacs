@@ -176,6 +176,12 @@ impl<T> PartialOrd for ExternalPtr<T> {
     }
 }
 
+impl<T> From<*mut T> for ExternalPtr<T> {
+    fn from(o: *mut T) -> Self {
+        Self::new(o)
+    }
+}
+
 // Misc support (LispType == Lisp_Misc == 1)
 
 // Lisp_Misc is a union. Now we don't really care about its variants except the
