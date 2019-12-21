@@ -2990,6 +2990,8 @@ read_char (int commandflag, Lisp_Object map,
 	  safe_run_hooks (Qecho_area_clear_hook);
 	  clear_message (1, 0);
 	}
+      else if (FUNCTIONP (Vclear_message_function))
+        clear_message (1, 0);
     }
 
  reread_for_input_method:

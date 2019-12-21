@@ -781,6 +781,10 @@ been introduced to allow controlling how the 'M-<' command works in
 the minibuffer.  If non-nil, point will move to the end of the prompt
 (if point is after the end of the prompt).
 
++++
+*** When the minibuffer is active, messages are displayed at the end of
+the minibuffer instead of overwriting the minibuffer by the echo area.
+
 ---
 *** Minibuffer now uses 'minibuffer-message' to display error messages
 at the end of the active minibuffer.
@@ -2722,6 +2726,10 @@ value.
 This function works like 'read-char', but uses 'read-from-minibuffer'
 to read a character, so it maintains a history that can be navigated
 via usual minibuffer keystrokes 'M-p'/'M-n'.
+
+** New variables 'set-message-function' and 'clear-message-function'
+can be used to specify functions to show and clear messages that
+normally are displayed in the echo area.
 
 ** 'setq-local' can now set an arbitrary number of variables, which
 makes the syntax more like 'setq'.
