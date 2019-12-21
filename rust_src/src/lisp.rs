@@ -145,6 +145,10 @@ impl<T> ExternalPtr<T> {
         let ptr = self.0.sub(size);
         self.replace_ptr(ptr);
     }
+
+    pub fn cast<U>(mut self) -> ExternalPtr<U> {
+        ExternalPtr::<U>(self.as_mut().cast())
+    }
 }
 
 impl<T> Deref for ExternalPtr<T> {
