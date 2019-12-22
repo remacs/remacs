@@ -7250,7 +7250,8 @@ if any returns nil.  If `confirm-kill-emacs' is non-nil, calls it."
            (or (not active)
                (with-displayed-buffer-window
                 (get-buffer-create "*Process List*")
-                '(display-buffer--maybe-at-bottom)
+                '(display-buffer--maybe-at-bottom
+                  (dedicated . t))
                 #'(lambda (window _value)
                     (with-selected-window window
                       (unwind-protect
