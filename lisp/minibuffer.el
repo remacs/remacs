@@ -3585,17 +3585,33 @@ that is non-nil."
   (cl-flet ((compose-flex-sort-fn
              (existing-sort-fn) ; wish `cl-flet' had proper indentation...
              (lambda (completions)
-               (let ((res
-                      (if existing-sort-fn
-                          (funcall existing-sort-fn completions)
-                        completions)))
-                 (sort
-                  res
-                  (lambda (c1 c2)
-                    (or (equal c1 minibuffer-default)
-                        (let ((s1 (get-text-property 0 'completion-score c1))
-                              (s2 (get-text-property 0 'completion-score c2)))
-                          (> (or s1 0) (or s2 0))))))))))
+               (let* ((by-score
+                       (sort
+                        (if existing-sort-fn
+                            (funcall existing-sort-fn completions)
+                          completions)
+                        (lambda (c1 c2)
+                          (let ((s1 (get-text-property 0 'completion-score c1))
+                                (s2 (get-text-property 0 'completion-score c2)))
+                            (> (or s1 0) (or s2 0))))))
+                      (promoted-default
+                       (and minibuffer-default
+                            (and (window-minibuffer-p)
+                                 (= (point-max)
+                                    (minibuffer-prompt-end)))
+                            ;; If we have an empty pattern and a
+                            ;; non-nil default we probably want to
+                            ;; make sure that default is bubbled to
+                            ;; the top even if it doesn't match the
+                            ;; completion perfectly (like in M-x man
+                            ;; case)
+                            (cl-loop
+                             for l on by-score
+                             for comp = (cadr l)
+                             when (string-prefix-p minibuffer-default comp)
+                             do (setf (cdr l) (cddr l))
+                             and return (cons comp by-score)))))
+                 (or promoted-default by-score)))))
     `(metadata
       (display-sort-function
        . ,(compose-flex-sort-fn
