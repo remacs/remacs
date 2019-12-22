@@ -21624,6 +21624,9 @@ extend_face_to_end_of_line (struct it *it)
   if (FRAME_WINDOW_P (f)
       && MATRIX_ROW_DISPLAYS_TEXT_P (it->glyph_row)
       && face->box == FACE_NO_BOX
+      && face->underline == FACE_NO_UNDERLINE
+      && !face->overline_p
+      && !face->strike_through_p
       && FACE_COLOR_TO_PIXEL (face->background, f) == FRAME_BACKGROUND_PIXEL (f)
 #ifdef HAVE_WINDOW_SYSTEM
       && !face->stipple
