@@ -1,4 +1,4 @@
-;;; gnus-start.el --- startup functions for Gnus
+;;; gnus-start.el --- startup functions for Gnus -*- lexical-binding:t -*-
 
 ;; Copyright (C) 1996-2019 Free Software Foundation, Inc.
 
@@ -518,7 +518,7 @@ Can be used to turn version control on or off."
 
 (defun gnus-subscribe-hierarchical-interactive (groups)
   (let ((groups (sort groups 'string<))
-	prefixes prefix start ans group starts real-group)
+	prefixes prefix start ans group starts)
     (while groups
       (setq prefixes (list "^"))
       (while (and groups prefixes)
@@ -1101,7 +1101,7 @@ for new groups, and subscribe the new groups as zombies."
         ;; Go though every newsgroup in `gnus-active-hashtb' and compare
         ;; with `gnus-newsrc-hashtb' and `gnus-killed-hashtb'.
         (maphash
-         (lambda (g-name active)
+         (lambda (g-name _active)
            (unless (or (gethash g-name gnus-killed-hashtb)
                        (gethash g-name gnus-newsrc-hashtb))
              (let ((do-sub (gnus-matches-options-n g-name)))
@@ -1330,14 +1330,10 @@ string name) to insert this group before."
 	    (setq active (gnus-active group))
 	    (setq num
 		  (if active (- (1+ (cdr active)) (car active)) t))
-	    ;; Shorten the select method if possible, if we need to
-	    ;; store it at all (native groups).
 	    (let ((method (gnus-method-simplify
 			   (or gnus-override-subscribe-method
 			       (gnus-group-method group)))))
-	      (if method
-		  (setq info (list group level nil nil method))
-		(setq info (list group level nil)))))
+	      (gnus-info-make group level nil nil method)))
 	  ;; Add group.  The exact ordering only matters for
 	  ;; `gnus-group-list', though we need to keep the dummy group
 	  ;; at the head of `gnus-newsrc-alist'.
@@ -1585,6 +1581,7 @@ backend check whether the group actually exists."
 (defun gnus-get-unread-articles (&optional level dont-connect one-level)
   (setq gnus-server-method-cache nil)
   (require 'gnus-agent)
+  (defvar gnus-agent-article-local-times)
   (let* ((newsrc (cdr gnus-newsrc-alist))
 	 (alevel (or level gnus-activate-level (1+ gnus-level-subscribed)))
 	 (foreign-level
@@ -1602,7 +1599,7 @@ backend check whether the group actually exists."
 	 (type-cache nil)
 	 (gnus-agent-article-local-times 0)
 	 (archive-method (gnus-server-to-method "archive"))
-	 infos info group active method cmethod
+	 info group active method cmethod
 	 method-type method-group-list entry)
     (gnus-message 6 "Checking new news...")
 
@@ -1666,7 +1663,7 @@ backend check whether the group actually exists."
     ;; aren't equal (and that need extension; i.e., they are async).
     (let ((methods nil))
       (dolist (elem type-cache)
-	(cl-destructuring-bind (method method-type infos dummy) elem
+	(cl-destructuring-bind (method _method-type infos _dummy) elem
 	  (let ((gnus-opened-servers methods))
 	    (when (and (gnus-similar-server-opened method)
 		       (gnus-check-backend-function
@@ -1689,7 +1686,7 @@ backend check whether the group actually exists."
 
     ;; Clear out all the early methods.
     (dolist (elem type-cache)
-      (cl-destructuring-bind (method method-type infos dummy) elem
+      (cl-destructuring-bind (method _method-type infos _dummy) elem
 	(when (and method
 		   infos
 		   (gnus-check-backend-function
@@ -1706,7 +1703,7 @@ backend check whether the group actually exists."
     (let ((done-methods nil)
 	  sanity-spec)
       (dolist (elem type-cache)
-	(cl-destructuring-bind (method method-type infos dummy) elem
+	(cl-destructuring-bind (method _method-type infos _dummy) elem
 	  (setq sanity-spec (list (car method) (cadr method)))
 	  (when (and method infos
 		     (not (gnus-method-denied-p method)))
@@ -1737,7 +1734,7 @@ backend check whether the group actually exists."
 
     ;; Do the rest of the retrieval.
     (dolist (elem type-cache)
-      (cl-destructuring-bind (method method-type infos early-data) elem
+      (cl-destructuring-bind (method _method-type infos early-data) elem
 	(when (and method infos
 		   (not (gnus-method-denied-p method)))
 	  (let ((updatep (gnus-check-backend-function
@@ -1822,7 +1819,7 @@ The info element is shared with the same element of
 		(if (equal (caar gnus-newsrc-alist)
 			   "dummy.group")
 		    gnus-newsrc-alist
-		  (cons (list "dummy.group" 0 nil) alist))))
+		  (cons (gnus-info-make "dummy.group" 0 nil) alist))))
     (while alist
       (setq info (car alist))
       ;; Make the same select-methods identical Lisp objects.
@@ -1831,10 +1828,10 @@ The info element is shared with the same element of
 	    (setf (gnus-info-method info) (car rest))
 	  (push method methods)))
       ;; Check for encoded group names and decode them.
-      (when (string-match-p "[^[:ascii:]]" (setq gname (car info)))
+      (when (string-match-p "[^[:ascii:]]" (setq gname (gnus-info-group info)))
 	(let ((decoded (gnus-group-decoded-name gname)))
 	 (setf gname decoded
-	       (car info) decoded)))
+	       (gnus-info-group info) decoded)))
       ;; Check for duplicates.
       (if (gethash gname gnus-newsrc-hashtb)
 	  ;; Remove this entry from the alist.
@@ -1857,15 +1854,13 @@ The info element is shared with the same element of
 
 (defun gnus-make-hashtable-from-killed ()
   "Create a hash table from the killed and zombie lists."
-  (let ((lists '(gnus-killed-list gnus-zombie-list))
-	list)
-    (setq gnus-killed-hashtb
-	  (gnus-make-hashtable
-	   (+ (length gnus-killed-list) (length gnus-zombie-list))))
-    (dolist (g (append gnus-killed-list gnus-zombie-list))
-      ;; NOTE: We have lost the ordering that used to be kept in this
-      ;; variable.
-      (puthash g t gnus-killed-hashtb))))
+  (setq gnus-killed-hashtb
+	(gnus-make-hashtable
+	 (+ (length gnus-killed-list) (length gnus-zombie-list))))
+  (dolist (g (append gnus-killed-list gnus-zombie-list))
+    ;; NOTE: We have lost the ordering that used to be kept in this
+    ;; variable.
+    (puthash g t gnus-killed-hashtb)))
 
 (defun gnus-parse-active ()
   "Parse active info in the nntp server buffer."
@@ -1982,7 +1977,7 @@ The info element is shared with the same element of
     (gnus-make-hashtable-from-killed))
   ;; Go through all newsgroups that are known to Gnus - enlarge kill list.
   (maphash
-   (lambda (g-name active)
+   (lambda (g-name _active)
      (let ((groups 0))
        (unless (or (gethash g-name gnus-killed-hashtb)
 		   (gethash g-name gnus-newsrc-hashtb))
@@ -2262,7 +2257,7 @@ If FORCE is non-nil, the .newsrc file is read."
       (gnus-convert-old-newsrc)
       (gnus-clean-old-newsrc))))
 
-(defun gnus-clean-old-newsrc (&optional force)
+(defun gnus-clean-old-newsrc (&optional _force)
   ;; Currently no cleanups.
   )
 
@@ -2354,7 +2349,7 @@ If FORCE is non-nil, the .newsrc file is read."
 	     no-prompt
 	   (funcall no-prompt)))))
 
-(defun gnus-convert-old-ticks (converting-to)
+(defun gnus-convert-old-ticks (_converting-to)
   (let ((newsrc (cdr gnus-newsrc-alist))
 	marks info dormant ticked)
     (while (setq info (pop newsrc))
@@ -2375,7 +2370,7 @@ If FORCE is non-nil, the .newsrc file is read."
     (while (not (eobp))
       (condition-case type
 	  (let ((form (read (current-buffer))))
-	    (eval form))
+	    (eval form t))
 	(error
 	 (unless (eq (car type) 'end-of-file)
 	   (let ((errmsg (format "Error in %s line %d" file
@@ -2858,9 +2853,9 @@ Variables printed are either the variables specified in
 SPECIFIC-VARIABLES, or those in `gnus-variable-list'."
     (princ (format ";; -*- mode:emacs-lisp; coding: %s; -*-\n"
 		   gnus-ding-file-coding-system))
-    (if name
-	(princ (format ";; %s\n" name))
-      (princ ";; Gnus startup file.\n"))
+    (princ (if name
+	       (format ";; %s\n" name)
+	     ";; Gnus startup file.\n"))
 
     (unless minimal
       (princ "\
