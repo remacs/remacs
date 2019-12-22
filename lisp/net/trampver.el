@@ -35,6 +35,9 @@
 ;; Emacs version check is defined in macro AC_EMACS_INFO of
 ;; aclocal.m4; should be changed only there.
 
+;; Needed for Emacs 24.
+(defvar inhibit-message)
+
 ;;;###tramp-autoload
 (defconst tramp-version "2.4.3-pre"
   "This version of Tramp.")
