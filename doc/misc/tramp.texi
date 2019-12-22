@@ -4083,6 +4083,31 @@ this @code{nil} setting:
 
 
 @item
+On multi-hop connections, @value{tramp} does not use @command{ssh}
+@code{ControlMaster}
+
+In order to use the @code{ControlMaster} option, @value{tramp} must
+check whether the @command{ssh} client supports this option.  This is
+only possible on the local host, for the first hop.  @value{tramp}
+does not use this option on proxy hosts.
+
+If you want to use this option also for the other hops, you must
+configure @file{~/.ssh/config} on the proxy host:
+
+@example
+@group
+Host *
+     ControlMaster	auto
+     ControlPath	tramp.%C
+     ControlPersist	no
+@end group
+@end example
+
+Check @command{man ssh_config} whether these options are supported on
+your proxy host.
+
+
+@item
 File name completion does not work with @value{tramp}
 
 @acronym{ANSI} escape sequences from the remote shell may cause errors
@@ -4604,6 +4629,12 @@ in @file{.emacs}:
 
 @lisp
 (customize-set-variable 'tramp-default-method "ftp")
+@end lisp
+
+If you want to enable Ange FTP's syntax, add the following form:
+
+@lisp
+(tramp-change-syntax 'simplified)
 @end lisp
 
 @item
