@@ -748,9 +748,10 @@ If ARGS are provided, then pass MESSAGE through `format-message'."
 
 (defcustom minibuffer-message-clear-timeout nil
   "How long to display an echo-area message when the minibuffer is active.
-If the value is a number, it should be specified in seconds.
-If the value is not a number, such messages never time out,
-and the text is displayed until the next input event arrives.
+If the value is a number, it is the time in seconds after which to
+remove the echo-area message from the active minibuffer.
+If the value is not a number, such messages are never removed,
+and their text is displayed until the next input event arrives.
 Unlike `minibuffer-message-timeout' used by `minibuffer-message',
 this option affects the pair of functions `set-minibuffer-message'
 and `clear-minibuffer-message' called automatically via

@@ -307,28 +307,29 @@ reformatted, with undesirable results.  Instead, use @code{(message
 @end defun
 
 @defvar set-message-function
-When this variable is non-@code{nil}, @code{message} and related functions
-call it as a function with one argument that is the message to show.
-
-When this function returns @code{nil}, the message is displayed in the
-echo area as usual.  When the function returns a string, the returned
-string is displayed in the echo area.  When this function returns
-other non-@code{nil} values, this means that the message was handled
-specially, so the same message is not displayed in the echo area.
-See also @code{clear-message-function} that can be used to clear the
-message displayed by this function.
+If this variable is non-@code{nil}, it should be a function of one
+argument, the text of a message to display in the echo area.  This
+function will be called by @code{message} and related functions.  If
+the function returns @code{nil}, the message is displayed in the echo
+area as usual.  If this function returns a string, that string is
+displayed in the echo area instead of the original one.  If this
+function returns other non-@code{nil} values, that means the message
+was already handled, so @code{message} will not display anything in
+the echo area.  See also @code{clear-message-function} that can be
+used to clear the message displayed by this function.
 
 The default value is the function that displays the message at the end
 of the minibuffer when the minibuffer is active.
 @end defvar
 
 @defvar clear-message-function
-When this variable is non-@code{nil}, @code{message} and related functions
-call it without arguments when their message is @code{nil} or the empty string.
+If this variable is non-@code{nil}, @code{message} and related
+functions call it with no arguments when their argument message is
+@code{nil} or the empty string.
 
-Usually this function is called when the next input event arrives.
-The function is called without arguments.  It is expected to clear the
-message displayed by its counterpart function specified by
+Usually this function is called when the next input event arrives
+after displaying an echo-area message.  The function is expected to
+clear the message displayed by its counterpart function specified by
 @code{set-message-function}.
 
 The default value is the function that clears the message displayed at

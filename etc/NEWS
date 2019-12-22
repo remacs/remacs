@@ -782,8 +782,11 @@ the minibuffer.  If non-nil, point will move to the end of the prompt
 (if point is after the end of the prompt).
 
 +++
-*** When the minibuffer is active, messages are displayed at the end of
-the minibuffer instead of overwriting the minibuffer by the echo area.
+*** When the minibuffer is active, echo-area messages are displayed at
+the end of the minibuffer instead of hiding the minibuffer by the echo
+area display.  The new option 'minibuffer-message-clear-timeout'
+controls how messages displayed in this situation are removed from the
+minibuffer.
 
 ---
 *** Minibuffer now uses 'minibuffer-message' to display error messages

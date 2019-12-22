@@ -34968,19 +34968,19 @@ display table takes effect; in this case, Emacs does not consult
   Vdebug_on_message = Qnil;
 
   DEFVAR_LISP ("set-message-function", Vset_message_function,
-	       doc: /* If non-nil, function to show the message.
-The function is called with one argument that is the message.
-When this function returns nil, the message is displayed in the echo
-area as usual.  When the function returns a string, the returned
-string is displayed in the echo area.  When this function returns
-other non-nil values, this means that the message was handled
-specially, so the same message is not displayed in the echo area.
+	       doc: /* If non-nil, function to handle display of echo-area messages.
+The function is called with one argument that is the text of a message.
+If this function returns nil, the message is displayed in the echo area
+as usual.  If the function returns a string, the returned string is
+displayed in the echo area.  If this function returns any other non-nil
+value, this means that the message was already handled, and the original
+message text will not be displayed in the echo area.
 See also `clear-message-function' that can be used to clear the
 message displayed by this function.  */);
   Vset_message_function = Qnil;
 
   DEFVAR_LISP ("clear-message-function", Vclear_message_function,
-	       doc: /* If non-nil, function to clear message.
+	       doc: /* If non-nil, function to clear echo-area messages.
 Usually this function is called when the next input event arrives.
 The function is called without arguments.  It is expected to clear the
 message displayed by its counterpart function specified by
