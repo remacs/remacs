@@ -311,8 +311,6 @@ is currently being used."
   "Insert contents of `ns-working-text' as UTF-8 string and mark with
 `ns-working-overlay'.  Any previously existing working text is cleared first.
 The overlay is assigned the face `ns-working-text-face'."
-  ;; FIXME: if buffer is read-only, don't try to insert anything, and
-  ;; if text is bound to a command, execute that instead (Bug#1453).
   (interactive)
   (ns-delete-working-text)
   (let ((start (point)))
