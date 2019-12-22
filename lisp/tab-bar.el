@@ -144,6 +144,8 @@ Possible modifiers are `control', `meta', `shift', `hyper', `super' and
   (if tab-bar-mode
       (progn
         (when tab-bar-select-tab-modifiers
+          (global-set-key (vector (append tab-bar-select-tab-modifiers (list ?0)))
+                          'tab-bar-switch-to-recent-tab)
           (dotimes (i 9)
             (global-set-key (vector (append tab-bar-select-tab-modifiers
                                             (list (+ i 1 ?0))))
@@ -405,7 +407,7 @@ Return its existing value or a new value."
            `((current-tab
               menu-item
               ,(propertize (concat (if tab-bar-tab-hints (format "%d " i) "")
-                                   (cdr (assq 'name tab))
+                                   (alist-get 'name tab)
                                    (or (and tab-bar-close-button-show
                                             (not (eq tab-bar-close-button-show
                                                      'non-selected))
@@ -417,14 +419,14 @@ Return its existing value or a new value."
            `((,(intern (format "tab-%i" i))
               menu-item
               ,(propertize (concat (if tab-bar-tab-hints (format "%d " i) "")
-                                   (cdr (assq 'name tab))
+                                   (alist-get 'name tab)
                                    (or (and tab-bar-close-button-show
                                             (not (eq tab-bar-close-button-show
                                                      'selected))
                                             tab-bar-close-button) ""))
                            'face 'tab-bar-tab-inactive)
               ,(or
-                (cdr (assq 'binding tab))
+                (alist-get 'binding tab)
                 `(lambda ()
                    (interactive)
                    (tab-bar-select-tab ,i)))
@@ -432,7 +434,7 @@ Return its existing value or a new value."
          `((,(if (eq (car tab) 'current-tab) 'C-current-tab (intern (format "C-tab-%i" i)))
             menu-item ""
             ,(or
-              (cdr (assq 'close-binding tab))
+              (alist-get 'close-binding tab)
               `(lambda ()
                  (interactive)
                  (tab-bar-close-tab ,i)))))))
@@ -464,12 +466,12 @@ Return its existing value or a new value."
 
 (defun tab-bar--tab (&optional frame)
   (let* ((tab (assq 'current-tab (frame-parameter frame 'tabs)))
-         (tab-explicit-name (cdr (assq 'explicit-name tab)))
+         (tab-explicit-name (alist-get 'explicit-name tab))
          (bl  (seq-filter #'buffer-live-p (frame-parameter frame 'buffer-list)))
          (bbl (seq-filter #'buffer-live-p (frame-parameter frame 'buried-buffer-list))))
     `(tab
       (name . ,(if tab-explicit-name
-                   (cdr (assq 'name tab))
+                   (alist-get 'name tab)
                  (funcall tab-bar-tab-name-function)))
       (explicit-name . ,tab-explicit-name)
       (time . ,(float-time))
@@ -487,10 +489,10 @@ Return its existing value or a new value."
   ;; necessary when switching tabs, otherwise the destination tab
   ;; inherit the current tab's `explicit-name` parameter.
   (let* ((tab (or tab (assq 'current-tab (frame-parameter frame 'tabs))))
-         (tab-explicit-name (cdr (assq 'explicit-name tab))))
+         (tab-explicit-name (alist-get 'explicit-name tab)))
     `(current-tab
       (name . ,(if tab-explicit-name
-                   (cdr (assq 'name tab))
+                   (alist-get 'name tab)
                  (funcall tab-bar-tab-name-function)))
       (explicit-name . ,tab-explicit-name))))
 
@@ -504,7 +506,7 @@ Return its existing value or a new value."
 
 (defun tab-bar--tab-index-by-name (name &optional tabs frame)
   (seq-position (or tabs (funcall tab-bar-tabs-function frame))
-                name (lambda (a b) (equal (cdr (assq 'name a)) b))))
+                name (lambda (a b) (equal (alist-get 'name a) b))))
 
 (defun tab-bar--tab-index-recent (nth &optional tabs frame)
   (let* ((tabs (or tabs (funcall tab-bar-tabs-function frame)))
@@ -514,7 +516,7 @@ Return its existing value or a new value."
 
 (defun tab-bar--tabs-recent (&optional tabs frame)
   (let* ((tabs (or tabs (funcall tab-bar-tabs-function frame))))
-    (seq-sort-by (lambda (tab) (cdr (assq 'time tab))) #'>
+    (seq-sort-by (lambda (tab) (alist-get 'time tab)) #'>
                  (seq-remove (lambda (tab)
                                (eq (car tab) 'current-tab))
                              tabs))))
@@ -538,8 +540,8 @@ to the numeric argument.  ARG counts from 1."
     (unless (eq from-index to-index)
       (let* ((from-tab (tab-bar--tab))
              (to-tab (nth to-index tabs))
-             (wc (cdr (assq 'wc to-tab)))
-             (ws (cdr (assq 'ws to-tab))))
+             (wc (alist-get 'wc to-tab))
+             (ws (alist-get 'ws to-tab)))
 
         ;; During the same session, use window-configuration to switch
         ;; tabs, because window-configurations are more reliable
@@ -549,11 +551,11 @@ to the numeric argument.  ARG counts from 1."
         ;; so restore its saved window-state.
         (cond
          ((window-configuration-p wc)
-          (let ((wc-point (cdr (assq 'wc-point to-tab)))
-                (wc-bl  (seq-filter #'buffer-live-p (cdr (assq 'wc-bl to-tab))))
-                (wc-bbl (seq-filter #'buffer-live-p (cdr (assq 'wc-bbl to-tab))))
-                (wc-history-back (cdr (assq 'wc-history-back to-tab)))
-                (wc-history-forward (cdr (assq 'wc-history-forward to-tab))))
+          (let ((wc-point (alist-get 'wc-point to-tab))
+                (wc-bl  (seq-filter #'buffer-live-p (alist-get 'wc-bl to-tab)))
+                (wc-bbl (seq-filter #'buffer-live-p (alist-get 'wc-bbl to-tab)))
+                (wc-history-back (alist-get 'wc-history-back to-tab))
+                (wc-history-forward (alist-get 'wc-history-forward to-tab)))
 
             (set-window-configuration wc)
 
@@ -573,11 +575,11 @@ to the numeric argument.  ARG counts from 1."
             (when wc-bbl (set-frame-parameter nil 'buried-buffer-list wc-bbl))
 
             (puthash (selected-frame)
-                     (and (window-configuration-p (cdr (assq 'wc (car wc-history-back))))
+                     (and (window-configuration-p (alist-get 'wc (car wc-history-back)))
                           wc-history-back)
                      tab-bar-history-back)
             (puthash (selected-frame)
-                     (and (window-configuration-p (cdr (assq 'wc (car wc-history-forward))))
+                     (and (window-configuration-p (alist-get 'wc (car wc-history-forward)))
                           wc-history-forward)
                      tab-bar-history-forward)))
 
@@ -626,7 +628,7 @@ to the numeric argument.  ARG counts from 1."
   "Switch to the tab by NAME."
   (interactive
    (let* ((recent-tabs (mapcar (lambda (tab)
-                                 (cdr (assq 'name tab)))
+                                 (alist-get 'name tab))
                                (tab-bar--tabs-recent))))
      (list (completing-read "Switch to tab by name (default recent): "
                             recent-tabs nil nil nil nil recent-tabs))))
@@ -908,7 +910,7 @@ for the last tab on a frame is determined by
   (interactive
    (list (completing-read "Close tab by name: "
                           (mapcar (lambda (tab)
-                                    (cdr (assq 'name tab)))
+                                    (alist-get 'name tab))
                                   (funcall tab-bar-tabs-function)))))
   (tab-bar-close-tab (1+ (tab-bar--tab-index-by-name name))))
 
@@ -947,14 +949,14 @@ for the last tab on a frame is determined by
   (interactive)
   ;; Pop out closed tabs that were on already deleted frames
   (while (and tab-bar-closed-tabs
-              (not (frame-live-p (cdr (assq 'frame (car tab-bar-closed-tabs))))))
+              (not (frame-live-p (alist-get 'frame (car tab-bar-closed-tabs)))))
     (pop tab-bar-closed-tabs))
 
   (if tab-bar-closed-tabs
       (let* ((closed (pop tab-bar-closed-tabs))
-             (frame (cdr (assq 'frame closed)))
-             (index (cdr (assq 'index closed)))
-             (tab (cdr (assq 'tab closed))))
+             (frame (alist-get 'frame closed))
+             (index (alist-get 'index closed))
+             (tab (alist-get 'tab closed)))
         (unless (eq frame (selected-frame))
           (select-frame-set-input-focus frame))
 
@@ -978,7 +980,7 @@ function `tab-bar-tab-name-function'."
   (interactive
    (let* ((tabs (funcall tab-bar-tabs-function))
           (tab-index (or current-prefix-arg (1+ (tab-bar--current-tab-index tabs))))
-          (tab-name (cdr (assq 'name (nth (1- tab-index) tabs)))))
+          (tab-name (alist-get 'name (nth (1- tab-index) tabs))))
      (list (read-from-minibuffer
             "New name for tab (leave blank for automatic naming): "
             nil nil nil nil tab-name)
@@ -992,8 +994,8 @@ function `tab-bar-tab-name-function'."
          (tab-new-name (if tab-explicit-name
                            name
                          (funcall tab-bar-tab-name-function))))
-    (setf (cdr (assq 'name tab-to-rename)) tab-new-name
-          (cdr (assq 'explicit-name tab-to-rename)) tab-explicit-name)
+    (setf (alist-get 'name tab-to-rename) tab-new-name
+          (alist-get 'explicit-name tab-to-rename) tab-explicit-name)
 
     (force-mode-line-update)
     (unless tab-bar-mode
@@ -1006,7 +1008,7 @@ function `tab-bar-tab-name-function'."
   (interactive
    (let ((tab-name (completing-read "Rename tab by name: "
                                     (mapcar (lambda (tab)
-                                              (cdr (assq 'name tab)))
+                                              (alist-get 'name tab))
                                             (funcall tab-bar-tabs-function)))))
      (list tab-name (read-from-minibuffer
                      "New name for tab (leave blank for automatic naming): "
@@ -1059,8 +1061,8 @@ function `tab-bar-tab-name-function'."
   (interactive)
   (setq tab-bar-history-omit t)
   (let* ((history (pop (gethash (selected-frame) tab-bar-history-back)))
-         (wc (cdr (assq 'wc history)))
-         (wc-point (cdr (assq 'wc-point history))))
+         (wc (alist-get 'wc history))
+         (wc-point (alist-get 'wc-point history)))
     (if (window-configuration-p wc)
         (progn
           (puthash (selected-frame)
@@ -1076,8 +1078,8 @@ function `tab-bar-tab-name-function'."
   (interactive)
   (setq tab-bar-history-omit t)
   (let* ((history (pop (gethash (selected-frame) tab-bar-history-forward)))
-         (wc (cdr (assq 'wc history)))
-         (wc-point (cdr (assq 'wc-point history))))
+         (wc (alist-get 'wc history))
+         (wc-point (alist-get 'wc-point history)))
     (if (window-configuration-p wc)
         (progn
           (puthash (selected-frame)
@@ -1175,8 +1177,8 @@ For more information, see the function `tab-switcher'."
                              (eq (car tab) 'current-tab))
                            (funcall tab-bar-tabs-function)))
          ;; Sort by recency
-         (tabs (sort tabs (lambda (a b) (< (cdr (assq 'time b))
-                                           (cdr (assq 'time a)))))))
+         (tabs (sort tabs (lambda (a b) (< (alist-get 'time b)
+                                           (alist-get 'time a))))))
     (with-current-buffer (get-buffer-create
                           (format " *Tabs*<%s>" (or (frame-parameter nil 'window-id)
                                                     (frame-parameter nil 'name))))
@@ -1192,7 +1194,7 @@ For more information, see the function `tab-switcher'."
                  (format "%s %s\n"
                          (make-string tab-switcher-column ?\040)
                          (propertize
-                          (cdr (assq 'name tab))
+                          (alist-get 'name tab)
                           'mouse-face 'highlight
                           'help-echo "mouse-2: select this window configuration"))
                  'tab tab)))
@@ -1393,7 +1395,7 @@ selected frame and no others."
           (lambda (tab)
             (when (if (eq (car tab) 'current-tab)
                       (get-buffer-window buffer frame)
-                    (let* ((state (cdr (assq 'ws tab)))
+                    (let* ((state (alist-get 'ws tab))
                            (buffers (when state
                                       (window-state-buffers state))))
                       (or
