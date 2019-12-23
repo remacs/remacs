@@ -1964,6 +1964,9 @@ When there is no region, this function does nothing."
     (move-overlay mouse-secondary-overlay (region-beginning) (region-end))))
 
 
+(declare-function rectangle--col-pos "rect" (col kind))
+(declare-function rectangle--reset-point-crutches "rect" ())
+
 (defconst mouse--rectangle-track-cursor t
   "Whether the mouse tracks the cursor when selecting a rectangle.
 If nil, the mouse tracks the rectangle corner instead.")
