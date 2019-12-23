@@ -3612,7 +3612,8 @@ that is non-nil."
                for comp = (cadr l)
                when (string-prefix-p minibuffer-default comp)
                do (setf (cdr l) (cddr l))
-               and return (cons comp pre-sorted)))
+               and return (cons comp pre-sorted)
+               finally return pre-sorted))
              (t
               pre-sorted))))))
     `(metadata
