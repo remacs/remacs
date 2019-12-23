@@ -84,6 +84,14 @@ impl Not for LispObject {
     }
 }
 
+impl Not for &LispObject {
+    type Output = bool;
+
+    fn not(self) -> Self::Output {
+        !*self
+    }
+}
+
 impl<T> From<Option<T>> for LispObject
 where
     LispObject: From<T>,

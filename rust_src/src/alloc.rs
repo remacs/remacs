@@ -57,7 +57,7 @@ pub fn bool_vector(args: &mut [LispObject]) -> LispObject {
     let vector = unsafe { make_uninit_bool_vector(args.len() as EmacsInt) };
 
     for (i, arg) in args.iter().enumerate() {
-        unsafe { bool_vector_set(vector, i as EmacsInt, !!*arg) }
+        unsafe { bool_vector_set(vector, i as EmacsInt, !!arg) }
     }
 
     vector
