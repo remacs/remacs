@@ -3593,8 +3593,13 @@ that is non-nil."
                    completions)))
             (cond
              ((or (not (window-minibuffer-p))
-                  (> (point-max)
-                     (minibuffer-prompt-end)))
+                  ;; JT@2019-12-23: FIXME: this is still wrong.  What
+                  ;; we need to test here is "some input that actually
+                  ;; leads to flex filtering", not "something after
+                  ;; the minibuffer prompt".  The latter is always
+                  ;; true for file searches, meaning the next clauses
+                  ;; will be ignored.
+                  (> (point-max) (minibuffer-prompt-end)))
               (sort
                pre-sorted
                (lambda (c1 c2)
