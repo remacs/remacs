@@ -6272,11 +6272,11 @@ this option is t, no such resizing is done.  Note that the size of
 fullscreen and maximized frames, the height of fullheight frames and the
 width of fullwidth frames never change implicitly.
 
-The value of this option can be also be a list of frame parameters.  In
-this case, resizing is inhibited when changing a parameter that appears
-in that list.  The parameters currently handled by this option include
-`font', `font-backend', `internal-border-width', `menu-bar-lines',
-`tool-bar-lines' and `tab-bar-lines'.
+The value of this option can be also a list of frame parameters.  In
+this case, resizing is inhibited when changing a parameter that
+appears in that list.  The parameters currently handled by this option
+include `font', `font-backend', `internal-border-width',
+`menu-bar-lines', `tool-bar-lines' and `tab-bar-lines'.
 
 Changing any of the parameters `scroll-bar-width', `scroll-bar-height',
 `vertical-scroll-bars', `horizontal-scroll-bars', `left-fringe' and
