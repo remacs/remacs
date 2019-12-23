@@ -1508,9 +1508,10 @@ overflow in the size calculation.
 @end deftypefn
 
 @deftp {Type alias} emacs_limb_t
-This is an unsigned integer type,
-used as the element type for the magnitude arrays for the big
-integer conversion functions.
+This is an unsigned integer type, used as the element type for the
+magnitude arrays for the big integer conversion functions.  The type
+is guaranteed to have unique object representations, i.e., no padding
+bits.
 @end deftp
 
 @defvr Macro EMACS_LIMB_MAX

@@ -827,6 +827,13 @@ enum
   module_bignum_count_max = min (SIZE_MAX, PTRDIFF_MAX) / sizeof (emacs_limb_t)
 };
 
+/* Verify that emacs_limb_t indeed has unique object
+   representations.  */
+verify (CHAR_BIT == 8);
+verify ((sizeof (emacs_limb_t) == 4 && EMACS_LIMB_MAX == 0xFFFFFFFF)
+        || (sizeof (emacs_limb_t) == 8
+            && EMACS_LIMB_MAX == 0xFFFFFFFFFFFFFFFF));
+
 static bool
 module_extract_big_integer (emacs_env *env, emacs_value arg, int *sign,
                             ptrdiff_t *count, emacs_limb_t *magnitude)
