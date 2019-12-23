@@ -1131,6 +1131,19 @@ end.
 *** 'comint-run' can now accept a list of switches to pass to the program.
 'C-u M-x comint-run' will prompt for the switches interactively.
 
+*** Abnormal hook `comint-password-function' has been added.
+This hook permits a derived mode to supply a password for the
+underlying command interpreter without prompting the user.  For
+example, in sql-mode, the password for connecting to the database may
+be stored in the connection wallet and may be passed on the command
+line to start the SQL interpreter.  This is a potential security flaw
+that could expose user's database passwords on the command line
+through the use of a process list (Bug#8427).  With this hook, it is
+possible to not pass the password on the command line and wait for the
+program to prompt for the password.  When it does so, the password cam
+be supplied to the SQL interpreter without involving the user just as
+if it had been supplied on the command line.
+
 ** SQL
 
 *** SQL Indent Minor Mode

@@ -2356,6 +2356,13 @@ a buffer local variable."
 ;; saved -- typically passwords to ftp, telnet, or somesuch.
 ;; Just enter m-x comint-send-invisible and type in your line.
 
+(defvar comint-password-function nil
+  "Abnormal hook run when prompted for a password.
+This function gets one argument, a string containing the prompt.
+It may return a string containing the password, or nil if normal
+password prompting should occur.")
+(make-variable-buffer-local 'comint-password-function)
+
 (defun comint-send-invisible (&optional prompt)
   "Read a string without echoing.
 Then send it to the process running in the current buffer.
@@ -2370,8 +2377,13 @@ Security bug: your string can still be temporarily recovered with
 	   (format "(In buffer %s) "
 		   (current-buffer)))))
     (if proc
-	(let ((str (read-passwd (concat prefix
-					(or prompt "Non-echoed text: ")))))
+	(let ((prefix-prompt (concat prefix
+				     (or prompt "Non-echoed text: ")))
+	      str)
+	  (when comint-password-function
+	    (setq str (funcall comint-password-function prefix-prompt)))
+	  (unless str
+	    (setq str (read-passwd prefix-prompt)))
 	  (if (stringp str)
 	      (progn
 		(comint-snapshot-last-prompt)
