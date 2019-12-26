@@ -450,7 +450,8 @@ pattern to search for."
        (status nil)
        (hits nil)
        (xrefs nil)
-       ;; Support for remote files.
+       ;; Support for remote files.  The assumption is that, if the
+       ;; first file is remote, they all are, and on the same host.
        (dir (file-name-directory (car files)))
        (remote-id (file-remote-p dir))
        ;; 'git ls-files' can output broken symlinks.
