@@ -1423,8 +1423,8 @@ following simple Lisp wrapper:
 @end lisp
 
 The Lisp package which goes with your module could then load the
-module using the @code{module-load} primitive (@pxref{Dynamic
-Modules}) when the package is loaded into Emacs.
+module using the @code{load} primitive (@pxref{Dynamic Modules}) when
+the package is loaded into Emacs.
 
 @node Module Values
 @subsection Conversion Between Lisp and Module Values
