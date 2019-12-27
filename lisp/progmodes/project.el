@@ -485,7 +485,7 @@ pattern to search for."
                     (buffer-substring (point-min) (line-end-position))))
       (while (re-search-forward grep-re nil t)
         (push (list (string-to-number (match-string line-group))
-                    (concat remote-id (match-string file-group))
+                    (match-string file-group)
                     (buffer-substring-no-properties (point) (line-end-position)))
               hits)))
     (setq xrefs (xref--convert-hits (nreverse hits) regexp))
