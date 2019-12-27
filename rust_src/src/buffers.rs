@@ -25,9 +25,10 @@ use crate::{
     lists::{car, cdr, list, member, rassq, setcar},
     lists::{CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks, TailsIter},
     marker::{
-        build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker_both,
-        LispMarkerRef, MARKER_DEBUG,
+        build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker,
+        set_marker_both, LispMarkerRef, MARKER_DEBUG,
     },
+    math::{max, min},
     multibyte::MAX_MULTIBYTE_LENGTH,
     multibyte::{multibyte_char_at, multibyte_chars_in_text, multibyte_length_by_head},
     multibyte::{Codepoint, LispStringRef, LispSymbolOrString},
@@ -54,6 +55,7 @@ use crate::{
         Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
         Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
     },
+    remacs_sys::{Qerror, Qevaporate},
     strings::string_equal,
     textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
@@ -1822,6 +1824,140 @@ pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRe
 
     // Refetch since that last call may have done GC.
     ThreadState::current_buffer_unchecked().name_.into()
+}
+
+/// Set the endpoints of OVERLAY to BEG and END in BUFFER.
+/// If BUFFER is omitted, leave OVERLAY in the same buffer it inhabits now.
+/// If BUFFER is omitted, and OVERLAY is in no buffer, put it in the current
+/// buffer.
+#[lisp_fn(min = "3")]
+pub fn move_overlay(
+    overlay: LispObject,
+    beg: LispObject,
+    end: LispObject,
+    buffer: LispObject,
+) -> LispObject {
+    let count = c_specpdl_index();
+    let mut overlay_ref = LispOverlayRef::from(overlay);
+    let mut buf = buffer
+        .as_buffer()
+        .or_else(|| overlay_buffer(overlay_ref))
+        .unwrap_or_else(ThreadState::current_buffer_unchecked);
+
+    if !buf.is_live() {
+        error!("Attempt to move overlay to a dead buffer");
+    }
+
+    if beg.is_marker() && !buf.eq(&marker_buffer(beg.into()).unwrap()) {
+        xsignal!(Qerror, "Marker points into wrong buffer", beg);
+    }
+
+    if end.is_marker() && !buf.eq(&marker_buffer(end.into()).unwrap()) {
+        xsignal!(Qerror, "Marker points into wrong buffer", end);
+    }
+
+    let beg_num = LispNumber::from(beg);
+    let end_num = LispNumber::from(end);
+    let (beg_num, end_num) = if beg_num.to_fixnum() > end_num.to_fixnum() {
+        (end_num, beg_num)
+    } else {
+        (beg_num, end_num)
+    };
+    unsafe { specbind(Qinhibit_quit, Qt) };
+    let obuffer = overlay_buffer(overlay_ref);
+    let (o_beg, o_end) = match obuffer {
+        Some(mut ob) => {
+            let o_beg = overlay_start(overlay_ref);
+            let o_end = overlay_end(overlay_ref);
+            unsafe { unchain_both(ob.as_mut(), overlay_ref.into()) };
+            (o_beg, o_end)
+        }
+        None => (None, None),
+    };
+    // Set the overlay boundaries, which may clip them
+    set_marker(
+        LispMarkerRef::from(overlay_ref.start),
+        beg_num.into(),
+        buf.into(),
+    );
+    set_marker(
+        LispMarkerRef::from(overlay_ref.end),
+        end_num.into(),
+        buf.into(),
+    );
+    let n_beg = overlay_start(overlay_ref);
+    let n_end = overlay_end(overlay_ref);
+    // If the overlay has changed buffers, do a thorough redisplay
+    if obuffer.is_some() && !buf.eq(&obuffer.unwrap()) {
+        if let Some(mut ob) = obuffer {
+            unsafe {
+                modify_overlay(
+                    ob.as_mut(),
+                    o_beg.unwrap_or(0) as ptrdiff_t,
+                    o_end.unwrap_or(0) as ptrdiff_t,
+                )
+            };
+        }
+        unsafe {
+            modify_overlay(
+                buf.as_mut(),
+                n_beg.unwrap_or(0) as ptrdiff_t,
+                n_end.unwrap_or(0) as ptrdiff_t,
+            )
+        };
+    } else {
+        // Redisplay the area the overlay has just left, or just enclosed
+        if o_beg == n_beg {
+            unsafe {
+                modify_overlay(
+                    buf.as_mut(),
+                    o_end.unwrap_or(0) as ptrdiff_t,
+                    n_end.unwrap_or(0) as ptrdiff_t,
+                )
+            };
+        } else if o_end == n_end {
+            unsafe {
+                modify_overlay(
+                    buf.as_mut(),
+                    o_beg.unwrap_or(0) as ptrdiff_t,
+                    n_beg.unwrap_or(0) as ptrdiff_t,
+                )
+            };
+        } else {
+            unsafe {
+                modify_overlay(
+                    buf.as_mut(),
+                    EmacsInt::from(min(&[
+                        LispObject::from(o_beg.unwrap_or(0)),
+                        LispObject::from(n_beg.unwrap_or(0)),
+                    ])) as ptrdiff_t,
+                    EmacsInt::from(max(&[
+                        LispObject::from(o_end.unwrap_or(0)),
+                        LispObject::from(n_end.unwrap_or(0)),
+                    ])) as ptrdiff_t,
+                )
+            };
+        }
+    }
+
+    // Delete the overlay if it is empty after clipping and has the evaporate property.
+    if n_beg == n_end && overlay_get(overlay_ref, Qevaporate).is_nil() {
+        delete_overlay(overlay_ref);
+        return unbind_to(count, Qnil);
+    }
+
+    // Put the overlay into the new buffer's overlay lists, first on the wrong list.
+    if (n_end.unwrap_or(0) as isize) < buf.overlay_center {
+        overlay_ref.next = buf.overlays_after;
+        buf.overlays_after = overlay_ref.as_mut();
+    } else {
+        overlay_ref.next = buf.overlays_before;
+        buf.overlays_before = overlay_ref.as_mut();
+    }
+    // This puts it in the right list, and in the right order.
+    unsafe { recenter_overlay_lists(buf.as_mut(), buf.overlay_center) };
+
+    unbind_to(count, overlay)
 }
 
 // Debugging
