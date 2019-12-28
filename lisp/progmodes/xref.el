@@ -1130,7 +1130,9 @@ and just use etags."
 (defvar ede-minor-mode) ;; ede.el
 
 (defun xref-collect-references (symbol dir)
-  "Collect references to SYMBOL inside DIR.
+  "Find all references to SYMBOL in directory DIR.
+Return a list of xref values.
+
 This function uses the Semantic Symbol Reference API, see
 `semantic-symref-tool-alist' for details on which tools are used,
 and when."
@@ -1160,7 +1162,8 @@ and when."
 
 ;;;###autoload
 (defun xref-collect-matches (regexp files dir ignores)
-  "Collect matches for REGEXP inside FILES in DIR.
+  "Find all matches for REGEXP in FILES in directory DIR.
+Return a list of xref values.
 FILES is a string with glob patterns separated by spaces.
 IGNORES is a list of glob patterns."
   ;; DIR can also be a regular file for now; let's not advertise that.
