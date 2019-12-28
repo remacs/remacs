@@ -1278,11 +1278,11 @@ Such as the current syntax table and the applied syntax properties."
                      (in ?b ?B ?< ?> ?w ?W ?_ ?s ?S))
                     str)))
 
-(defvar xref--last-visiting-buffer nil)
+(defvar xref--last-file-buffer nil)
 (defvar xref--temp-buffer-file-name nil)
 
 (defun xref--convert-hits (hits regexp)
-  (let (xref--last-visiting-buffer
+  (let (xref--last-file-buffer
         (tmp-buffer (generate-new-buffer " *xref-temp*")))
     (unwind-protect
         (cl-mapcan (lambda (hit) (xref--collect-matches hit regexp tmp-buffer))
@@ -1293,7 +1293,7 @@ Such as the current syntax table and the applied syntax properties."
   (pcase-let* ((`(,line ,file ,text) hit)
                (remote-id (file-remote-p default-directory))
                (file (and file (concat remote-id file)))
-               (buf (xref--find-buffer-visiting file))
+               (buf (xref--find-file-buffer file))
                (syntax-needed (xref--regexp-syntax-dependent-p regexp)))
     (if buf
         (with-current-buffer buf
@@ -1349,11 +1349,13 @@ Such as the current syntax table and the applied syntax properties."
               matches)))
     (nreverse matches)))
 
-(defun xref--find-buffer-visiting (file)
-  (unless (equal (car xref--last-visiting-buffer) file)
-    (setq xref--last-visiting-buffer
+(defun xref--find-file-buffer (file)
+  (unless (equal (car xref--last-file-buffer) file)
+    (setq xref--last-file-buffer
+          ;; `find-buffer-visiting' is considerably slower,
+          ;; especially on remote files.
           (cons file (get-file-buffer file))))
-  (cdr xref--last-visiting-buffer))
+  (cdr xref--last-file-buffer))
 
 (provide 'xref)
 
