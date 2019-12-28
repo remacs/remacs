@@ -1164,7 +1164,6 @@ and when."
 FILES is a string with glob patterns separated by spaces.
 IGNORES is a list of glob patterns."
   ;; DIR can also be a regular file for now; let's not advertise that.
-  (require 'semantic/fw)
   (grep-compute-defaults)
   (defvar grep-find-template)
   (defvar grep-highlight-matches)
