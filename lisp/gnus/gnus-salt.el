@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'gnus)
 (require 'gnus-sum)
@@ -131,7 +131,7 @@ It accepts the same format specs that `gnus-summary-line-format' does."
 (defvar gnus-pick-line-number 1)
 (defun gnus-pick-line-number ()
   "Return the current line number."
-  (incf gnus-pick-line-number))
+  (cl-incf gnus-pick-line-number))
 
 (defun gnus-pick-start-reading (&optional catch-up)
   "Start reading the picked articles.
@@ -552,7 +552,7 @@ Two predefined functions are available:
 	     (not (one-window-p)))
     (let ((windows 0)
 	  tot-win-height)
-      (walk-windows (lambda (_window) (incf windows)))
+      (walk-windows (lambda (_window) (cl-incf windows)))
       (setq tot-win-height
 	    (- (frame-height)
 	       (* window-min-height (1- windows))
@@ -734,7 +734,7 @@ it in the environment specified by BINDINGS."
       (insert (make-string len ? )))))
 
 (defsubst gnus-tree-forward-line (n)
-  (while (>= (decf n) 0)
+  (while (>= (cl-decf n) 0)
     (unless (zerop (forward-line 1))
       (end-of-line)
       (insert "\n")))
@@ -784,7 +784,7 @@ it in the environment specified by BINDINGS."
 	(progn
 	  (goto-char (point-min))
 	  (end-of-line)
-	  (incf gnus-tmp-indent))
+	  (cl-incf gnus-tmp-indent))
       ;; Recurse downwards in all children of this article.
       (while thread
 	(gnus-generate-vertical-tree

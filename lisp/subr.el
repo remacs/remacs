@@ -768,7 +768,9 @@ side-effects, and the argument LIST is not modified."
 KEYS should be a string in the format returned by commands such
 as `C-h k' (`describe-key').
 This is the same format used for saving keyboard macros (see
-`edmacro-mode')."
+`edmacro-mode').
+
+For an approximate inverse of this, see `key-description'."
   ;; Don't use a defalias, since the `pure' property is only true for
   ;; the calling convention of `kbd'.
   (read-kbd-macro keys))
@@ -3569,6 +3571,119 @@ in BODY."
        (let ((combine-after-change-calls t))
 	 . ,body)
      (combine-after-change-execute)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defvar undo--combining-change-calls nil
+  "Non-nil when `combine-change-calls-1' is running.")
+
+(defun combine-change-calls-1 (beg end body)
+  "Evaluate BODY, running the change hooks just once, for region \(BEG END).
+
+Firstly, `before-change-functions' is invoked for the region
+\(BEG END), then BODY (a function) is evaluated with
+`before-change-functions' and `after-change-functions' bound to
+nil, then finally `after-change-functions' is invoked on the
+updated region (BEG NEW-END) with a calculated OLD-LEN argument.
+If `inhibit-modification-hooks' is initially non-nil, the change
+hooks are not run.
+
+The result of `combine-change-calls-1' is the value returned by
+BODY.  BODY must not make a different buffer current, except
+temporarily.  It must not make any changes to the buffer outside
+the specified region.  It must not change
+`before-change-functions' or `after-change-functions'.
+
+Additionally, the buffer modifications of BODY are recorded on
+the buffer's undo list as a single \(apply ...) entry containing
+the function `undo--wrap-and-run-primitive-undo'."
+  (let ((old-bul buffer-undo-list)
+	(end-marker (copy-marker end t))
+	result)
+    (if undo--combining-change-calls
+	(setq result (funcall body))
+      (let ((undo--combining-change-calls t))
+	(if (not inhibit-modification-hooks)
+	    (run-hook-with-args 'before-change-functions beg end))
+	(if (eq buffer-undo-list t)
+	    (setq result (funcall body))
+	  (let (;; (inhibit-modification-hooks t)
+                before-change-functions after-change-functions)
+	    (setq result (funcall body)))
+	  (let ((ap-elt
+		 (list 'apply
+		       (- end end-marker)
+		       beg
+		       (marker-position end-marker)
+		       #'undo--wrap-and-run-primitive-undo
+		       beg (marker-position end-marker) buffer-undo-list))
+		(ptr buffer-undo-list))
+	    (if (not (eq buffer-undo-list old-bul))
+		(progn
+		  (while (and (not (eq (cdr ptr) old-bul))
+			      ;; In case garbage collection has removed OLD-BUL.
+			      (cdr ptr)
+			      ;; Don't include a timestamp entry.
+			      (not (and (consp (cdr ptr))
+					(consp (cadr ptr))
+					(eq (caadr ptr) t)
+					(setq old-bul (cdr ptr)))))
+		    (setq ptr (cdr ptr)))
+		  (unless (cdr ptr)
+		    (message "combine-change-calls: buffer-undo-list broken"))
+		  (setcdr ptr nil)
+		  (push ap-elt buffer-undo-list)
+		  (setcdr buffer-undo-list old-bul)))))
+	(if (not inhibit-modification-hooks)
+	    (run-hook-with-args 'after-change-functions
+				beg (marker-position end-marker)
+				(- end beg)))))
+    (set-marker end-marker nil)
+    result))
+
+(defmacro combine-change-calls (beg end &rest body)
+  "Evaluate BODY, running the change hooks just once.
+
+BODY is a sequence of lisp forms to evaluate.  BEG and END bound
+the region the change hooks will be run for.
+
+Firstly, `before-change-functions' is invoked for the region
+\(BEG END), then the BODY forms are evaluated with
+`before-change-functions' and `after-change-functions' bound to
+nil, and finally `after-change-functions' is invoked on the
+updated region.  The change hooks are not run if
+`inhibit-modification-hooks' is initially non-nil.
+
+The result of `combine-change-calls' is the value returned by the
+last of the BODY forms to be evaluated.  BODY may not make a
+different buffer current, except temporarily.  BODY may not
+change the buffer outside the specified region.  It must not
+change `before-change-functions' or `after-change-functions'.
+
+Additionally, the buffer modifications of BODY are recorded on
+the buffer's undo list as a single \(apply ...) entry containing
+the function `undo--wrap-and-run-primitive-undo'. "
+  `(combine-change-calls-1 ,beg ,end (lambda () ,@body)))
+
+(defun undo--wrap-and-run-primitive-undo (beg end list)
+  "Call `primitive-undo' on the undo elements in LIST.
+
+This function is intended to be called purely by `undo' as the
+function in an \(apply DELTA BEG END FUNNAME . ARGS) undo
+element.  It invokes `before-change-functions' and
+`after-change-functions' once each for the entire region \(BEG
+END) rather than once for each individual change.
+
+Additionally the fresh \"redo\" elements which are generated on
+`buffer-undo-list' will themselves be \"enclosed\" in
+`undo--wrap-and-run-primitive-undo'.
+
+Undo elements of this form are generated by the macro
+`combine-change-calls'."
+  (combine-change-calls beg end
+			(while list
+			  (setq list (primitive-undo 1 list)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defmacro with-case-table (table &rest body)
   "Execute the forms in BODY with TABLE as the current case table.

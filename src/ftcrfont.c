@@ -164,6 +164,9 @@ ftcrfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 static void
 ftcrfont_close (struct font *font)
 {
+  if (font_data_structures_may_be_ill_formed ())
+    return;
+
   struct ftcrfont_info *ftcrfont_info = (struct ftcrfont_info *) font;
   int i;
 

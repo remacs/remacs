@@ -553,6 +553,7 @@ be invoked with the right arguments."
     (should-not (file-newer-than-file-p nospecial nospecial))))
 
 (ert-deftest files-file-name-non-special-notify-handlers ()
+  (skip-unless file-notify--library)
   (files-tests--with-temp-non-special (tmpfile nospecial)
     (let ((watch (file-notify-add-watch nospecial '(change) #'ignore)))
       (should (file-notify-valid-p watch))

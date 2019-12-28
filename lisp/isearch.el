@@ -72,7 +72,9 @@ If t, random control and meta characters terminate the search
 and are then executed normally.
 If `edit', edit the search string instead of exiting.
 If `move', extend the search string by motion commands
-that have the `isearch-move' property on their symbols.
+that have the `isearch-move' property on their symbols
+equal to `enabled', or the shift-translated command is
+not disabled by the value `disabled' of the same property.
 If `shift-move', extend the search string by motion commands
 while holding down the shift key.
 Both `move' and `shift-move' extend the search string by yanking text
@@ -2434,7 +2436,10 @@ See more for options in `search-exit-option'."
      ;; Don't terminate the search for motion commands.
      ((or (and (eq search-exit-option 'move)
                (symbolp this-command)
-               (eq (get this-command 'isearch-move) t))
+               (or (eq (get this-command 'isearch-move) 'enabled)
+                   (and (not (eq (get this-command 'isearch-move) 'disabled))
+                        (stringp (nth 1 (interactive-form this-command)))
+                        (string-match-p "^^" (nth 1 (interactive-form this-command))))))
           (and (eq search-exit-option 'shift-move)
                this-command-keys-shift-translated))
       (setq this-command-keys-shift-translated nil)
@@ -2469,7 +2474,8 @@ See more for options in `search-exit-option'."
                                          string ""))
         (setq isearch-yank-flag t)
         (setq isearch-forward (<= (or isearch-other-end isearch-opoint) (point)))
-        (goto-char isearch-pre-move-point)
+        (when isearch-forward
+          (goto-char isearch-pre-move-point))
         (isearch-search-and-update)))
     (setq isearch-pre-move-point nil))))
 

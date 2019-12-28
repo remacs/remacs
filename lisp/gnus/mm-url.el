@@ -28,7 +28,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'mm-util)
 (require 'gnus)
@@ -318,7 +318,7 @@ If FOLLOW-REFRESH is non-nil, redirect refresh url in META."
 	(done nil)
 	(first t)
 	result)
-    (while (and (not (zerop (decf times)))
+    (while (and (not (zerop (cl-decf times)))
 		(not done))
       (with-timeout (mm-url-timeout)
 	(unless first

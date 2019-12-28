@@ -23,8 +23,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-
 (require 'gnus)
 (require 'gnus-range)
 (require 'gnus-art)
@@ -483,8 +481,13 @@ Lines matching `gnus-cite-attribution-suffix' and perhaps
 (defun gnus-article-fill-cited-article (&optional width long-lines)
   "Do word wrapping in the current article.
 If WIDTH (the numerical prefix), use that text width when
-filling.  If LONG-LINES, only fill sections that have lines
-longer than the frame width."
+filling.
+
+If LONG-LINES, only fill sections that have lines longer than the
+frame width.
+
+Sections that are heuristically interpreted as not being
+text (i.e., computer code and the like) will not be folded."
   (interactive "P")
   (with-current-buffer gnus-article-buffer
     (let ((buffer-read-only nil)
@@ -504,8 +507,6 @@ longer than the frame width."
 		use-hard-newlines)
 	    (unless do-fill
 	      (setq do-fill (gnus-article-foldable-buffer (cdar marks))))
-	    ;; Note: the XEmacs version of `fill-region' inserts a newline
-	    ;; unless the region ends with a newline.
 	    (when do-fill
 	      (if (not long-lines)
 		  (fill-region (point-min) (point-max))

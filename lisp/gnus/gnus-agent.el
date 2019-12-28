@@ -31,8 +31,7 @@
 (require 'gnus-srvr)
 (require 'gnus-util)
 (require 'timer)
-(eval-when-compile
-  (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (autoload 'gnus-server-update-server "gnus-srvr")
 (autoload 'gnus-agent-customize-category "gnus-cus")
@@ -332,9 +331,9 @@ manipulated as follows:
     `(progn (defmacro ,name (category)
               (list 'cdr (list 'assq '',prop-name category)))
 
-            (defsetf ,name (category) (value)
-              (list 'gnus-agent-cat-set-property
-                    category '',prop-name value))))
+	    (gv-define-setter ,name (value category)
+	      (list 'gnus-agent-cat-set-property
+		    category '',prop-name value))))
   )
 
 (defmacro gnus-agent-cat-name (category)
@@ -361,11 +360,7 @@ manipulated as follows:
 (gnus-agent-cat-defaccessor
  gnus-agent-cat-enable-undownloaded-faces  agent-enable-undownloaded-faces)
 
-
-;; This form may expand to code that uses CL functions at run-time,
-;; but that's OK since those functions will only ever be called from
-;; something like `setf', so only when CL is loaded anyway.
-(defsetf gnus-agent-cat-groups gnus-agent-set-cat-groups)
+(gv-define-simple-setter gnus-agent-cat-groups gnus-agent-set-cat-groups)
 
 (defun gnus-agent-set-cat-groups (category groups)
   (unless (eq groups 'ignore)
@@ -2180,7 +2175,7 @@ article counts for each of the method's subscribed groups."
 	     'gnus-agent-file-loading-local
 	     'gnus-agent-read-and-cache-local))
       (when gnus-agent-article-local-times
-	(incf gnus-agent-article-local-times)))
+	(cl-incf gnus-agent-article-local-times)))
     gnus-agent-article-local))
 
 (defun gnus-agent-read-and-cache-local (file)
@@ -3353,9 +3348,9 @@ missing NOV entry.  Run gnus-agent-regenerate-group to restore it.")))
 		       (let* ((file-name (nnheader-concat dir (number-to-string
 							       article-number)))
 			      (size (float (nth 7 (file-attributes file-name)))))
-			 (incf bytes-freed size)
-			 (incf size-files-deleted size)
-			 (incf files-deleted)
+			 (cl-incf bytes-freed size)
+			 (cl-incf size-files-deleted size)
+			 (cl-incf files-deleted)
 			 (delete-file file-name))
 		       (push "expired cached article" actions))
 		     (setf (nth 1 entry) nil)
@@ -3368,13 +3363,13 @@ missing NOV entry.  Run gnus-agent-regenerate-group to restore it.")))
 				    marker
 				  (- marker position-offset)))
 
-		     (incf nov-entries-deleted)
+		     (cl-incf nov-entries-deleted)
 
 		     (let* ((from (point-at-bol))
 			    (to (progn (forward-line 1) (point)))
 			    (freed (- to from)))
-		       (incf bytes-freed freed)
-		       (incf position-offset freed)
+		       (cl-incf bytes-freed freed)
+		       (cl-incf position-offset freed)
 		       (delete-region from to)))
 
 		   ;; If considering all articles is set, I can only
@@ -3431,9 +3426,9 @@ expiration tests failed." decoded article-number)
 
 	 (when (boundp 'gnus-agent-expire-stats)
 	   (let ((stats gnus-agent-expire-stats))
-	     (incf (nth 2 stats) bytes-freed)
-	     (incf (nth 1 stats) files-deleted)
-	     (incf (nth 0 stats) nov-entries-deleted)))
+	     (cl-incf (nth 2 stats) bytes-freed)
+	     (cl-incf (nth 1 stats) files-deleted)
+	     (cl-incf (nth 0 stats) nov-entries-deleted)))
 
 	 (gnus-agent-update-files-total-fetched-for group (- size-files-deleted)))))))
 
@@ -4110,7 +4105,7 @@ agent has fetched."
 	       (let ((sum 0.0)
 		     file)
 		 (while (setq file (pop delta))
-		   (incf sum (float (or (nth 7 (file-attributes
+		   (cl-incf sum (float (or (nth 7 (file-attributes
 						(nnheader-concat
 						 path
 						 (if (numberp file)
@@ -4122,11 +4117,11 @@ agent has fetched."
 			  path nil "^-?[0-9]+$" t))
 		   file)
 	       (while (setq file (pop info))
-		 (incf sum (float (or (nth 8 file) 0))))
+		 (cl-incf sum (float (or (nth 8 file) 0))))
 	       (setq delta sum))))
 
 	 (setq gnus-agent-need-update-total-fetched-for t)
-	 (incf (nth 2 entry) delta))))))
+	 (cl-incf (nth 2 entry) delta))))))
 
 (defun gnus-agent-update-view-total-fetched-for
   (group agent-over &optional method path)

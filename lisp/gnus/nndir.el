@@ -28,7 +28,6 @@
 (require 'nnmh)
 (require 'nnml)
 (require 'nnoo)
-(eval-when-compile (require 'cl))
 
 (nnoo-declare nndir
   nnml nnmh)
@@ -38,7 +37,7 @@
   nnml-current-directory nnmh-current-directory)
 
 (defvoo nndir-nov-is-evil nil
-  "*Non-nil means that nndir will never retrieve NOV headers."
+  "Non-nil means that nndir will never retrieve NOV headers."
   nnml-nov-is-evil)
 
 

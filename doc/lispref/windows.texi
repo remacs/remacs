@@ -904,7 +904,7 @@ include mode and header line and a bottom divider, if any.
 
 If @var{window} is part of a horizontal combination and the value of the
 option @code{fit-window-to-buffer-horizontally} (see below) is
-non-@code{nil}, this function adjusts @var{window}'s height.  The new
+non-@code{nil}, this function adjusts @var{window}'s width.  The new
 width of @var{window} is calculated from the maximum length of its
 buffer's lines that follow the current start position of @var{window}.
 The optional argument @var{max-width} specifies a maximum width and

@@ -311,7 +311,7 @@ pass to the OPERATION."
 	(tramp-archive-run-real-handler operation args)
       ;; Now run the handler.
       (unless tramp-archive-enabled
-	(tramp-compat-user-error nil "Package `tramp-archive' not supported"))
+	(tramp-user-error nil "Package `tramp-archive' not supported"))
       (let ((tramp-methods (cons `(,tramp-archive-method) tramp-methods))
 	    (tramp-gvfs-methods tramp-archive-all-gvfs-methods)
 	    ;; Set uid and gid.  gvfsd-archive could do it, but it doesn't.
@@ -398,7 +398,7 @@ hexified archive name as host, and the localname.  The archive
 name is kept in slot `hop'"
   (save-match-data
     (unless (tramp-archive-file-name-p name)
-      (tramp-compat-user-error nil "Not an archive file name: \"%s\"" name))
+      (tramp-user-error nil "Not an archive file name: \"%s\"" name))
     (let* ((localname (tramp-archive-file-name-localname name))
 	   (archive (file-truename (tramp-archive-file-name-archive name)))
 	   (vec (make-tramp-file-name

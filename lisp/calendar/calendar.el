@@ -76,20 +76,19 @@
 ;;    solar.el                   Sunrise/sunset, equinoxes/solstices
 
 ;; Technical details of all the calendrical calculations can be found in
-;; ``Calendrical Calculations: The Millennium Edition'' by Edward M. Reingold
-;; and Nachum Dershowitz, Cambridge University Press (2001).
+;; "Calendrical Calculations: The Ultimate Edition" by Edward M. Reingold
+;; and Nachum Dershowitz, Cambridge University Press (2018).
 
-;; An earlier version of the technical details appeared in
-;; ``Calendrical Calculations'' by Nachum Dershowitz and Edward M. Reingold,
+;; An earlier version of the technical details appeared in "Calendrical
+;; Calculations" by Nachum Dershowitz and Edward M. Reingold,
 ;; Software--Practice and Experience, Volume 20, Number 9 (September, 1990),
-;; pages 899-928, and in ``Calendrical Calculations, Part II: Three Historical
-;; Calendars'' by E. M. Reingold,  N. Dershowitz, and S. M. Clamen,
-;; Software--Practice and Experience, Volume 23, Number 4 (April, 1993),
-;; pages 383-404.
-
-;; Hard copies of these two papers can be obtained by sending email to
-;; reingold@cs.uiuc.edu with the SUBJECT "send-paper-cal" (no quotes) and
-;; the message BODY containing your mailing address (snail).
+;; pages 899-928 <https://doi.org/10.1002/spe.4380200905>
+;; <https://pdfs.semanticscholar.org/83b1/14f570002a7a8e1d4e3730cd0e4cdbcad212.pdf>,
+;; and in "Calendrical Calculations, Part II: Three Historical Calendars" by
+;; E. M. Reingold, N. Dershowitz, and S. M. Clamen, Software--Practice and
+;; Experience, Volume 23, Number 4 (April, 1993), pages 383-404
+;; <https://doi.org/10.1002/spe.4380230404>
+;; <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.42.6421&rep=rep1&type=pdf>
 
 
 ;; A note on free variables:
@@ -1948,10 +1947,12 @@ use instead of point."
 The absolute date is the number of days elapsed since the (imaginary)
 Gregorian date Sunday, December 31, 1 BC.  This function does not
 handle dates in years BC."
-  ;; See the footnote on page 384 of ``Calendrical Calculations, Part II:
-  ;; Three Historical Calendars'' by E. M. Reingold,  N. Dershowitz, and S. M.
-  ;; Clamen, Software--Practice and Experience, Volume 23, Number 4
-  ;; (April, 1993), pages 383-404 for an explanation.
+  ;; For an explanation, see the footnote on page 384 of "Calendrical
+  ;; Calculations, Part II: Three Historical Calendars" by
+  ;; E. M. Reingold, N. Dershowitz, and S. M.  Clamen,
+  ;; Software--Practice and Experience, Volume 23, Number 4 (April,
+  ;; 1993), pages 383-404 <https://doi.org/10.1002/spe.4380230404>
+  ;; <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.42.6421&rep=rep1&type=pdf>.
   (let* ((d0 (1- date))
          (n400 (/ d0 146097))
          (d1 (% d0 146097))

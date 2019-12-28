@@ -159,6 +159,14 @@ The function has no args.
 Applicable at least in modes for languages like fixed-format Fortran where
 comments always start in column zero.")
 
+(defvar-local comment-combine-change-calls t
+  "If non-nil (the default), use `combine-change-calls' around
+  calls of `comment-region-function' and
+  `uncomment-region-function'.  This Substitutes a single call to
+  each of the hooks `before-change-functions' and
+  `after-change-functions' in place of those hooks being called
+  for each individual buffer change.")
+
 (defvar comment-region-function 'comment-region-default
   "Function to comment a region.
 Its args are the same as those of `comment-region', but BEG and END are
@@ -898,7 +906,7 @@ comment markers."
     (save-excursion
       (funcall uncomment-region-function beg end arg))))
 
-(defun uncomment-region-default (beg end &optional arg)
+(defun uncomment-region-default-1 (beg end &optional arg)
   "Uncomment each line in the BEG .. END region.
 The numeric prefix ARG can specify a number of chars to remove from the
 comment markers."
@@ -994,6 +1002,15 @@ comment markers."
 	  ;; Go to the end for the next comment.
 	  (goto-char (point-max))))))
   (set-marker end nil))
+
+(defun uncomment-region-default (beg end &optional arg)
+  "Uncomment each line in the BEG .. END region.
+The numeric prefix ARG can specify a number of chars to remove from the
+comment markers."
+  (if comment-combine-change-calls
+      (combine-change-calls beg end (uncomment-region-default-1 beg end arg))
+    (uncomment-region-default-1 beg end arg)))
+
 
 (defun comment-make-bol-ws (len)
   "Make a white-space string of width LEN for use at BOL.
@@ -1191,7 +1208,7 @@ changed with `comment-style'."
     ;; FIXME: maybe we should call uncomment depending on ARG.
     (funcall comment-region-function beg end arg)))
 
-(defun comment-region-default (beg end &optional arg)
+(defun comment-region-default-1 (beg end &optional arg)
   (let* ((numarg (prefix-numeric-value arg))
 	 (style (cdr (assoc comment-style comment-styles)))
 	 (lines (nth 2 style))
@@ -1259,6 +1276,11 @@ changed with `comment-style'."
 	 block
 	 lines
 	 indent))))))
+
+(defun comment-region-default (beg end &optional arg)
+  (if comment-combine-change-calls
+      (combine-change-calls beg end (comment-region-default-1 beg end arg))
+    (comment-region-default-1 beg end arg)))
 
 ;;;###autoload
 (defun comment-box (beg end &optional arg)

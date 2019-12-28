@@ -97,13 +97,6 @@ Add the extension of F, if existing."
                                     process-name))))
 	      (setq result t)))))))))
 
-;; `user-error' has appeared in Emacs 24.3.
-(defsubst tramp-compat-user-error (vec-or-proc format &rest args)
-  "Signal a pilot error."
-  (apply
-   'tramp-error vec-or-proc
-   (if (fboundp 'user-error) 'user-error 'error) format args))
-
 ;; `default-toplevel-value' has been declared in Emacs 24.4.
 (unless (fboundp 'default-toplevel-value)
   (defalias 'default-toplevel-value 'symbol-value))

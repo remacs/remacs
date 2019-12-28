@@ -71,7 +71,7 @@ modify this GNU manual.''
 The Emacs mode for programming in Ada helps the user in understanding
 existing code and facilitates writing new code.
 
-When the Gnu Ada compiler GNAT is used, the cross-reference
+When the GNU Ada compiler GNAT is used, the cross-reference
 information output by the compiler is used to provide powerful code
 navigation (jump to definition, find all uses, etc.).
 
@@ -221,7 +221,7 @@ is beyond the scope of this manual; see the current definitions in
 @node Other compiler
 @section Other compiler
 
-By default, Ada mode is configured to use the Gnu Ada compiler GNAT.
+By default, Ada mode is configured to use the GNU Ada compiler GNAT.
 
 To use a different Ada compiler, you must specify the command lines
 used to run that compiler, either in lisp variables or in Emacs

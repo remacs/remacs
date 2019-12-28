@@ -36,6 +36,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'puny)
 
 (defgroup gnutls nil
   "Emacs interface to the GnuTLS library."
@@ -61,9 +62,9 @@ If the value is a list, it should have the form
    ((HOST-REGEX FLAGS...) (HOST-REGEX FLAGS...) ...)
 
 where each HOST-REGEX is a regular expression to be matched
-against the hostname, and FLAGS is either t or a list of
-one or more verification flags.  The supported flags and the
-corresponding conditions to be tested are:
+against the hostname, on a first-match basis, and FLAGS is either
+t or a list of one or more verification flags.  The supported
+flags and the corresponding conditions to be tested are:
 
   :trustfiles -- certificate must be issued by a trusted authority.
   :hostname   -- hostname must match presented certificate's host name.
@@ -154,12 +155,12 @@ trust and key files, and priority string."
                        (cons 'gnutls-x509pki
                              (gnutls-boot-parameters
                               :type 'gnutls-x509pki
-                              :hostname host))))))
+                              :hostname (puny-encode-domain host)))))))
     (if nowait
         process
       (gnutls-negotiate :process process
                         :type 'gnutls-x509pki
-                        :hostname host))))
+                        :hostname (puny-encode-domain host)))))
 
 (define-error 'gnutls-error "GnuTLS error")
 
@@ -282,13 +283,9 @@ defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
                              t)
                             ;; if a list, look for hostname matches
                             ((listp gnutls-verify-error)
-                             (apply 'append
-                                    (mapcar
-                                     (lambda (check)
-                                       (when (string-match (nth 0 check)
-                                                           hostname)
-                                         (nth 1 check)))
-                                     gnutls-verify-error)))
+                             (cadr (cl-find-if #'(lambda (x)
+                                                   (string-match (car x) hostname))
+                                               gnutls-verify-error)))
                             ;; else it's nil
                             (t nil))))
          (min-prime-bits (or min-prime-bits gnutls-min-prime-bits)))

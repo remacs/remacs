@@ -218,11 +218,17 @@ See also `eww-form-checkbox-selected-symbol'."
 (defvar eww-data nil)
 (defvar eww-history nil)
 (defvar eww-history-position 0)
+(defvar eww-prompt-history nil)
 
 (defvar eww-local-regex "localhost"
   "When this regex is found in the URL, it's not a keyword but an address.")
 
 (defvar eww-link-keymap
+  (let ((map (copy-keymap shr-map)))
+    (define-key map "\r" 'eww-follow-link)
+    map))
+
+(defvar eww-image-link-keymap
   (let ((map (copy-keymap shr-image-map)))
     (define-key map "\r" 'eww-follow-link)
     map))
@@ -250,7 +256,7 @@ word(s) will be searched for via `eww-search-prefix'."
 	  (prompt (concat "Enter URL or keywords"
 			  (if uris (format " (default %s)" (car uris)) "")
 			  ": ")))
-     (list (read-string prompt nil nil uris))))
+     (list (read-string prompt nil 'eww-prompt-history uris))))
   (setq url (eww--dwim-expand-url url))
   (pop-to-buffer-same-window
    (if (eq major-mode 'eww-mode)
@@ -272,7 +278,7 @@ word(s) will be searched for via `eww-search-prefix'."
     (insert (format "Loading %s..." url))
     (goto-char (point-min)))
   (url-retrieve url 'eww-render
-		(list url nil (current-buffer))))
+                (list url nil (current-buffer))))
 
 (defun eww--dwim-expand-url (url)
   (setq url (string-trim url))
@@ -349,9 +355,6 @@ Currently this means either text/html or application/xhtml+xml."
 			 "application/xhtml+xml")))
 
 (defun eww-render (status url &optional point buffer encode)
-  (let ((redirect (plist-get status :redirect)))
-    (when redirect
-      (setq url redirect)))
   (let* ((headers (eww-parse-headers))
 	 (content-type
 	  (mail-header-parse-content-type
@@ -364,12 +367,19 @@ Currently this means either text/html or application/xhtml+xml."
 			(eww-detect-charset (eww-html-p (car content-type)))
 			"utf-8"))))
 	 (data-buffer (current-buffer))
+	 (shr-target-id (url-target (url-generic-parse-url url)))
 	 last-coding-system-used)
+    (let ((redirect (plist-get status :redirect)))
+      (when redirect
+        (setq url redirect)))
     (with-current-buffer buffer
       ;; Save the https peer status.
       (plist-put eww-data :peer (plist-get status :peer))
       ;; Make buffer listings more informative.
-      (setq list-buffers-directory url))
+      (setq list-buffers-directory url)
+      ;; Let the URL library have a handle to the current URL for
+      ;; referer purposes.
+      (setq url-current-lastloc (url-generic-parse-url url)))
     (unwind-protect
 	(progn
 	  (cond
@@ -460,7 +470,6 @@ Currently this means either text/html or application/xhtml+xml."
       (plist-put eww-data :dom document)
       (let ((inhibit-read-only t)
 	    (inhibit-modification-hooks t)
-	    (shr-target-id (url-target (url-generic-parse-url url)))
 	    (shr-external-rendering-functions
              (append
               shr-external-rendering-functions
@@ -547,7 +556,11 @@ Currently this means either text/html or application/xhtml+xml."
   (eww-handle-link dom)
   (let ((start (point)))
     (shr-tag-a dom)
-    (put-text-property start (point) 'keymap eww-link-keymap)))
+    (put-text-property start (point)
+                       'keymap
+                       (if (mm-images-in-region-p start (point))
+                           eww-image-link-keymap
+                         eww-link-keymap))))
 
 (defun eww-update-header-line-format ()
   (setq header-line-format
@@ -731,7 +744,10 @@ the like."
 		   most-negative-fixnum)
 	       (or (dom-attr result :eww-readability-score)
 		   most-negative-fixnum))
-	(setq result highest)))
+        ;; We set a lower bound to how long we accept that the
+        ;; readable portion of the page is going to be.
+        (when (> (length (split-string (dom-texts highest))) 100)
+	  (setq result highest))))
     result))
 
 (defvar eww-mode-map
@@ -1236,14 +1252,8 @@ See URL `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/Input'.")
 		    :eww-form eww-form))
 	(options nil)
 	(start (point))
-	(max 0)
-	opelem)
-    (if (eq (dom-tag dom) 'optgroup)
-	(dolist (groupelem (dom-children dom))
-	  (unless (dom-attr groupelem 'disabled)
-	    (setq opelem (append opelem (list groupelem)))))
-      (setq opelem (list dom)))
-    (dolist (elem opelem)
+	(max 0))
+    (dolist (elem (dom-non-text-children dom))
       (when (eq (dom-tag elem) 'option)
 	(when (dom-attr elem 'selected)
 	  (nconc menu (list :value (dom-attr elem 'value))))
@@ -1489,7 +1499,8 @@ If EXTERNAL is double prefix, browse in new buffer."
      ((string-match "^mailto:" url)
       (browse-url-mail url))
      ((and (consp external) (<= (car external) 4))
-      (funcall shr-external-browser url))
+      (funcall shr-external-browser url)
+      (shr--blink-link))
      ;; This is a #target url in the same page as the current one.
      ((and (url-target (url-generic-parse-url url))
 	   (eww-same-page-p url (plist-get eww-data :url)))

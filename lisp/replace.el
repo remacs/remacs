@@ -2619,6 +2619,7 @@ It must return a string."
 			   (let ((stack-idx         0)
                                  (stack-len         (length stack))
                                  (num-replacements  0)
+                                 (nocasify t) ; Undo must preserve case (Bug#31073).
                                  search-string
                                  next-replacement)
                              (while (and (< stack-idx stack-len)

@@ -161,7 +161,7 @@ function.
 
 @code{compile-defun} normally displays the result of evaluation in the
 echo area, but if @var{arg} is non-@code{nil}, it inserts the result
-in the current buffer after the form it compiled.
+in the current buffer after the form it has compiled.
 @end deffn
 
 @deffn Command byte-compile-file filename &optional load

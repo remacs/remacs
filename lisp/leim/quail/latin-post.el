@@ -1103,6 +1103,7 @@ szz -> sz
  ("UE" ?Ü)
  ("ue" ?ü)
  ("sz" ?ß)
+ ("SZ" ?ẞ)
 
  ("AEE" ["AE"])
  ("aee" ["ae"])
@@ -1111,6 +1112,7 @@ szz -> sz
  ("UEE" ["UE"])
  ("uee" ["ue"])
  ("szz" ["sz"])
+ ("SZZ" ["SZ"])
  ("ge" ["ge"])
  ("eue" ["eue"])
  ("Eue" ["Eue"])
@@ -2184,6 +2186,7 @@ Doubling the postfix separates the letter and postfix: e.g. a\\='\\=' -> a\\='
  ("R~" ?Ř)
  ("S'" ?Ś)
  ("S," ?Ş)
+ ("S/" ?ẞ)
  ("S^" ?Ŝ)
  ("S~" ?Š)
  ("T," ?Ţ)

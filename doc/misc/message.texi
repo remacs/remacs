@@ -345,10 +345,10 @@ constructed.  The default value is @code{nil}.
 
 @item message-forward-as-mime
 @vindex message-forward-as-mime
-If this variable is @code{t} (the default), forwarded messages are
-included as inline @acronym{MIME} RFC822 parts.  If it's @code{nil}, forwarded
-messages will just be copied inline to the new message, like previous,
-non @acronym{MIME}-savvy versions of Gnus would do.
+If this variable is @code{t}, forwarded messages are included as
+inline @acronym{MIME} RFC822 parts.  If it's @code{nil} (the default),
+forwarded messages will just be copied inline to the new message, like
+previous, non @acronym{MIME}-savvy versions of Gnus would do.
 
 @item message-forward-before-signature
 @vindex message-forward-before-signature

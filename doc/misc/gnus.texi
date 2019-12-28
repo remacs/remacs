@@ -3102,6 +3102,21 @@ interest in relation to the sieve parameter.
 The Sieve language is described in RFC 3028.  @xref{Top, Emacs Sieve,
 Top, sieve, Emacs Sieve}.
 
+@item match-list
+@cindex match-list
+If this parameter is set to @code{t} and @code{nnmail-split-method} is
+set to @code{gnus-group-split}, Gnus will match @code{to-address},
+@code{to-list}, @code{extra-aliases} and @code{split-regexp} against
+the @code{list} split abbreviation.  The split regexp is modified to
+match either a @code{@@} or a dot @code{.} in mail addresses to
+conform to RFC2919 @code{List-ID}.
+
+See @code{nnmail-split-abbrev-alist} for the regular expression
+matching mailing-list headers.
+
+See @pxref{Group Mail Splitting} to automatically split on group
+parameters.
+
 @item (agent parameters)
 If the agent has been enabled, you can set any of its parameters to
 control the behavior of the agent in individual groups.  See Agent
@@ -5643,8 +5658,7 @@ as an rfc822 @acronym{MIME} section; if the prefix is 3, decode message and
 forward as an rfc822 @acronym{MIME} section; if the prefix is 4, forward message
 directly inline; otherwise, the message is forwarded as no prefix given
 but use the flipped value of (@code{message-forward-as-mime}).  By
-default, the message is decoded and forwarded as an rfc822 @acronym{MIME}
-section.
+default, the forwarded message is inlined into the mail.
 
 @item S m
 @itemx m
@@ -6657,7 +6671,8 @@ Limit the summary buffer to the unseen articles
 @kindex / v @r{(Summary)}
 @findex gnus-summary-limit-to-score
 Limit the summary buffer to articles that have a score at or above some
-score (@code{gnus-summary-limit-to-score}).
+score (@code{gnus-summary-limit-to-score}).  If given a prefix, below
+some score.
 
 @item / p
 @kindex / p @r{(Summary)}
@@ -9790,9 +9805,6 @@ Warning: Spammers use links to images (using the @code{http} scheme) in
 this command passes the @acronym{HTML} content to the browser without
 eliminating these ``web bugs'' you should only use it for mails from
 trusted senders.
-
-If you always want to display @acronym{HTML} parts in the browser, set
-@code{mm-text-html-renderer} to @code{nil}.
 
 This command creates temporary files to pass @acronym{HTML} contents
 including images if any to the browser, and deletes them when exiting
@@ -15474,6 +15486,9 @@ Matches the @samp{To}, @samp{Cc}, @samp{Apparently-To},
 @samp{Resent-To} and @samp{Resent-Cc} fields.
 @item any
 Is the union of the @code{from} and @code{to} entries.
+@item list
+Matches the @samp{List-ID}, @samp{List-Post}, @samp{X-Mailing-List},
+@samp{X-BeenThere} and @samp{X-Loop} fields.
 @end table
 
 @vindex nnmail-split-fancy-syntax-table

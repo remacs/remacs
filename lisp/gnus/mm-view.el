@@ -22,7 +22,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (require 'mail-parse)
 (require 'mailcap)
 (require 'mm-bodies)
@@ -318,6 +318,8 @@
       (if entry
 	  (setq func (cdr entry)))
       (cond
+       ((null func)
+	(mm-insert-inline handle (mm-get-part handle)))
        ((functionp func)
 	(funcall func handle))
        (t
@@ -561,7 +563,7 @@ If MODE is not set, try to find mode automatically."
 	   (error "Could not identify PKCS#7 type")))))
 
 (defun mm-view-pkcs7 (handle &optional from)
-  (case (mm-view-pkcs7-get-type handle)
+  (cl-case (mm-view-pkcs7-get-type handle)
     (enveloped (mm-view-pkcs7-decrypt handle from))
     (signed (mm-view-pkcs7-verify handle))
     (otherwise (error "Unknown or unimplemented PKCS#7 type"))))

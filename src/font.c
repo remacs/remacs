@@ -5281,6 +5281,13 @@ Disabling compaction of font caches might enlarge the Emacs memory
 footprint in sessions that use lots of different fonts.  */);
   inhibit_compacting_font_caches = 0;
 
+  DEFVAR_BOOL ("xft-ignore-color-fonts",
+	       Vxft_ignore_color_fonts,
+	       doc: /*
+Non-nil means don't query fontconfig for color fonts, since they often
+cause Xft crashes.  Only has an effect in Xft builds.  */);
+  Vxft_ignore_color_fonts = 1;
+
 #ifdef HAVE_WINDOW_SYSTEM
 #ifdef HAVE_FREETYPE
   syms_of_ftfont ();

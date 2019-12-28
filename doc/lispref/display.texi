@@ -1241,7 +1241,7 @@ displays the buffer specified by @var{buffer-or-name} @emph{before}
 running @var{body}.
 @end defmac
 
-A window showing a temporary buffer can be fit to the size of that
+A window showing a temporary buffer can be fitted to the size of that
 buffer using the following mode:
 
 @defopt temp-buffer-resize-mode
@@ -1274,7 +1274,7 @@ positive integer.  At the time the function is called, the window to be
 resized is selected.
 @end defopt
 
-The following function uses the current buffer for temporal display:
+The following function uses the current buffer for temporary display:
 
 @defun momentary-string-display string position &optional char message
 This function momentarily displays @var{string} in the current buffer at
@@ -6968,7 +6968,7 @@ The glyph for the end of a truncated screen line (the default for this
 is @samp{$}).  @xref{Glyphs}.  On graphical terminals, Emacs by
 default uses arrows in the fringes to indicate truncation, so the
 display table has no effect, unless you disable the fringes
-(@pxref{Fringes,, Window Fringes, emacs, the Gnu Emacs Manual}).
+(@pxref{Fringes,, Window Fringes, emacs, the GNU Emacs Manual}).
 
 @item 1
 The glyph for the end of a continued line (the default is @samp{\}).

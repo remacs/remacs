@@ -29,7 +29,7 @@
 (require 'nnheader)
 (require 'nntp)
 (require 'nnoo)
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 ;; Probably this entire thing should be obsolete.
 ;; It's only used to init nnspool-spool-directory, so why not just
@@ -105,7 +105,7 @@ If nil, nnspool will load the entire file into a buffer and process it
 there.")
 
 (defvoo nnspool-rejected-article-hook nil
-  "*A hook that will be run when an article has been rejected by the server.")
+  "A hook that will be run when an article has been rejected by the server.")
 
 (defvoo nnspool-file-coding-system nnheader-file-coding-system
   "Coding system for nnspool.")
@@ -172,7 +172,7 @@ there.")
 	      (delete-region (point) (point-max)))
 
 	    (and do-message
-		 (zerop (% (incf count) 20))
+		 (zerop (% (cl-incf count) 20))
 		 (nnheader-message 5 "nnspool: Receiving headers... %d%%"
 				   (floor (* count 100.0) number))))
 

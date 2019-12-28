@@ -327,9 +327,6 @@ static struct {
   NULL, 0, 0
 };
 
-static NSString *represented_filename = nil;
-static struct frame *represented_frame = 0;
-
 #ifdef NS_IMPL_COCOA
 /*
  * State for pending menu activation:
@@ -471,40 +468,6 @@ static void ns_judge_scroll_bars (struct frame *f);
     Utilities
 
    ========================================================================== */
-
-void
-ns_set_represented_filename (struct frame *f)
-{
-  Lisp_Object filename, encoded_filename;
-  Lisp_Object buf = XWINDOW (f->selected_window)->contents;
-  NSAutoreleasePool *pool;
-  NSString *fstr;
-
-  NSTRACE ("ns_set_represented_filename");
-
-  if (f->explicit_name || ! NILP (f->title))
-    return;
-
-  block_input ();
-  pool = [[NSAutoreleasePool alloc] init];
-  filename = BVAR (XBUFFER (buf), filename);
-
-  if (! NILP (filename))
-    {
-      encoded_filename = ENCODE_UTF_8 (filename);
-
-      fstr = [NSString stringWithUTF8String: SSDATA (encoded_filename)];
-      if (fstr == nil) fstr = @"";
-    }
-  else
-    fstr = @"";
-
-  represented_filename = [fstr retain];
-  represented_frame = f;
-
-  [pool release];
-  unblock_input ();
-}
 
 void
 ns_init_events (struct input_event *ev)
@@ -5625,23 +5588,6 @@ ns_term_shutdown (int sig)
       return;
     }
 #endif
-
-  if (represented_filename != nil && represented_frame)
-    {
-      NSString *fstr = represented_filename;
-      NSView *view = FRAME_NS_VIEW (represented_frame);
-#ifdef NS_IMPL_COCOA
-      /* Work around a bug observed on 10.3 and later where
-         setTitleWithRepresentedFilename does not clear out previous state
-         if given filename does not exist.  */
-      if (! [[NSFileManager defaultManager] fileExistsAtPath: fstr])
-        [[view window] setRepresentedFilename: @""];
-#endif
-      [[view window] setRepresentedFilename: fstr];
-      [represented_filename release];
-      represented_filename = nil;
-      represented_frame = NULL;
-    }
 
   if (type == NSEventTypeApplicationDefined)
     {

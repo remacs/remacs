@@ -1295,7 +1295,8 @@ to use a pty, or nil to use the default specified through
 
 :stderr STDERR -- STDERR is either a buffer or a pipe process attached
 to the standard error of subprocess.  Specifying this implies
-`:connection-type' is set to `pipe'.
+`:connection-type' is set to `pipe'.  If STDERR is nil, standard error
+is mixed with standard output and sent to BUFFER or FILTER.
 
 usage: (make-process &rest ARGS)  */)
   (ptrdiff_t nargs, Lisp_Object *args)
@@ -2107,6 +2108,10 @@ usage:  (make-pipe-process &rest ARGS)  */)
   }
   /* This may signal an error.  */
   setup_process_coding_systems (proc);
+
+  pset_decoding_buf (p, empty_unibyte_string);
+  eassert (p->decoding_carryover == 0);
+  pset_encoding_buf (p, empty_unibyte_string);
 
   specpdl_ptr = specpdl + specpdl_count;
 
@@ -6354,12 +6359,7 @@ SIGCODE may be an integer, or a symbol whose name is a signal name.  */)
     {
       Lisp_Object tem = Fget_process (process);
       if (NILP (tem))
-	{
-	  Lisp_Object process_number
-	    = string_to_number (SSDATA (process), 10, true);
-	  if (NUMBERP (process_number))
-	    tem = process_number;
-	}
+	tem = string_to_number (SSDATA (process), 10, S2N_OVERFLOW_TO_FLOAT);
       process = tem;
     }
   else if (!NUMBERP (process))

@@ -67,6 +67,7 @@
     (define-key map "\C-n" 'view-emacs-news)
     (define-key map "\C-o" 'describe-distribution)
     (define-key map "\C-p" 'view-emacs-problems)
+    (define-key map "\C-s" 'search-forward-help-for-help)
     (define-key map "\C-t" 'view-emacs-todo)
     (define-key map "\C-w" 'describe-no-warranty)
 
@@ -240,6 +241,7 @@ C-m         How to order printed Emacs manuals.
 C-n         News of recent Emacs changes.
 C-o         Emacs ordering and distribution information.
 C-p         Info about known Emacs problems.
+C-s         Search forward \"help window\".
 C-t         Emacs TODO list.
 C-w         Information on absence of warranty for GNU Emacs."
   help-map)
@@ -965,6 +967,13 @@ documentation for the major and minor modes of that buffer."
   ;; For the sake of IELM and maybe others
   nil)
 
+(defun search-forward-help-for-help ()
+  "Search forward \"help window\"."
+  (interactive)
+  ;; Move cursor to the "help window".
+  (pop-to-buffer " *Metahelp*")
+  ;; Do incremental search forward.
+  (isearch-forward nil t))
 
 (defun describe-minor-mode (minor-mode)
   "Display documentation of a minor mode given as MINOR-MODE.

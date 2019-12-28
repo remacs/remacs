@@ -1613,7 +1613,7 @@ that the line ends exactly at @code{fill-column}.  It returns
 
 The argument @var{how}, if non-@code{nil} specifies explicitly the style
 of justification.  It can be @code{left}, @code{right}, @code{full},
-@code{center}, or @code{none}.  If it is @code{t}, that means to do
+@code{center}, or @code{none}.  If it is @code{t}, that means to
 follow specified justification style (see @code{current-justification},
 below).  @code{nil} means to do full justification.
 
@@ -2977,7 +2977,7 @@ If any text in the region already has a non-@code{nil} @code{face} property,
 those face(s) are retained.  This function sets the @code{face}
 property to a list of faces, with @var{face} as the first element (by
 default) and the pre-existing faces as the remaining elements.  If the
-optional argument @var{append} is non-@code{nil}, @var{face} is
+optional argument @var{appendp} is non-@code{nil}, @var{face} is
 appended to the end of the list instead.  Note that in a face list,
 the first occurring value for each attribute takes precedence.
 
@@ -4298,10 +4298,10 @@ read register names use this function.
   This function can be used to transpose stretches of text:
 
 @defun transpose-regions start1 end1 start2 end2 &optional leave-markers
-This function exchanges two nonoverlapping portions of the buffer.
-Arguments @var{start1} and @var{end1} specify the bounds of one portion
-and arguments @var{start2} and @var{end2} specify the bounds of the
-other portion.
+This function exchanges two nonoverlapping portions of the buffer (if
+they overlap, the function signals an error).  Arguments @var{start1}
+and @var{end1} specify the bounds of one portion and arguments
+@var{start2} and @var{end2} specify the bounds of the other portion.
 
 Normally, @code{transpose-regions} relocates markers with the transposed
 text; a marker previously positioned within one of the two transposed
@@ -5136,8 +5136,8 @@ making.  When that happens, the arguments to
 individual changes are made, but won't necessarily be the minimal such
 region, and the arguments to each successive call of
 @code{after-change-functions} will then delimit the part of text being
-changed exactly.  In general, we advise to use either before- or the
-after-change hooks, but not both.
+changed exactly.  In general, we advise using either the before- or
+the after-change hook, but not both.
 
 @defmac combine-after-change-calls body@dots{}
 The macro executes @var{body} normally, but arranges to call the
@@ -5159,6 +5159,30 @@ the body of a @code{combine-after-change-calls} form.
 parts of the buffer, this will still work, but it is not advisable,
 because it may lead to inefficient behavior for some change hook
 functions.
+@end defmac
+
+@defmac combine-change-calls beg end body@dots{}
+This executes @var{body} normally, except any buffer changes it makes
+do not trigger the calls to @code{before-change-functions} and
+@code{after-change-functions}.  Instead there is a single call of each
+of these hooks for the region enclosed by @var{beg} and @var{end}, the
+parameters supplied to @code{after-change-functions} reflecting the
+changes made to the size of the region by @var{body}.
+
+The result of this macro is the result returned by @var{body}.
+
+This macro is useful when a function makes a possibly large number of
+repetitive changes to the buffer, and the change hooks would otherwise
+take a long time to run, were they to be run for each individual
+buffer modification.  Emacs itself uses this macro, for example, in
+the commands @code{comment-region} and @code{uncomment-region}.
+
+@strong{Warning:} You must not alter the values of
+@code{before-change-functions} or @code{after-change-function} within
+@var{body}.
+
+@strong{Warning:} You must not make any buffer changes outside of the
+region specified by @var{beg} and @var{end}.
 @end defmac
 
 @defvar first-change-hook

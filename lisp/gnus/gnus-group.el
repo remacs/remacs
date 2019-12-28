@@ -1901,7 +1901,7 @@ If FIRST-TOO, the current line is also eligible as a target."
 	   (insert-char gnus-process-mark 1 t)))
       (unless no-advance
 	(gnus-group-next-group 1))
-      (decf n))
+      (cl-decf n))
     (gnus-group-position-point)
     n))
 
@@ -3924,7 +3924,7 @@ yanked) a list of yanked groups is returned."
   (interactive "p")
   (setq arg (or arg 1))
   (let (info group prev out)
-    (while (>= (decf arg) 0)
+    (while (>= (cl-decf arg) 0)
       (when (not (setq info (pop gnus-list-of-killed-groups)))
 	(error "No more newsgroups to yank"))
       (push (setq group (nth 1 info)) out)
@@ -4120,6 +4120,7 @@ If DONT-SCAN is non-nil, scan non-activated groups as well."
 	       method (gnus-group-real-name group) active))
 	    (gnus-group-update-group group nil t))
 	(gnus-error 3 "%s error: %s" group (gnus-status-message group))))
+    (gnus-run-hooks 'gnus-after-getting-new-news-hook)
     (when beg
       (goto-char beg))
     (when gnus-goto-next-group-when-activating

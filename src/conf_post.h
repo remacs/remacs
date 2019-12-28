@@ -291,6 +291,10 @@ extern int emacs_setenv_TZ (char const *);
 # define vfork fork
 #endif
 
+#if ! (defined __FreeBSD__ || defined GNU_LINUX || defined __MINGW32__)
+# undef PROFILING
+#endif
+
 /* Some versions of GNU/Linux define noinline in their headers.  */
 #ifdef noinline
 #undef noinline
