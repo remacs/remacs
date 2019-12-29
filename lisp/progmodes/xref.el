@@ -261,7 +261,7 @@ find a search tool; by default, this uses \"find | grep\" in the
 `project-current' roots."
   (cl-mapcan
    (lambda (dir)
-     (xref-collect-references identifier dir))
+     (xref-references-in-directory identifier dir))
    (let ((pr (project-current t)))
      (append
       (project-roots pr)
@@ -1129,7 +1129,7 @@ and just use etags."
 (declare-function grep-expand-template "grep")
 (defvar ede-minor-mode) ;; ede.el
 
-(defun xref-collect-references (symbol dir)
+(defun xref-references-in-directory (symbol dir)
   "Find all references to SYMBOL in directory DIR.
 Return a list of xref values.
 
@@ -1160,8 +1160,13 @@ and when."
     (xref--convert-hits (semantic-symref-perform-search inst)
                         (format "\\_<%s\\_>" (regexp-quote symbol)))))
 
+(define-obsolete-function-alias
+  'xref-collect-references
+  #'xref-references-in-directory
+  "27.1")
+
 ;;;###autoload
-(defun xref-collect-matches (regexp files dir ignores)
+(defun xref-matches-in-directory (regexp files dir ignores)
   "Find all matches for REGEXP in directory DIR.
 Return a list of xref values.
 Only files matching some of FILES and none of IGNORES are searched.
@@ -1206,6 +1211,11 @@ IGNORES is a list of glob patterns for files to ignore."
                     (buffer-substring-no-properties (point) (line-end-position)))
               hits)))
     (xref--convert-hits (nreverse hits) regexp)))
+
+(define-obsolete-function-alias
+  'xref-collect-matches
+  #'xref-matches-in-directory
+  "27.1")
 
 (defun xref--rgrep-command (regexp files dir ignores)
   (require 'find-dired)      ; for `find-name-arg'
