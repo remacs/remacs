@@ -1217,6 +1217,56 @@ IGNORES is a list of glob patterns for files to ignore."
   #'xref-matches-in-directory
   "27.1")
 
+;;;###autoload
+(defun xref-matches-in-files (regexp files)
+  "Find all matches for REGEXP in FILES.
+Return a list of xref values.
+FILES must be a list of absolute file names."
+  (pcase-let*
+      ((output (get-buffer-create " *project grep output*"))
+       (`(,grep-re ,file-group ,line-group . ,_) (car grep-regexp-alist))
+       (status nil)
+       (hits nil)
+       ;; Support for remote files.  The assumption is that, if the
+       ;; first file is remote, they all are, and on the same host.
+       (dir (file-name-directory (car files)))
+       (remote-id (file-remote-p dir))
+       ;; 'git ls-files' can output broken symlinks.
+       (command (format "xargs -0 grep %s -snHE -e %s"
+                        (if (and case-fold-search
+                                 (isearch-no-upper-case-p regexp t))
+                            "-i"
+                          "")
+                        (shell-quote-argument (xref--regexp-to-extended regexp)))))
+    (when remote-id
+      (setq files (mapcar #'file-local-name files)))
+    (with-current-buffer output
+      (erase-buffer)
+      (with-temp-buffer
+        (insert (mapconcat #'identity files "\0"))
+        (setq default-directory dir)
+        (setq status
+              (project--process-file-region (point-min)
+                                            (point-max)
+                                            shell-file-name
+                                            output
+                                            nil
+                                            shell-command-switch
+                                            command)))
+      (goto-char (point-min))
+      (when (and (/= (point-min) (point-max))
+                 (not (looking-at grep-re))
+                 ;; TODO: Show these matches as well somehow?
+                 (not (looking-at "Binary file .* matches")))
+        (user-error "Search failed with status %d: %s" status
+                    (buffer-substring (point-min) (line-end-position))))
+      (while (re-search-forward grep-re nil t)
+        (push (list (string-to-number (match-string line-group))
+                    (match-string file-group)
+                    (buffer-substring-no-properties (point) (line-end-position)))
+              hits)))
+    (xref--convert-hits (nreverse hits) regexp)))
+
 (defun xref--rgrep-command (regexp files dir ignores)
   (require 'find-dired)      ; for `find-name-arg'
   (defvar grep-find-template)

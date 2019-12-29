@@ -425,8 +425,6 @@ DIRS must contain directory names."
 (declare-function grep-read-files "grep")
 (declare-function xref--show-xrefs "xref")
 (declare-function xref--find-ignores-arguments "xref")
-(declare-function xref--regexp-to-extended "xref")
-(declare-function xref--convert-hits "xref")
 
 ;;;###autoload
 (defun project-find-regexp (regexp)
@@ -479,51 +477,7 @@ pattern to search for."
      nil)))
 
 (defun project--find-regexp-in-files (regexp files)
-  (pcase-let*
-      ((output (get-buffer-create " *project grep output*"))
-       (`(,grep-re ,file-group ,line-group . ,_) (car grep-regexp-alist))
-       (status nil)
-       (hits nil)
-       (xrefs nil)
-       ;; Support for remote files.  The assumption is that, if the
-       ;; first file is remote, they all are, and on the same host.
-       (dir (file-name-directory (car files)))
-       (remote-id (file-remote-p dir))
-       ;; 'git ls-files' can output broken symlinks.
-       (command (format "xargs -0 grep %s -snHE -e %s"
-                        (if (and case-fold-search
-                                 (isearch-no-upper-case-p regexp t))
-                            "-i"
-                          "")
-                        (shell-quote-argument (xref--regexp-to-extended regexp)))))
-    (when remote-id
-      (setq files (mapcar #'file-local-name files)))
-    (with-current-buffer output
-      (erase-buffer)
-      (with-temp-buffer
-        (insert (mapconcat #'identity files "\0"))
-        (setq default-directory dir)
-        (setq status
-              (project--process-file-region (point-min)
-                                            (point-max)
-                                            shell-file-name
-                                            output
-                                            nil
-                                            shell-command-switch
-                                            command)))
-      (goto-char (point-min))
-      (when (and (/= (point-min) (point-max))
-                 (not (looking-at grep-re))
-                 ;; TODO: Show these matches as well somehow?
-                 (not (looking-at "Binary file .* matches")))
-        (user-error "Search failed with status %d: %s" status
-                    (buffer-substring (point-min) (line-end-position))))
-      (while (re-search-forward grep-re nil t)
-        (push (list (string-to-number (match-string line-group))
-                    (match-string file-group)
-                    (buffer-substring-no-properties (point) (line-end-position)))
-              hits)))
-    (setq xrefs (xref--convert-hits (nreverse hits) regexp))
+  (let ((xrefs (xref-matches-in-files regexp files)))
     (unless xrefs
       (user-error "No matches for: %s" regexp))
     xrefs))
