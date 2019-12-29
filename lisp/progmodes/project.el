@@ -175,7 +175,6 @@ subset of the project roots and external roots.
 
 The default implementation uses `find-program'.  PROJECT is used
 to find the list of ignores for each directory."
-  (require 'xref)
   (cl-mapcan
    (lambda (dir)
      (project--files-in-directory dir
@@ -184,6 +183,7 @@ to find the list of ignores for each directory."
 
 (defun project--files-in-directory (dir ignores &optional files)
   (require 'find-dired)
+  (require 'xref)
   (defvar find-name-arg)
   (let ((default-directory dir)
         (command (format "%s %s %s -type f %s -print0"
@@ -436,6 +436,7 @@ e.g. entering `ch' is equivalent to `*.[ch]'.  As whitespace
 triggers completion when entering a pattern, including it
 requires quoting, e.g. `\\[quoted-insert]<space>'."
   (interactive (list (project--read-regexp)))
+  (require 'xref)
   (let* ((pr (project-current t))
          (files
           (if (not current-prefix-arg)
@@ -467,6 +468,7 @@ requires quoting, e.g. `\\[quoted-insert]<space>'."
 With \\[universal-argument] prefix, you can specify the file name
 pattern to search for."
   (interactive (list (project--read-regexp)))
+  (require 'xref)
   (let* ((pr (project-current t))
          (files
           (project-files pr (append
