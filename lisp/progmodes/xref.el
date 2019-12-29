@@ -1129,6 +1129,7 @@ and just use etags."
 (declare-function grep-expand-template "grep")
 (defvar ede-minor-mode) ;; ede.el
 
+;;;###autoload
 (defun xref-references-in-directory (symbol dir)
   "Find all references to SYMBOL in directory DIR.
 Return a list of xref values.
