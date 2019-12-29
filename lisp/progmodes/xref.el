@@ -1162,10 +1162,11 @@ and when."
 
 ;;;###autoload
 (defun xref-collect-matches (regexp files dir ignores)
-  "Find all matches for REGEXP in FILES in directory DIR.
+  "Find all matches for REGEXP in directory DIR.
 Return a list of xref values.
+Only files matching some of FILES and none of IGNORES are searched.
 FILES is a string with glob patterns separated by spaces.
-IGNORES is a list of glob patterns."
+IGNORES is a list of glob patterns for files to ignore."
   ;; DIR can also be a regular file for now; let's not advertise that.
   (grep-compute-defaults)
   (defvar grep-find-template)
