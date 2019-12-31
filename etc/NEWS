@@ -164,7 +164,7 @@ and will override their traditional locations (the home directory,
 "~/.emacs.d", etc.).
 
 Emacs will still look for init files in their traditional locations if
-XDG_CONFIG_HOME does not exist, so invoking Emacs with
+XDG_CONFIG_HOME/emacs does not exist, so invoking Emacs with
 XDG_CONFIG_HOME='/nowhere' might be useful if your new-location init
 files are scrambled, or if you want to force Emacs to ignore files
 under XDG_CONFIG_HOME for some other reason.
