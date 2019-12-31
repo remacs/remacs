@@ -1,7 +1,6 @@
 //! marker support
 
 use libc::{c_void, ptrdiff_t};
-use std::mem;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
@@ -59,7 +58,7 @@ impl LispMarkerRef {
     }
 
     pub fn buffer(self) -> Option<LispBufferRef> {
-        unsafe { self.buffer.as_ref().map(|b| mem::transmute(b)) }
+        ExternalPtr::from_ptr(self.buffer.cast())
     }
 
     pub fn set_buffer(mut self, b: *mut Lisp_Buffer) {
@@ -73,7 +72,7 @@ impl LispMarkerRef {
     }
 
     pub fn next(self) -> Option<Self> {
-        unsafe { self.next.as_ref().map(|n| mem::transmute(n)) }
+        Self::from_ptr(self.next.cast())
     }
 
     pub fn set_next(mut self, m: *mut Lisp_Marker) {
@@ -139,7 +138,7 @@ impl LispObject {
 impl LispMiscRef {
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {
-            unsafe { Some(mem::transmute(self)) }
+            Some(self.cast())
         } else {
             None
         }

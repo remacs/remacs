@@ -234,7 +234,8 @@ impl LispBufferRef {
     }
 
     pub fn markers(self) -> Option<LispMarkerRef> {
-        unsafe { (*self.text).markers.as_ref().map(|m| mem::transmute(m)) }
+        let markers = unsafe { (*self.text).markers };
+        ExternalPtr::from_ptr(markers.cast())
     }
 
     pub fn mark_active(self) -> LispObject {
@@ -722,11 +723,11 @@ impl LispBufferRef {
     }
 
     pub fn overlays_before(self) -> Option<LispOverlayRef> {
-        unsafe { self.overlays_before.as_ref().map(|m| mem::transmute(m)) }
+        ExternalPtr::from_ptr(self.overlays_before.cast())
     }
 
     pub fn overlays_after(self) -> Option<LispOverlayRef> {
-        unsafe { self.overlays_after.as_ref().map(|m| mem::transmute(m)) }
+        ExternalPtr::from_ptr(self.overlays_after.cast())
     }
 
     pub fn as_live(self) -> Option<Self> {

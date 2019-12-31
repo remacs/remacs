@@ -120,7 +120,11 @@ impl<T> ExternalPtr<T> {
     }
 
     pub fn from_ptr(ptr: *mut c_void) -> Option<Self> {
-        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
+        if ptr.is_null() {
+            None
+        } else {
+            Some(Self(ptr as *mut T))
+        }
     }
 
     pub fn replace_ptr(&mut self, ptr: *mut T) {
@@ -140,6 +144,10 @@ impl<T> ExternalPtr<T> {
     pub unsafe fn ptr_sub(&mut self, size: usize) {
         let ptr = self.0.sub(size);
         self.replace_ptr(ptr);
+    }
+
+    pub fn cast<U>(mut self) -> ExternalPtr<U> {
+        ExternalPtr::<U>(self.as_mut().cast())
     }
 }
 
@@ -165,6 +173,12 @@ impl<T> PartialEq for ExternalPtr<T> {
 impl<T> PartialOrd for ExternalPtr<T> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.as_ptr().cmp(&other.as_ptr()))
+    }
+}
+
+impl<T> From<*mut T> for ExternalPtr<T> {
+    fn from(o: *mut T) -> Self {
+        Self::new(o)
     }
 }
 
