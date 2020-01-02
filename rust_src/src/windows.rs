@@ -760,6 +760,22 @@ pub extern "C" fn decode_any_window(window: LispObject) -> LispWindowRef {
     LispWindowOrSelected::from(window).into()
 }
 
+/// Return the width in pixels of WINDOW's vertical scrollbar.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_scroll_bar_width(window: LispWindowLiveOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
+    win.scroll_bar_area_width()
+}
+
+/// Return the height in pixels of WINDOW's horizontal scrollbar.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_scroll_bar_height(window: LispWindowLiveOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
+    win.scroll_bar_area_height()
+}
+
 /// Return the normal height of window WINDOW.
 /// WINDOW must be a valid window and defaults to the selected one.
 /// If HORIZONTAL is non-nil, return the normal width of WINDOW.

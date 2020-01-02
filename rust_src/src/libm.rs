@@ -1,5 +1,4 @@
 use libc::c_int;
-use std::mem;
 
 mod sys {
     use libc::{c_double, c_int};
@@ -14,8 +13,7 @@ mod sys {
 
 /// Return the sign bit of the float.
 pub fn signbit(x: f64) -> bool {
-    let bits: u64 = unsafe { mem::transmute(x) };
-    bits >> 63 != 0
+    x.is_sign_negative()
 }
 
 /// Split the number `x` into a normalized fraction and an exponent.
@@ -34,4 +32,19 @@ pub fn ldexp(x: f64, exp: c_int) -> f64 {
 /// Round `x` to an integer value in floating-point format.
 pub fn rint(x: f64) -> f64 {
     unsafe { sys::rint(x) }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::signbit;
+
+    #[test]
+    fn test_signbit() {
+        assert!(signbit(-1f64));
+        assert!(signbit(-0f64));
+        assert!(signbit(-std::f64::NAN));
+        assert!(!signbit(std::f64::NAN));
+        assert!(!signbit(0f64));
+        assert!(!signbit(1f64));
+    }
 }

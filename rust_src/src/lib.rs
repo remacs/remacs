@@ -18,6 +18,7 @@
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]
 #![feature(untagged_unions)]
+#![feature(ptr_cast)]
 
 extern crate errno;
 #[macro_use]
@@ -73,6 +74,7 @@ mod charset;
 mod chartable;
 mod cmds;
 mod coding;
+mod composite;
 mod crypto;
 mod data;
 mod decompress;
@@ -95,6 +97,7 @@ mod hashtable;
 mod image;
 mod indent;
 mod interactive;
+mod intervals;
 mod keyboard;
 mod keymap;
 mod libm;

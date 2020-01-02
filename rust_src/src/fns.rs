@@ -598,4 +598,55 @@ pub fn copy_sequence(mut arg: LispObject) -> LispObject {
     }
 }
 
+/// Check that ARRAY can have a valid subarray [FROM..TO),
+/// given that its size is SIZE.
+/// If FROM is nil, use 0; if TO is nil, use SIZE.
+/// Count negative values backwards from the end.
+/// Set *IFROM and *ITO to the two indexes used.
+pub fn validate_subarray_rust(
+    array: LispObject,
+    from: Option<EmacsInt>,
+    to: Option<EmacsInt>,
+    size: isize,
+) -> (EmacsInt, EmacsInt) {
+    // change from, to and size to EmacsInt
+    let int_size = size as EmacsInt;
+    let mut int_from = from.unwrap_or(0);
+    let mut int_to = to.unwrap_or(int_size);
+
+    // Negative indexes count from the end of the array.
+    // Adding size to them should turn them into
+    // equivalent positive indexes.
+    if int_from < 0 {
+        int_from += int_size;
+    }
+    if int_to < 0 {
+        int_to += int_size;
+    }
+
+    // check if from is less than to, or if from or to are out of range.
+    if 0 > int_from || int_from > int_to || int_to > int_size {
+        args_out_of_range!(array, LispObject::from(int_from), LispObject::from(int_to));
+    }
+
+    (int_from, int_to)
+}
+
+#[no_mangle]
+pub extern "C" fn validate_subarray(
+    array: LispObject,
+    from: LispObject,
+    to: LispObject,
+    size: isize,
+    new_from: *mut isize,
+    new_to: *mut isize,
+) {
+    let (f, t) = validate_subarray_rust(array, from.into(), to.into(), size);
+
+    unsafe {
+        *new_from = f as isize;
+        *new_to = t as isize;
+    }
+}
+
 include!(concat!(env!("OUT_DIR"), "/fns_exports.rs"));

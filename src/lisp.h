@@ -4309,6 +4309,8 @@ extern Lisp_Object do_switch_frame (Lisp_Object, int, int, Lisp_Object);
 extern Lisp_Object get_frame_param (struct frame *, Lisp_Object);
 extern void frames_discard_buffer (Lisp_Object);
 extern void syms_of_frame (void);
+extern void set_last_nonminibuffer_frame(struct frame *);
+extern struct frame *get_last_nonminibuffer_frame(void);
 
 /* Defined in emacs.c.  */
 extern char **initial_argv;
