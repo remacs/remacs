@@ -538,6 +538,7 @@ adjust_glyph_matrix (struct window *w, struct glyph_matrix *matrix, int x, int y
       /* If we are resizing a window, make sure the previous mode-line
 	 row of the window's current matrix is no longer marked as such.  */
       if (w && matrix == w->current_matrix
+	  && matrix->nrows > 0
 	  && dim.height != matrix->nrows
 	  && matrix->nrows <= matrix->rows_allocated)
 	MATRIX_MODE_LINE_ROW (matrix)->mode_line_p = false;
