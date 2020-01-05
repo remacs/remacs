@@ -3206,7 +3206,11 @@ CALS (DocBook DTD):
 	  (while (and (re-search-forward "$" nil t)
 		      (not (eobp)))
 	    (insert "<br />")
-	    (forward-char 1))))
+	    (forward-char 1)))
+	(unless (and table-html-delegate-spacing-to-user-agent
+		     (progn
+		       (goto-char (point-min))
+		       (looking-at "\\s *\\'")))))
        ((eq language 'cals)
 	(table--remove-eol-spaces (point-min) (point-max))
 	(if (re-search-forward "\\s +\\'" nil t)
