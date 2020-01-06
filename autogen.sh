@@ -189,7 +189,7 @@ if [ -n $rust_toolchain_vers_path ] ; then
     retval=$?
 
     case $retval in
-        0) echo "Your system has the required Rust toolchain installed for building Remacs." ;;
+        0|3) echo "Your system has the required Rust toolchain installed for building Remacs." ;;
         1) echo >&2 "Remacs currently requires Rust toolchain version $remacs_version."
 	   echo >&2 "Run 'rustup install $remacs_version'."
 	   exit 1 ;;
@@ -198,7 +198,7 @@ if [ -n $rust_toolchain_vers_path ] ; then
 	   echo >&2 "Run 'rustup override unset' in this directory."
 	   exit 1 ;;
         *) # /should/ not happen
-	   echo >&2 "Remacs currently requires Rust toolchain version $remacs_version."
+	   echo >&2 "Assertion failed: Remacs currently requires Rust toolchain version $remacs_version: rustup returned $retval."
 	   exit 1 ;;
     esac
 
