@@ -4183,6 +4183,23 @@ getpwent endpwent getgrent endgrent \
 cfmakeraw cfsetspeed __executable_start log2 pthread_setname_np)
 LIBS=$OLD_LIBS
 
+if test "$ac_cv_func_pthread_setname_np" = "yes"; then
+  AC_CACHE_CHECK(
+   [whether pthread_setname_np takes a single argument],
+   [emacs_cv_pthread_setname_np_1arg],
+   [AC_COMPILE_IFELSE(
+     [AC_LANG_PROGRAM(
+       [[#include <pthread.h>]],
+       [[pthread_setname_np ("a");]])],
+     [emacs_cv_pthread_setname_np_1arg=yes],
+     [emacs_cv_pthread_setname_np_1arg=no])])
+  if test "$emacs_cv_pthread_setname_np_1arg" = "yes"; then
+    AC_DEFINE(
+      HAVE_PTHREAD_SETNAME_NP_1ARG, 1,
+      [Define to 1 if pthread_setname_np takes a single argument.])
+  fi
+fi
+
 dnl No need to check for posix_memalign if aligned_alloc works.
 AC_CHECK_FUNCS([aligned_alloc posix_memalign], [break])
 AC_CHECK_DECLS([aligned_alloc], [], [], [[#include <stdlib.h>]])
