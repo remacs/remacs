@@ -463,6 +463,12 @@ Usually run by inclusion in `minibuffer-setup-hook'."
                        ((and fido-mode
                              (not minibuffer-default)
                              (eq (icomplete--category) 'file))
+                        ;; `fido-mode' has some extra file-sorting
+                        ;; semantics even if there isn't a default,
+                        ;; which is to bubble "./" to the top if it
+                        ;; exists.  This makes M-x dired RET RET go to
+                        ;; the directory of current file, which is
+                        ;; what vanilla Emacs and `ido-mode' both do.
                         `(,(lambda (comp)
                              (string= "./" comp)))))
        thereis (cl-loop
