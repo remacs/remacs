@@ -149,32 +149,17 @@ echo "Checking Rust toolchain install ..."
 command -v rustup >/dev/null 2>&1 || { echo >&2 "Remacs requires the rustup command to be installed in order to build. Please see https://www.rustup.rs/; Aborting."; exit 1; }
 
 ## $1 = Remacs required version
-## Return 0 if Remacs Rust toolchain required version is installed and active
+## Return 0 if Remacs Rust toolchain required version is installed
 ## Return 1 if Remacs Rust toolchain required version is not installed
-## Return 2 if Remacs Rust toolchain required version is installed but not active (directory override)
-## Return 3 for unexpected error
 check_rust_version ()
 {
     remacs_version=$1
 
-    rustup_active_version=$(rustup show | awk '/active toolchain/ {getline; getline; getline; print}')
-    echo $rustup_active_version | grep $remacs_version >/dev/null && return 0
-
-    if rustup show | grep -e "active\|installed toolchain" >/dev/null; then
-        rustup_installed=$(rustup show | awk '/installed/{flag=1; next} /active/{flag=0} flag')
-        echo $rustup_installed | grep $remacs_version >/dev/null || return 1
-    else
-        rustup_installed=$(rustup show | grep "overridden by")
-        if echo $rustup_installed | grep $remacs_version >/dev/null; then
-            return 0
-        else
-            return 1
-        fi
-    fi
-
-    echo $rustup_active_version | grep 'directory override'  >/dev/null && return 2
-
-    return 3
+    # rustup show will automatically install things without asking and provides no control over this.
+    # Instead, let's use 'toolchain list' which is idempotent and makes no changes.
+    # When cargo begins to compile the rust-toolchain file will be honored so no further work is needed.
+    rustup toolchain list | grep -q $remacs_version
+    return $retval
 }
 
 ## If the rust toolchain version path is set then check the version
@@ -189,16 +174,9 @@ if [ -n $rust_toolchain_vers_path ] ; then
     retval=$?
 
     case $retval in
-        0|3) echo "Your system has the required Rust toolchain installed for building Remacs." ;;
+        0) echo "Your system has the required Rust toolchain installed for building Remacs." ;;
         1) echo >&2 "Remacs currently requires Rust toolchain version $remacs_version."
 	   echo >&2 "Run 'rustup install $remacs_version'."
-	   exit 1 ;;
-        2) echo >&2 "Remacs currently requires Rust toolchain version $remacs_version."
-	   echo >&2 -e "The active version is not the required one and is set via directory override:\n\t$rustup_active_version"
-	   echo >&2 "Run 'rustup override unset' in this directory."
-	   exit 1 ;;
-        *) # /should/ not happen
-	   echo >&2 "Assertion failed: Remacs currently requires Rust toolchain version $remacs_version: rustup returned $retval."
 	   exit 1 ;;
     esac
 
