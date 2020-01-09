@@ -448,13 +448,14 @@ Usually run by inclusion in `minibuffer-setup-hook'."
        with end = (icomplete--field-end)
        with all = (completion-all-sorted-completions beg end)
        for fn in (cond ((and minibuffer-default
+                             (stringp minibuffer-default) ; bug#38992
                              (= (icomplete--field-end) (icomplete--field-beg)))
-                        ;; When we have a non-nil default and no input
-                        ;; whatsoever: we want to make sure that default
-                        ;; is bubbled to the top so that
+                        ;; When we have a non-nil string default and
+                        ;; no input whatsoever: we want to make sure
+                        ;; that default is bubbled to the top so that
                         ;; `icomplete-force-complete-and-exit' will
-                        ;; select it (do that even if the match doesn't
-                        ;; match the completion perfectly.
+                        ;; select it (do that even if the match
+                        ;; doesn't match the completion perfectly.
                         `(,(lambda (comp)
                              (equal minibuffer-default comp))
                           ,(lambda (comp)
