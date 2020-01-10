@@ -68,11 +68,11 @@ trees, either.
 
 @item
 TLS connections are back to their lenient security settings.  We
-decide that too tight security settings are an annoyance for users,
-and make little sense considering the world-wide tendency to have less
-and less network security problems as we move back in time (those
-issues will be completely gone when networks disappear in some distant
-past).
+decided that too tight security settings are an annoyance for users,
+and make little sense considering the world-wide tendency to have
+fewer and fewer network security problems as we move back in time
+(those issues will be completely gone when networks disappear in some
+distant past).
 
 @item
 The @code{server-after-make-frame-hook} hook was deleted, in
@@ -99,8 +99,9 @@ reliably than eny such display indicator.
 We removed the features that made visiting large files easier.  Thus,
 Emacs will no longer suggest visiting a large file literally, nor will
 offer the @code{so-long} mode to deal with overly-long lines.  We
-decided that this simplification is worthwhile, given the general
-tendency of having very large files a rarity as we move back in time.
+decided that this simplification is worthwhile, given that the general
+tendency of having very large files is becoming a rarity as we move
+back in time.
 
 @item
 We have removed the feature that displayed echo-area messages without
