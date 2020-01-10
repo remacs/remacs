@@ -75,4 +75,6 @@ extern void apropos_accum (Lisp_Object symbol, Lisp_Object string);
 /* Apropos - finding all symbols whose names match a regexp.		*/
 extern Lisp_Object apropos_predicate;
 extern Lisp_Object apropos_accumulate;
+/* Pre-allocated 2-element vector for Fcommand_remapping to use.  */
+extern Lisp_Object command_remapping_vector;
 #endif

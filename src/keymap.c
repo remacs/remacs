@@ -81,9 +81,6 @@ Lisp_Object apropos_accumulate;
 /* Alist of elements like (DEL . "\d").  */
 static Lisp_Object exclude_keys;
 
-/* Pre-allocated 2-element vector for Fcommand_remapping to use.  */
-static Lisp_Object command_remapping_vector;
-
 static Lisp_Object store_in_keymap (Lisp_Object, Lisp_Object, Lisp_Object);
 
 static Lisp_Object define_as_prefix (Lisp_Object, Lisp_Object);
@@ -776,37 +773,6 @@ binding KEY to DEF is added at the front of KEYMAP.  */)
 		 trailing_esc);
 	}
     }
-}
-
-/* This function may GC (it calls Fkey_binding).  */
-
-DEFUN ("command-remapping", Fcommand_remapping, Scommand_remapping, 1, 3, 0,
-       doc: /* Return the remapping for command COMMAND.
-Returns nil if COMMAND is not remapped (or not a symbol).
-
-If the optional argument POSITION is non-nil, it specifies a mouse
-position as returned by `event-start' and `event-end', and the
-remapping occurs in the keymaps associated with it.  It can also be a
-number or marker, in which case the keymap properties at the specified
-buffer position instead of point are used.  The KEYMAPS argument is
-ignored if POSITION is non-nil.
-
-If the optional argument KEYMAPS is non-nil, it should be a list of
-keymaps to search for command remapping.  Otherwise, search for the
-remapping in all currently active keymaps.  */)
-  (Lisp_Object command, Lisp_Object position, Lisp_Object keymaps)
-{
-  if (!SYMBOLP (command))
-    return Qnil;
-
-  ASET (command_remapping_vector, 1, command);
-
-  if (NILP (keymaps))
-    command = Fkey_binding (command_remapping_vector, Qnil, Qt, position);
-  else
-    command = Flookup_key (Fcons (Qkeymap, keymaps),
-			   command_remapping_vector, Qnil);
-  return INTEGERP (command) ? Qnil : command;
 }
 
 /* Make KEYMAP define event C as a keymap (i.e., as a prefix).
@@ -3054,7 +3020,6 @@ be preferred.  */);
   command_remapping_vector = Fmake_vector (make_number (2), Qremap);
   staticpro (&command_remapping_vector);
 
-  defsubr (&Scommand_remapping);
   defsubr (&Sminor_mode_key_binding);
   defsubr (&Sdefine_key);
   defsubr (&Scurrent_minor_mode_maps);
