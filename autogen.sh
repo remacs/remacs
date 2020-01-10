@@ -159,6 +159,7 @@ check_rust_version ()
     # Instead, let's use 'toolchain list' which is idempotent and makes no changes.
     # When cargo begins to compile the rust-toolchain file will be honored so no further work is needed.
     rustup toolchain list | grep -q $remacs_version
+    retval=$?
     return $retval
 }
 
