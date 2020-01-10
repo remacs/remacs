@@ -9,6 +9,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
+    - name: setup Rust version
+      run: rustup toolchain install $(cat rust-toolchain)
     - name: autogen
       run: ./autogen.sh
     - name: configure
