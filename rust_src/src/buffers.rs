@@ -50,9 +50,9 @@ use crate::{
     },
     remacs_sys::{
         buffer_permanent_local_flags, Qafter_string, Qbefore_string, Qbuffer_list_update_hook,
-        Qbuffer_read_only, Qbufferp, Qerror, Qevaporate, Qfundamental_mode, Qget_file_buffer, Qinhibit_quit,
-        Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
-        Qt, Qunbound, Qvisible, UNKNOWN_MODTIME_NSECS,
+        Qbuffer_read_only, Qbufferp, Qerror, Qevaporate, Qfundamental_mode, Qget_file_buffer,
+        Qinhibit_quit, Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local,
+        Qpermanent_local_hook, Qt, Qunbound, Qvisible, UNKNOWN_MODTIME_NSECS,
     },
     remacs_sys::{Fget_buffer_window, Fmake_marker, Fset_buffer_major_mode},
     strings::string_equal,
