@@ -781,7 +781,7 @@ pub fn current_minor_mode_maps() -> LispObject {
     let mut maps: *mut LispObject = ptr::null_mut();
     unsafe {
         let num_of_maps = current_minor_maps(ptr::null_mut(), &mut maps);
-        Flist(num_of_maps, maps)
+        list!(num_of_maps, maps)
     }
 }
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
