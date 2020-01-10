@@ -4295,6 +4295,7 @@ This works for both graphical and text displays."
 	     (widget-put widget :children children)
 	     (custom-group-state-update widget))
 	   ;; End line
+           (insert "\n")
            (custom-group--draw-horizontal-line)))))
 
 (defvar custom-group-menu
