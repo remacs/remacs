@@ -465,24 +465,6 @@ WINDOW must be a live window and defaults to the selected one.  */)
   return (make_number (WINDOW_BOTTOM_DIVIDER_WIDTH (decode_live_window (window))));
 }
 
-DEFUN ("window-scroll-bar-width", Fwindow_scroll_bar_width,
-       Swindow_scroll_bar_width, 0, 1, 0,
-       doc: /* Return the width in pixels of WINDOW's vertical scrollbar.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return (make_number (WINDOW_SCROLL_BAR_AREA_WIDTH (decode_live_window (window))));
-}
-
-DEFUN ("window-scroll-bar-height", Fwindow_scroll_bar_height,
-       Swindow_scroll_bar_height, 0, 1, 0,
-       doc: /* Return the height in pixels of WINDOW's horizontal scrollbar.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return (make_number (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window))));
-}
-
 /* Test if the character at column X, row Y is within window W.
    If it is not, return ON_NOTHING;
    if it is on the window's vertical divider, return
@@ -6188,8 +6170,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_header_line_height);
   defsubr (&Swindow_right_divider_width);
   defsubr (&Swindow_bottom_divider_width);
-  defsubr (&Swindow_scroll_bar_width);
-  defsubr (&Swindow_scroll_bar_height);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
   defsubr (&Swindow_end);

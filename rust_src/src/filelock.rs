@@ -25,7 +25,6 @@ use crate::{
     remacs_sys::{Qnil, Qstringp, Qt},
     threads::ThreadState,
 };
-use LockState::*;
 
 /// An arbitrary limit on lock contents length when it is stored in the
 /// contents of the lock file.  8 K should be plenty big enough in practice.
@@ -47,7 +46,7 @@ struct LockInfo {
 impl LockInfo {
     /// Parses a string like `USER@HOST.PID:BOOT_TIME` into a [`LockInfo`].
     /// Returns [`None`] if the parse fails.
-    fn parse(data: &str) -> Option<LockInfo> {
+    fn parse(data: &str) -> Option<Self> {
         // Treat "\357\200\242" (U+F022 in UTF-8) as if it were ":" (Bug#24656).
         // This works around a bug in the Linux CIFS kernel client, which can
         // mistakenly transliterate ':' to U+F022 in symlink contents.
@@ -67,8 +66,8 @@ impl LockInfo {
         // NOTE: Unlike GNU Emacs, we do not tolerate negative PID values
         // or over/underflow.
         let (pid_str, boot_time_str) =
-            rest.split_at(rest.find(boot_time_sep).unwrap_or(rest.len()));
-        let pid = pid_str[1..].parse::<i32>().ok().filter(|pid| pid > &0)?;
+            rest.split_at(rest.find(boot_time_sep).unwrap_or_else(|| rest.len()));
+        let pid = pid_str[1..].parse::<i32>().ok().filter(|pid| *pid > 0)?;
 
         // After the ':' or equivalent, if there is one, comes the boot time.
         let boot_time = if boot_time_str.is_empty() {
@@ -86,7 +85,7 @@ impl LockInfo {
             )
         };
 
-        Some(LockInfo {
+        Some(Self {
             user,
             host,
             pid,
@@ -171,10 +170,11 @@ fn read_lock_data(path: &Path) -> Result<String> {
         match read_link_as_string(path) {
             ok @ Ok(_) => return ok,
 
-            Err(ref e) if e.kind() == InvalidInput => match read_nofollow(path, MAX_LOCK_INFO)? {
-                Some(target) => return Ok(target),
-                None => (),
-            },
+            Err(ref e) if e.kind() == InvalidInput => {
+                if let Some(target) = read_nofollow(path, MAX_LOCK_INFO)? {
+                    return Ok(target);
+                }
+            }
 
             err => return err,
         }
@@ -191,10 +191,12 @@ fn read_lock_data(path: &Path) -> Result<String> {
 fn read_lock_info(path: &Path) -> Result<Option<LockInfo>> {
     match read_lock_data(path) {
         Ok(data) => {
-            let info = LockInfo::parse(&data).ok_or(Error::new(
-                InvalidData,
-                format!("Invalid lock information in '{}'", path.display()),
-            ))?;
+            let info = LockInfo::parse(&data).ok_or_else(|| {
+                Error::new(
+                    InvalidData,
+                    format!("Invalid lock information in '{}'", path.display()),
+                )
+            })?;
             Ok(Some(info))
         }
 
@@ -241,22 +243,22 @@ fn current_lock_owner(path: &Path) -> Result<LockState> {
             if info.host.as_bytes() == system_name().as_slice() {
                 if info.pid == std::process::id() as i32 {
                     // We own it.
-                    LockedByUs
+                    LockState::LockedByUs
                 } else if process_exists(info.pid) && boot_time_within_one_second(&info) {
                     // An existing process on this machine owns it.
-                    LockedBy(info)
+                    LockState::LockedBy(info)
                 } else {
                     // The owner process is dead or has a strange pid, so try to
                     // zap the lockfile.
                     remove_file(path)?;
-                    NotLocked
+                    LockState::NotLocked
                 }
             } else {
-                LockedBy(info)
+                LockState::LockedBy(info)
             }
         }
 
-        None => NotLocked,
+        None => LockState::NotLocked,
     };
 
     Ok(result)
@@ -326,9 +328,9 @@ pub fn file_locked_p(filename: LispStringRef) -> LispObject {
     let path = make_lock_name(expand_file_name(filename, None));
 
     match current_lock_owner(&path) {
-        Ok(NotLocked) | Err(_) => Qnil,
-        Ok(LockedByUs) => Qt,
-        Ok(LockedBy(info)) => LispObject::from(info.user.as_str()),
+        Ok(LockState::NotLocked) | Err(_) => Qnil,
+        Ok(LockState::LockedByUs) => Qt,
+        Ok(LockState::LockedBy(info)) => LispObject::from(info.user.as_str()),
     }
 }
 

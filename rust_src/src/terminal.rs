@@ -1,6 +1,6 @@
 //! Functions related to terminal devices.
 
-use std::{mem, ptr};
+use std::ptr;
 
 use libc::{c_int, c_void};
 
@@ -36,7 +36,7 @@ impl LispTerminalRef {
 impl LispVectorlikeRef {
     pub fn as_terminal(self) -> Option<LispTerminalRef> {
         if self.is_pseudovector(pvec_type::PVEC_TERMINAL) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }

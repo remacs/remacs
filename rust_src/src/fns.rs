@@ -15,7 +15,7 @@ use crate::{
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     minibuf::read_from_minibuffer,
-    multibyte::{string_char_and_length, write_codepoint, LispStringRef},
+    multibyte::{string_char_and_length, LispStringRef},
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
@@ -343,7 +343,7 @@ pub fn reverse(seq: LispObject) -> LispObject {
                     let (c, len) = string_char_and_length(p);
                     p = p.add(len);
                     q = q.sub(len);
-                    write_codepoint(slice::from_raw_parts_mut(q, len), c);
+                    c.write_to(slice::from_raw_parts_mut(q, len));
                 }
             }
             new.into()
@@ -591,10 +591,61 @@ pub fn copy_sequence(mut arg: LispObject) -> LispObject {
         let mut new = unsafe { make_uninit_bool_vector(nbits).force_bool_vector() };
         new.as_mut_slice().copy_from_slice(boolvec.as_slice());
         new.into()
-    } else if !(arg.is_cons() || arg.is_vector() || arg.is_string()) {
-        wrong_type!(Qsequencep, arg);
-    } else {
+    } else if arg.is_cons() || arg.is_vector() || arg.is_string() {
         unsafe { lisp_concat(1, &mut arg, arg.get_type(), false) }
+    } else {
+        wrong_type!(Qsequencep, arg);
+    }
+}
+
+/// Check that ARRAY can have a valid subarray [FROM..TO),
+/// given that its size is SIZE.
+/// If FROM is nil, use 0; if TO is nil, use SIZE.
+/// Count negative values backwards from the end.
+/// Set *IFROM and *ITO to the two indexes used.
+pub fn validate_subarray_rust(
+    array: LispObject,
+    from: Option<EmacsInt>,
+    to: Option<EmacsInt>,
+    size: isize,
+) -> (EmacsInt, EmacsInt) {
+    // change from, to and size to EmacsInt
+    let int_size = size as EmacsInt;
+    let mut int_from = from.unwrap_or(0);
+    let mut int_to = to.unwrap_or(int_size);
+
+    // Negative indexes count from the end of the array.
+    // Adding size to them should turn them into
+    // equivalent positive indexes.
+    if int_from < 0 {
+        int_from += int_size;
+    }
+    if int_to < 0 {
+        int_to += int_size;
+    }
+
+    // check if from is less than to, or if from or to are out of range.
+    if 0 > int_from || int_from > int_to || int_to > int_size {
+        args_out_of_range!(array, LispObject::from(int_from), LispObject::from(int_to));
+    }
+
+    (int_from, int_to)
+}
+
+#[no_mangle]
+pub extern "C" fn validate_subarray(
+    array: LispObject,
+    from: LispObject,
+    to: LispObject,
+    size: isize,
+    new_from: *mut isize,
+    new_to: *mut isize,
+) {
+    let (f, t) = validate_subarray_rust(array, from.into(), to.into(), size);
+
+    unsafe {
+        *new_from = f as isize;
+        *new_to = t as isize;
     }
 }
 

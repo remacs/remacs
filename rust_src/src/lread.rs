@@ -17,13 +17,14 @@ use crate::{
     },
     eval::unbind_to,
     lisp::LispObject,
-    multibyte::char_resolve_modifier_mask,
-    obarray::{intern, intern_c_string_1},
+    multibyte::{char_resolve_modifier_mask, LispSymbolOrString},
+    obarray::{intern, intern_c_string_1, LispObarrayRef},
     remacs_sys,
     remacs_sys::infile,
     remacs_sys::{
-        block_input, build_string, getc_unlocked, maybe_quit, read_filtered_event,
-        read_internal_start, readevalloop, specbind, staticpro, symbol_redirect, unblock_input,
+        block_input, build_string, getc_unlocked, maybe_quit, oblookup_last_bucket_number,
+        read_filtered_event, read_internal_start, readevalloop, specbind, staticpro,
+        symbol_redirect, unblock_input,
     },
     remacs_sys::{globals, EmacsInt},
     remacs_sys::{Qeval_buffer_list, Qnil, Qread_char, Qstandard_output, Qsymbolp},
@@ -206,10 +207,10 @@ pub unsafe extern "C" fn readbyte_from_stdio() -> i32 {
 
     unblock_input();
 
-    if c != libc::EOF {
-        c
-    } else {
+    if c == libc::EOF {
         -1
+    } else {
+        c
     }
 }
 
@@ -402,6 +403,48 @@ pub fn read_char_exclusive(
         Some(num) => Some(char_resolve_modifier_mask(num)),
         None => None,
     }
+}
+
+/// Delete the symbol named NAME, if any, from OBARRAY.
+/// The value is t if a symbol was found and deleted, nil otherwise.
+/// NAME may be a string or a symbol.  If it is a symbol, that symbol
+/// is deleted, if it belongs to OBARRAY--no other symbol is deleted.
+/// OBARRAY, if nil, defaults to the value of the variable `obarray'.
+/// usage: (unintern NAME OBARRAY)
+#[lisp_fn(min = "1")]
+pub fn unintern(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) -> bool {
+    let mut obarray = obarray.unwrap_or_else(LispObarrayRef::global).check();
+
+    let tem = obarray.lookup(name);
+    if tem.is_integer() {
+        return false;
+    }
+    // If arg was a symbol, don't delete anything but that symbol itself.
+    if name.is_symbol() && name != tem {
+        return false;
+    }
+
+    let mut temp: LispSymbolRef = tem.into();
+    temp.set_uninterned();
+
+    let hash = unsafe { oblookup_last_bucket_number };
+
+    let symbol = obarray.get(hash);
+
+    if symbol == temp {
+        match symbol.get_next() {
+            Some(sym) => obarray.set(hash, sym),
+            None => obarray.set(hash, LispObject::from_natnum(0)),
+        };
+    } else {
+        let tail = symbol.iter().find(|elem| elem.get_next() == Some(temp));
+        if let Some(previous) = tail {
+            let next = temp.get_next();
+            previous.set_next(next);
+        }
+    }
+
+    true
 }
 
 include!(concat!(env!("OUT_DIR"), "/lread_exports.rs"));

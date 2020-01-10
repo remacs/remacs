@@ -325,7 +325,7 @@ pub fn random(limit: LispObject) -> LispObject {
         let mut seed = [0; 32];
         let mut values: Vec<u8> = s.as_slice().to_vec();
         values.resize(32, 0);
-        seed.copy_from_slice(&values.as_slice());
+        seed.copy_from_slice(values.as_slice());
         *rng = StdRng::from_seed(seed);
     }
 

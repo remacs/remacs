@@ -17,8 +17,8 @@
 #![feature(slice_patterns)]
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]
-#![feature(type_alias_enum_variants)]
 #![feature(untagged_unions)]
+#![feature(ptr_cast)]
 
 extern crate errno;
 #[macro_use]
@@ -74,6 +74,7 @@ mod charset;
 mod chartable;
 mod cmds;
 mod coding;
+mod composite;
 mod crypto;
 mod data;
 mod decompress;
@@ -93,8 +94,10 @@ mod floatfns;
 mod fns;
 mod fonts;
 mod hashtable;
+mod image;
 mod indent;
 mod interactive;
+mod intervals;
 mod keyboard;
 mod keymap;
 mod libm;
@@ -126,6 +129,8 @@ mod windows;
 mod xdisp;
 mod xfaces;
 mod xml;
+#[cfg(feature = "window-system-x11")]
+mod xsettings;
 
 #[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;

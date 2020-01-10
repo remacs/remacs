@@ -1,10 +1,9 @@
 //! font support
 
+use std::ffi::CString;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
-
-use std::{ffi::CString, mem};
 
 use crate::{
     data, fns,
@@ -161,7 +160,7 @@ impl From<LispObject> for Option<LispFontObjectRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| {
             if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_object() {
-                Some(unsafe { mem::transmute(o) })
+                Some(v.cast())
             } else {
                 None
             }
@@ -190,7 +189,7 @@ impl From<LispObject> for Option<LispFontSpecRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(|v| {
             if v.is_pseudovector(pvec_type::PVEC_FONT) && o.is_font_spec() {
-                Some(unsafe { mem::transmute(o) })
+                Some(v.cast())
             } else {
                 None
             }
@@ -325,23 +324,25 @@ pub fn list_fonts(
     let mut frame: LispFrameRef = frame.into();
 
     let n = match num {
-        Some(n) if n < 0 => return Qnil,
+        Some(n) if n <= 0 => return Qnil,
         Some(n) => n,
         None => 0,
     } as usize;
 
     let list = unsafe { font_list_entities(frame.as_mut(), font_spec.into()) };
+
     match list.into() {
         Some((car, cdr)) if cdr.is_nil() => match car.as_vector() {
             Some(vec) if vec.len() == 1 => return list!(vec.get(0)),
             _ => (),
         },
-        _ => return Qnil,
+        Some(_) => (),
+        None => return Qnil,
     }
 
     let vec = match prefer {
-        None => unsafe { font_sort_entities(list, prefer.into(), frame.as_mut(), 0) },
-        Some(_) => vconcat_entity_vectors(list.into()),
+        None => vconcat_entity_vectors(list.into()),
+        Some(f) => unsafe { font_sort_entities(list, f.into(), frame.as_mut(), 0) },
     }
     .force_vector();
 

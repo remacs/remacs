@@ -636,17 +636,6 @@ bset_update_mode_line (struct buffer *b)
   b->text->redisplay = true;
 }
 
-DEFUN ("set-buffer-redisplay", Fset_buffer_redisplay,
-       Sset_buffer_redisplay, 4, 4, 0,
-       doc: /* Mark the current buffer for redisplay.
-This function may be passed to `add-variable-watcher'.  */)
-  (Lisp_Object symbol, Lisp_Object newval, Lisp_Object op, Lisp_Object where)
-{
-  bset_update_mode_line (current_buffer);
-  current_buffer->prevent_redisplay_optimizations_p = true;
-  return Qnil;
-}
-
 #ifdef GLYPH_DEBUG
 
 /* True means print traces of redisplay if compiled with
@@ -1380,6 +1369,29 @@ pos_visible_p (struct window *w, ptrdiff_t charpos, int *x, int *y,
   start_display (&it, w, top);
   move_it_to (&it, charpos, -1, it.last_visible_y - 1, -1,
 	      (charpos >= 0 ? MOVE_TO_POS : 0) | MOVE_TO_Y);
+
+  /* Adjust for line numbers, if CHARPOS is at or beyond first_visible_x,
+     but we didn't yet produce the line-number glyphs.  */
+  if (!NILP (Vdisplay_line_numbers)
+      && it.current_x >= it.first_visible_x
+      && IT_CHARPOS (it) == charpos
+      && !it.line_number_produced_p)
+    {
+      /* If the pixel width of line numbers was not yet known, compute
+	 it now.  This usually happens in the first display line of a
+	 window.  */
+      if (!it.lnum_pixel_width)
+	{
+	  struct it it2;
+	  void *it2data = NULL;
+
+	  SAVE_IT (it2, it, it2data);
+	  move_it_by_lines (&it, 1);
+	  it2.lnum_pixel_width = it.lnum_pixel_width;
+	  RESTORE_IT (&it, &it2, it2data);
+	}
+      it.current_x += it.lnum_pixel_width;
+    }
 
   if (charpos >= 0
       && (((!it.bidi_p || it.bidi_it.scan_dir != -1)
@@ -10173,9 +10185,14 @@ include the height of both, if present, in the return value.  */)
       RESTORE_IT (&it, &it2, it2data);
       x = move_it_to (&it, end, to_x, max_y, -1, move_op);
       /* Add the width of the thing at TO, but only if we didn't
-	 overshoot it; if we did, it is already accounted for.  */
+	 overshoot it; if we did, it is already accounted for.  Also,
+	 account for the height of the thing at TO.  */
       if (IT_CHARPOS (it) == end)
-	x += it.pixel_width;
+	{
+	  x += it.pixel_width;
+	  it.max_ascent = max (it.max_ascent, it.ascent);
+	  it.max_descent = max (it.max_descent, it.descent);
+	}
     }
   if (!NILP (x_limit))
     {
@@ -13890,7 +13907,15 @@ redisplay_internal (void)
 
 #if defined (USE_GTK) || defined (HAVE_NS)
   if (popup_activated ())
-    return;
+    {
+#ifdef NS_IMPL_COCOA
+      /* On macOS we may have disabled screen updates due to window
+         resizing.  We should re-enable them so the popup can be
+         displayed.  */
+      ns_enable_screen_updates ();
+#endif
+      return;
+    }
 #endif
 
   /* I don't think this happens but let's be paranoid.  */
@@ -14694,6 +14719,12 @@ unwind_redisplay (void)
 {
   redisplaying_p = false;
   unblock_buffer_flips ();
+#ifdef NS_IMPL_COCOA
+  /* On macOS we may have disabled screen updates due to window
+     resizing.  When redisplay completes we want to re-enable
+     them.  */
+  ns_enable_screen_updates ();
+#endif
 }
 
 
@@ -21910,9 +21941,24 @@ display_line (struct it *it, int cursor_vpos)
 	  break;
 	}
 
+      /* Detect overly-wide wrap-prefixes made of (space ...) display
+	 properties.  When such a wrap prefix reaches past the right
+	 margin of the window, we need to avoid the call to
+	 set_iterator_to_next below, so that it->line_wrap is left at
+	 its TRUNCATE value wisely set by handle_line_prefix.
+	 Otherwise, set_iterator_to_next will pop the iterator stack,
+	 restore it->line_wrap, and redisplay might infloop.  */
+      bool overwide_wrap_prefix =
+	CONSP (it->object) && EQ (XCAR (it->object), Qspace)
+	&& it->sp > 0 && it->method == GET_FROM_STRETCH
+	&& it->current_x >= it->last_visible_x
+	&& it->continuation_lines_width > 0
+	&& it->line_wrap == TRUNCATE && it->stack[0].line_wrap != TRUNCATE;
+
       /* Proceed with next display element.  Note that this skips
 	 over lines invisible because of selective display.  */
-      set_iterator_to_next (it, true);
+      if (!overwide_wrap_prefix)
+	set_iterator_to_next (it, true);
 
       /* If we truncate lines, we are done when the last displayed
 	 glyphs reach past the right margin of the window.  */
@@ -25170,32 +25216,6 @@ invisible_prop (Lisp_Object propval, Lisp_Object list)
     }
 
   return 0;
-}
-
-DEFUN ("invisible-p", Finvisible_p, Sinvisible_p, 1, 1, 0,
-       doc: /* Non-nil if text properties at POS cause text there to be currently invisible.
-POS should be a marker or a buffer position; the value of the `invisible'
-property at that position in the current buffer is examined.
-POS can also be the actual value of the `invisible' text or overlay
-property of the text of interest, in which case the value itself is
-examined.
-
-The non-nil value returned can be t for currently invisible text that is
-entirely hidden on display, or some other non-nil, non-t value if the
-text is replaced by an ellipsis.
-
-Note that whether text with `invisible' property is actually hidden on
-display may depend on `buffer-invisibility-spec', which see.  */)
-  (Lisp_Object pos)
-{
-  Lisp_Object prop
-    = (NATNUMP (pos) || MARKERP (pos)
-       ? Fget_char_property (pos, Qinvisible, Qnil)
-       : pos);
-  int invis = TEXT_PROP_MEANS_INVISIBLE (prop);
-  return (invis == 0 ? Qnil
-	  : invis == 1 ? Qt
-	  : make_number (invis));
 }
 
 /* Calculate a width or height in pixels from a specification using
@@ -32171,14 +32191,7 @@ expose_window_tree (struct window *w, XRectangle *r)
   struct frame *f = XFRAME (w->frame);
   bool mouse_face_overwritten_p = false;
 
-  /* NS toolkits may have aleady modified the frame in expectation of
-     a successful redraw, so don't bail out here if the frame is
-     garbaged.  */
-  while (w
-#if !defined (HAVE_NS)
-         && !FRAME_GARBAGED_P (f)
-#endif
-         )
+  while (w && !FRAME_GARBAGED_P (f))
     {
       mouse_face_overwritten_p
 	|= (WINDOWP (w->contents)
@@ -32206,16 +32219,12 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
 
   TRACE ((stderr, "expose_frame "));
 
-#if !defined (HAVE_NS)
-  /* No need to redraw if frame will be redrawn soon except under NS
-     where the toolkit may have already modified the frame in
-     expectation of us redrawing it.  */
+  /* No need to redraw if frame will be redrawn soon.  */
   if (FRAME_GARBAGED_P (f))
     {
       TRACE ((stderr, " garbaged\n"));
       return;
     }
-#endif
 
   /* If basic faces haven't been realized yet, there is no point in
      trying to redraw anything.  This can happen when we get an expose
@@ -32371,7 +32380,6 @@ They are still logged to the *Messages* buffer.  */);
   message_dolog_marker3 = Fmake_marker ();
   staticpro (&message_dolog_marker3);
 
-  defsubr (&Sset_buffer_redisplay);
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_frame_glyph_matrix);
   defsubr (&Sdump_glyph_matrix);
@@ -32385,7 +32393,6 @@ They are still logged to the *Messages* buffer.  */);
 #endif
   defsubr (&Sline_pixel_height);
   defsubr (&Sformat_mode_line);
-  defsubr (&Sinvisible_p);
   defsubr (&Scurrent_bidi_paragraph_direction);
   defsubr (&Swindow_text_pixel_size);
   defsubr (&Smove_point_visually);

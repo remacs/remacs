@@ -2674,13 +2674,12 @@ struct Lisp_Buffer_Objfwd
    variable, you must first make sure the right binding is loaded;
    then you can access the value in (or through) `realvalue'.
 
-   `buffer' and `frame' are the buffer and frame for which the loaded
-   binding was found.  If those have changed, to make sure the right
-   binding is loaded it is necessary to find which binding goes with
-   the current buffer and selected frame, then load it.  To load it,
-   first unload the previous binding, then copy the value of the new
-   binding into `realvalue' (or through it).  Also update
-   LOADED-BINDING to point to the newly loaded binding.
+   `where' is the buffer for which the loaded binding was found.  If
+   it has changed, to make sure the right binding is loaded it is
+   necessary to find which binding goes with the current buffer, then
+   load it.  To load it, first unload the previous binding, then copy
+   the value of the new binding into `realvalue' (or through it).
+   Also update LOADED-BINDING to point to the newly loaded binding.
 
    `local_if_set' indicates that merely setting the variable creates a
    local binding for the current buffer.  Otherwise the latter, setting
@@ -2696,14 +2695,14 @@ struct Lisp_Buffer_Local_Value
     bool_bf found : 1;
     /* If non-NULL, a forwarding to the C var where it should also be set.  */
     union Lisp_Fwd *fwd;	/* Should never be (Buffer|Kboard)_Objfwd.  */
-    /* The buffer or frame for which the loaded binding was found.  */
+    /* The buffer for which the loaded binding was found.  */
     Lisp_Object where;
     /* A cons cell that holds the default value.  It has the form
        (SYMBOL . DEFAULT-VALUE).  */
     Lisp_Object defcell;
     /* The cons cell from `where's parameter alist.
        It always has the form (SYMBOL . VALUE)
-       Note that if `forward' is non-nil, VALUE may be out of date.
+       Note that if `fwd' is non-NULL, VALUE may be out of date.
        Also if the currently loaded binding is the default binding, then
        this is `eq'ual to defcell.  */
     Lisp_Object valcell;
@@ -3682,6 +3681,7 @@ extern void parse_str_as_multibyte (const unsigned char *, ptrdiff_t,
 				    ptrdiff_t *, ptrdiff_t *);
 
 /* Defined in alloc.c.  */
+extern Lisp_Object purecopy (Lisp_Object obj);
 extern void *my_heap_start (void);
 extern void check_pure_size (void);
 extern void free_misc (Lisp_Object);
@@ -4055,6 +4055,12 @@ extern void get_backtrace (Lisp_Object array);
 Lisp_Object backtrace_top_function (void);
 extern bool let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol);
 
+/* Defined in eval.rs.   */
+extern Lisp_Object specpdl_symbol (union specbinding *pdl);
+extern Lisp_Object specpdl_old_value (union specbinding *pdl);
+extern void set_specpdl_old_value (union specbinding *pdl, Lisp_Object val);
+extern union specbinding *default_toplevel_binding (Lisp_Object symbol);
+
 /* Defined in unexmacosx.c.  */
 #if defined DARWIN_OS && !defined CANNOT_DUMP
 extern void unexec_init_emacs_zone (void);
@@ -4303,6 +4309,8 @@ extern Lisp_Object do_switch_frame (Lisp_Object, int, int, Lisp_Object);
 extern Lisp_Object get_frame_param (struct frame *, Lisp_Object);
 extern void frames_discard_buffer (Lisp_Object);
 extern void syms_of_frame (void);
+extern void set_last_nonminibuffer_frame(struct frame *);
+extern struct frame *get_last_nonminibuffer_frame(void);
 
 /* Defined in emacs.c.  */
 extern char **initial_argv;

@@ -82,6 +82,7 @@ extern "C" {
     );
     pub fn map_keymap_char_table_item(args: LispObject, key: LispObject, val: LispObject);
     pub static initial_obarray: LispObject;
+    pub static oblookup_last_bucket_number: libc::size_t;
     pub fn scan_lists(
         from: EmacsInt,
         count: EmacsInt,
@@ -129,7 +130,7 @@ extern "C" {
 }
 
 // Max value for the first argument of wait_reading_process_output.
-pub const WAIT_READING_MAX: i64 = std::i64::MAX;
+pub const WAIT_READING_MAX: i64 = i64::max_value();
 
 // In order to use `lazy_static!` with LispSubr, it must be Sync. Raw
 // pointers are not Sync, but it isn't a problem to define Sync if we

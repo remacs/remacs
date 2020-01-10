@@ -22,7 +22,7 @@ pub fn zlib_available_p() -> bool {
     true
 }
 
-fn create_buffer_decoder<'a>(buffer: &'a [u8]) -> Box<Read + 'a> {
+fn create_buffer_decoder<'a>(buffer: &'a [u8]) -> Box<dyn Read + 'a> {
     let magic_number = buffer[0];
 
     match magic_number {

@@ -9,8 +9,13 @@ use crate::{
     lists::assq,
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::Vframe_list,
-    remacs_sys::{candidate_frame, delete_frame as c_delete_frame, frame_dimension, output_method},
-    remacs_sys::{pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type},
+    remacs_sys::{
+        candidate_frame, check_minibuf_window, delete_frame as c_delete_frame, frame_dimension,
+        other_frames, output_method, windows_or_buffers_changed,
+    },
+    remacs_sys::{
+        minibuf_window, pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type,
+    },
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
     vectors::LispVectorlikeRef,
     windows::{select_window_lisp, selected_window, LispWindowRef},
@@ -19,12 +24,15 @@ use crate::{
 #[cfg(feature = "window-system")]
 use crate::{
     fns::nreverse,
-    remacs_sys::{vertical_scroll_bar_type, x_focus_frame},
+    remacs_sys::{vertical_scroll_bar_type, x_focus_frame, x_make_frame_invisible},
 };
 
 #[cfg(not(feature = "window-system"))]
 use crate::fns::copy_sequence;
 
+/// LispFrameRef is a reference to the LispFrame
+/// However a reference is guaranteed to point to an existing frame
+/// therefore no NULL checks are needed while using it
 pub type LispFrameRef = ExternalPtr<Lisp_Frame>;
 
 impl LispFrameRef {
@@ -681,6 +689,83 @@ pub fn visible_frame_list() -> LispObject {
 pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
     let frame_ref: LispFrameRef = frame.into();
     frame_ref.face_alist
+}
+
+/// Make the frame FRAME invisible.
+/// If omitted, FRAME defaults to the currently selected frame.
+/// On graphical displays, invisible frames are not updated and are
+/// usually not displayed at all, even in a window system's "taskbar".
+///
+/// Normally you may not make FRAME invisible if all other frames are invisible,
+/// but if the second optional argument FORCE is non-nil, you may do so.
+///
+/// This function has no effect on text terminal frames.  Such frames are
+/// always considered visible, whether or not they are currently being
+/// displayed in the terminal.
+#[lisp_fn(min = "0")]
+pub fn make_frame_invisible(frame: LispFrameLiveOrSelected, force: bool) {
+    let mut frame_ref: LispFrameRef = frame.into();
+    if !(force || unsafe { other_frames(frame_ref.as_mut(), true, false) }) {
+        error!("Attempt to make invisible the sole visible or iconified frame");
+    }
+    // Don't allow minibuf_window to remain on an invisible frame.
+    unsafe {
+        check_minibuf_window(
+            frame_ref.into(),
+            (minibuf_window == selected_window()) as i32,
+        )
+    };
+    // I think this should be done with a hook.
+    #[cfg(feature = "window-system")]
+    {
+        if frame_ref.is_gui_window() {
+            unsafe {
+                x_make_frame_invisible(frame_ref.as_mut());
+            }
+        }
+    }
+    // Make menu bar update for the Buffers and Frames menus.
+    unsafe {
+        windows_or_buffers_changed = 16;
+    }
+}
+
+#[lisp_fn]
+pub fn last_nonminibuffer_frame() -> LispObject {
+    unsafe { last_non_minibuffer_frame.into() }
+}
+
+/// A reference (Some) to a guaranteed existing frame which is not just a mini-buffer,
+/// or None if there are no such frames.
+/// This is usually the most recent such frame that was selected.
+///
+/// Option<LispFrameRef> is used in order to clear out the confusion around references,
+/// since LispFrameRef (as any other reference) is used for an existing reference (not NULL)
+static mut last_non_minibuffer_frame: Option<LispFrameRef> = None;
+
+/// Return current last non-minibuffer frame reference
+/// or a pointer to null in case there are no such frames
+#[no_mangle]
+pub extern "C" fn get_last_nonminibuffer_frame() -> LispFrameRef {
+    unsafe {
+        match last_non_minibuffer_frame {
+            Some(frame_ref) => frame_ref,
+            None => LispFrameRef::new(std::ptr::null_mut()),
+        }
+    }
+}
+
+/// Set current last non-minibuffer frame reference
+#[no_mangle]
+pub extern "C" fn set_last_nonminibuffer_frame(frame_ref: LispFrameRef) {
+    unsafe {
+        // frame reference may be null, since it is called from C
+        if frame_ref.is_null() {
+            last_non_minibuffer_frame = None
+        } else {
+            last_non_minibuffer_frame = Some(frame_ref)
+        }
+    }
 }
 
 /// Return the value of frame parameter PROP in frame FRAME.

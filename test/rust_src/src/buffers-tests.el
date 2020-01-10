@@ -43,6 +43,46 @@
       (should (eq (overlays-in (point-min) (point-max)) nil)))
     (kill-buffer buf)))
 
+(ert-deftest test-move-overlay-in-buffer-implicit ()
+  (let ((buf (get-buffer-create "test-move-overlay-in-buffer-implict")))
+    (with-current-buffer buf
+      (insert "1234567890")
+      (let ((overlay (make-overlay (point-min) (+ (point-min) 3) buf)))
+        (overlay-put overlay 'test "test")
+        (should (= (length (overlays-in (point-min) (+ (point-min) 3))) 1))
+        (should (= (length (overlays-in (- (point-max) 3) (point-max))) 0))
+        (move-overlay overlay (- (point-max) 3) (point-max))
+        (should (= (length (overlays-in (point-min) (+ (point-min) 3))) 0))
+        (should (= (length (overlays-in (- (point-max) 3) (point-max))) 1))
+        (delete-all-overlays)))))
+
+(ert-deftest test-move-overlay-in-buffer-explicit ()
+  (let ((buf (get-buffer-create "test-move-overlay-in-buffer-explicit")))
+    (with-current-buffer buf
+      (insert "1234567890")
+      (let ((overlay (make-overlay (point-min) (+ (point-min) 3) buf)))
+        (overlay-put overlay 'test "test")
+        (should (= (length (overlays-in (point-min) (+ (point-min) 3))) 1))
+        (should (= (length (overlays-in (- (point-max) 3) (point-max))) 0))
+        (move-overlay overlay (- (point-max) 3) (point-max) buf)
+        (should (= (length (overlays-in (point-min) (+ (point-min) 3))) 0))
+        (should (= (length (overlays-in (- (point-max) 3) (point-max))) 1))
+        (delete-all-overlays)))))
+
+(ert-deftest test-move-overlay-in-buffer-add-to-buffer ()
+  (let ((buf (get-buffer-create "test-move-overlay-in-buffer-add-to-buffer"))
+        (other-buf (get-buffer-create "other-temp")))
+    (with-current-buffer buf
+      (insert "1234567890")
+      (let ((overlay (make-overlay (point-min) (+ (point-min) 3) other-buf)))
+        (overlay-put overlay 'test "test")
+        (should (= (length (overlays-in (point-min) (+ (point-min) 3))) 0))
+        (should (= (length (overlays-in (- (point-max) 3) (point-max))) 0))
+        (move-overlay overlay (- (point-max) 3) (point-max) buf)
+        (should (= (length (overlays-in (point-min) (+ (point-min) 3))) 0))
+        (should (= (length (overlays-in (- (point-max) 3) (point-max))) 1))
+        (delete-all-overlays)))))
+
 (ert-deftest test-erase-buffer ()
   (let ((buf (get-buffer-create "test-erase-buffer")))
     (with-current-buffer buf
