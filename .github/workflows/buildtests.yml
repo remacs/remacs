@@ -11,6 +11,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: setup Rust version
       run: rustup toolchain install $(cat rust-toolchain)
+    - name: Install dependencies
+      run: apt-get install -y texinfo libgif-dev libxmp-dev libgnutls28-dev
     - name: autogen
       run: ./autogen.sh
     - name: configure
