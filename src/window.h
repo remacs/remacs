@@ -402,6 +402,15 @@ struct window
     ptrdiff_t window_end_bytepos;
   };
 
+enum window_loop
+{
+  WINDOW_LOOP_UNUSED,
+  GET_BUFFER_WINDOW,		    /* Arg is buffer */
+  REPLACE_BUFFER_IN_WINDOWS_SAFELY, /* Arg is buffer */
+  REDISPLAY_BUFFER_WINDOWS,	    /* Arg is buffer */
+  CHECK_ALL_WINDOWS                 /* Arg is ignored */
+};
+
 Lisp_Object
 window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames);
 
@@ -1128,6 +1137,7 @@ extern Lisp_Object select_window (Lisp_Object window, Lisp_Object norecord,
 extern struct window *set_window_fringes (struct window *w, Lisp_Object left_width,
                                           Lisp_Object right_width, Lisp_Object outside_margins);
 extern void apply_window_adjustment (struct window *);
+extern Lisp_Object window_loop (enum window_loop type, Lisp_Object obj, bool mini, Lisp_Object frames);
 
 /* Move cursor to row/column position VPOS/HPOS, pixel coordinates
    Y/X. HPOS/VPOS are window-relative row and column numbers and X/Y
