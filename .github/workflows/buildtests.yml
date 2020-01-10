@@ -14,6 +14,6 @@ jobs:
     - name: configure
       run: ./configure
     - name: make
-      run: make
-    - name: make test
-      run: make test
+      run: make -j 3
+    - name: make check
+      run: make check
