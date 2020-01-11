@@ -42,7 +42,7 @@ pub fn tool_bar_get_system_style() -> LispObject {
     let current_style = unsafe { current_tool_bar_style };
     match style {
         Qimage | Qtext | Qboth | Qboth_horiz | Qtext_image_horiz => style,
-        _ if current_style.is_nil() => Qimage,
+        _ if !current_style => Qimage,
         _ => current_style,
     }
 }

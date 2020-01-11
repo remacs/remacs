@@ -168,7 +168,7 @@ pub unsafe fn defvar_per_buffer_offset(
     let local = offset.apply_mut(&mut remacs_sys::buffer_local_symbols);
     *local = sym.into();
     let flags = offset.apply(&remacs_sys::buffer_local_flags);
-    if flags.is_nil() {
+    if !*flags {
         panic!(
             "Did a DEFVAR_PER_BUFFER without initializing
              the corresponding slot of buffer_local_flags."
@@ -235,7 +235,7 @@ pub fn read(stream: LispObject) -> LispObject {
     //      or 'read-char.
     // In all other cases, read-minibuffer will be called.
 
-    let input = if stream.is_not_nil() {
+    let input = if !!stream {
         stream
     } else {
         unsafe { globals.Vstandard_input }
@@ -284,11 +284,7 @@ pub fn eval_region(
     let cur_buf = ThreadState::current_buffer_unchecked();
     let cur_buf_obj = cur_buf.into();
 
-    let tem = if printflag.is_nil() {
-        Qsymbolp
-    } else {
-        printflag
-    };
+    let tem = if !printflag { Qsymbolp } else { printflag };
     unsafe {
         specbind(Qstandard_output, tem);
         specbind(
@@ -301,7 +297,7 @@ pub fn eval_region(
             cur_buf_obj,
             ptr::null_mut(),
             cur_buf.filename(),
-            printflag.is_not_nil(),
+            !!printflag,
             Qnil,
             read_function,
             start,
@@ -337,12 +333,11 @@ pub fn read_char(
     inherit_input_method: LispObject,
     seconds: LispObject,
 ) -> Option<EmacsInt> {
-    if !prompt.is_nil() {
+    if !!prompt {
         message_with_string!("%s", prompt, false);
     }
 
-    let val =
-        unsafe { read_filtered_event(true, true, true, !inherit_input_method.is_nil(), seconds) };
+    let val = unsafe { read_filtered_event(true, true, true, !!inherit_input_method, seconds) };
 
     match val.into() {
         Some(num) => Some(char_resolve_modifier_mask(num)),
@@ -366,11 +361,11 @@ pub fn read_event(
     inherit_input_method: LispObject,
     seconds: LispObject,
 ) -> LispObject {
-    if !prompt.is_nil() {
+    if !!prompt {
         message_with_string!("%s", prompt, false);
     }
 
-    unsafe { read_filtered_event(false, false, false, !inherit_input_method.is_nil(), seconds) }
+    unsafe { read_filtered_event(false, false, false, !!inherit_input_method, seconds) }
 }
 
 /// Read a character from the command input (keyboard or macro).
@@ -392,12 +387,11 @@ pub fn read_char_exclusive(
     inherit_input_method: LispObject,
     seconds: LispObject,
 ) -> Option<EmacsInt> {
-    if !prompt.is_nil() {
+    if !!prompt {
         message_with_string!("%s", prompt, false);
     }
 
-    let val =
-        unsafe { read_filtered_event(true, true, false, !inherit_input_method.is_nil(), seconds) };
+    let val = unsafe { read_filtered_event(true, true, false, !!inherit_input_method, seconds) };
 
     match val.into() {
         Some(num) => Some(char_resolve_modifier_mask(num)),

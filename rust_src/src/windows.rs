@@ -61,7 +61,7 @@ impl LispWindowRef {
     /// A window of any sort, leaf or interior, is "valid" if its
     /// contents slot is non-nil.
     pub fn is_valid(self) -> bool {
-        self.contents.is_not_nil()
+        !!self.contents
     }
 
     // Equivalent to WINDOW_RIGHTMOST_P
@@ -138,13 +138,13 @@ impl LispWindowRef {
     /// True if W is a minibuffer window on a frame that contains at least
     /// one other window
     pub fn is_minibuffer_non_only(self) -> bool {
-        self.is_minibuffer() && self.prev.is_not_nil()
+        self.is_minibuffer() && !!self.prev
     }
 
     // Equivalent to MINI_ONLY_WINDOW_P
     /// True if W is a minibuffer window that is alone on its frame.
     pub fn is_minibuffer_only(self) -> bool {
-        self.is_minibuffer() && self.prev.is_nil()
+        self.is_minibuffer() && !self.prev
     }
 
     pub fn is_menu_bar(mut self) -> bool {
@@ -248,10 +248,10 @@ impl LispWindowRef {
     pub fn internal_height(self) -> i32 {
         let mut lines = self.total_lines;
         if !self.is_minibuffer() {
-            if self.parent.is_not_nil()
+            if !!self.parent
                 || self.contents.is_window()
-                || self.next.is_not_nil()
-                || self.prev.is_not_nil()
+                || !!self.next
+                || !!self.prev
                 || self.wants_mode_line()
             {
                 lines -= 1;
@@ -327,8 +327,7 @@ impl LispWindowRef {
             && !self.is_minibuffer()
             && !self.is_pseudo()
             && !window_mode_line_format.eq(Qnone)
-            && (window_mode_line_format.is_not_nil()
-                || self.contents_as_buffer().mode_line_format_.is_not_nil())
+            && (!!window_mode_line_format || !!self.contents_as_buffer().mode_line_format_)
             && self.pixel_height > self.get_frame().line_height
     }
 
@@ -353,8 +352,7 @@ impl LispWindowRef {
             && !self.is_minibuffer()
             && !self.is_pseudo()
             && !window_header_line_format.eq(Qnone)
-            && (window_header_line_format.is_not_nil()
-                || (self.contents_as_buffer().header_line_format_).is_not_nil())
+            && (!!window_header_line_format || !!self.contents_as_buffer().header_line_format_)
             && self.pixel_height > height
     }
 
@@ -503,7 +501,7 @@ impl LispWindowRef {
 
     /// Width of the window's bottom divider
     pub fn bottom_divider_width(self) -> i32 {
-        if self.is_bottommost() && self.get_frame().root_window().next.is_not_nil()
+        if self.is_bottommost() && !!self.get_frame().root_window().next
             || self.prev.eq(self.get_frame().root_window)
             || self.is_pseudo()
         {
@@ -1120,7 +1118,7 @@ pub fn set_window_parameter(
 ) -> LispObject {
     let mut win: LispWindowRef = window.into();
     let old_alist_elt = assq(parameter, win.window_parameters);
-    if old_alist_elt.is_nil() {
+    if !old_alist_elt {
         win.window_parameters = ((parameter, value), win.window_parameters).into();
     } else {
         setcdr(old_alist_elt.into(), value);

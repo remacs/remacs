@@ -110,7 +110,7 @@ pub extern "C" fn get_keymap(
     while autoload_retry {
         autoload_retry = false;
 
-        if object.is_nil() {
+        if !object {
             break;
         }
 
@@ -159,11 +159,7 @@ pub extern "C" fn get_keymap(
 /// in case you use it as a menu with `x-popup-menu'.
 #[lisp_fn(min = "0")]
 pub fn make_keymap(string: LispObject) -> (LispObject, (LispObject, LispObject)) {
-    let tail: LispObject = if string.is_not_nil() {
-        list!(string)
-    } else {
-        Qnil
-    };
+    let tail: LispObject = if !!string { list!(string) } else { Qnil };
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
     (Qkeymap, (char_table, tail))
@@ -179,7 +175,7 @@ pub fn make_keymap(string: LispObject) -> (LispObject, (LispObject, LispObject))
 #[lisp_fn]
 pub fn keymapp(object: LispObject) -> bool {
     let map = get_keymap(object, false, false);
-    map.is_not_nil()
+    !!map
 }
 
 /// Return the parent map of KEYMAP, or nil if it has none.
@@ -209,7 +205,7 @@ pub fn keymap_parent_lisp(keymap: LispObject) -> LispObject {
 pub extern "C" fn keymap_memberp(map: LispObject, maps: LispObject) -> bool {
     let map = map;
     let mut maps = maps;
-    if map.is_nil() {
+    if !map {
         return false;
     }
     while keymapp(maps) && !map.eq(maps) {
@@ -230,7 +226,7 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
 
     let mut parent = parent;
     let keymap = get_keymap(keymap, true, true);
-    if parent.is_not_nil() {
+    if !!parent {
         parent = get_keymap(parent, true, false);
 
         // Check for cycles
@@ -276,7 +272,7 @@ pub fn keymap_prompt(map: LispObject) -> LispObject {
             return tem;
         } else if keymapp(tem) {
             tem = keymap_prompt(tem);
-            if tem.is_not_nil() {
+            if !!tem {
                 return tem;
             }
         }
@@ -409,7 +405,7 @@ pub fn map_keymap_internal_lisp(function: LispObject, mut keymap: LispObject) ->
 #[lisp_fn(min = "1")]
 pub fn local_key_binding(keys: LispObject, accept_default: LispObject) -> LispObject {
     let map = current_local_map();
-    if map.is_nil() {
+    if !map {
         Qnil
     } else {
         lookup_key(map, keys, accept_default)
@@ -427,7 +423,7 @@ pub fn current_local_map() -> LispObject {
 /// If KEYMAP is nil, that means no local keymap.
 #[lisp_fn]
 pub fn use_local_map(mut keymap: LispObject) {
-    if !keymap.is_nil() {
+    if !!keymap {
         let map = get_keymap(keymap, true, true);
         keymap = map;
     }
@@ -446,7 +442,7 @@ pub fn use_local_map(mut keymap: LispObject) {
 #[lisp_fn(min = "1")]
 pub fn global_key_binding(keys: LispObject, accept_default: LispObject) -> LispObject {
     let map = current_global_map();
-    if map.is_nil() {
+    if !map {
         Qnil
     } else {
         lookup_key(map, keys, accept_default)
@@ -485,7 +481,7 @@ pub fn use_global_map(keymap: LispObject) {
 /// recognize the default bindings, just as `read-key-sequence' does.
 #[lisp_fn(min = "2")]
 pub fn lookup_key(keymap: LispObject, key: LispObject, accept_default: LispObject) -> LispObject {
-    let ok = accept_default.is_not_nil();
+    let ok = !!accept_default;
     let mut keymap = get_keymap(keymap, true, true);
     let length = key.as_vector_or_string_length() as EmacsInt;
     if length == 0 {
@@ -551,7 +547,7 @@ pub fn define_prefix_command(
 ) -> LispSymbolRef {
     let map = make_sparse_keymap(name);
     fset(command, map);
-    if mapvar.is_not_nil() {
+    if !!mapvar {
         set(mapvar.into(), map);
     } else {
         set(command, map);
@@ -569,8 +565,8 @@ pub fn define_prefix_command(
 /// in case you use it as a menu with `x-popup-menu'.
 #[lisp_fn(min = "0")]
 pub fn make_sparse_keymap(string: LispObject) -> LispObject {
-    if string.is_not_nil() {
-        let s = if unsafe { globals.Vpurify_flag }.is_not_nil() {
+    if !!string {
+        let s = if unsafe { !!globals.Vpurify_flag } {
             purecopy(string)
         } else {
             string
@@ -593,7 +589,7 @@ pub extern "C" fn describe_vector_princ(elt: LispObject, fun: LispObject) {
 /// DESCRIBER is the output function used; nil means use `princ'.
 #[lisp_fn(min = "1", name = "describe-vector", c_name = "describe_vector")]
 pub fn describe_vector_lisp(vector: LispObject, mut describer: LispObject) {
-    if describer.is_nil() {
+    if !describer {
         describer = intern("princ").into();
     }
     unsafe { specbind(Qstandard_output, current_buffer()) };
@@ -712,7 +708,7 @@ pub fn key_binding(
     no_remap: bool,
     mut position: LispObject,
 ) -> LispObject {
-    if key.is_vector() && position.is_nil() {
+    if key.is_vector() && !position {
         let key = key.force_vector();
         if key.is_empty() {
             return Qnil;
@@ -741,7 +737,7 @@ pub fn key_binding(
         accept_default.into(),
     );
 
-    if value.is_nil() || value.is_integer() {
+    if !value || value.is_integer() {
         return Qnil;
     }
 
@@ -749,7 +745,7 @@ pub fn key_binding(
     // command, look for a key binding (i.e. remapping) for that command.
     if !no_remap && value.is_symbol() {
         let remap = unsafe { Fcommand_remapping(value, position, Qnil) };
-        if remap.is_not_nil() {
+        if !!remap {
             return remap;
         }
     }

@@ -182,7 +182,7 @@ pub unsafe extern "C" fn disassemble_lisp_time(
                 } else {
                     len = 3;
                 }
-            } else if low_tail.is_not_nil() {
+            } else if !!low_tail {
                 usec = low_tail;
                 len = 3;
             } else {
@@ -247,7 +247,7 @@ pub unsafe extern "C" fn decode_time_components(
                 *dresult = t;
             }
             return 1;
-        } else if low.is_nil() {
+        } else if !low {
             let now = current_timespec();
             if !result.is_null() {
                 (*result).hi = hi_time(now.tv_sec);

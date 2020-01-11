@@ -6,7 +6,7 @@ use crate::{lisp::LispObject, remacs_sys::EmacsInt, threads::ThreadState, xdisp:
 pub extern "C" fn text_prop_means_invisible(prop: LispObject) -> EmacsInt {
     let cur_buf = ThreadState::current_buffer_unchecked();
     if cur_buf.invisibility_spec_.is_t() {
-        if prop.is_nil() {
+        if !prop {
             0
         } else {
             1

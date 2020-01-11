@@ -42,7 +42,7 @@ fn move_point(n: LispObject, forward: bool) {
     // hooks, et cetera), that's not a good approach. So we validate the
     // proposed position, then set point.
 
-    let mut n = if n.is_nil() {
+    let mut n = if !n {
         1
     } else {
         n.as_fixnum_or_error() as isize
@@ -65,7 +65,7 @@ fn move_point(n: LispObject, forward: bool) {
     }
 
     unsafe { set_point(new_point) };
-    if signal.is_not_nil() {
+    if !!signal {
         xsignal!(signal);
     }
 }
@@ -298,8 +298,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 
     let mut current_buffer = ThreadState::current_buffer_unchecked();
     let overwrite = current_buffer.overwrite_mode_;
-    if unsafe { globals.Vbefore_change_functions }.is_not_nil()
-        || unsafe { globals.Vafter_change_functions }.is_not_nil()
+    if unsafe { !!globals.Vbefore_change_functions } || unsafe { !!globals.Vafter_change_functions }
     {
         hairy = 1;
     }
@@ -318,7 +317,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         };
         len = 1;
     }
-    if overwrite.is_not_nil() && current_buffer.pt < current_buffer.zv {
+    if !!overwrite && current_buffer.pt < current_buffer.zv {
         // In overwrite-mode, we substitute a character at point (C2,
         // hereafter) by C.  For that, we delete C2 in advance.  But,
         // just substituting C2 by C may move a remaining text in the
@@ -382,9 +381,9 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     } else {
         Codepoint::from(preceding_char() as u32).unibyte_to_char()
     };
-    if current_buffer.abbrev_mode_.is_not_nil()
+    if !!current_buffer.abbrev_mode_
         && synt != syntaxcode::Sword
-        && current_buffer.read_only_.is_nil()
+        && !current_buffer.read_only_
         && current_buffer.pt > current_buffer.begv
         && unsafe { syntax_property(previous_char.val() as libc::c_int, true) } == syntaxcode::Sword
     {
@@ -398,7 +397,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
         if let Some(s) = sym.as_symbol() {
             if let Some(f) = s.get_function().as_symbol() {
                 let prop = get(f, intern("no-self-insert").into());
-                if prop.is_not_nil() {
+                if !!prop {
                     return 1;
                 }
             }
@@ -447,9 +446,9 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     }
 
     if let Some(t) = unsafe { globals.Vauto_fill_chars }.as_char_table() {
-        if t.get(c.val() as isize).is_not_nil()
+        if !!t.get(c.val() as isize)
             && (c == ' ' || c == '\n')
-            && current_buffer.auto_fill_function_.is_not_nil()
+            && !!current_buffer.auto_fill_function_
         {
             if c == '\n' {
                 // After inserting a newline, move to previous line and fill
@@ -466,7 +465,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
                 let newpt_byte = current_buffer.pt_byte + 1;
                 current_buffer.set_pt_both(newpt, newpt_byte);
             }
-            if auto_fill_result.is_not_nil() {
+            if !!auto_fill_result {
                 hairy = 2;
             }
         }

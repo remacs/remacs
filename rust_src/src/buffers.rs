@@ -194,7 +194,7 @@ impl LispBufferRef {
         let buffer: LispObject = b.into();
         unsafe {
             Vbuffer_alist = nconc(&mut [Vbuffer_alist, list!((name, buffer))]);
-            if Vrun_hooks.is_not_nil() {
+            if !!Vrun_hooks {
                 call!(Vrun_hooks, Qbuffer_list_update_hook);
             }
         }
@@ -281,7 +281,7 @@ impl LispBufferRef {
 
     // Check if buffer is live
     pub fn is_live(self) -> bool {
-        self.name_.is_not_nil()
+        !!self.name_
     }
 
     pub fn set_pt_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
@@ -379,7 +379,7 @@ impl LispBufferRef {
     }
 
     pub fn multibyte_characters_enabled(self) -> bool {
-        self.enable_multibyte_characters_.is_not_nil()
+        !!self.enable_multibyte_characters_
     }
 
     pub fn pos_within_range(self, pos: isize) -> isize {
@@ -825,7 +825,7 @@ impl LispBufferRef {
                 let (local, list) = tail.car().into();
                 let prop = lists::get(local.force_symbol(), Qpermanent_local);
                 // If permanent-local, keep it.
-                if prop.is_not_nil() {
+                if !!prop {
                     last = tail.into();
                     if prop == Qpermanent_local_hook {
                         // This is a partially permanent hook variable.
@@ -837,8 +837,7 @@ impl LispBufferRef {
                                     .filter(|elt| {
                                         !elt.is_symbol()
                                             || elt.is_t()
-                                            || lists::get((*elt).into(), Qpermanent_local_hook)
-                                                .is_not_nil()
+                                            || !!lists::get((*elt).into(), Qpermanent_local_hook)
                                     })
                                     .fold(Qnil, |new, elt| (elt, new).into()),
                             ),
@@ -857,7 +856,7 @@ impl LispBufferRef {
                         // Don't do variable write trapping twice
                         continue;
                     }
-                } else if last.is_nil() {
+                } else if !last {
                     // Delete this local variable
                     self.local_var_alist_ = tail.cdr();
                 } else {
@@ -1075,7 +1074,7 @@ impl From<LispStringRef> for LispBufferOrName {
 
 impl From<LispObject> for Option<LispBufferOrName> {
     fn from(v: LispObject) -> Self {
-        if v.is_nil() {
+        if !v {
             None
         } else if let Some(s) = v.as_string() {
             Some(LispBufferOrName::Name(s))
@@ -1179,7 +1178,7 @@ pub fn buffer_list(frame: Option<LispFrameRef>) -> LispObject {
             let prevlist = nreverse(copy_sequence(frame.buried_buffer_list));
 
             // Remove any buffer that duplicates one in FRAMELIST or PREVLIST.
-            buffers.retain(|e| member(*e, framelist).is_nil() && member(*e, prevlist).is_nil());
+            buffers.retain(|e| !member(*e, framelist) && !member(*e, prevlist));
 
             nconc(&mut [framelist, list(&buffers), prevlist])
         }
@@ -1364,8 +1363,7 @@ pub fn barf_if_buffer_read_only(position: Option<EmacsInt>) {
     let inhibit_read_only: bool = unsafe { globals.Vinhibit_read_only.into() };
     let prop = get_text_property(pos.into(), Qinhibit_read_only, Qnil);
 
-    if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && prop.is_nil()
-    {
+    if ThreadState::current_buffer_unchecked().is_read_only() && !inhibit_read_only && !prop {
         xsignal!(Qbuffer_read_only, current_buffer())
     }
 }
@@ -1431,12 +1429,12 @@ pub extern "C" fn record_buffer_markers(buffer: *mut Lisp_Buffer) {
         .unwrap_or_else(|| panic!("Invalid buffer reference."));
     let pt_marker = buffer_ref.pt_marker();
 
-    if pt_marker.is_not_nil() {
+    if !!pt_marker {
         let begv_marker = buffer_ref.begv_marker();
         let zv_marker = buffer_ref.zv_marker();
 
-        assert!(begv_marker.is_not_nil());
-        assert!(zv_marker.is_not_nil());
+        assert!(!!begv_marker);
+        assert!(!!zv_marker);
 
         let buffer = LispObject::from(buffer_ref);
         set_marker_both(pt_marker, buffer, buffer_ref.pt, buffer_ref.pt_byte);
@@ -1452,9 +1450,9 @@ pub extern "C" fn fetch_buffer_markers(buffer: *mut Lisp_Buffer) {
     let mut buffer_ref = LispBufferRef::from_ptr(buffer as *mut c_void)
         .unwrap_or_else(|| panic!("Invalid buffer reference."));
 
-    if buffer_ref.pt_marker().is_not_nil() {
-        assert!(buffer_ref.begv_marker().is_not_nil());
-        assert!(buffer_ref.zv_marker().is_not_nil());
+    if !!buffer_ref.pt_marker() {
+        assert!(!!buffer_ref.begv_marker());
+        assert!(!!buffer_ref.zv_marker());
 
         let pt_marker: LispMarkerRef = buffer_ref.pt_marker().into();
         let begv_marker: LispMarkerRef = buffer_ref.begv_marker().into();
@@ -1481,7 +1479,7 @@ pub fn get_file_buffer(filename: LispStringRef) -> Option<LispBufferRef> {
     // call the corresponding file handler.
     let handler = find_file_name_handler(filename, Qget_file_buffer);
 
-    if handler.is_not_nil() {
+    if !!handler {
         let handled_buf = call!(handler, Qget_file_buffer, filename.into());
         handled_buf.as_buffer()
     } else {
@@ -1597,8 +1595,8 @@ pub fn delete_overlay(overlay: LispOverlayRef) {
         // display optimizations for the affected buffer, on the basis that
         // these strings may contain newlines.  This is easier to do than to
         // check for that situation during redisplay.
-        if windows_or_buffers_changed != 0 && overlay_get(overlay, Qbefore_string).is_not_nil()
-            || overlay_get(overlay, Qafter_string).is_not_nil()
+        if windows_or_buffers_changed != 0 && !!overlay_get(overlay, Qbefore_string)
+            || !!overlay_get(overlay, Qafter_string)
         {
             buf_ref.set_prevent_redisplay_optimizations_p(true);
         }
@@ -1654,7 +1652,7 @@ pub fn erase_buffer() {
 /// is first appended to NAME, to speed up finding a non-existent buffer.
 #[lisp_fn(min = "1")]
 pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> LispStringRef {
-    if (ignore.is_not_nil() && string_equal(name, ignore)) || get_buffer(name.into()).is_none() {
+    if (!!ignore && string_equal(name, ignore)) || get_buffer(name.into()).is_none() {
         return name;
     }
 
@@ -1791,7 +1789,7 @@ pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRe
         // create another with the original name.  It makes UNIQUE
         // equivalent to
         // (rename-buffer (generate-new-buffer-name NEWNAME)).
-        if unique.is_nil() {
+        if !unique {
             if tem == current_buffer {
                 return current_buffer.name_.into();
             }
@@ -1813,12 +1811,12 @@ pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRe
     unsafe {
         setcar(rassq(buf.into(), Vbuffer_alist).into(), newname.into());
     }
-    if current_buffer.filename_.is_nil() && current_buffer.auto_save_file_name_.is_not_nil() {
+    if !current_buffer.filename_ && !!current_buffer.auto_save_file_name_ {
         call!(intern("rename-auto-save-file").into());
     }
 
     unsafe {
-        if Vrun_hooks.is_not_nil() {
+        if !!Vrun_hooks {
             call!(Vrun_hooks, Qbuffer_list_update_hook);
         }
     }

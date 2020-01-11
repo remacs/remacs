@@ -32,7 +32,7 @@ impl LispObject {
     }
 
     pub fn check_list_end(self, list: Self) {
-        if !self.is_nil() {
+        if !!self {
             wrong_type!(Qlistp, list);
         }
     }
@@ -68,7 +68,7 @@ impl Debug for LispCons {
             write!(f, "{:?}", car)?;
         }
         let last = it.rest();
-        if !last.is_nil() {
+        if !!last {
             write!(f, ". {:?}", last)?;
         }
         write!(f, ")")
@@ -81,7 +81,7 @@ impl LispObject {
     }
 
     pub fn is_list(self) -> bool {
-        self.is_cons() || self.is_nil()
+        self.is_cons() || !self
     }
 
     pub fn iter_tails_v2(
@@ -224,7 +224,7 @@ impl Iterator for TailsIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self.tail.as_cons() {
             None => {
-                if self.tail.is_not_nil() {
+                if !!self.tail {
                     if let Some(errsym) = self.errsym {
                         wrong_type!(errsym, self.list);
                     }
@@ -471,7 +471,7 @@ pub fn setcdr(cell: LispCons, newcdr: LispObject) -> LispObject {
 /// Lisp concepts such as car, cdr, cons cell and list.
 #[lisp_fn]
 pub fn car(list: LispObject) -> LispObject {
-    if list.is_nil() {
+    if !list {
         list
     } else {
         let (a, _) = list.into();
@@ -486,7 +486,7 @@ pub fn car(list: LispObject) -> LispObject {
 /// Lisp concepts such as cdr, car, cons cell and list.
 #[lisp_fn]
 pub fn cdr(list: LispObject) -> LispObject {
-    if list.is_nil() {
+    if !list {
         list
     } else {
         let (_, d) = list.into();
@@ -596,10 +596,10 @@ pub fn assq(key: LispObject, list: LispObject) -> LispObject {
 /// Equality is defined by TESTFN is non-nil or by `equal' if nil.
 #[lisp_fn(min = "2")]
 pub fn assoc(key: LispObject, list: LispObject, testfn: LispObject) -> LispObject {
-    if testfn.is_nil() {
+    if !testfn {
         assoc_impl(key, list, |k, item| k.eq(item) || k.equal(item))
     } else {
-        assoc_impl(key, list, |k, item| call!(testfn, k, item).is_not_nil())
+        assoc_impl(key, list, |k, item| !!call!(testfn, k, item))
     }
 }
 
@@ -702,7 +702,7 @@ fn internal_plist_get(
         match tail.cdr().into() {
             None => {
                 // need an extra check here to catch odd-length lists
-                if end_checks == LispConsEndChecks::on && LispObject::from(tail).is_not_nil() {
+                if end_checks == LispConsEndChecks::on && !!LispObject::from(tail) {
                     wrong_type!(Qplistp, plist)
                 }
 
@@ -747,7 +747,7 @@ fn internal_plist_put(
         match tail.cdr().as_cons() {
             None => {
                 // need an extra check here to catch odd-length lists
-                if LispObject::from(tail).is_not_nil() {
+                if !!LispObject::from(tail) {
                     wrong_type!(Qplistp, plist)
                 }
                 break;
@@ -803,7 +803,7 @@ pub fn lax_plist_put(plist: LispObject, prop: LispObject, val: LispObject) -> Li
 pub fn get(symbol: LispSymbolRef, propname: LispObject) -> LispObject {
     let plist_env = unsafe { globals.Voverriding_plist_environment };
     let propval = plist_get(cdr(assq(symbol.into(), plist_env)), propname);
-    if propval.is_not_nil() {
+    if !!propval {
         propval
     } else {
         plist_get(symbol.get_plist(), propname)
@@ -864,7 +864,7 @@ pub fn sort_list(list: LispObject, pred: LispObject) -> LispObject {
 
 // also needed by vectors.rs
 pub fn inorder(pred: LispObject, a: LispObject, b: LispObject) -> bool {
-    call!(pred, b, a).is_nil()
+    !call!(pred, b, a)
 }
 
 /// Merge step of linked-list sorting.
@@ -873,7 +873,7 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
     let mut value = Qnil;
 
     loop {
-        if l1.is_nil() {
+        if !l1 {
             match tail {
                 Some(cons) => {
                     setcdr(cons, l2);
@@ -882,7 +882,7 @@ pub fn merge(mut l1: LispObject, mut l2: LispObject, pred: LispObject) -> LispOb
                 None => return l2,
             };
         }
-        if l2.is_nil() {
+        if !l2 {
             match tail {
                 Some(cons) => {
                     setcdr(cons, l1);

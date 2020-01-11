@@ -617,7 +617,7 @@ impl<'a> ExactSizeIterator for LispBoolVecIterator<'a> {}
 /// To get the number of bytes, use `string-bytes'.
 #[lisp_fn]
 pub fn length(sequence: LispObject) -> usize {
-    if sequence.is_nil() {
+    if !sequence {
         0
     } else if let Some(s) = sequence.as_string() {
         s.len_chars() as usize
@@ -678,7 +678,7 @@ pub fn sort(seq: LispObject, predicate: LispObject) -> LispObject {
             }
         });
         seq
-    } else if seq.is_nil() {
+    } else if !seq {
         seq
     } else {
         wrong_type!(Qsequencep, seq)

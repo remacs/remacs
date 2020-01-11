@@ -220,7 +220,7 @@ impl From<LispFrameLiveOrSelected> for LispFrameRef {
 pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
     // Cannot use LispFrameOrSelected because the selected frame is not
     // checked for live.
-    if object.is_nil() {
+    if !object {
         selected_frame()
     } else if let Some(win) = object.as_valid_window() {
         // the window's frame does not need a live check
@@ -237,7 +237,7 @@ pub fn window_frame_live_or_selected_with_action(
     mut object: LispObject,
     mut window_action: impl FnMut(LispWindowRef) -> (),
 ) -> LispFrameRef {
-    if object.is_nil() {
+    if !object {
         object = selected_window();
     }
 
@@ -551,7 +551,7 @@ pub fn next_frame(frame: LispFrameLiveOrSelected, miniframe: LispObject) -> Lisp
         for_each_frame!(f => {
             if passed > 0 {
                 let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
-                if !tmp.is_nil() {
+                if !!tmp {
                     // Found a valid candidate, stop looking.
                     return f;
                 }
@@ -583,19 +583,19 @@ pub fn previous_frame(frame: LispFrameLiveOrSelected, miniframe: LispObject) -> 
     let mut prev = Qnil;
 
     for_each_frame!(f => {
-        if frame_ref == f && !prev.is_nil() {
+        if frame_ref == f && !!prev {
             // frames match and there is a previous frame, return it.
             return prev.into();
         }
         let tmp = unsafe { candidate_frame(f.into(), frame_obj, miniframe) };
-        if !tmp.is_nil() {
+        if !!tmp {
             // found a candidate, remember it.
             prev = tmp;
         }
     });
 
     // We've scanned the entire list.
-    if prev.is_nil() {
+    if !prev {
         // We went through the whole frame list without finding a single
         // acceptable frame.  Return the original frame.
         frame_ref
@@ -619,7 +619,7 @@ pub fn previous_frame(frame: LispFrameLiveOrSelected, miniframe: LispObject) -> 
 #[lisp_fn]
 pub fn frame_after_make_frame(frame: LispFrameLiveOrSelected, made: LispObject) -> LispObject {
     let mut frame_ref: LispFrameRef = frame.into();
-    frame_ref.set_after_make_frame(made.is_not_nil());
+    frame_ref.set_after_make_frame(!!made);
     frame_ref.set_inhibit_horizontal_resize(false);
     frame_ref.set_inhibit_vertical_resize(false);
     made

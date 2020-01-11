@@ -60,7 +60,7 @@ pub struct LispLiveTerminal(LispTerminalRef);
 
 impl From<LispObject> for Option<LispLiveTerminal> {
     fn from(obj: LispObject) -> Self {
-        let obj = if obj.is_nil() { Fselected_frame() } else { obj };
+        let obj = if !obj { Fselected_frame() } else { obj };
 
         let term = if let Some(frame) = obj.as_frame() {
             frame.terminal

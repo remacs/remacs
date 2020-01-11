@@ -110,11 +110,7 @@ pub extern "C" fn set_window_update_flags(w: LispWindowRef, on_p: bool) {
         }
 
         let next = win.next;
-        w = if next.is_nil() {
-            None
-        } else {
-            Some(next.into())
-        };
+        w = if !next { None } else { Some(next.into()) };
     }
 }
 
@@ -147,7 +143,7 @@ pub fn internal_show_cursor_p(window: LispWindowOrSelected) -> bool {
 /// Return whether input is coming from the keyboard.
 // Corresponds to the INTERACTIVE macro in commands.h.
 pub fn is_interactive() -> bool {
-    unsafe { globals.Vexecuting_kbd_macro.is_nil() && !noninteractive }
+    unsafe { !globals.Vexecuting_kbd_macro && !noninteractive }
 }
 
 #[no_mangle]
@@ -169,7 +165,7 @@ pub extern "C" fn ding_internal(terminate_macro: bool) {
 /// terminate any keyboard macro currently executing.
 #[lisp_fn(min = "0")]
 pub fn ding(arg: LispObject) {
-    ding_internal(arg.is_nil())
+    ding_internal(!arg)
 }
 
 /// Perform redisplay.
@@ -182,14 +178,14 @@ pub fn ding(arg: LispObject) {
 /// immediately by pending input.
 #[lisp_fn(min = "0")]
 pub fn redisplay(force: LispObject) -> bool {
-    let force: bool = force.is_not_nil();
+    let force: bool = !!force;
 
     unsafe {
         swallow_events(true);
 
         let ret =
             (detect_input_pending_run_timers(true) && !force && !globals.redisplay_dont_pause)
-                || globals.Vexecuting_kbd_macro.is_not_nil();
+                || !!globals.Vexecuting_kbd_macro;
 
         if ret {
             let count = c_specpdl_index();

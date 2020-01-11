@@ -33,7 +33,7 @@ impl InteractiveNumericPrefix {
         match self {
             Self::Number(value) => value,
             Self::Object(raw) => {
-                if raw.is_nil() {
+                if !raw {
                     1
                 } else if raw.eq(Qminus) {
                     -1
@@ -57,7 +57,7 @@ impl From<LispObject> for InteractiveNumericPrefix {
 
 impl From<LispObject> for Option<InteractiveNumericPrefix> {
     fn from(obj: LispObject) -> Self {
-        if obj.is_nil() {
+        if !obj {
             None
         } else {
             Some(InteractiveNumericPrefix::from_object(obj))

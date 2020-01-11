@@ -106,7 +106,7 @@ trait LispObjectExt {
 
 impl LispObjectExt for LispObject {
     fn to_idfstring(&self) -> String {
-        if self.is_nil() {
+        if !*self {
             "NOTstring".to_string()
         } else {
             let idf_sym_s: LispStringRef = self.as_symbol_or_string().into();
@@ -335,7 +335,7 @@ pub fn directory_files_intro(
     let dnexp = expand_file_name(directory, None);
 
     let handler = find_file_name_handler(dnexp, Qdirectory_files);
-    if handler.is_not_nil() {
+    if !!handler {
         return call!(
             handler,
             Qdirectory_files,
@@ -348,17 +348,9 @@ pub fn directory_files_intro(
 
     let dr = DirReq::new(
         LispObject::from(dnexp).to_stdstring(),
-        if full.is_nil() {
-            FullPath::No
-        } else {
-            FullPath::Yes
-        },
-        if match_re.is_nil() {
-            None
-        } else {
-            Some(match_re)
-        },
-        if nosort.is_nil() {
+        if !full { FullPath::No } else { FullPath::Yes },
+        if !match_re { None } else { Some(match_re) },
+        if !nosort {
             SortFNames::Yes
         } else {
             SortFNames::No
@@ -380,7 +372,7 @@ pub fn directory_files_and_attributes_intro(
     let dnexp = expand_file_name(directory, None);
 
     let handler = find_file_name_handler(dnexp, Qdirectory_files_and_attributes);
-    if handler.is_not_nil() {
+    if !!handler {
         return call!(
             handler,
             Qdirectory_files_and_attributes,
@@ -394,17 +386,9 @@ pub fn directory_files_and_attributes_intro(
 
     let dr = DirReq::new(
         LispObject::from(dnexp).to_stdstring(),
-        if full.is_nil() {
-            FullPath::No
-        } else {
-            FullPath::Yes
-        },
-        if match_re.is_nil() {
-            None
-        } else {
-            Some(match_re)
-        },
-        if nosort.is_nil() {
+        if !full { FullPath::No } else { FullPath::Yes },
+        if !match_re { None } else { Some(match_re) },
+        if !nosort {
             SortFNames::Yes
         } else {
             SortFNames::No
@@ -431,17 +415,9 @@ pub extern "C" fn directory_files_internal(
 ) -> LispObject {
     let dr = DirReq::new(
         directory.to_stdstring(),
-        if full.is_nil() {
-            FullPath::No
-        } else {
-            FullPath::Yes
-        },
-        if match_re.is_nil() {
-            None
-        } else {
-            Some(match_re)
-        },
-        if nosort.is_nil() {
+        if !full { FullPath::No } else { FullPath::Yes },
+        if !match_re { None } else { Some(match_re) },
+        if !nosort {
             SortFNames::Yes
         } else {
             SortFNames::No
@@ -711,8 +687,8 @@ impl FileAttrs {
 pub fn file_attributes_intro(filename: LispStringRef, id_format: LispObject) -> LispObject {
     let fnexp = expand_file_name(filename, None);
     let handler = find_file_name_handler(fnexp, Qfile_attributes);
-    if handler.is_not_nil() {
-        if id_format.is_not_nil() {
+    if !!handler {
+        if !!id_format {
             return call!(handler, Qfile_attributes, fnexp.into(), id_format);
         } else {
             return call!(handler, Qfile_attributes, fnexp.into());

@@ -75,11 +75,11 @@ pub fn indirect_function(object: LispObject) -> LispObject {
     let mut tortoise = object;
     let mut hare = object;
     loop {
-        if !hare.is_symbol() || hare.is_nil() {
+        if !hare.is_symbol() || !hare {
             return hare;
         }
         hare = LispSymbolRef::from(hare).get_function();
-        if !hare.is_symbol() || hare.is_nil() {
+        if !hare.is_symbol() || !hare {
             return hare;
         }
         hare = LispSymbolRef::from(hare).get_function();
@@ -235,7 +235,7 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
             unsafe { CHECK_IMPURE(array, array.get_untaggedptr()) };
             v.set_checked(idx as usize, newelt);
         } else if let Some(mut bv) = vl.as_bool_vector() {
-            bv.set_checked(idx as usize, newelt.is_not_nil());
+            bv.set_checked(idx as usize, !!newelt);
         } else if let Some(_tbl) = vl.as_char_table() {
             verify_lisp_type!(idx, Qcharacterp);
             unsafe { CHAR_TABLE_SET(array, idx as c_int, newelt) };
@@ -288,15 +288,15 @@ pub fn defalias(
 ) -> LispObject {
     let sym = LispObject::from(symbol);
 
-    if unsafe {globals.Vpurify_flag.is_not_nil()}
+    if unsafe { !!globals.Vpurify_flag }
             // If `definition' is a keymap, immutable (and copying) is wrong.
-            && get_keymap(definition, false, false).is_nil()
+            && !get_keymap(definition, false, false)
     {
         definition = purecopy(definition);
     }
 
     let autoload = is_autoload(definition);
-    if unsafe { globals.Vpurify_flag.is_nil() } || !autoload {
+    if unsafe { !globals.Vpurify_flag } || !autoload {
         // Only add autoload entries after dumping, because the ones before are
         // not useful and else we get loads of them from the loaddefs.el.
 
@@ -309,13 +309,13 @@ pub fn defalias(
 
     // Handle automatic advice activation.
     let hook = get(symbol, Qdefalias_fset_function);
-    if hook.is_not_nil() {
+    if !!hook {
         call!(hook, sym, definition);
     } else {
         fset(symbol, definition);
     }
 
-    if docstring.is_not_nil() {
+    if !!docstring {
         put(symbol, Qfunction_documentation, docstring);
     }
 
@@ -562,7 +562,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
 ) {
     match (*valcontents).u_intfwd.ty {
         Lisp_Fwd_Int => (*(*valcontents).u_intfwd.intvar) = newval.as_fixnum_or_error(),
-        Lisp_Fwd_Bool => (*(*valcontents).u_boolfwd.boolvar) = newval.is_not_nil(),
+        Lisp_Fwd_Bool => (*(*valcontents).u_boolfwd.boolvar) = !!newval,
         Lisp_Fwd_Obj => {
             (*(*valcontents).u_objfwd.objvar) = newval;
             update_buffer_defaults((*valcontents).u_objfwd.objvar, newval);
@@ -570,11 +570,11 @@ pub unsafe extern "C" fn store_symval_forwarding(
         Lisp_Fwd_Buffer_Obj => {
             let predicate = (*valcontents).u_buffer_objfwd.predicate;
 
-            if newval.is_not_nil() && predicate.is_symbol() {
+            if !!newval && predicate.is_symbol() {
                 let pred_sym: LispSymbolRef = predicate.into();
                 let mut prop = get(pred_sym, Qchoice);
-                if prop.is_not_nil() {
-                    if memq(newval, prop).is_nil() {
+                if !!prop {
+                    if !memq(newval, prop) {
                         wrong_choice(prop, newval);
                     }
                 } else {
@@ -584,7 +584,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
                         if !newval.is_number() || leq(&args) {
                             wrong_range(min, max, newval);
                         }
-                    } else if predicate.is_function() && call!(predicate, newval).is_nil() {
+                    } else if predicate.is_function() && !call!(predicate, newval) {
                         wrong_type!(predicate, newval);
                     }
                 }
@@ -737,7 +737,7 @@ pub fn add_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject) {
     let watchers = get(symbol, Qwatchers);
     let mem = member(watch_function, watchers);
 
-    if mem.is_nil() {
+    if !mem {
         put(symbol, Qwatchers, (watch_function, watchers).into());
     }
 }
@@ -752,7 +752,7 @@ pub fn remove_variable_watcher(symbol: LispSymbolRef, watch_function: LispObject
     let watchers = get(symbol, Qwatchers);
     let watchers = unsafe { Fdelete(watch_function, watchers) };
 
-    if watchers.is_nil() {
+    if !watchers {
         symbol.set_trapped_write(symbol_trapped_write::SYMBOL_UNTRAPPED_WRITE);
 
         map_obarray(
@@ -790,7 +790,7 @@ pub fn logcount(value: EmacsInt) -> i32 {
 #[lisp_fn]
 pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
     let sym_obj = LispObject::from(symbol);
-    if sym_obj.is_nil() {
+    if !sym_obj {
         // Perhaps not quite the right error signal, but seems good enough.
         setting_constant!(sym_obj);
     }
@@ -798,7 +798,7 @@ pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
     let function = symbol.get_function();
 
     unsafe {
-        if Vautoload_queue.is_not_nil() && function.is_not_nil() {
+        if !!Vautoload_queue && !!function {
             Vautoload_queue = ((sym_obj, function), Vautoload_queue).into();
         }
     }

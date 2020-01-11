@@ -155,7 +155,7 @@ fn _secure_hash(
         HashAlg::SHA512 => (SHA512_DIGEST_LEN, sha512_buffer as HashFn),
     };
 
-    let buffer_size = if binary.is_nil() {
+    let buffer_size = if !binary {
         (digest_size * 2) as EmacsInt
     } else {
         digest_size as EmacsInt
@@ -163,7 +163,7 @@ fn _secure_hash(
     let digest = unsafe { make_uninit_string(buffer_size as EmacsInt) };
     let mut digest_str: LispStringRef = digest.into();
     hash_func(input_slice, digest_str.as_mut_slice());
-    if binary.is_nil() {
+    if !binary {
         hexify_digest_string(digest_str.as_mut_slice(), digest_size);
     }
     digest

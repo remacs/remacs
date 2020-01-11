@@ -90,14 +90,14 @@ pub extern "C" fn get_process(name: LispObject) -> LispObject {
     let proc_or_buf = if name.is_string() {
         let mut obj = get_process_lisp(name);
 
-        if obj.is_nil() {
+        if !obj {
             obj = get_buffer(LispBufferOrName::from(name)).map_or_else(
                 || error!("Process {} does not exist", name),
                 LispObject::from,
             );
         }
         obj
-    } else if name.is_nil() {
+    } else if !name {
         current_buffer()
     } else {
         name
@@ -370,7 +370,7 @@ pub fn set_process_filter(mut process: LispProcessRef, mut filter: LispObject) -
 }
 
 fn pset_filter(mut process: LispProcessRef, val: LispObject) -> LispObject {
-    let filter = if val.is_nil() {
+    let filter = if !val {
         Qinternal_default_process_filter
     } else {
         val
@@ -409,7 +409,7 @@ pub fn set_process_sentinel(mut process: LispProcessRef, mut sentinel: LispObjec
 }
 
 fn pset_sentinel(mut process: LispProcessRef, val: LispObject) -> LispObject {
-    let sentinel = if val.is_nil() {
+    let sentinel = if !val {
         Qinternal_default_process_sentinel
     } else {
         val
@@ -451,7 +451,7 @@ pub fn process_query_on_exit_flag(process: LispProcessRef) -> bool {
 /// returns FLAG.
 #[lisp_fn]
 pub fn set_process_query_on_exit_flag(mut process: LispProcessRef, flag: LispObject) -> LispObject {
-    process.set_kill_without_query(flag.is_nil());
+    process.set_kill_without_query(!flag);
     flag
 }
 

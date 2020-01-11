@@ -67,20 +67,20 @@ fn set_case_table(table: LispObject, standard: bool) -> LispObject {
     let (mut up, mut canon, mut eqv) = case_table.extras();
 
     unsafe {
-        if up.is_nil() {
+        if !up {
             up = Fmake_char_table(Qcase_table, Qnil);
             map_char_table(Some(set_identity), Qnil, table, up);
             map_char_table(Some(shuffle), Qnil, table, up);
             set_char_table_extras(table, 0, up);
         }
 
-        if canon.is_nil() {
+        if !canon {
             canon = Fmake_char_table(Qcase_table, Qnil);
             set_char_table_extras(table, 1, canon);
             map_char_table(Some(set_canon), Qnil, table, table);
         }
 
-        if eqv.is_nil() {
+        if !eqv {
             eqv = Fmake_char_table(Qcase_table, Qnil);
             map_char_table(Some(set_identity), Qnil, canon, eqv);
             map_char_table(Some(shuffle), Qnil, canon, eqv);
@@ -198,9 +198,8 @@ pub fn case_table_p(table: Option<LispCharTableRef>) -> bool {
     let case_table = LispCaseTable::from_char_table(char_table);
     let (up, canon, eqv) = case_table.extras();
 
-    (up.is_nil() || up.is_char_table())
-        && ((canon.is_nil() && eqv.is_nil())
-            || (canon.is_char_table() && (eqv.is_nil() || eqv.is_char_table())))
+    (!up || up.is_char_table())
+        && ((!canon && !eqv) || (canon.is_char_table() && (!eqv || eqv.is_char_table())))
 }
 
 /// Return the case table of the current buffer.
