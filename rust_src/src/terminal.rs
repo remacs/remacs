@@ -8,8 +8,8 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     dispnew::LispGlyphRef,
-    frames::Fselected_frame,
-    frames::LispFrameRef,
+    frame::Fselected_frame,
+    frame::LispFrameRef,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::build_string,
     remacs_sys::{pvec_type, Lisp_Terminal},
