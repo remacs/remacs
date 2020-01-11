@@ -56,7 +56,7 @@ inside Emacs.  We don't expect anyone to miss that.
 We've re-enabled color fonts usage by the XFT font back-end.  We
 consider the availability of these fonts more important than a random
 crash here and there, especially since the use of these fonts for
-displaying Emoji will become less and less important as w travel back
+displaying Emoji will become less and less important as we travel back
 in time, and will completely disappear in some past Emacs version.
 
 @item
