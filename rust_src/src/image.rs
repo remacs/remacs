@@ -1,7 +1,8 @@
 //! Functions for image support on window system.
 
-use crate::lisp::LispObject;
 use remacs_macros::lisp_fn;
+
+use crate::lisp::LispObject;
 use crate::remacs_sys::lookup_image_type;
 
 #[cfg(feature = "glyph-debug")]
