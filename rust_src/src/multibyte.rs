@@ -46,7 +46,7 @@ use crate::{
     obarray::LispObarrayRef,
     remacs_sys::{
         buffer_display_table, char_width, compare_string_intervals, empty_unibyte_string,
-        find_composition as c_find_composition, get_composition_id,
+        find_composition as c_find_composition, get_composition_id, staticpro,
     },
     remacs_sys::{
         char_bits, composition_table, equal_kind, EmacsDouble, EmacsInt, Lisp_Interval,
@@ -375,7 +375,7 @@ impl LispStringRef {
             return char_index;
         }
 
-        // Use cache operating on the cached string?
+        // Are we operating on the cached string?
         unsafe {
             if LispObject::from(self) == string_index_cache {
                 // Check if character is before or after cached position
@@ -634,6 +634,17 @@ impl LispStringRef {
     /// Panics if index is an incomplete codepoint at end of string.
     pub fn char_and_len(self, index: usize) -> (Codepoint, usize) {
         multibyte_char_at(&self.as_slice()[index..])
+    }
+
+    pub fn char_and_len_safe(self, index: usize) -> Option<(Codepoint, usize)> {
+        self.as_slice().get(index..).and_then(|slice| {
+            // Check for valid multibyte head and sufficient slice length
+            if !char_head_p(slice[0]) || slice.len() < multibyte_length_by_head(slice[0]) {
+                None
+            } else {
+                Some(multibyte_char_at(slice))
+            }
+        })
     }
 
     /// This function does not allocate. It will not change the size of the data allocation.
@@ -1381,4 +1392,9 @@ pub extern "C" fn lisp_string_width(
         }
     };
     width as isize
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rust_syms_of_multibyte() {
+    staticpro(&mut string_index_cache as *mut LispObject);
 }

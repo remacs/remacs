@@ -2517,6 +2517,8 @@ extract_data_from_object (Lisp_Object spec,
   return SSDATA (object);
 }
 
+extern void rust_syms_of_multibyte(void);
+
 void
 syms_of_fns (void)
 {
@@ -2604,6 +2606,8 @@ they are initiated from the keyboard.  If `use-dialog-box' is nil,
 that disables the use of a file dialog, regardless of the value of
 this variable.  */);
   use_file_dialog = 1;
+
+  rust_syms_of_multibyte();
 
   defsubr (&Scompare_strings);
   defsubr (&Sstring_version_lessp);
