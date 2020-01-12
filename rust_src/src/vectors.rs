@@ -127,7 +127,7 @@ impl Debug for LispVectorlikeRef {
                 write!(f, "[")?;
                 match v.as_slice() {
                     [] => {}
-                    [first, rest..] => {
+                    [first, rest @ ..] => {
                         write!(f, "{:?}", first)?;
                         for elt in rest {
                             write!(f, " {:?}", elt)?;
