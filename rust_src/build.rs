@@ -36,8 +36,8 @@ impl LintMsg {
     fn new(modname: &str, lineno: u32, msg: String) -> Self {
         Self {
             modname: modname.to_string(),
-            lineno: lineno,
-            msg: msg,
+            lineno,
+            msg,
         }
     }
 
@@ -77,10 +77,7 @@ impl ModuleInfo {
             let tmp = path_as_str(mod_path.file_name()).to_string();
             let path = mod_path.join("mod.rs");
             if path.is_file() {
-                return Some(ModuleInfo {
-                    path: path,
-                    name: tmp,
-                });
+                return Some(ModuleInfo { path, name: tmp });
             }
         } else if let Some(ext) = mod_path.extension() {
             if ext == "rs" {
@@ -105,7 +102,7 @@ struct ModuleData {
 impl ModuleData {
     pub fn new(info: ModuleInfo) -> Self {
         Self {
-            info: info,
+            info,
             c_exports: Vec::new(),
             lisp_fns: Vec::new(),
             protected_statics: Vec::new(),
@@ -395,30 +392,26 @@ fn generate_include_files() -> Result<(), BuildError> {
     for mod_data in &modules {
         for (cfg, func) in &mod_data.c_exports {
             if let Some(cfg) = cfg {
-                write!(out_file, "{}\n", cfg)?;
+                writeln!(out_file, "{}", cfg)?;
             }
-            write!(
-                out_file,
-                "pub use crate::{}::{};\n",
-                mod_data.info.name, func
-            )?;
+            writeln!(out_file, "pub use crate::{}::{};", mod_data.info.name, func)?;
         }
         for (cfg, func) in &mod_data.lisp_fns {
             if let Some(cfg) = cfg {
-                write!(out_file, "{}\n", cfg)?;
+                writeln!(out_file, "{}", cfg)?;
             }
-            write!(
+            writeln!(
                 out_file,
-                "pub use crate::{}::F{};\n",
+                "pub use crate::{}::F{};",
                 mod_data.info.name, func
             )?;
         }
     }
-    write!(out_file, "\n")?;
+    writeln!(out_file, "")?;
 
-    write!(
+    writeln!(
         out_file,
-        "#[no_mangle]\npub extern \"C\" fn rust_init_syms() {{\n"
+        "#[no_mangle]\npub extern \"C\" fn rust_init_syms() {{"
     )?;
     for mod_data in &modules {
         let exports_path: PathBuf = [
@@ -434,9 +427,9 @@ fn generate_include_files() -> Result<(), BuildError> {
 
         if !mod_data.lisp_fns.is_empty() {
             let mut file = File::create(&exports_path)?;
-            write!(
+            writeln!(
                 file,
-                "export_lisp_fns! {{\n    {}\n}}\n",
+                "export_lisp_fns! {{\n    {}\n}}",
                 mod_data
                     .lisp_fns
                     .iter()
@@ -448,7 +441,7 @@ fn generate_include_files() -> Result<(), BuildError> {
                     .join(",\n    ")
             )?;
 
-            write!(out_file, "    {}::rust_init_syms();\n", mod_data.info.name)?;
+            writeln!(out_file, "    {}::rust_init_syms();", mod_data.info.name)?;
         }
 
         if !mod_data.protected_statics.is_empty() {
@@ -457,23 +450,19 @@ fn generate_include_files() -> Result<(), BuildError> {
                 .write(true)
                 .append(true)
                 .open(exports_path)?;
-            write!(
+            writeln!(
                 file,
-                "protect_statics_from_GC! {{ {} }}\n",
+                "protect_statics_from_GC! {{ {} }}",
                 mod_data.protected_statics.join(", ")
             )?;
 
-            write!(
-                out_file,
-                "    {}::rust_static_syms();\n",
-                mod_data.info.name
-            )?;
+            writeln!(out_file, "    {}::rust_static_syms();", mod_data.info.name)?;
         }
     }
 
     // Add this one by hand.
-    write!(out_file, "    floatfns::rust_init_extra_syms();\n")?;
-    write!(out_file, "}}\n")?;
+    writeln!(out_file, "    floatfns::rust_init_extra_syms();")?;
+    writeln!(out_file, "}}")?;
 
     Ok(())
 }
