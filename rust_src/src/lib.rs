@@ -20,7 +20,6 @@
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]
 #![feature(untagged_unions)]
-#![feature(ptr_cast)]
 
 extern crate errno;
 #[macro_use]
