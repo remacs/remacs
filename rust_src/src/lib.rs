@@ -1,6 +1,8 @@
 #![allow(clippy::cognitive_complexity)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+// For us, there is nothing to document. Calling C code isn't going to be safe.
+#![allow(clippy::missing_safety_doc)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]

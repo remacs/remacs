@@ -1,3 +1,4 @@
+#![allow(clippy::missing_safety_doc)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![cfg_attr(feature = "strict", deny(warnings))]
