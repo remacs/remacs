@@ -54,7 +54,6 @@ static bool foreach_window_1 (struct window *,
 static bool window_resize_check (struct window *, bool);
 static void window_resize_apply (struct window *, bool);
 static void select_window_1 (Lisp_Object, bool);
-static void run_window_configuration_change_hook (struct frame *);
 
 static struct window *set_window_margins (struct window *, Lisp_Object,
 					  Lisp_Object);
@@ -2193,7 +2192,7 @@ select_frame_norecord (Lisp_Object frame)
     Fselect_frame (frame, Qt);
 }
 
-static void
+void
 run_window_configuration_change_hook (struct frame *f)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -2241,16 +2240,6 @@ run_window_configuration_change_hook (struct frame *f)
 
   run_funs (global_wcch);
   unbind_to (count, Qnil);
-}
-
-DEFUN ("run-window-configuration-change-hook", Frun_window_configuration_change_hook,
-       Srun_window_configuration_change_hook, 0, 1, 0,
-       doc: /* Run `window-configuration-change-hook' for FRAME.
-If FRAME is omitted or nil, it defaults to the selected frame.  */)
-  (Lisp_Object frame)
-{
-  run_window_configuration_change_hook (decode_live_frame (frame));
-  return Qnil;
 }
 
 DEFUN ("run-window-scroll-functions", Frun_window_scroll_functions,
@@ -5936,6 +5925,8 @@ init_window (void)
   Vwindow_list = Qnil;
 }
 
+extern void rust_syms_of_window(void);
+
 void
 syms_of_window (void)
 {
@@ -5946,7 +5937,6 @@ syms_of_window (void)
   Fput (Qscroll_up, Qscroll_command, Qt);
   Fput (Qscroll_down, Qscroll_command, Qt);
 
-  DEFSYM (Qwindow_configuration_change_hook, "window-configuration-change-hook");
   DEFSYM (Qwindowp, "windowp");
   DEFSYM (Qwindow_configuration_p, "window-configuration-p");
   DEFSYM (Qwindow_live_p, "window-live-p");
@@ -6031,13 +6021,7 @@ on their symbols to be controlled by this variable.  */);
   Vwindow_point_insertion_type = Qnil;
   DEFSYM (Qwindow_point_insertion_type, "window_point_insertion_type");
 
-  DEFVAR_LISP ("window-configuration-change-hook",
-	       Vwindow_configuration_change_hook,
-	       doc: /* Functions to call when window configuration changes.
-The buffer-local value is run once per window, with the relevant window
-selected; while the global value is run only once for the modified frame,
-with the relevant frame selected.  */);
-  Vwindow_configuration_change_hook = Qnil;
+  rust_syms_of_window();
 
   DEFVAR_LISP ("window-size-change-functions", Vwindow_size_change_functions,
     doc: /* Functions called during redisplay, if window sizes have changed.
@@ -6180,7 +6164,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sdelete_window_internal);
   defsubr (&Sresize_mini_window_internal);
   defsubr (&Sset_window_buffer);
-  defsubr (&Srun_window_configuration_change_hook);
   defsubr (&Srun_window_scroll_functions);
   defsubr (&Sforce_window_update);
   defsubr (&Ssplit_window_internal);
