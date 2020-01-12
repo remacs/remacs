@@ -8511,26 +8511,6 @@ DEFUN ("read-non-nil-coding-system", Fread_non_nil_coding_system,
   return (Fintern (val, Qnil));
 }
 
-DEFUN ("read-coding-system", Fread_coding_system, Sread_coding_system, 1, 2, 0,
-       doc: /* Read a coding system from the minibuffer, prompting with string PROMPT.
-If the user enters null input, return second argument DEFAULT-CODING-SYSTEM.
-Ignores case when completing coding systems (all Emacs coding systems
-are lower-case).  */)
-  (Lisp_Object prompt, Lisp_Object default_coding_system)
-{
-  Lisp_Object val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  if (SYMBOLP (default_coding_system))
-    default_coding_system = SYMBOL_NAME (default_coding_system);
-  specbind (Qcompletion_ignore_case, Qt);
-  val = Fcompleting_read (prompt, Vcoding_system_alist, Qnil,
-			  Qt, Qnil, Qcoding_system_history,
-			  default_coding_system, Qnil);
-  unbind_to (count, Qnil);
-  return (SCHARS (val) == 0 ? Qnil : Fintern (val, Qnil));
-}
-
 
 /* Detect how the bytes at SRC of length SRC_BYTES are encoded.  If
    HIGHEST, return the coding system of the highest
@@ -10879,7 +10859,6 @@ syms_of_coding (void)
      symbol as a coding system.  */
   DEFSYM (Qcoding_system_define_form, "coding-system-define-form");
 
-  defsubr (&Sread_coding_system);
   defsubr (&Sread_non_nil_coding_system);
   defsubr (&Sdetect_coding_region);
   defsubr (&Sdetect_coding_string);

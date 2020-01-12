@@ -105,10 +105,10 @@ pub struct Codepoint(u32);
 impl Codepoint {
     // Equivalent to BYTE8_TO_CHAR
     /// Create a codepoint from a raw byte. If non-ascii, byte8 encode it.
-    pub fn from_raw(byte: u8) -> Codepoint {
-        match Codepoint::from(byte) {
+    pub fn from_raw(byte: u8) -> Self {
+        match Self::from(byte) {
             cp if cp.is_ascii() => cp,
-            cp => Codepoint::from(cp.0 + BYTE8_OFFSET),
+            cp => Self::from(cp.0 + BYTE8_OFFSET),
         }
     }
 
@@ -154,9 +154,10 @@ impl Codepoint {
     /// Note that this does not check if the codepoint is within the
     /// appropriate range.
     pub fn to_byte8_unchecked(self) -> u8 {
-        match self.is_byte8() {
-            true => (self.0 - BYTE8_OFFSET) as u8,
-            false => (self.0 & 0xFF) as u8,
+        if self.is_byte8() {
+            (self.0 - BYTE8_OFFSET) as u8
+        } else {
+            (self.0 & 0xFF) as u8
         }
     }
 
@@ -174,16 +175,17 @@ impl Codepoint {
     }
 
     // Equivalent to UNIBYTE_TO_CHAR
-    pub fn unibyte_to_char(self) -> Codepoint {
-        match self.is_ascii() {
-            true => self,
-            false => Codepoint::from_raw(self.0 as u8),
+    pub fn unibyte_to_char(self) -> Self {
+        if self.is_ascii() {
+            self
+        } else {
+            Self::from_raw(self.0 as u8)
         }
     }
 
     // Equivalent to MAKE_CHAR_MULTIBYTE
     /// Transform an 8-bit codepoint to its byte8 encoded form.
-    pub fn to_multibyte(self) -> Codepoint {
+    pub fn to_multibyte(self) -> Self {
         debug_assert!(self.is_single_byte());
         self.unibyte_to_char()
     }
@@ -220,7 +222,7 @@ impl Codepoint {
             to[0] = 0xF8;
             5
         } else if cp <= MAX_CHAR {
-            let b = Codepoint::from(cp).to_byte8_unchecked();
+            let b = Self::from(cp).to_byte8_unchecked();
             to[1] = 0x80 | (b & 0x3F);
             to[0] = 0xC0 | ((b >> 6) & 1);
             2
@@ -231,11 +233,11 @@ impl Codepoint {
 
     /// If character code C has modifier masks, reflect them to the character
     /// code if possible. Return the resulting code.
-    pub fn resolve_modifier_mask(self) -> Codepoint {
+    pub fn resolve_modifier_mask(self) -> Self {
         let mut cp = self.0;
         // A non-ASCII character can't reflect modifier bits to the code.
-        if !Codepoint::from(cp & !char_bits::CHAR_MODIFIER_MASK).is_ascii() {
-            return Codepoint::from(cp);
+        if !Self::from(cp & !char_bits::CHAR_MODIFIER_MASK).is_ascii() {
+            return Self::from(cp);
         }
         let ascii = (cp & 0x7F) as u8;
         // For Meta, Shift, and Control modifiers, we need special care.
@@ -262,7 +264,7 @@ impl Codepoint {
                 cp &= 0x1F | (!0x7F & !char_bits::CHAR_CTL);
             }
         }
-        Codepoint::from(cp)
+        Self::from(cp)
     }
 }
 
@@ -331,7 +333,7 @@ impl From<Codepoint> for LispObject {
 impl From<LispObject> for Codepoint {
     fn from(o: LispObject) -> Self {
         match o.as_fixnum() {
-            Some(i) if 0 <= i && i <= EmacsInt::from(MAX_CHAR) => Codepoint::from(i as u32),
+            Some(i) if 0 <= i && i <= EmacsInt::from(MAX_CHAR) => Self::from(i as u32),
             _ => wrong_type!(Qcharacterp, o),
         }
     }
@@ -350,6 +352,7 @@ impl LispStringRef {
         }
     }
 
+    // Same as the SCHARS function
     /// Return the string's length in characters.  Differs from
     /// `len_bytes` for multibyte strings.
     pub fn len_chars(self) -> ptrdiff_t {
@@ -942,7 +945,7 @@ pub unsafe extern "C" fn count_size_as_multibyte(ptr: *const c_uchar, len: ptrdi
 /// character code if possible.  Return the resulting code.
 #[no_mangle]
 pub extern "C" fn char_resolve_modifier_mask(ch: EmacsInt) -> EmacsInt {
-    Codepoint::from(ch as u32).resolve_modifier_mask().0 as EmacsInt
+    Codepoint::from(ch as u32).resolve_modifier_mask().0.into()
 }
 
 /// Store multibyte form of character CP at TO.  If CP has modifier bits,
@@ -1331,10 +1334,10 @@ pub unsafe extern "C" fn str_to_unibyte(
         srcslice = &srcslice[cplen..];
         dstslice[i as usize] = if cp.val() > MAX_5_BYTE_CHAR {
             cp.to_byte8_unchecked()
-        } else if !cp.is_ascii() {
-            return i;
-        } else {
+        } else if cp.is_ascii() {
             cp.0 as c_uchar
+        } else {
+            return i;
         };
     }
     chars

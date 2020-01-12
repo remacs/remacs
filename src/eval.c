@@ -103,32 +103,11 @@ union specbinding *backtrace_top (void) EXTERNALLY_VISIBLE;
 static Lisp_Object apply_lambda (Lisp_Object, Lisp_Object, ptrdiff_t);
 static Lisp_Object lambda_arity (Lisp_Object);
 
-static Lisp_Object
-specpdl_symbol (union specbinding *pdl)
-{
-  eassert (pdl->kind >= SPECPDL_LET);
-  return pdl->let.symbol;
-}
-
 static enum specbind_tag
 specpdl_kind (union specbinding *pdl)
 {
   eassert (pdl->kind >= SPECPDL_LET);
   return pdl->let.kind;
-}
-
-static Lisp_Object
-specpdl_old_value (union specbinding *pdl)
-{
-  eassert (pdl->kind >= SPECPDL_LET);
-  return pdl->let.old_value;
-}
-
-static void
-set_specpdl_old_value (union specbinding *pdl, Lisp_Object val)
-{
-  eassert (pdl->kind >= SPECPDL_LET);
-  pdl->let.old_value = val;
 }
 
 static Lisp_Object
@@ -415,36 +394,6 @@ The return value is BASE-VARIABLE.  */)
   return base_variable;
 }
 
-static union specbinding *
-default_toplevel_binding (Lisp_Object symbol)
-{
-  union specbinding *binding = NULL;
-  union specbinding *pdl = specpdl_ptr;
-  while (pdl > specpdl)
-    {
-      switch ((--pdl)->kind)
-	{
-	case SPECPDL_LET_DEFAULT:
-	case SPECPDL_LET:
-	  if (EQ (specpdl_symbol (pdl), symbol))
-	    binding = pdl;
-	  break;
-
-	case SPECPDL_UNWIND:
-	case SPECPDL_UNWIND_PTR:
-	case SPECPDL_UNWIND_INT:
-	case SPECPDL_UNWIND_VOID:
-	case SPECPDL_BACKTRACE:
-	case SPECPDL_LET_LOCAL:
-	  break;
-
-	default:
-	  emacs_abort ();
-	}
-    }
-  return binding;
-}
-
 DEFUN ("default-toplevel-value", Fdefault_toplevel_value, Sdefault_toplevel_value, 1, 1, 0,
        doc: /* Return SYMBOL's toplevel default value.
 "Toplevel" means outside of any let binding.  */)
@@ -470,87 +419,6 @@ DEFUN ("set-default-toplevel-value", Fset_default_toplevel_value,
   else
     Fset_default (symbol, value);
   return Qnil;
-}
-
-DEFUN ("defvar", Fdefvar, Sdefvar, 1, UNEVALLED, 0,
-       doc: /* Define SYMBOL as a variable, and return SYMBOL.
-You are not required to define a variable in order to use it, but
-defining it lets you supply an initial value and documentation, which
-can be referred to by the Emacs help facilities and other programming
-tools.  The `defvar' form also declares the variable as \"special\",
-so that it is always dynamically bound even if `lexical-binding' is t.
-
-If SYMBOL's value is void and the optional argument INITVALUE is
-provided, INITVALUE is evaluated and the result used to set SYMBOL's
-value.  If SYMBOL is buffer-local, its default value is what is set;
-buffer-local values are not affected.  If INITVALUE is missing,
-SYMBOL's value is not set.
-
-If SYMBOL has a local binding, then this form affects the local
-binding.  This is usually not what you want.  Thus, if you need to
-load a file defining variables, with this form or with `defconst' or
-`defcustom', you should always load that file _outside_ any bindings
-for these variables.  (`defconst' and `defcustom' behave similarly in
-this respect.)
-
-The optional argument DOCSTRING is a documentation string for the
-variable.
-
-To define a user option, use `defcustom' instead of `defvar'.
-usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
-  (Lisp_Object args)
-{
-  Lisp_Object sym, tem, tail;
-
-  sym = XCAR (args);
-  tail = XCDR (args);
-
-  if (!NILP (tail))
-    {
-      if (!NILP (XCDR (tail)) && !NILP (XCDR (XCDR (tail))))
-	error ("Too many arguments");
-
-      tem = Fdefault_boundp (sym);
-
-      /* Do it before evaluating the initial value, for self-references.  */
-      XSYMBOL (sym)->u.s.declared_special = true;
-
-      if (NILP (tem))
-	Fset_default (sym, eval_sub (XCAR (tail)));
-      else
-	{ /* Check if there is really a global binding rather than just a let
-	     binding that shadows the global unboundness of the var.  */
-	  union specbinding *binding = default_toplevel_binding (sym);
-	  if (binding && EQ (specpdl_old_value (binding), Qunbound))
-	    {
-	      set_specpdl_old_value (binding, eval_sub (XCAR (tail)));
-	    }
-	}
-      tail = XCDR (tail);
-      tem = Fcar (tail);
-      if (!NILP (tem))
-	{
-	  if (!NILP (Vpurify_flag))
-	    tem = Fpurecopy (tem);
-	  Fput (sym, Qvariable_documentation, tem);
-	}
-      LOADHIST_ATTACH (sym);
-    }
-  else if (!NILP (Vinternal_interpreter_environment)
-	   && !XSYMBOL (sym)->u.s.declared_special)
-    /* A simple (defvar foo) with lexical scoping does "nothing" except
-       declare that var to be dynamically scoped *locally* (i.e. within
-       the current file or let-block).  */
-    Vinternal_interpreter_environment
-      = Fcons (sym, Vinternal_interpreter_environment);
-  else
-    {
-      /* Simple (defvar <var>) should not count as a definition at all.
-	 It could get in the way of other definitions, and unloading this
-	 package could try to make the variable unbound.  */
-    }
-
-  return sym;
 }
 
 /* Assert that E is true, but do not evaluate E.  Use this instead of
@@ -2998,7 +2866,6 @@ alist of active lexical bindings.  */);
 
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);
-  defsubr (&Sdefvar);
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
   defsubr (&Sthrow);

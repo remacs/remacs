@@ -1626,4 +1626,7 @@ INLINE_HEADER_END
 # pragma GCC diagnostic ignored "-Wsuggest-attribute=const"
 #endif
 
+extern bool other_frames (struct frame *f, bool invisible, bool force);
+extern void check_minibuf_window (Lisp_Object frame, int select);
+
 #endif /* not EMACS_FRAME_H */

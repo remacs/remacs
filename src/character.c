@@ -330,21 +330,6 @@ usage: (unibyte-string &rest BYTES)  */)
   return str;
 }
 
-DEFUN ("char-resolve-modifiers", Fchar_resolve_modifiers,
-       Schar_resolve_modifiers, 1, 1, 0,
-       doc: /* Resolve modifiers in the character CHAR.
-The value is a character with modifiers resolved into the character
-code.  Unresolved modifiers are kept in the value.
-usage: (char-resolve-modifiers CHAR)  */)
-  (Lisp_Object character)
-{
-  EMACS_INT c;
-
-  CHECK_NUMBER (character);
-  c = XINT (character);
-  return make_number (char_resolve_modifier_mask (c));
-}
-
 DEFUN ("get-byte", Fget_byte, Sget_byte, 0, 2, 0,
        doc: /* Return a byte value of a character at point.
 Optional 1st arg POSITION, if non-nil, is a position of a character to get
@@ -549,7 +534,6 @@ syms_of_character (void)
   defsubr (&Schar_width);
   defsubr (&Sstring);
   defsubr (&Sunibyte_string);
-  defsubr (&Schar_resolve_modifiers);
   defsubr (&Sget_byte);
 
   DEFVAR_LISP ("translation-table-vector",  Vtranslation_table_vector,

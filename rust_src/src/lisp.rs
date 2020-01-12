@@ -20,13 +20,15 @@ use crate::{
     lists::{list, memq, CarIter, LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     process::LispProcessRef,
+    remacs_sys::specbind_tag,
     remacs_sys::{build_string, make_float, Fmake_hash_table},
     remacs_sys::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },
-    remacs_sys::{Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
+    remacs_sys::{specbinding, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
     remacs_sys::{QCtest, Qautoload, Qeq, Qnil, Qsubrp, Qt},
     remacs_sys::{Vbuffer_alist, Vprocess_alist},
+    symbols::LispSymbolRef,
 };
 
 // TODO: tweak Makefile to rebuild C files if this changes.
@@ -118,7 +120,11 @@ impl<T> ExternalPtr<T> {
     }
 
     pub fn from_ptr(ptr: *mut c_void) -> Option<Self> {
-        unsafe { ptr.as_ref().map(|p| mem::transmute(p)) }
+        if ptr.is_null() {
+            None
+        } else {
+            Some(Self(ptr as *mut T))
+        }
     }
 
     pub fn replace_ptr(&mut self, ptr: *mut T) {
@@ -139,6 +145,10 @@ impl<T> ExternalPtr<T> {
         let ptr = self.0.sub(size);
         self.replace_ptr(ptr);
     }
+
+    pub fn cast<U>(mut self) -> ExternalPtr<U> {
+        ExternalPtr::<U>(self.as_mut().cast())
+    }
 }
 
 impl<T> Deref for ExternalPtr<T> {
@@ -157,6 +167,18 @@ impl<T> DerefMut for ExternalPtr<T> {
 impl<T> PartialEq for ExternalPtr<T> {
     fn eq(&self, other: &Self) -> bool {
         self.as_ptr() == other.as_ptr()
+    }
+}
+
+impl<T> PartialOrd for ExternalPtr<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.as_ptr().cmp(&other.as_ptr()))
+    }
+}
+
+impl<T> From<*mut T> for ExternalPtr<T> {
+    fn from(o: *mut T) -> Self {
+        Self::new(o)
     }
 }
 
@@ -276,6 +298,27 @@ impl From<LispObject> for LispSubrRef {
 impl From<LispObject> for Option<LispSubrRef> {
     fn from(o: LispObject) -> Self {
         o.as_vectorlike().and_then(ExternalPtr::as_subr)
+    }
+}
+
+pub type SpecbindingRef = ExternalPtr<specbinding>;
+
+impl SpecbindingRef {
+    pub fn symbol(self) -> LispSymbolRef {
+        debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
+        unsafe { self.let_.as_ref().symbol }.into()
+    }
+
+    pub fn old_value(self) -> LispObject {
+        debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
+        unsafe { self.let_.as_ref().old_value }
+    }
+
+    pub fn set_old_value(&mut self, val: LispObject) {
+        debug_assert!(self.kind() >= specbind_tag::SPECPDL_LET);
+        unsafe {
+            self.let_.as_mut().old_value = val;
+        }
     }
 }
 

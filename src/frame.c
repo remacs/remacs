@@ -50,11 +50,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 Lisp_Object selected_frame;
 
-/* A frame which is not just a mini-buffer, or NULL if there are no such
-   frames.  This is usually the most recent such frame that was selected.  */
-
-static struct frame *last_nonminibuf_frame;
-
 /* False means there are no visible garbaged frames.  */
 bool frame_garbaged;
 
@@ -996,7 +991,7 @@ make_initial_frame (void)
   if (!noninteractive)
     init_frame_faces (f);
 
-  last_nonminibuf_frame = f;
+  set_last_nonminibuffer_frame(f);
 
   f->can_x_set_window_size = true;
   f->after_make_frame = true;
@@ -1298,7 +1293,7 @@ do_switch_frame (Lisp_Object frame, int track, int for_deletion, Lisp_Object nor
 
   selected_frame = frame;
   if (! FRAME_MINIBUF_ONLY_P (XFRAME (selected_frame)))
-    last_nonminibuf_frame = XFRAME (selected_frame);
+    set_last_nonminibuffer_frame(XFRAME (selected_frame));
 
   Fselect_window (f->selected_window, norecord);
 
@@ -1475,19 +1470,6 @@ candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf)
   return Qnil;
 }
 
-DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
-       Slast_nonminibuf_frame, 0, 0, 0,
-       doc: /* Return last non-minibuffer frame selected. */)
-  (void)
-{
-  Lisp_Object frame = Qnil;
-
-  if (last_nonminibuf_frame)
-    XSETFRAME (frame, last_nonminibuf_frame);
-
-  return frame;
-}
-
 /**
  * other_frames:
  *
@@ -1503,7 +1485,7 @@ DEFUN ("last-nonminibuffer-frame", Flast_nonminibuf_frame,
  * If F is the terminal frame and we are using X, return true if at
  * least one X frame exists.
  */
-static bool
+bool
 other_frames (struct frame *f, bool invisible, bool force)
 {
   Lisp_Object frames, frame, frame1;
@@ -1553,7 +1535,7 @@ other_frames (struct frame *f, bool invisible, bool force)
    instead.  If the selected frame doesn't have one, get some other
    frame's minibuffer window.  SELECT non-zero means select the new
    minibuffer window.  */
-static void
+void
 check_minibuf_window (Lisp_Object frame, int select)
 {
   struct frame *f = decode_live_frame (frame);
@@ -1850,9 +1832,10 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
   /* If we've deleted the last_nonminibuf_frame, then try to find
      another one.  */
+  struct frame *last_nonminibuf_frame = get_last_nonminibuffer_frame();
   if (f == last_nonminibuf_frame)
     {
-      last_nonminibuf_frame = 0;
+      set_last_nonminibuffer_frame(0);
 
       FOR_EACH_FRAME (frames, frame1)
 	{
@@ -1860,7 +1843,7 @@ delete_frame (Lisp_Object frame, Lisp_Object force)
 
 	  if (!FRAME_MINIBUF_ONLY_P (f1))
 	    {
-	      last_nonminibuf_frame = f1;
+	      set_last_nonminibuffer_frame(f1);
 	      break;
 	    }
 	}
@@ -2261,41 +2244,6 @@ make_frame_visible_1 (Lisp_Object window)
       else
 	bset_display_time (XBUFFER (w->contents), Fcurrent_time ());
     }
-}
-
-DEFUN ("make-frame-invisible", Fmake_frame_invisible, Smake_frame_invisible,
-       0, 2, "",
-       doc: /* Make the frame FRAME invisible.
-If omitted, FRAME defaults to the currently selected frame.
-On graphical displays, invisible frames are not updated and are
-usually not displayed at all, even in a window system's \"taskbar\".
-
-Normally you may not make FRAME invisible if all other frames are invisible,
-but if the second optional argument FORCE is non-nil, you may do so.
-
-This function has no effect on text terminal frames.  Such frames are
-always considered visible, whether or not they are currently being
-displayed in the terminal.  */)
-  (Lisp_Object frame, Lisp_Object force)
-{
-  struct frame *f = decode_live_frame (frame);
-
-  if (NILP (force) && !other_frames (f, true, false))
-    error ("Attempt to make invisible the sole visible or iconified frame");
-
-  /* Don't allow minibuf_window to remain on an invisible frame.  */
-  check_minibuf_window (frame, EQ (minibuf_window, selected_window));
-
-  /* I think this should be done with a hook.  */
-#ifdef HAVE_WINDOW_SYSTEM
-  if (FRAME_WINDOW_P (f))
-    x_make_frame_invisible (f);
-#endif
-
-  /* Make menu bar update for the Buffers and Frames menus.  */
-  windows_or_buffers_changed = 16;
-
-  return Qnil;
 }
 
 DEFUN ("iconify-frame", Ficonify_frame, Siconify_frame,
@@ -2866,42 +2814,6 @@ list, but are otherwise ignored.  */)
       SAFE_FREE ();
     }
   return Qnil;
-}
-
-DEFUN ("frame-char-height", Fframe_char_height, Sframe_char_height,
-       0, 1, 0,
-       doc: /* Height in pixels of a line in the font in frame FRAME.
-If FRAME is omitted or nil, the selected frame is used.
-For a terminal frame, the value is always 1.  */)
-  (Lisp_Object frame)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  struct frame *f = decode_any_frame (frame);
-
-  if (FRAME_WINDOW_P (f))
-    return make_number (FRAME_LINE_HEIGHT (f));
-  else
-#endif
-    return make_number (1);
-}
-
-
-DEFUN ("frame-char-width", Fframe_char_width, Sframe_char_width,
-       0, 1, 0,
-       doc: /* Width in pixels of characters in the font in frame FRAME.
-If FRAME is omitted or nil, the selected frame is used.
-On a graphical screen, the width is the standard width of the default font.
-For a terminal screen, the value is always 1.  */)
-  (Lisp_Object frame)
-{
-#ifdef HAVE_WINDOW_SYSTEM
-  struct frame *f = decode_any_frame (frame);
-
-  if (FRAME_WINDOW_P (f))
-    return make_number (FRAME_COLUMN_WIDTH (f));
-  else
-#endif
-    return make_number (1);
 }
 
 DEFUN ("frame-native-width", Fframe_native_width,
@@ -5595,7 +5507,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sselect_frame);
   defsubr (&Sframe_parent);
   defsubr (&Sframe_ancestor_p);
-  defsubr (&Slast_nonminibuf_frame);
   defsubr (&Smouse_position);
   defsubr (&Smouse_pixel_position);
   defsubr (&Sset_mouse_position);
@@ -5605,7 +5516,6 @@ iconify the top level frame instead.  */);
   defsubr (&Srestore_frame_configuration);
 #endif
   defsubr (&Smake_frame_visible);
-  defsubr (&Smake_frame_invisible);
   defsubr (&Siconify_frame);
   defsubr (&Sraise_frame);
   defsubr (&Slower_frame);
@@ -5613,8 +5523,6 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_parameters);
   defsubr (&Sframe_parameter);
   defsubr (&Smodify_frame_parameters);
-  defsubr (&Sframe_char_height);
-  defsubr (&Sframe_char_width);
   defsubr (&Sframe_native_height);
   defsubr (&Sframe_native_width);
   defsubr (&Stool_bar_pixel_width);

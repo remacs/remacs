@@ -11,7 +11,7 @@ use crate::{
     editfns::{goto_char, point},
     eval::unbind_to,
     fns::{copy_alist, nreverse},
-    frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
+    frame::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
     interactive::InteractiveNumericPrefix,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
@@ -494,10 +494,10 @@ impl LispWindowRef {
 
     /// Width of the bottom divider of the window
     pub fn right_divider_width(self) -> i32 {
-        if !self.is_rightmost() {
-            self.get_frame().right_divider_width
-        } else {
+        if self.is_rightmost() {
             0
+        } else {
+            self.get_frame().right_divider_width
         }
     }
 
@@ -760,6 +760,22 @@ pub extern "C" fn decode_any_window(window: LispObject) -> LispWindowRef {
     LispWindowOrSelected::from(window).into()
 }
 
+/// Return the width in pixels of WINDOW's vertical scrollbar.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_scroll_bar_width(window: LispWindowLiveOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
+    win.scroll_bar_area_width()
+}
+
+/// Return the height in pixels of WINDOW's horizontal scrollbar.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_scroll_bar_height(window: LispWindowLiveOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
+    win.scroll_bar_area_height()
+}
+
 /// Return the normal height of window WINDOW.
 /// WINDOW must be a valid window and defaults to the selected one.
 /// If HORIZONTAL is non-nil, return the normal width of WINDOW.
@@ -784,10 +800,10 @@ pub extern "C" fn decode_any_window(window: LispObject) -> LispWindowRef {
 #[lisp_fn(min = "0")]
 pub fn window_normal_size(window: LispWindowValidOrSelected, horizontal: bool) -> EmacsDouble {
     let win: LispWindowRef = window.into();
-    let frac = if !horizontal {
-        win.normal_lines
-    } else {
+    let frac = if horizontal {
         win.normal_cols
+    } else {
+        win.normal_lines
     };
     EmacsDouble::from(frac)
 }
@@ -1985,11 +2001,11 @@ pub fn set_window_fringes_lisp(
     let updated_window =
         unsafe { set_window_fringes(window.as_mut(), left_width, right_width, outside_margins) };
 
-    if !updated_window.is_null() {
+    if updated_window.is_null() {
+        false
+    } else {
         unsafe { apply_window_adjustment(updated_window) };
         true
-    } else {
-        false
     }
 }
 

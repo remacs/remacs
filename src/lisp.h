@@ -4055,6 +4055,12 @@ extern void get_backtrace (Lisp_Object array);
 Lisp_Object backtrace_top_function (void);
 extern bool let_shadows_buffer_binding_p (struct Lisp_Symbol *symbol);
 
+/* Defined in eval.rs.   */
+extern Lisp_Object specpdl_symbol (union specbinding *pdl);
+extern Lisp_Object specpdl_old_value (union specbinding *pdl);
+extern void set_specpdl_old_value (union specbinding *pdl, Lisp_Object val);
+extern union specbinding *default_toplevel_binding (Lisp_Object symbol);
+
 /* Defined in unexmacosx.c.  */
 #if defined DARWIN_OS && !defined CANNOT_DUMP
 extern void unexec_init_emacs_zone (void);
@@ -4303,6 +4309,8 @@ extern Lisp_Object do_switch_frame (Lisp_Object, int, int, Lisp_Object);
 extern Lisp_Object get_frame_param (struct frame *, Lisp_Object);
 extern void frames_discard_buffer (Lisp_Object);
 extern void syms_of_frame (void);
+extern void set_last_nonminibuffer_frame(struct frame *);
+extern struct frame *get_last_nonminibuffer_frame(void);
 
 /* Defined in emacs.c.  */
 extern char **initial_argv;

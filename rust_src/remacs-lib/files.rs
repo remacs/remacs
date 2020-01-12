@@ -8,7 +8,7 @@ use libc::{self, c_char, c_int, EEXIST, EINVAL};
 #[cfg(unix)]
 use libc::{open, O_CLOEXEC, O_CREAT, O_EXCL, O_RDWR};
 
-use rand::{thread_rng, RngCore};
+use rand::{rngs::OsRng, RngCore};
 
 #[cfg(windows)]
 extern "C" {
@@ -71,13 +71,14 @@ fn generate_temporary_filename(name: &mut String) {
 
     let bytes = &mut name_vec[len - 6..len];
     {
-        thread_rng().fill_bytes(bytes);
+        let mut rng = OsRng::new().unwrap();
+        rng.fill_bytes(bytes);
     }
     for byte in bytes.iter_mut() {
         *byte = match *byte % 62 {
-            v @ 0...9 => v + b'0',
-            v @ 10...35 => v - 10 + b'a',
-            v @ 36...61 => v - 36 + b'A',
+            v @ 0..=9 => v + b'0',
+            v @ 10..=35 => v - 10 + b'a',
+            v @ 36..=61 => v - 36 + b'A',
             _ => unreachable!(),
         }
     }

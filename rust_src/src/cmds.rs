@@ -11,7 +11,7 @@ use crate::{
     data::set,
     dispnew::ding_internal,
     editfns::{insert_and_inherit, line_beginning_position, line_end_position, preceding_char},
-    frames::selected_frame,
+    frame::selected_frame,
     keymap::{current_global_map, Ctl},
     lisp::LispObject,
     lists::get,
@@ -436,7 +436,7 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
     } else if n > 1 {
         let mut strn: Vec<libc::c_uchar> = match n.checked_mul(len) {
             Some(size_bytes) => Vec::with_capacity(size_bytes),
-            None => unsafe { memory_full(std::usize::MAX) },
+            None => unsafe { memory_full(usize::max_value()) },
         };
         for _ in 0..n {
             strn.extend_from_slice(&str[0..len]);
