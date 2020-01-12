@@ -29,7 +29,7 @@ use crate::{
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
-        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Flist, Fmake_char_table,
+        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table,
         Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
