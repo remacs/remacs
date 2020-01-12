@@ -1,3 +1,4 @@
+// For us, there is nothing to document. Calling C code isn't going to be safe.
 #![allow(clippy::missing_safety_doc)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
