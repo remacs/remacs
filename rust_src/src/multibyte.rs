@@ -32,7 +32,7 @@
 //! `&str`, and this module regrettably contains adapted copies of
 //! stretches of `std::str` functions.
 
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::fmt;
 use std::ptr;
 use std::slice;
@@ -1379,11 +1379,7 @@ pub extern "C" fn lisp_string_width(
     nchars: *mut isize,
     nbytes: *mut isize,
 ) -> isize {
-    let precision = if precision < 0 {
-        None
-    } else {
-        Some(precision as usize)
-    };
+    let precision: Option<usize> = precision.try_into().ok();
     let (width, n) = string.force_string().display_width(precision);
     if let Some((chars, bytes)) = n {
         unsafe {
