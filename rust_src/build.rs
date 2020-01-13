@@ -74,17 +74,16 @@ impl ModuleInfo {
         // in order to parse correctly, determine where the code lives.
         // For submodules that will be in a mod.rs file.
         if mod_path.is_dir() {
-            let tmp = path_as_str(mod_path.file_name()).to_string();
-            let path = mod_path.join("mod.rs");
             if path.is_file() {
-                return Some(ModuleInfo { path, name: tmp });
+                let name = path_as_str(mod_path.file_name()).to_string();
+                let path = mod_path.join("mod.rs");
+                return Some(ModuleInfo { path, name });
             }
         } else if let Some(ext) = mod_path.extension() {
             if ext == "rs" {
-                return Some(ModuleInfo {
-                    path: mod_path.clone(),
-                    name: path_as_str(mod_path.file_stem()).to_string(),
-                });
+                let name = path_as_str(mod_path.file_stem()).to_string();
+                let path = mod_path.clone();
+                return Some(ModuleInfo { path, name });
             }
         }
 
