@@ -155,20 +155,16 @@ impl<'a> ModuleParser<'a> {
             } else if line.starts_with("#[cfg") {
                 preceding_cfg = Some(line);
             } else if line.starts_with("#[lisp_fn") {
-                let line = if line.ends_with("]") {
+                let line = if line.ends_with(']') {
                     line.clone()
                 } else {
                     let mut line = line.clone();
-                    loop {
-                        if let Some(next) = reader.next() {
-                            let l = next?;
-                            if !l.ends_with(")]") {
-                                line += &l;
-                            } else {
-                                line += &l;
-                                break;
-                            }
+                    while let Some(next) = reader.next() {
+                        let l = next?;
+                        if !l.ends_with(")]") {
+                            line += &l;
                         } else {
+                            line += &l;
                             break;
                         }
                     }
@@ -204,6 +200,10 @@ impl<'a> ModuleParser<'a> {
             } else if line.starts_with("include!(concat!(env!(\"OUT_DIR\"),") {
                 has_include = true;
             } else if line.starts_with("/*") && !line.ends_with("*/") {
+                // Clippy is confused. `next` has to be used because reader is also
+                // being iterated in the outer loop. Using `for next in reader` here
+                // will lead to complaints about borrowed iterators.
+                #[allow(clippy::while_let_on_iterator)]
                 while let Some(next) = reader.next() {
                     let line = next?;
                     if line.ends_with("*/") {
@@ -215,7 +215,7 @@ impl<'a> ModuleParser<'a> {
             }
         }
 
-        if !has_include && !(mod_data.lisp_fns.is_empty() && mod_data.protected_statics.is_empty())
+        if !(has_include || (mod_data.lisp_fns.is_empty() && mod_data.protected_statics.is_empty()))
         {
             let msg = format!(
                 "{} is missing the required include for protected statics or lisp_fn exports.",
@@ -351,7 +351,7 @@ fn env_var(name: &str) -> String {
 }
 
 // What to ignore when walking the list of files
-fn ignore(path: &str, additional_ignored_paths: &Vec<&str>) -> bool {
+fn ignore(path: &str, additional_ignored_paths: &[&str]) -> bool {
     path == "" || path.starts_with('.') || additional_ignored_paths.contains(&path)
 }
 
@@ -434,7 +434,7 @@ fn generate_include_files() -> Result<(), BuildError> {
                     .iter()
                     .map(|lisp_fn| match lisp_fn {
                         (Some(cfg), func) => format!("{} {}", cfg, func),
-                        (_, func) => format!("{}", func),
+                        (_, func) => func.to_string(),
                     })
                     .collect::<Vec<String>>()
                     .join(",\n    ")
