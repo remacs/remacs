@@ -74,15 +74,15 @@ impl ModuleInfo {
         // in order to parse correctly, determine where the code lives.
         // For submodules that will be in a mod.rs file.
         if mod_path.is_dir() {
+            let path = mod_path.join("mod.rs");
             if path.is_file() {
                 let name = path_as_str(mod_path.file_name()).to_string();
-                let path = mod_path.join("mod.rs");
                 return Some(ModuleInfo { path, name });
             }
         } else if let Some(ext) = mod_path.extension() {
             if ext == "rs" {
-                let name = path_as_str(mod_path.file_stem()).to_string();
                 let path = mod_path.clone();
+                let name = path_as_str(mod_path.file_stem()).to_string();
                 return Some(ModuleInfo { path, name });
             }
         }
@@ -406,7 +406,7 @@ fn generate_include_files() -> Result<(), BuildError> {
             )?;
         }
     }
-    writeln!(out_file, "")?;
+    writeln!(out_file)?;
 
     writeln!(
         out_file,
