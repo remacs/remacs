@@ -150,6 +150,10 @@ builds respectively.
 Pass '--without-modules' to 'configure' to disable dynamic module
 support.
 
+---
+** The ftx font backend driver is now obsolete and will be removed in
+Emacs 28.
+
 
 * Startup Changes in Emacs 27.1
 
