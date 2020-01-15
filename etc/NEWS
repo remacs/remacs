@@ -161,25 +161,24 @@ Emacs 28.
 * Startup Changes in Emacs 27.1
 
 +++
-** Emacs now uses the XDG convention for init files.
-For example, it looks for init.el in "~/.config/emacs/init.el", and
-similarly for other init files.
+** Emacs can now use the XDG convention for init files.
+The 'XDG_CONFIG_HOME' environment variable (which defaults to
+"~/.config") specifies the XDG configuration parent directory.  Emacs
+checks for "init.el" and other configuration files inside the "emacs"
+subdirectory of 'XDG_CONFIG_HOME', i.e. "$XDG_CONFIG_HOME/emacs/init.el"
 
-The 'XDG_CONFIG_HOME' environment variable (which defaults to "~/.config")
-specifies the parent directory of these and other configuration files,
-and will override their traditional locations (the home directory,
-"~/.emacs.d", etc.).
+However, Emacs will still initially look for init files in their
+traditional locations if "~/.emacs.d" or "~/.emacs" exist, even if
+"$XDG_CONFIG_HOME/emacs" also exists.  This means that you must delete
+or rename any existing "~/.emacs.d" and "~/.emacs" to enable use of
+the XDG directory.
 
-Emacs will still look for init files in their traditional locations if
-"$XDG_CONFIG_HOME/emacs" does not exist, but "~/.emacs.d" or
-"~/.emacs" does exist, so invoking Emacs with XDG_CONFIG_HOME='/nowhere'
-might be useful if your new-location init files are scrambled, or if
-you want to force Emacs to ignore files under 'XDG_CONFIG_HOME' for
-some other reason.
+If "~/.emacs.d" does not exist, and Emacs has decided to use it
+(i.e. "$XDG_CONFIG_HOME/emacs" does not exist), Emacs will create it.
+Emacs will never create "$XDG_CONFIG_HOME/emacs".
 
-If neither "$XDG_CONFIG_HOME/emacs" nor "~/.emacs.d" exist, Emacs will
-now default to "$XDG_CONFIG_HOME/emacs", and will create that directory
-and set 'user-emacs-directory' to point to it.
+Whichever directory Emacs decides to use, it will set
+'user-emacs-directory' to point to it.
 
 +++
 ** Emacs can now be configured using an early init file.
