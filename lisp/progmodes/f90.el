@@ -3,7 +3,7 @@
 ;; Copyright (C) 1995-1997, 2000-2020 Free Software Foundation, Inc.
 
 ;; Author: Torbjörn Einarsson <Torbjorn.Einarsson@era.ericsson.se>
-;; Maintainer: Glenn Morris <rgm@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: fortran, f90, languages
 
 ;; This file is part of GNU Emacs.
