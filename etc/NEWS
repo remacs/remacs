@@ -71,7 +71,7 @@ operating systems.
 When built with the portable dumping support (which is the default),
 Emacs looks for the 'emacs.pdmp' file, generated during the build, in
 its data directory at startup, and loads the dumped state from there.
-The new command-line argument '--dump-file=FILE' allows to specify a
+The new command-line argument '--dump-file=FILE' allows specifying a
 non-default '.pdmp' file to load the state from; see the node
 "(emacs) Initial Options" in the Emacs manual for more information.
 
@@ -224,7 +224,7 @@ it won't work right without some adjustment:
 Units that are ordered after 'emacs.service' will only be started
 after Emacs has finished initialization and is ready for use.
 (If your Emacs is installed in a non-standard location and you copied the
-emacs.service file to eg "~/.config/systemd/user/", you will need to copy
+emacs.service file to e.g. "~/.config/systemd/user/", you will need to copy
 the new version of the file again.)
 
 
@@ -450,7 +450,7 @@ from a remote host.
 
 +++
 ** The function 'executable-find' supports an optional argument REMOTE.
-This triggers to search the program on the remote host as indicated by
+This triggers searching for the program on the remote host as indicated by
 'default-directory'.
 
 +++
@@ -480,7 +480,7 @@ Customize 'switch-to-prev-buffer-skip' instead.
 
 +++
 ** New user option 'switch-to-prev-buffer-skip'.
-This user option allows to specify the set of buffers that may be
+This user option allows specifying the set of buffers that may be
 shown by 'switch-to-prev-buffer' and 'switch-to-next-buffer' more
 stringently than the now obsolete 'switch-to-visible-buffer'.
 
@@ -550,7 +550,7 @@ There are 2 new buffer local variables and 1 face to customize this
 mode, they are described in the manual "(emacs) Display".
 
 +++
-** 'progress-reporter-update' accepts a suffix string to display.
+** 'progress-reporter-update' now accepts an optional suffix string to display.
 
 ---
 ** New user option 'xref-file-name-display' controls the display of
@@ -596,14 +596,14 @@ if so, 'backup-by-copying-when-mismatch' will be forced on.
 * Editing Changes in Emacs 27.1
 
 +++
-** When asked to visit a large file, Emacs now offers visiting it literally.
+** When asked to visit a large file, Emacs now offers to visit it literally.
 Previously, Emacs would only ask for confirmation before visiting
 large files.  Now it also offers a third alternative: to visit the
 file literally, as in 'find-file-literally', which speeds up
 navigation and editing of large files.
 
 +++
-** 'zap-to-char' now uses history of characters you used to zap to.
+** 'zap-to-char' now uses the history of characters you used to zap to.
 'zap-to-char' uses the new 'read-char-from-minibuffer' function to allow
 navigating through the history of characters that have been input.
 This is mostly useful for characters that have complex input methods
@@ -779,9 +779,9 @@ mediawiki format tables.
 
 ** goto-addr
 
-*** A way to more conveniently specify what URI address schemes that
-should be ignored have been added via the
-'goto-address-uri-schemes-ignored' variable.
+*** A way to more conveniently specify what URI address schemes should
+be ignored has been added via the 'goto-address-uri-schemes-ignored'
+variable.
 
 +++
 ** tex-mode
@@ -1411,7 +1411,7 @@ where you can select a node to go back (like in browsers).
 *** Info can now follow 'file://' protocol URLs.
 The 'file://' URLs in Info documents can now be followed by passing
 them to the 'browse-url' function, like the other protocols: 'ftp',
-'http', and 'https'.  This allows to have references to local HTML
+'http', and 'https'.  This allows having references to local HTML
 files, for example.
 
 ---
@@ -1523,8 +1523,9 @@ This feature can be enabled by setting the new 'nnimap-use-namespaces'
 server variable to non-nil.
 
 +++
-*** A prefix argument to 'gnus-summary-limit-to-score' will limit reverse.
-Limit to articles with score at below.
+*** A prefix argument to 'gnus-summary-limit-to-score' will limit in reverse.
+Limit to articles with score "at or below" the SCORE argument rather
+than "at or above".
 
 ---
 *** The function 'gnus-score-find-favorite-words' has been renamed
@@ -1925,7 +1926,7 @@ The abbreviation can be disabled by the new user option
 ** ERT
 
 +++
-*** New variable 'ert-quiet' allows to make ERT output in batch mode
+*** New variable 'ert-quiet' allows making ERT output in batch mode
 less verbose by removing non-essential information.
 
 +++
@@ -2064,21 +2065,21 @@ the real password is revealed (via 'reveal-mode').  The new
 ** Tramp
 
 +++
-*** New connection method "nextcloud", which allows to access OwnCloud
+*** New connection method "nextcloud", which allows accessing OwnCloud
 or NextCloud hosted files and directories.
 
 +++
-*** New connection method "rclone", which allows to access system
+*** New connection method "rclone", which allows accessing system
 storages via the 'rclone' program.  This feature is experimental.
 
 +++
-*** New connection method "sudoedit", which allows to edit local files
+*** New connection method "sudoedit", which allows editing local files
 with different user credentials.  Contrary to the "sudo" method, no
 session is run permanently in the background.  This is for security
 reasons.
 
 +++
-*** Connection methods "obex" and "synce" are removed, because they
+*** Connection methods "obex" and "synce" have been removed, because they
 are obsoleted in GVFS.
 
 +++
@@ -2090,7 +2091,7 @@ from auth-source search are taken into account.  This can be disabled
 by setting the user option 'tramp-completion-use-auth-sources' to nil.
 
 +++
-*** The user option 'tramp-ignored-file-name-regexp' allows to disable
+*** The user option 'tramp-ignored-file-name-regexp' allows disabling
 Tramp for some look-alike remote file names.
 
 +++
@@ -2099,9 +2100,9 @@ multi-hop file names must match the previous hop.  Default host names
 are adjusted to the host name from the previous hop.
 
 +++
-*** For the connection methods "sudo" and "doas" there exists a
-timeout, after which the underlying session is disabled.  This is for
-security reasons.
+*** A timeout has been added for the connection methods "sudo" and "doas".
+The underlying session is disabled when the timeout expires.  This is
+for security reasons.
 
 +++
 *** For some connection methods, like "sshx" or "plink", it is
@@ -2111,7 +2112,7 @@ cooperates badly with Tramp.
 
 +++
 *** New commands 'tramp-rename-files' and 'tramp-rename-these-files'.
-They allow to save remote files somewhere else when the corresponding
+They allow saving remote files somewhere else when the corresponding
 host is not reachable anymore.
 
 ** Rcirc
@@ -2311,7 +2312,7 @@ expressions from simpler parts.
 
 +++
 *** New value of 'minibuffer' frame parameter 'child-frame'.
-This allows to create and parent immediately a minibuffer-only child
+This allows creating and immediately parenting a minibuffer-only child
 frame when making a frame.
 
 ---
@@ -3040,7 +3041,7 @@ years containing more than four digits.  This is for compatibility
 with POSIX.1-2017.
 
 +++
-*** To access (or alter) the elements a decoded time value, the
+*** To access (or alter) the elements of a decoded time value, the
 'decoded-time-second', 'decoded-time-minute', 'decoded-time-hour',
 'decoded-time-day', 'decoded-time-month', 'decoded-time-year',
 'decoded-time-weekday', 'decoded-time-dst' and 'decoded-time-zone'
@@ -3059,7 +3060,7 @@ elements as if it's midnight January 1st, 1970) have been added.
 if it is not known whether daylight saving time is in effect.
 Formerly they were inconsistent: 'encode-time' returned t in this
 situation, whereas 'parse-time-string' returned nil.  Now they
-consistently use use nil to mean that DST is not in effect, and use -1
+consistently use nil to mean that DST is not in effect, and use -1
 to mean that it is not known whether DST is in effect.
 
 +++
@@ -3249,22 +3250,22 @@ reliably survive subsequent invocations of 'set-window-buffer'.
 
 +++
 ** New user option 'resize-mini-frames'.
-This option allows to automatically resize minibuffer-only frames
+This option allows automatically resizing minibuffer-only frames
 similarly to how minibuffer windows are resized on "normal" frames.
 
 +++
 ** New buffer display action function 'display-buffer-in-direction'.
-This function allows to specify the location of the window chosen by
+This function allows specifying the location of the window chosen by
 'display-buffer' in various ways.
 
 +++
 ** New buffer display action alist entry 'dedicated'.
-Such an entry allows to specify the dedicated status of a window
+Such an entry allows specifying the dedicated status of a window
 created by 'display-buffer'.
 
 +++
 ** New buffer display action alist entry 'window-min-height'.
-Such an entry allows to specify a minimum height of the window used
+Such an entry allows specifying a minimum height of the window used
 for displaying a buffer.  'display-buffer-below-selected' is the only
 action function to respect it at the moment.
 
