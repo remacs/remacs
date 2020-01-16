@@ -56,7 +56,10 @@ than their Lisp counterparts from json.el.
 ** The configure option '--with-cairo' is no longer experimental.
 This builds Emacs with Cairo drawing, and supports built-in printing
 when Emacs is built with GTK+.  Some severe bugs in this build were
-fixed, and we can therefore offer this to users without caveats.
+fixed, and we can therefore offer this to users without caveats.  Note
+that building with Cairo enabled results in using Pango instead of
+libXft for font support, and that Pango 1.44 has removed support for
+bitmapped fonts.
 
 +++
 ** Emacs now uses a "portable dumper" instead of unexec.
