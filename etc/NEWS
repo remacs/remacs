@@ -312,6 +312,15 @@ causing XFT crashes, they are now filtered out.  Setting
 require setting 'face-ignored-fonts' to filter out problematic fonts.
 Known problematic fonts are "Noto Color Emoji" and "Emoji One".
 
+---
+** The GTK+ font chooser now respects 'face-ignored-fonts'.
+When using 'menu-set-font' under GTK3, the available fonts are now
+matched against 'face-ignored-fonts'.
+
+---
+** The GTK+ font chooser now remembers the previously selected settings.
+It now remembers the name, size, style, etc.
+
 +++
 ** New user option 'what-cursor-show-names'.
 When non-nil, 'what-cursor-position' will show the name of the character
