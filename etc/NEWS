@@ -69,10 +69,10 @@ Randomization (ASLR) feature, a security technique used by most modern
 operating systems.
 
 When built with the portable dumping support (which is the default),
-Emacs looks for the 'emacs.pdmp' file, generated during the build, in
+Emacs looks for the "emacs.pdmp" file, generated during the build, in
 its data directory at startup, and loads the dumped state from there.
 The new command-line argument '--dump-file=FILE' allows specifying a
-non-default '.pdmp' file to load the state from; see the node
+non-default ".pdmp" file to load the state from; see the node
 "(emacs) Initial Options" in the Emacs manual for more information.
 
 An Emacs started via a dump file can create a new dump file only if it
@@ -732,7 +732,7 @@ non-nil.
 
 ---
 ** 'autoconf-mode' is now used instead of 'm4-mode' for the
-acinclude.m4/aclocal.m4/acsite.m4 files.
+"acinclude.m4" / "aclocal.m4" / "acsite.m4" files.
 
 ---
 ** On GNU/Linux, 'M-x battery' will now list all batteries, no matter
@@ -1283,9 +1283,9 @@ embedding database passwords in your Emacs initialization.
 
 See the 'auth-source' module for complete documentation on the file
 formats.  By default, the wallet file is expected to be in the
-'user-emacs-directory', named 'sql-wallet' or '.sql-wallet', with
-'.json' (JSON) or no (NETRC) suffix.  Both file formats can optionally
-be encrypted with GPG by adding an additional '.gpg' suffix.
+'user-emacs-directory', named "sql-wallet" or ".sql-wallet", with
+".json" (JSON) or no (NETRC) suffix.  Both file formats can optionally
+be encrypted with GPG by adding an additional ".gpg" suffix.
 
 ** Term
 
@@ -1475,8 +1475,9 @@ completion facilities.
 This can be controlled by the new 'ecomplete-sort-predicate' user option.
 
 ---
-*** The 'ecompleterc' file is now placed in "~/.emacs.d/ecompleterc" by default.
-Of course it will still find it if you have it in "~/.ecompleterc".
+*** The 'ecomplete-database-file' file is now placed in
+"~/.emacs.d/ecompleterc" by default.  Of course it will still find it
+if you have it in "~/.ecompleterc".
 
 ** Gnus
 
@@ -2358,7 +2359,7 @@ in a terminal frame.
 ---
 *** JSX syntax is now automatically detected and enabled.
 If a file imports Facebook's 'React' library, or if the file uses the
-extension '.jsx', then various features supporting XML-like syntax
+extension ".jsx", then various features supporting XML-like syntax
 will be supported in 'js-mode' and derivative modes.  ('js-jsx-mode'
 no longer needs to be enabled.)
 
