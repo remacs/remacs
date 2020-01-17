@@ -1458,6 +1458,10 @@ A new command 'xref-revert-buffer' is bound to 'g'.
 ---
 *** Imenu support has been added to 'xref--xref-buffer-mode'.
 
+*** New generic method 'xref-backend-identifier-completion-ignore-case'.
+Using it, the etags backend now honors 'tags-case-fold-search' during
+identifier completion.
+
 ** Checkdoc
 
 ---
