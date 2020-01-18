@@ -254,6 +254,10 @@ impl LispBufferRef {
         self.zv_marker_
     }
 
+    pub fn get_zv(self) -> isize {
+        self.zv
+    }
+
     pub fn mark(self) -> LispObject {
         self.mark_
     }
@@ -287,6 +291,10 @@ impl LispBufferRef {
     pub fn set_pt_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {
         self.pt = charpos;
         self.pt_byte = byte;
+    }
+
+    pub fn get_pt(self) -> isize {
+        self.pt
     }
 
     pub fn set_begv_both(&mut self, charpos: ptrdiff_t, byte: ptrdiff_t) {

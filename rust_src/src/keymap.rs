@@ -3,7 +3,7 @@
 use std;
 use std::ptr;
 
-use libc::c_void;
+use libc::{c_void, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
 
@@ -19,13 +19,14 @@ use crate::{
     lisp::LispObject,
     lists::{nth, setcdr},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    marker::marker_position,
     multibyte::LispStringRef,
     obarray::intern,
     remacs_sys::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
         describe_vector, make_save_funcptr_ptr_obj, map_char_table, map_keymap_call,
         map_keymap_char_table_item, map_keymap_function_t, map_keymap_item, map_obarray,
-        maybe_quit, specbind,
+        maybe_quit, menu_item_eval_property, safe_call1, specbind,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
@@ -33,8 +34,8 @@ use crate::{
         Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
-        Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qstring_lessp, Qt,
-        Qvector_or_char_table_p,
+        QCfilter, Qautoload, Qkeymap, Qkeymap_canonicalize, Qkeymapp, Qmenu_item, Qmouse_click,
+        Qnil, Qquote, Qstandard_output, Qstring_lessp, Qt, Qvector_or_char_table_p,
     },
     symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
@@ -60,6 +61,177 @@ pub extern "C" fn set_where_is_cache(val: LispObject) {
     unsafe {
         where_is_cache = val;
     }
+}
+
+// TODO Change this wherever it is used in rust to this implementation
+
+// This function has an extra argument called dummy but it is not used.
+// original signature is :
+// map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
+// For now, this is simply ported and the dummy argument is ommitted
+#[no_mangle]
+pub extern "C" fn _map_keymap_call(key: LispObject, val: LispObject, fun: LispObject) {
+    call!(fun, key, val);
+}
+
+// TODO Change this wherever it is used in rust to this implementation
+//
+/// Same as map_keymap, but does it right, properly eliminating duplicate
+/// bindings due to inheritance.
+#[no_mangle]
+pub extern "C" fn _map_keymap_canonical(
+    map: LispObject,
+    fun: map_keymap_function_t,
+    args: LispObject,
+    data: *mut c_void,
+) {
+    unsafe {
+        let map = safe_call1(Qkeymap_canonicalize, map);
+        map_keymap_internal(map, fun, args, data);
+    }
+}
+
+/// Given OBJECT which was found in a slot in a keymap,
+/// trace indirect definitions to get the actual definition of that slot.
+/// An indirect definition is a list of the form
+/// (KEYMAP . INDEX), where KEYMAP is a keymap or a symbol defined as one
+/// and INDEX is the object to look up in KEYMAP to yield the definition.
+
+/// Also if OBJECT has a menu string as the first element,
+/// remove that.  Also remove a menu help string as second element.
+
+/// If AUTOLOAD, load autoloadable keymaps
+/// that are referred to with indirection.
+
+/// This can GC because menu_item_eval_property calls Feval.
+#[no_mangle]
+pub extern "C" fn _get_keyelt(object: LispObject, autoload: bool) -> LispObject {
+    while let Some((head, tail)) = object.into() {
+        let mut object = object;
+        /* If the keymap contents looks like (menu-item name . DEFN)
+        or (menu-item name DEFN ...) then use DEFN.
+        This is a new format menu item.  */
+        if head.eq(Qmenu_item) {
+            if let Some((_, tail2)) = tail.into() {
+                if let Some((head3, _)) = tail2.into() {
+                    object = head3;
+                }
+                let object_iter = tail2
+                    .as_cons()
+                    .unwrap()
+                    .iter_cars(LispConsEndChecks::on, LispConsCircularChecks::on);
+
+                // Iterate over every element in the list
+                /* If there's a `:filter FILTER', apply FILTER to the
+                menu-item's definition to get the real definition to
+                use.  */
+                for val in object_iter {
+                    if val.eq(QCfilter) && autoload {
+                        // Get the next object in the list
+                        let mut filter = val.as_cons().unwrap().cdr();
+
+                        unsafe {
+                            filter = list!(filter, list!(Qquote, object));
+                            object = menu_item_eval_property(filter);
+                        }
+                        break;
+                    }
+                }
+            } else {
+                /* Invalid keymap.  */
+                return object;
+            }
+        }
+        /* If the keymap contents looks like (STRING . DEFN), use DEFN.
+        Keymap alist elements like (CHAR MENUSTRING . DEFN)
+        will be used by HierarKey menus.  */
+        else if head.is_string() {
+            object = tail;
+        } else {
+            return object;
+        }
+    }
+
+    object
+}
+
+#[no_mangle]
+pub extern "C" fn _copy_keymap_item(elt: LispObject) -> LispObject {
+    if let Some((head, tail)) = elt.into() {
+        let res: LispObject;
+        let mut elt: LispCons = elt.into();
+
+        if head.eq(Qmenu_item) {
+            res = LispObject::cons(head, tail);
+            elt = LispObject::cons(head, tail).into();
+
+            if let Some((head2, tail2)) = tail.into() {
+                elt.set_cdr(LispObject::cons(head2, tail2));
+                if let Some((head3, tail3)) = tail2.into() {
+                    elt.set_cdr(LispObject::cons(head3, tail3));
+                    if let Some((head4, _)) = tail3.into() {
+                        if head4.is_cons() && head4.eq(Qkeymap) {
+                            elt.set_cdr(copy_keymap(elt.into()));
+                        }
+                    }
+                }
+            }
+            return res;
+        } else if head.is_string() {
+            /* Copy the cell, since copy-alist didn't go this deep.  */
+            res = LispObject::cons(head, tail).into();
+            elt = LispObject::cons(head, tail).into();
+
+            if let Some((head2, tail2)) = tail.into() {
+                if tail2.is_string() {
+                    elt.set_cdr(LispObject::cons(head2, tail2));
+                    if let Some((head3, tail3)) = tail2.into() {
+                        if head3.eq(Qkeymap) {
+                            elt.set_cdr(LispObject::cons(head3, tail3));
+                        }
+                    }
+                }
+            }
+        // return res;
+        } else if head.eq(Qkeymap) {
+            res = copy_keymap(elt.into());
+            return res;
+        }
+        // To shut up the compiler for now. Res can be uninitialized
+        // in some cases but these are not handled
+        return Qnil;
+    } else {
+        return elt;
+    }
+}
+/* Return the offset of POSITION, a click position, in the style of
+the respective argument of Fkey_binding.  */
+pub extern "C" fn _click_position(position: LispObject) -> ptrdiff_t {
+    let curr_pos: EmacsInt;
+
+    if position.is_integer() {
+        curr_pos = position.into();
+    } else if position.is_marker() {
+        curr_pos = marker_position(position) as EmacsInt;
+    } else {
+        curr_pos = ThreadState::current_buffer_unchecked().get_pt() as EmacsInt;
+    };
+
+    if ThreadState::current_buffer_unchecked().beg() as EmacsInt <= curr_pos
+        && curr_pos <= ThreadState::current_buffer_unchecked().get_zv() as EmacsInt
+    {
+        return curr_pos as ptrdiff_t;
+    }
+    args_out_of_range!(ThreadState::current_buffer_unchecked(), position);
+}
+
+// Help functions for describing and documenting keymaps
+struct _accessible_keymaps_data {
+    maps: LispObject,
+    this_seq: LispObject,
+    tail: LispObject,
+    // Does the current sequence end in the meta-prefix-char?
+    is_metized: bool,
 }
 
 // Which keymaps are reverse-stored in the cache.
