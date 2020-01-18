@@ -60,7 +60,7 @@
 This will replace the last notification sent with this function."
   (dbus-ignore-errors
     (setq erc-notifications-last-notification
-          (let ((channel (current-buffer)))
+          (let ((channel (erc-get-buffer nick)))
             (notifications-notify :bus erc-notifications-bus
                                   :title (format "%s in %s"
                                                  (xml-escape-string nick)
