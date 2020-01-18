@@ -55,12 +55,14 @@
 
 (defvar dbus-debug) ; used in the macroexpansion of dbus-ignore-errors
 
-(defun erc-notifications-notify (nick msg)
-  "Notify that NICK send some MSG.
+(defun erc-notifications-notify (nick msg &optional privp)
+  "Notify that NICK send some MSG, where PRIVP should be non-nil for PRIVMSGs.
 This will replace the last notification sent with this function."
+  ;; TODO: can we do this without PRIVP? (by "fixing" ERC's not
+  ;; setting the current buffer to the existing query buffer)
   (dbus-ignore-errors
     (setq erc-notifications-last-notification
-          (let ((channel (erc-get-buffer nick)))
+          (let ((channel (if privp (erc-get-buffer nick) (current-buffer))))
             (notifications-notify :bus erc-notifications-bus
                                   :title (format "%s in %s"
                                                  (xml-escape-string nick)
@@ -80,7 +82,7 @@ This will replace the last notification sent with this function."
                (not (and (boundp 'erc-track-exclude)
                          (member nick erc-track-exclude)))
                (not (erc-is-message-ctcp-and-not-action-p msg)))
-      (erc-notifications-notify nick msg)))
+      (erc-notifications-notify nick msg t)))
   ;; Return nil to continue processing by ERC
   nil)
 
