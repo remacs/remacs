@@ -3,6 +3,7 @@
 ;; Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 ;; Author: Julien Danjou <julien@danjou.info>
+;; Maintainer: Amin Bandali <mab@gnu.org>
 ;; Keywords: comm
 
 ;; This file is part of GNU Emacs.
