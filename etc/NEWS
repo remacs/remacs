@@ -2041,7 +2041,7 @@ variable for remote shells.  It still defaults to "/bin/sh".
 *** 'shell-command-dont-erase-buffer' accepts the value 'erase' to
 force to erase the output buffer before execution of the command.
 
-*** The new functions shell-command-save-pos-or-erase' and
+*** The new functions 'shell-command-save-pos-or-erase' and
 'shell-command-set-point-after-cmd' control how point is handled
 between two consecutive shell commands in the same buffer.
 
