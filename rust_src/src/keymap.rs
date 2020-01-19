@@ -773,4 +773,46 @@ pub fn apropos_internal(regexp: LispStringRef, predicate: LispObject) -> LispObj
     }
 }
 
+// This function may GC (it calls Fkey_binding)
+/// Return the remapping for command COMMAND.
+/// Returns nil if COMMAND is not remapped (or not a symbol).
+///
+/// If the optional argument POSITION is non-nil, it specifies a mouse
+/// position as returned by `event-start' and `event-end', and the
+/// remapping occurs in the keymaps associated with it.  It can also be a
+/// number or marker, in which case the keymap properties at the specified
+/// buffer position instead of point are used.  The KEYMAPS argument is
+/// ignored if POSITION is non-nil.
+///
+/// If the optional argument KEYMAPS is non-nil, it should be a list of
+/// keymaps to search for command remapping.  Otherwise, search for the
+/// remapping in all currently active keymaps.
+#[lisp_fn(min = "1")]
+pub fn command_remapping(
+    command: LispObject,
+    position: EmacsUInt,
+    keymaps: LispObject,
+) -> LispObject {
+    let c = match command.as_symbol() {
+        None => return Qnil,
+        Some(c) => c,
+    };
+
+    unsafe {
+        c.set(position.into(), command_remapping_vector);
+    }
+
+    let remapped_command = if keymaps.is_nil() {
+        key_binding(command_remapping_vector, false, t, position.into());
+    } else {
+        lookup_key((Qkeymap, keymaps).into(), command_remapping_vector, Qnil);
+    };
+
+    if remapped_command.is_integer() {
+        Qnil
+    } else {
+        remapped_command
+    }
+}
+
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
