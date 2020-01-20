@@ -723,7 +723,9 @@ See Bug#21722."
     `(let* ((,caller-buf (generate-new-buffer "caller-buf"))
             (,output-buf (if ,output-buffer-is-current ,caller-buf
                            (generate-new-buffer "output-buf")))
-            (,command (format "%s -Q --batch --eval '(princ \"%s\")'" invocation-name ,str))
+            (emacs (expand-file-name invocation-name invocation-directory))
+            (,command (format "%s -Q --batch --eval '(princ \"%s\")'"
+                              emacs ,str))
             (inhibit-message t))
        (unwind-protect
            ;; Feature must work the same regardless how we specify the 2nd arg of `shell-command', ie,
