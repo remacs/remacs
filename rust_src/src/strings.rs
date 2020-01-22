@@ -190,6 +190,7 @@ pub fn string_width(string: LispStringRef) -> usize {
 macro_rules! new_unibyte_string {
     ($str:expr) => {{
         let strg = ::std::ffi::CString::new($str).unwrap();
+        #[allow(unused_unsafe)]
         unsafe {
             crate::remacs_sys::make_unibyte_string(strg.as_ptr(), strg.as_bytes().len() as isize)
         }
