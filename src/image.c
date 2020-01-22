@@ -527,7 +527,7 @@ x_create_bitmap_mask (struct frame *f, ptrdiff_t id)
 /* List of supported image types.  Use define_image_type to add new
    types.  Use lookup_image_type to find a type for a given symbol.  */
 
-static struct image_type *image_types;
+struct image_type *image_types;
 
 /* Forward function prototypes.  */
 
