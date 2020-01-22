@@ -11,9 +11,9 @@ use crate::{
     remacs_sys::Vframe_list,
     remacs_sys::SET_FRAME_VISIBLE,
     remacs_sys::{
-        candidate_frame, check_minibuf_window, delete_frame as c_delete_frame, frame_ancestor_p,
-        frame_dimension, internal_last_event_frame, other_frames, output_method,
-        resize_mini_window, windows_or_buffers_changed,
+        candidate_frame, check_minibuf_window, delete_frame as c_delete_frame, frame_dimension,
+        internal_last_event_frame, other_frames, output_method, resize_mini_window,
+        windows_or_buffers_changed,
     },
     remacs_sys::{
         minibuf_window, pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type,
@@ -28,7 +28,8 @@ use crate::{
     fns::nreverse,
     remacs_sys::Fredirect_frame_focus,
     remacs_sys::{
-        vertical_scroll_bar_type, x_focus_frame, x_get_focus_frame, x_make_frame_invisible,
+        frame_ancestor_p, vertical_scroll_bar_type, x_focus_frame, x_get_focus_frame,
+        x_make_frame_invisible,
     },
 };
 
@@ -64,7 +65,7 @@ impl LispFrameRef {
     pub fn is_visible(self) -> bool {
         self.visible() != 0
     }
-
+    #[cfg(feature = "window-system")]
     pub fn is_ancestor(mut self, mut other: Self) -> bool {
         unsafe { frame_ancestor_p(self.as_mut(), other.as_mut()) }
     }
@@ -929,14 +930,20 @@ pub extern "C" fn do_switch_frame(
 
         select_window_lisp(target_frame.selected_window, norecord);
 
-        if cfg!(feature = "window-system") && target_frame.is_ancestor(current_frame_ref)
-            || !cfg!(feature = "window-system")
+        #[cfg(feature = "window-system")]
+        {
+            if target_frame.is_ancestor(current_frame_ref) {
+                unsafe {
+                    internal_last_event_frame = Qnil;
+                }
+            }
+        }
+        #[cfg(not(feature = "window-system"))]
         {
             unsafe {
                 internal_last_event_frame = Qnil;
             }
         }
-
         return frame;
     }
     Qnil
