@@ -531,7 +531,7 @@ static struct image_type *image_types;
 
 /* Forward function prototypes.  */
 
-struct image_type *lookup_image_type (Lisp_Object);
+static struct image_type *lookup_image_type (Lisp_Object);
 static void x_laplace (struct frame *, struct image *);
 static void x_emboss (struct frame *, struct image *);
 static void x_build_heuristic_mask (struct frame *, struct image *,
@@ -9690,7 +9690,7 @@ DEFUN ("lookup-image", Flookup_image, Slookup_image, 1, 1, 0,
 /* Look up image type TYPE, and return a pointer to its image_type
    structure.  Return 0 if TYPE is not a known image type.  */
 
-struct image_type *
+static struct image_type *
 lookup_image_type (Lisp_Object type)
 {
   /* Types pbm and xbm are built-in and always available.  */
