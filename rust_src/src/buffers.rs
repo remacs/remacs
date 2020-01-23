@@ -20,7 +20,7 @@ use crate::{
     eval::{run_hook_with_args_until_failure, unbind_to},
     fileio::{expand_file_name, find_file_name_handler},
     fns::{copy_sequence, nconc, nreverse, yes_or_no_p},
-    frames::LispFrameRef,
+    frame::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists,
