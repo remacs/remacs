@@ -8,13 +8,13 @@ use remacs_macros::lisp_fn;
 use crate::{
     alloc::purecopy,
     buffers::{per_buffer_idx, per_buffer_idx_from_field_offset},
-    frames::selected_frame,
+    frame::selected_frame,
     keymap::get_keymap,
     lisp::is_autoload,
     lisp::{LispObject, LispSubrRef, LiveBufferIter},
     lists::{get, member, memq, put},
     math::leq,
-    multibyte::{is_ascii, is_single_byte_char, LispStringRef},
+    multibyte::{Codepoint, LispStringRef},
     obarray::{loadhist_attach, map_obarray},
     remacs_sys,
     remacs_sys::Fdelete,
@@ -250,18 +250,18 @@ pub fn aset(array: LispObject, idx: EmacsInt, newelt: LispObject) -> LispObject 
             args_out_of_range!(array, idx);
         }
 
-        let c = newelt.as_character_or_error();
+        let c: Codepoint = newelt.into();
 
         if s.is_multibyte() {
-            unsafe { aset_multibyte_string(array, idx, c as c_int) };
-        } else if is_single_byte_char(c) {
-            s.set_byte(idx as isize, c as u8);
+            unsafe { aset_multibyte_string(array, idx, c.val() as c_int) };
+        } else if c.is_single_byte() {
+            s.set_byte(idx as isize, c.val() as u8);
         } else {
-            if s.chars().any(|i| !is_ascii(i)) {
+            if s.chars().any(|i| !i.is_ascii()) {
                 args_out_of_range!(array, newelt);
             }
             s.mark_as_multibyte();
-            unsafe { aset_multibyte_string(array, idx, c as c_int) };
+            unsafe { aset_multibyte_string(array, idx, c.val() as c_int) };
         }
     } else {
         wrong_type!(Qarrayp, array);

@@ -92,9 +92,9 @@ impl StringExt for String {
         // So here make sure just one '/' between dir&file.
         let last_char = dir.as_str().chars().last().unwrap();
         if last_char == '/' {
-            dir + &self
+            dir + self
         } else {
-            dir + "/" + &self
+            dir + "/" + self
         }
     }
 }
@@ -245,9 +245,6 @@ fn read_dir(dname: &str, fnames: &mut Vec<String>, match_re: Option<LispObject>)
         fnames.push(dotdot);
     }
 
-    // NOTE: The allow can be dropped when the issue
-    // https://github.com/rust-lang/rust-clippy/issues/3913 is resolved
-    #[allow(clippy::identity_conversion)]
     for fname in fs::read_dir(dir_p)? {
         let fname = fname?;
         let f_enc = match fname.file_name().into_string() {
@@ -635,33 +632,32 @@ impl FileAttrs {
             };
         }
 
-        let mut attrs = Vec::new();
-
         //  0. t for directory, string (name linked to) for symbolic link, or nil.
-        if self.ftype_is_sym {
-            attrs.push(self.ftype_sym_path.to_owned().to_bstring());
+        let ftype = if self.ftype_is_sym {
+            self.ftype_sym_path.to_owned().to_bstring()
         } else if self.ftype_is_dir {
-            attrs.push(Qt);
+            Qt
         } else {
-            attrs.push(Qnil);
-        }
+            Qnil
+        };
 
         //  1. Number of links to file.
-        attrs.push(LispObject::from_natnum(self.nlinks));
+        let nlinks = LispObject::from_natnum(self.nlinks);
 
         //  2. File uid as a string or a number.  If a string value cannot be
         //     looked up, a numeric value, either an integer or a float, is returned.
         //  3. File gid, likewise.
-        if self.idf_is_int || self.idf_u_is_int {
-            attrs.push(LispObject::from_natnum(u64::from(self.idf_uid)));
+        let uid = if self.idf_is_int || self.idf_u_is_int {
+            LispObject::from_natnum(u64::from(self.idf_uid))
         } else {
-            attrs.push(self.idf_uname.to_owned().to_bstring());
-        }
-        if self.idf_is_int || self.idf_g_is_int {
-            attrs.push(LispObject::from_natnum(u64::from(self.idf_gid)));
+            self.idf_uname.to_owned().to_bstring()
+        };
+
+        let gid = if self.idf_is_int || self.idf_g_is_int {
+            LispObject::from_natnum(u64::from(self.idf_gid))
         } else {
-            attrs.push(self.idf_gname.to_owned().to_bstring());
-        }
+            self.idf_gname.to_owned().to_bstring()
+        };
 
         //  4. Last access time, as a list of integers (HIGH LOW USEC PSEC) in the
         //     same style as (current-time).
@@ -670,43 +666,45 @@ impl FileAttrs {
         //     change to the file's contents.
         //  6. Last status change time, likewise.  This is the time of last change
         //     to the file's attributes: owner and group, access mode bits, etc.
-        attrs.push(make_lisp_time(c_timespec {
+        let atime = make_lisp_time(c_timespec {
             tv_sec: self.atime_s,
             tv_nsec: self.atime_ns, //tv_nsec: self.atime_ns
-        }));
-        attrs.push(make_lisp_time(c_timespec {
+        });
+        let mtime = make_lisp_time(c_timespec {
             tv_sec: self.mtime_s,
             tv_nsec: self.mtime_ns,
-        }));
-        attrs.push(make_lisp_time(c_timespec {
+        });
+        let ctime = make_lisp_time(c_timespec {
             tv_sec: self.ctime_s,
             tv_nsec: self.ctime_ns,
-        }));
+        });
 
         //  7. Size in bytes.
         //     This is a floating point number if the size is too large for an integer.
         //     remacs: symlink size is of file linked to? (or size of path str?)
-        attrs.push(LispObject::from_natnum(self.size));
+        let size = LispObject::from_natnum(self.size);
 
         //  8. File modes, as a string of ten letters or dashes as in ls -l.
         //  Punt back to C until the filemode_string code is ported to Rust.
-        attrs.push(unsafe { filemode_string(self.fpath.as_str().into()) });
+        let modes = unsafe { filemode_string(self.fpath.as_str().into()) };
 
         //  9. An unspecified value, present only for backward compatibility.
-        attrs.push(Qt);
+        let undef = Qt;
 
         // 10. inode number.  If it is larger than what an Emacs integer can hold,
         //     this is of the form (HIGH . LOW): first the high bits, then the low 16 bits.
         //     If even HIGH is too large for an Emacs integer, this is instead of the form
         //     (HIGH MIDDLE . LOW): first the high bits, then the middle 24 bits,
         //     and finally the low 16 bits.
-        attrs.push(LispObject::from_natnum(self.ino));
+        let inode = LispObject::from_natnum(self.ino);
 
         // 11. Filesystem device number.  If it is larger than what the Emacs
         //     integer can hold, this is a cons cell, similar to the inode number.
-        attrs.push(LispObject::from_natnum(self.dev));
+        let devno = LispObject::from_natnum(self.dev);
 
-        list(&attrs)
+        list(&[
+            ftype, nlinks, uid, gid, atime, mtime, ctime, size, modes, undef, inode, devno,
+        ])
     }
 }
 

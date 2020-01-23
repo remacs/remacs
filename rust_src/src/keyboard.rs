@@ -7,7 +7,7 @@ use crate::{
     dispnew::ding_internal,
     emacs::is_daemon,
     eval::{record_unwind_protect, unbind_to},
-    frames::{selected_frame, window_frame_live_or_selected_with_action},
+    frame::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::LispObject,
     lists,
     lists::{car_safe, cdr_safe},
@@ -360,10 +360,10 @@ pub fn input_pending_p(check_timers: bool) -> bool {
         // Process non-user-visible events (Bug#10195).
         process_special_events();
 
-        let val = if !check_timers {
-            0
-        } else {
+        let val = if check_timers {
             READABLE_EVENTS_DO_TIMERS_NOW
+        } else {
+            0
         };
 
         get_input_pending(val | READABLE_EVENTS_FILTER_EVENTS)

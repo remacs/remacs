@@ -1128,6 +1128,7 @@ extern Lisp_Object select_window (Lisp_Object window, Lisp_Object norecord,
 extern struct window *set_window_fringes (struct window *w, Lisp_Object left_width,
                                           Lisp_Object right_width, Lisp_Object outside_margins);
 extern void apply_window_adjustment (struct window *);
+extern void run_window_configuration_change_hook (struct frame *);
 
 /* Move cursor to row/column position VPOS/HPOS, pixel coordinates
    Y/X. HPOS/VPOS are window-relative row and column numbers and X/Y

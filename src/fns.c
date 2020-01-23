@@ -842,47 +842,6 @@ If STRING is multibyte and contains a character of charset
   return string;
 }
 
-/* Check that ARRAY can have a valid subarray [FROM..TO),
-   given that its size is SIZE.
-   If FROM is nil, use 0; if TO is nil, use SIZE.
-   Count negative values backwards from the end.
-   Set *IFROM and *ITO to the two indexes used.  */
-
-void
-validate_subarray (Lisp_Object array, Lisp_Object from, Lisp_Object to,
-		   ptrdiff_t size, ptrdiff_t *ifrom, ptrdiff_t *ito)
-{
-  EMACS_INT f, t;
-
-  if (INTEGERP (from))
-    {
-      f = XINT (from);
-      if (f < 0)
-	f += size;
-    }
-  else if (NILP (from))
-    f = 0;
-  else
-    wrong_type_argument (Qintegerp, from);
-
-  if (INTEGERP (to))
-    {
-      t = XINT (to);
-      if (t < 0)
-	t += size;
-    }
-  else if (NILP (to))
-    t = size;
-  else
-    wrong_type_argument (Qintegerp, to);
-
-  if (! (0 <= f && f <= t && t <= size))
-    args_out_of_range_3 (array, from, to);
-
-  *ifrom = f;
-  *ito = t;
-}
-
 DEFUN ("substring", Fsubstring, Ssubstring, 1, 3, 0,
        doc: /* Return a new string whose contents are a substring of STRING.
 The returned string consists of the characters between index FROM

@@ -1,6 +1,8 @@
 #![allow(clippy::cognitive_complexity)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+// For us, there is nothing to document. Calling C code isn't going to be safe.
+#![allow(clippy::missing_safety_doc)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
@@ -17,7 +19,6 @@
 #![feature(slice_patterns)]
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]
-#![feature(type_alias_enum_variants)]
 #![feature(untagged_unions)]
 
 extern crate errno;
@@ -53,7 +54,7 @@ mod eval_macros;
 #[macro_use]
 mod lisp;
 #[macro_use]
-mod frames;
+mod frame;
 #[macro_use]
 mod strings;
 #[macro_use]
@@ -74,6 +75,7 @@ mod charset;
 mod chartable;
 mod cmds;
 mod coding;
+mod composite;
 mod crypto;
 mod data;
 mod decompress;
@@ -93,8 +95,10 @@ mod floatfns;
 mod fns;
 mod fonts;
 mod hashtable;
+mod image;
 mod indent;
 mod interactive;
+mod intervals;
 mod keyboard;
 mod keymap;
 mod libm;
@@ -145,7 +149,6 @@ pub use crate::functions::{lispsym, make_string, make_unibyte_string, Fcons};
 mod hacks {
     use core::mem::ManuallyDrop;
 
-    #[allow(unions_with_drop_fields)]
     pub union Hack<T> {
         t: ManuallyDrop<T>,
         u: (),

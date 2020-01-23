@@ -36,8 +36,8 @@ impl LintMsg {
     fn new(modname: &str, lineno: u32, msg: String) -> Self {
         Self {
             modname: modname.to_string(),
-            lineno: lineno,
-            msg: msg,
+            lineno,
+            msg,
         }
     }
 
@@ -74,20 +74,16 @@ impl ModuleInfo {
         // in order to parse correctly, determine where the code lives.
         // For submodules that will be in a mod.rs file.
         if mod_path.is_dir() {
-            let tmp = path_as_str(mod_path.file_name()).to_string();
             let path = mod_path.join("mod.rs");
             if path.is_file() {
-                return Some(ModuleInfo {
-                    path: path,
-                    name: tmp,
-                });
+                let name = path_as_str(mod_path.file_name()).to_string();
+                return Some(ModuleInfo { path, name });
             }
         } else if let Some(ext) = mod_path.extension() {
             if ext == "rs" {
-                return Some(ModuleInfo {
-                    path: mod_path.clone(),
-                    name: path_as_str(mod_path.file_stem()).to_string(),
-                });
+                let path = mod_path.clone();
+                let name = path_as_str(mod_path.file_stem()).to_string();
+                return Some(ModuleInfo { path, name });
             }
         }
 
@@ -105,7 +101,7 @@ struct ModuleData {
 impl ModuleData {
     pub fn new(info: ModuleInfo) -> Self {
         Self {
-            info: info,
+            info,
             c_exports: Vec::new(),
             lisp_fns: Vec::new(),
             protected_statics: Vec::new(),
@@ -159,20 +155,16 @@ impl<'a> ModuleParser<'a> {
             } else if line.starts_with("#[cfg") {
                 preceding_cfg = Some(line);
             } else if line.starts_with("#[lisp_fn") {
-                let line = if line.ends_with("]") {
+                let line = if line.ends_with(']') {
                     line.clone()
                 } else {
                     let mut line = line.clone();
-                    loop {
-                        if let Some(next) = reader.next() {
-                            let l = next?;
-                            if !l.ends_with(")]") {
-                                line += &l;
-                            } else {
-                                line += &l;
-                                break;
-                            }
+                    while let Some(next) = reader.next() {
+                        let l = next?;
+                        if !l.ends_with(")]") {
+                            line += &l;
                         } else {
+                            line += &l;
                             break;
                         }
                     }
@@ -208,6 +200,10 @@ impl<'a> ModuleParser<'a> {
             } else if line.starts_with("include!(concat!(env!(\"OUT_DIR\"),") {
                 has_include = true;
             } else if line.starts_with("/*") && !line.ends_with("*/") {
+                // Clippy is confused. `next` has to be used because reader is also
+                // being iterated in the outer loop. Using `for next in reader` here
+                // will lead to complaints about borrowed iterators.
+                #[allow(clippy::while_let_on_iterator)]
                 while let Some(next) = reader.next() {
                     let line = next?;
                     if line.ends_with("*/") {
@@ -219,7 +215,7 @@ impl<'a> ModuleParser<'a> {
             }
         }
 
-        if !has_include && !(mod_data.lisp_fns.is_empty() && mod_data.protected_statics.is_empty())
+        if !(has_include || (mod_data.lisp_fns.is_empty() && mod_data.protected_statics.is_empty()))
         {
             let msg = format!(
                 "{} is missing the required include for protected statics or lisp_fn exports.",
@@ -355,7 +351,7 @@ fn env_var(name: &str) -> String {
 }
 
 // What to ignore when walking the list of files
-fn ignore(path: &str, additional_ignored_paths: &Vec<&str>) -> bool {
+fn ignore(path: &str, additional_ignored_paths: &[&str]) -> bool {
     path == "" || path.starts_with('.') || additional_ignored_paths.contains(&path)
 }
 
@@ -395,30 +391,26 @@ fn generate_include_files() -> Result<(), BuildError> {
     for mod_data in &modules {
         for (cfg, func) in &mod_data.c_exports {
             if let Some(cfg) = cfg {
-                write!(out_file, "{}\n", cfg)?;
+                writeln!(out_file, "{}", cfg)?;
             }
-            write!(
-                out_file,
-                "pub use crate::{}::{};\n",
-                mod_data.info.name, func
-            )?;
+            writeln!(out_file, "pub use crate::{}::{};", mod_data.info.name, func)?;
         }
         for (cfg, func) in &mod_data.lisp_fns {
             if let Some(cfg) = cfg {
-                write!(out_file, "{}\n", cfg)?;
+                writeln!(out_file, "{}", cfg)?;
             }
-            write!(
+            writeln!(
                 out_file,
-                "pub use crate::{}::F{};\n",
+                "pub use crate::{}::F{};",
                 mod_data.info.name, func
             )?;
         }
     }
-    write!(out_file, "\n")?;
+    writeln!(out_file)?;
 
-    write!(
+    writeln!(
         out_file,
-        "#[no_mangle]\npub extern \"C\" fn rust_init_syms() {{\n"
+        "#[no_mangle]\npub extern \"C\" fn rust_init_syms() {{"
     )?;
     for mod_data in &modules {
         let exports_path: PathBuf = [
@@ -434,21 +426,21 @@ fn generate_include_files() -> Result<(), BuildError> {
 
         if !mod_data.lisp_fns.is_empty() {
             let mut file = File::create(&exports_path)?;
-            write!(
+            writeln!(
                 file,
-                "export_lisp_fns! {{\n    {}\n}}\n",
+                "export_lisp_fns! {{\n    {}\n}}",
                 mod_data
                     .lisp_fns
                     .iter()
                     .map(|lisp_fn| match lisp_fn {
                         (Some(cfg), func) => format!("{} {}", cfg, func),
-                        (_, func) => format!("{}", func),
+                        (_, func) => func.to_string(),
                     })
                     .collect::<Vec<String>>()
                     .join(",\n    ")
             )?;
 
-            write!(out_file, "    {}::rust_init_syms();\n", mod_data.info.name)?;
+            writeln!(out_file, "    {}::rust_init_syms();", mod_data.info.name)?;
         }
 
         if !mod_data.protected_statics.is_empty() {
@@ -457,23 +449,19 @@ fn generate_include_files() -> Result<(), BuildError> {
                 .write(true)
                 .append(true)
                 .open(exports_path)?;
-            write!(
+            writeln!(
                 file,
-                "protect_statics_from_GC! {{ {} }}\n",
+                "protect_statics_from_GC! {{ {} }}",
                 mod_data.protected_statics.join(", ")
             )?;
 
-            write!(
-                out_file,
-                "    {}::rust_static_syms();\n",
-                mod_data.info.name
-            )?;
+            writeln!(out_file, "    {}::rust_static_syms();", mod_data.info.name)?;
         }
     }
 
     // Add this one by hand.
-    write!(out_file, "    floatfns::rust_init_extra_syms();\n")?;
-    write!(out_file, "}}\n")?;
+    writeln!(out_file, "    floatfns::rust_init_extra_syms();")?;
+    writeln!(out_file, "}}")?;
 
     Ok(())
 }

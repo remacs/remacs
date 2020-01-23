@@ -1,7 +1,6 @@
 //! marker support
 
 use libc::{c_void, ptrdiff_t};
-use std::mem;
 use std::ptr;
 
 use remacs_macros::lisp_fn;
@@ -59,7 +58,7 @@ impl LispMarkerRef {
     }
 
     pub fn buffer(self) -> Option<LispBufferRef> {
-        unsafe { self.buffer.as_ref().map(|b| mem::transmute(b)) }
+        ExternalPtr::from_ptr(self.buffer.cast())
     }
 
     pub fn set_buffer(mut self, b: *mut Lisp_Buffer) {
@@ -73,7 +72,7 @@ impl LispMarkerRef {
     }
 
     pub fn next(self) -> Option<Self> {
-        unsafe { self.next.as_ref().map(|n| mem::transmute(n)) }
+        Self::from_ptr(self.next.cast())
     }
 
     pub fn set_next(mut self, m: *mut Lisp_Marker) {
@@ -139,7 +138,7 @@ impl LispObject {
 impl LispMiscRef {
     pub fn as_marker(self) -> Option<LispMarkerRef> {
         if self.get_type() == Lisp_Misc_Type::Lisp_Misc_Marker {
-            unsafe { Some(mem::transmute(self)) }
+            Some(self.cast())
         } else {
             None
         }
@@ -569,17 +568,20 @@ fn set_marker_internal_else(
     // Don't believe BYTEPOS if it comes from a different buffer,
     // since that buffer might have a very different correspondence
     // between character and byte positions.
-    if bytepos == -1
+    bytepos = if bytepos == -1
         || !position
             .as_marker()
             .map_or(false, |m| m.buffer() == Some(buf))
     {
-        bytepos = buf.charpos_to_bytepos(charpos);
+        buf.charpos_to_bytepos(charpos)
     } else {
-        let beg = buf.buffer_beg_byte(restricted);
-        let end = buf.buffer_end_byte(restricted);
-        bytepos = clip_to_bounds(beg, bytepos as EmacsInt, end);
-    }
+        clip_to_bounds(
+            buf.buffer_beg_byte(restricted),
+            bytepos as EmacsInt,
+            buf.buffer_end_byte(restricted),
+        )
+    };
+
     attach_marker(marker.as_mut(), buf.as_mut(), charpos, bytepos);
 }
 
