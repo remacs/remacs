@@ -945,9 +945,7 @@ compact_buffer (struct buffer *buffer)
     }
 }
 
-extern Lisp_Object Fkill_buffer(Lisp_Object buffer_or_name);
-
-#if 0
+#if PORTED_TO_RUST
 DEFUN ("kill-buffer", Fkill_buffer, Skill_buffer, 0, 1, "bKill buffer: ",
        doc: /* Kill the buffer specified by BUFFER-OR-NAME.
 The argument may be a buffer or the name of an existing buffer.
@@ -5262,7 +5260,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Sbuffer_local_variables);
   defsubr (&Sset_buffer_modified_p);
   defsubr (&Sother_buffer);
-//  defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
   defsubr (&Sbuffer_swap_text);

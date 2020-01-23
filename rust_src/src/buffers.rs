@@ -31,6 +31,7 @@ use crate::{
         set_marker, set_marker_both, LispMarkerIter, LispMarkerRef, MARKER_DEBUG,
     },
     math::{max, min},
+    minibuf::minibuffer_window,
     multibyte::MAX_MULTIBYTE_LENGTH,
     multibyte::{multibyte_char_at, multibyte_chars_in_text, multibyte_length_by_head},
     multibyte::{Codepoint, LispStringRef, LispSymbolOrString},
@@ -44,7 +45,7 @@ use crate::{
         buffer_local_value, buffer_memory_full, buffer_window_count, del_range,
         delete_all_overlays, frames_discard_buffer, free_buffer_text, free_region_cache, globals,
         internal_delete_file, kill_buffer_processes, kill_buffer_xwidgets, last_per_buffer_idx,
-        lookup_char_property, make_timespec, marker_position, minibuf_window, modify_overlay,
+        lookup_char_property, make_timespec, marker_position, modify_overlay,
         notify_variable_watchers, per_buffer_default, recenter_overlay_lists,
         record_unwind_protect, replace_buffer_in_windows, replace_buffer_in_windows_safely,
         run_hook, save_excursion_restore, save_excursion_save, set_buffer_internal,
@@ -70,7 +71,6 @@ use crate::{
     threads::{c_specpdl_index, ThreadState},
     util::clip_to_bounds,
     vectors::LispVectorlikeRef,
-    windows::LispWindowRef,
 };
 
 pub const BEG: ptrdiff_t = 1;
@@ -2047,8 +2047,8 @@ pub fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
 /// cleaning up all windows currently displaying the buffer to be killed.
 #[lisp_fn(min = "0", intspec = "bKill buffer: ")]
 pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
-    let mut b = match buffer_or_name {
-        Some(buf_or_name) => LispBufferRef::from(buf_or_name),
+    let mut b: LispBufferRef = match buffer_or_name {
+        Some(buf_or_name) => buf_or_name.into(),
         None => ThreadState::current_buffer_unchecked(),
     };
 
@@ -2073,7 +2073,6 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
 
     // Query if the buffer is still modified.
     if is_interactive() && b.filename().is_not_nil() && b.modified_since_save() {
-        // TODO: This was AUTO_STRING.
         let format_str = new_unibyte_string!("Buffer %s modified; kill anyway? ");
         if !yes_or_no_p(format(&mut [format_str, b.name_]).into()) {
             return unbind_to(count, Qnil).into();
@@ -2099,7 +2098,7 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
     // since anything can happen within do_yes_or_no_p.
 
     // Don't kill the minibuffer now current.
-    if LispObject::from(b) == LispWindowRef::from(unsafe { minibuf_window }).contents {
+    if b == minibuffer_window().contents_as_buffer() {
         return false;
     }
 
@@ -2142,7 +2141,7 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
 
     // If the buffer now current is shown in the minibuffer and our buffer
     // is the sole other buffer give up.
-    if current_buffer() == LispWindowRef::from(unsafe { minibuf_window }).contents
+    if current_buffer() == minibuffer_window().contents
         && LispObject::from(b) == unsafe { Fother_buffer(b.into(), Qnil, Qnil) }
     {
         return false;
