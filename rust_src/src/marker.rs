@@ -150,6 +150,14 @@ pub struct LispMarkerIter {
     current: Option<LispMarkerRef>,
 }
 
+impl LispMarkerIter {
+    pub fn from_buffer(buffer: LispBufferRef) -> Self {
+        Self {
+            current: buffer.markers(),
+        }
+    }
+}
+
 impl Iterator for LispMarkerIter {
     type Item = LispMarkerRef;
 
