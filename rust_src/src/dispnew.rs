@@ -7,8 +7,8 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     eval::unbind_to,
-    frames::selected_frame,
-    frames::{LispFrameLiveOrSelected, LispFrameRef},
+    frame::selected_frame,
+    frame::{LispFrameLiveOrSelected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::{

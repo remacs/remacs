@@ -34,14 +34,14 @@ jobs:
       os: linux  # No need to run this everywhere
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
-        - travis_wait rustup component add rustfmt-preview
+        - travis_wait rustup component add rustfmt
         - ./autogen.sh && ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
       script: ./.travis-format.sh
     - stage: clippy
       os: linux  # No need to run this everywhere
       before_script:
         - sudo apt install -y libgtk-3-dev
-        - travis_wait rustup component add clippy-preview
+        - travis_wait rustup component add clippy
         - ./autogen.sh && ./configure --without-makeinfo
       script:
         - make clippy

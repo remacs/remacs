@@ -3196,110 +3196,6 @@ unchain_both (struct buffer *b, Lisp_Object overlay)
   eassert (XOVERLAY (overlay)->next == NULL);
 }
 
-DEFUN ("move-overlay", Fmove_overlay, Smove_overlay, 3, 4, 0,
-       doc: /* Set the endpoints of OVERLAY to BEG and END in BUFFER.
-If BUFFER is omitted, leave OVERLAY in the same buffer it inhabits now.
-If BUFFER is omitted, and OVERLAY is in no buffer, put it in the current
-buffer.  */)
-  (Lisp_Object overlay, Lisp_Object beg, Lisp_Object end, Lisp_Object buffer)
-{
-  struct buffer *b, *ob = 0;
-  Lisp_Object obuffer;
-  ptrdiff_t count = SPECPDL_INDEX ();
-  ptrdiff_t n_beg, n_end;
-  ptrdiff_t o_beg UNINIT, o_end UNINIT;
-
-  CHECK_OVERLAY (overlay);
-  if (NILP (buffer))
-    buffer = Fmarker_buffer (OVERLAY_START (overlay));
-  if (NILP (buffer))
-    XSETBUFFER (buffer, current_buffer);
-  CHECK_BUFFER (buffer);
-
-  if (NILP (Fbuffer_live_p (buffer)))
-    error ("Attempt to move overlay to a dead buffer");
-
-  if (MARKERP (beg) && !EQ (Fmarker_buffer (beg), buffer))
-    signal_error ("Marker points into wrong buffer", beg);
-  if (MARKERP (end) && !EQ (Fmarker_buffer (end), buffer))
-    signal_error ("Marker points into wrong buffer", end);
-
-  CHECK_NUMBER_COERCE_MARKER (beg);
-  CHECK_NUMBER_COERCE_MARKER (end);
-
-  if (XINT (beg) > XINT (end))
-    {
-      Lisp_Object temp;
-      temp = beg; beg = end; end = temp;
-    }
-
-  specbind (Qinhibit_quit, Qt);
-
-  obuffer = Fmarker_buffer (OVERLAY_START (overlay));
-  b = XBUFFER (buffer);
-
-  if (!NILP (obuffer))
-    {
-      ob = XBUFFER (obuffer);
-
-      o_beg = OVERLAY_POSITION (OVERLAY_START (overlay));
-      o_end = OVERLAY_POSITION (OVERLAY_END (overlay));
-
-      unchain_both (ob, overlay);
-    }
-
-  /* Set the overlay boundaries, which may clip them.  */
-  Fset_marker (OVERLAY_START (overlay), beg, buffer);
-  Fset_marker (OVERLAY_END (overlay), end, buffer);
-
-  n_beg = marker_position (OVERLAY_START (overlay));
-  n_end = marker_position (OVERLAY_END (overlay));
-
-  /* If the overlay has changed buffers, do a thorough redisplay.  */
-  if (!EQ (buffer, obuffer))
-    {
-      /* Redisplay where the overlay was.  */
-      if (ob)
-        modify_overlay (ob, o_beg, o_end);
-
-      /* Redisplay where the overlay is going to be.  */
-      modify_overlay (b, n_beg, n_end);
-    }
-  else
-    /* Redisplay the area the overlay has just left, or just enclosed.  */
-    {
-      if (o_beg == n_beg)
-	modify_overlay (b, o_end, n_end);
-      else if (o_end == n_end)
-	modify_overlay (b, o_beg, n_beg);
-      else
-	modify_overlay (b, min (o_beg, n_beg), max (o_end, n_end));
-    }
-
-  /* Delete the overlay if it is empty after clipping and has the
-     evaporate property.  */
-  if (n_beg == n_end && !NILP (Foverlay_get (overlay, Qevaporate)))
-    return unbind_to (count, Fdelete_overlay (overlay));
-
-  /* Put the overlay into the new buffer's overlay lists, first on the
-     wrong list.  */
-  if (n_end < b->overlay_center)
-    {
-      XOVERLAY (overlay)->next = b->overlays_after;
-      set_buffer_overlays_after (b, XOVERLAY (overlay));
-    }
-  else
-    {
-      XOVERLAY (overlay)->next = b->overlays_before;
-      set_buffer_overlays_before (b, XOVERLAY (overlay));
-    }
-
-  /* This puts it in the right list, and in the right order.  */
-  recenter_overlay_lists (b, b->overlay_center);
-
-  return unbind_to (count, overlay);
-}
-
 
 /* Overlay dissection functions.  */
 
@@ -5372,7 +5268,6 @@ Functions running this hook are, `get-buffer-create',
   defsubr (&Skill_all_local_variables);
 
   defsubr (&Smake_overlay);
-  defsubr (&Smove_overlay);
   defsubr (&Soverlays_at);
   defsubr (&Soverlays_in);
   defsubr (&Snext_overlay_change);

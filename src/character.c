@@ -69,7 +69,7 @@ translate_char (Lisp_Object table, int c)
 
 /* Return width (columns) of C considering the buffer display table DP. */
 
-static ptrdiff_t
+ptrdiff_t
 char_width (int c, struct Lisp_Char_Table *dp)
 {
   ptrdiff_t width = CHARACTER_WIDTH (c);
@@ -161,79 +161,6 @@ ptrdiff_t
 strwidth (const char *str, ptrdiff_t len)
 {
   return c_string_width ((const unsigned char *) str, len, -1, NULL, NULL);
-}
-
-/* Return width of Lisp string STRING when displayed in the current
-   buffer.  The width is measured by how many columns it occupies on
-   the screen while paying attention to compositions.  If PRECISION >
-   0, return the width of longest substring that doesn't exceed
-   PRECISION, and set number of characters and bytes of the substring
-   in *NCHARS and *NBYTES respectively.  */
-
-ptrdiff_t
-lisp_string_width (Lisp_Object string, ptrdiff_t precision,
-		   ptrdiff_t *nchars, ptrdiff_t *nbytes)
-{
-  ptrdiff_t len = SCHARS (string);
-  /* This set multibyte to 0 even if STRING is multibyte when it
-     contains only ascii and eight-bit-graphic, but that's
-     intentional.  */
-  bool multibyte = len < SBYTES (string);
-  unsigned char *str = SDATA (string);
-  ptrdiff_t i = 0, i_byte = 0;
-  ptrdiff_t width = 0;
-  struct Lisp_Char_Table *dp = buffer_display_table ();
-
-  while (i < len)
-    {
-      ptrdiff_t chars, bytes, thiswidth;
-      Lisp_Object val;
-      ptrdiff_t cmp_id;
-      ptrdiff_t ignore, end;
-
-      if (find_composition (i, -1, &ignore, &end, &val, string)
-	  && ((cmp_id = get_composition_id (i, i_byte, end - i, val, string))
-	      >= 0))
-	{
-	  thiswidth = composition_table[cmp_id]->width;
-	  chars = end - i;
-	  bytes = string_char_to_byte (string, end) - i_byte;
-	}
-      else
-	{
-	  int c;
-
-	  if (multibyte)
-	    {
-	      int cbytes;
-	      c = STRING_CHAR_AND_LENGTH (str + i_byte, cbytes);
-	      bytes = cbytes;
-	    }
-	  else
-	    c = str[i_byte], bytes = 1;
-	  chars = 1;
-	  thiswidth = char_width (c, dp);
-	}
-
-      if (0 < precision && precision - width < thiswidth)
-	{
-	  *nchars = i;
-	  *nbytes = i_byte;
-	  return width;
-	}
-      if (INT_ADD_WRAPV (thiswidth, width, &width))
-	string_overflow ();
-      i += chars;
-      i_byte += bytes;
-    }
-
-  if (precision > 0)
-    {
-      *nchars = i;
-      *nbytes = i_byte;
-    }
-
-  return width;
 }
 
 /* Return the number of characters in the NBYTES bytes at PTR.

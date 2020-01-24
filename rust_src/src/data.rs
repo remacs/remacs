@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     alloc::purecopy,
     buffers::{per_buffer_idx, per_buffer_idx_from_field_offset},
-    frames::selected_frame,
+    frame::selected_frame,
     keymap::get_keymap,
     lisp::is_autoload,
     lisp::{LispObject, LispSubrRef, LiveBufferIter},

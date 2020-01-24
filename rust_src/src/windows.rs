@@ -11,7 +11,7 @@ use crate::{
     editfns::{goto_char, point},
     eval::unbind_to,
     fns::{copy_alist, nreverse},
-    frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
+    frame::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
     interactive::InteractiveNumericPrefix,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
@@ -23,6 +23,7 @@ use crate::{
     remacs_sys::{
         apply_window_adjustment, estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
+        run_window_configuration_change_hook as run_window_conf_change_hook,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
         set_window_scroll_bars, update_mode_lines, window_list_1, window_menu_bar_p, window_scroll,
@@ -758,6 +759,22 @@ pub extern "C" fn window_internal_height(w: LispWindowRef) -> i32 {
 #[no_mangle]
 pub extern "C" fn decode_any_window(window: LispObject) -> LispWindowRef {
     LispWindowOrSelected::from(window).into()
+}
+
+/// Return the width in pixels of WINDOW's vertical scrollbar.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_scroll_bar_width(window: LispWindowLiveOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
+    win.scroll_bar_area_width()
+}
+
+/// Return the height in pixels of WINDOW's horizontal scrollbar.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_scroll_bar_height(window: LispWindowLiveOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
+    win.scroll_bar_area_height()
 }
 
 /// Return the normal height of window WINDOW.
@@ -2067,3 +2084,25 @@ pub fn set_window_scroll_bars_lisp(
 }
 
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
+
+/// Run `window-configuration-change-hook' for FRAME.
+/// If FRAME is omitted or nil, it defaults to the selected frame.
+#[lisp_fn(min = "0")]
+pub fn run_window_configuration_change_hook(frame: LispFrameLiveOrSelected) {
+    let mut frame_ref: LispFrameRef = frame.into();
+    unsafe { run_window_conf_change_hook(frame_ref.as_mut()) };
+}
+
+#[rustfmt::skip]
+def_lisp_sym!(Qwindow_configuration_change_hook, "window-configuration-change-hook");
+
+#[no_mangle]
+#[allow(unused_doc_comments)]
+extern "C" fn rust_syms_of_window() {
+    /// Functions to call when window configuration changes.
+    /// The buffer-local value is run once per window, with the relevant window
+    /// selected; while the global value is run only once for the modified frame,
+    /// with the relevant frame selected.
+    #[rustfmt::skip]
+    defvar_lisp!(Vwindow_configuration_change_hook, "window-configuration-change-hook", Qnil);
+}

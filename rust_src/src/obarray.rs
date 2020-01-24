@@ -239,7 +239,7 @@ pub fn intern_soft(name: LispSymbolOrString, obarray: Option<LispObarrayRef>) ->
 /// A second optional argument specifies the obarray to use;
 /// it defaults to the value of `obarray'.
 #[lisp_fn(name = "intern", c_name = "intern", min = "1")]
-pub fn lisp_intern(string: LispStringRef, obarray: Option<LispObarrayRef>) -> LispObject {
+pub fn intern_lisp(string: LispStringRef, obarray: Option<LispObarrayRef>) -> LispObject {
     let obarray_ref = obarray.unwrap_or_else(LispObarrayRef::global);
 
     obarray_ref.intern(string)

@@ -11,7 +11,7 @@ use crate::{
     lisp::LispObject,
     lists::{car_safe, cdr_safe, memq, LispCons},
     multibyte::LispStringRef,
-    obarray::{intern, lisp_intern},
+    obarray::{intern, intern_lisp},
     remacs_sys::{
         globals, Qbuffer_name_history, Qcommandp, Qcompletion_ignore_case, Qcustom_variable_p,
         Qfield, Qminibuffer_completion_table, Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
@@ -373,7 +373,7 @@ pub fn read_command_or_variable(
     if name.is_nil() {
         name
     } else {
-        lisp_intern(name.into(), None)
+        intern_lisp(name.into(), None)
     }
 }
 

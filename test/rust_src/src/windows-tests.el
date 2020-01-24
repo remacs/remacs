@@ -1,5 +1,17 @@
 (require 'ert)
 
+(ert-deftest window-scroll-bar-width ()
+  (let ((w1 (selected-window)))
+    (set-window-scroll-bars w1 nil nil nil nil)
+    (should (eq 0 (window-scroll-bar-width w1)))
+    (set-window-scroll-bars w1 1 'right nil nil)
+    (should (eq 1 (window-scroll-bar-width w1)))))
+
+(ert-deftest window-scroll-bar-height ()
+  (let ((w1 (selected-window)))
+    (set-window-scroll-bars w1 nil nil nil nil)
+    (should (eq 0 (window-scroll-bar-height w1)))))
+
 (ert-deftest window-display-table-nil ()
   (should (eq (window-display-table) nil)))
 
@@ -207,3 +219,14 @@
     (should (set-window-scroll-bars w1 1 t nil nil))
     (should-not (set-window-scroll-bars w1 1 t nil nil))
     (should (set-window-scroll-bars w1 2 t nil nil))))
+
+(ert-deftest run-window-configuration-change-hook ()
+  (setq window-conf-change-hook-val 0)
+  (add-hook 'window-configuration-change-hook
+            (lambda () (setq window-conf-change-hook-val
+                        (+ window-conf-change-hook-val 1))))
+
+  (should (eq (run-window-configuration-change-hook) nil))
+  (should (eq window-conf-change-hook-val 1))
+  (should (eq (run-window-configuration-change-hook (selected-frame)) nil))
+  (should (eq window-conf-change-hook-val 2)))

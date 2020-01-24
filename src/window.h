@@ -1131,6 +1131,7 @@ extern struct window *set_window_scroll_bars (struct window *w, Lisp_Object widt
 			Lisp_Object vertical_type, Lisp_Object height,
 			Lisp_Object horizontal_type);
 extern void apply_window_adjustment (struct window *);
+extern void run_window_configuration_change_hook (struct frame *);
 
 /* Move cursor to row/column position VPOS/HPOS, pixel coordinates
    Y/X. HPOS/VPOS are window-relative row and column numbers and X/Y
