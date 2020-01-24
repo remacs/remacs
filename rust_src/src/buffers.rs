@@ -1171,14 +1171,23 @@ impl From<LispBufferOrCurrent> for LispBufferRef {
     }
 }
 
-/// Iterates over all buffers by starting at `all_buffers` and jumping over each `next` member on
-/// each buffer.
+/// Iterates over buffers by traversing over each `next` member of encountered
+/// buffers.
 pub struct LispBufferIter {
     current: Option<LispBufferRef>,
 }
 
 impl LispBufferIter {
-    pub fn new() -> Self {
+    /// Start iteration at a given buffer.
+    #[allow(dead_code)]
+    pub fn with_start(buffer: LispBufferRef) -> Self {
+        Self {
+            current: Some(buffer)
+        }
+    }
+
+    /// Iterate over all buffers, i.e. start at the buffer defined by `all_buffers`.
+    pub fn all_buffers() -> Self {
         unsafe {
             Self {
                 current: LispBufferRef::from_ptr(all_buffers as *mut c_void),
@@ -2065,8 +2074,8 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
         set_buffer_internal(b.as_mut());
     }
 
-    // First run the query functions; if any query is answered no,
-    // don't kill the buffer.
+    // First run the query functions; if any query is answered no, don't kill
+    // the buffer.
     if !run_hook_with_args_until_failure(&mut [Qkill_buffer_query_functions]) {
         return unbind_to(count, Qnil).into();
     }
@@ -2093,45 +2102,44 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
         return true;
     }
 
-    // We have no more questions to ask.  Verify that it is valid
-    // to kill the buffer.  This must be done after the questions
-    // since anything can happen within do_yes_or_no_p.
+    // We have no more questions to ask. Verify that it is valid to kill the
+    // buffer. This must be done after the questions since anything can happen
+    // within do_yes_or_no_p.
 
-    // Don't kill the minibuffer now current.
+    // Don't kill the current minibuffer.
     if b == minibuffer_window().contents_as_buffer() {
         return false;
     }
 
-    // When we kill an ordinary buffer which shares its buffer text
-    // with indirect buffer(s), we must kill indirect buffer(s) too.
-    // We do it at this stage so nothing terrible happens if they
-    // ask questions or their hooks get errors.
+    // When we kill an ordinary buffer which shares its buffer text with
+    // indirect buffer(s), we must kill indirect buffer(s) too. We do it at this
+    // stage so nothing terrible happens if they ask questions or their hooks
+    // get errors.
     if b.base_buffer.is_null() && b.indirections > 0 {
-        for other in LispBufferIter::new() {
+        for other in LispBufferIter::all_buffers() {
             if other.base_buffer == b.as_mut() {
                 kill_buffer(Some(other.into()));
             }
         }
 
-        // Exit if we now have killed the base buffer (Bug#11665).
+        // Exit if we have now killed the base buffer (Bug#11665).
         if !b.is_live() {
             return true;
         }
     }
 
-    // Run replace_buffer_in_windows before making another buffer current
-    // since set-window-buffer-start-and-point will refuse to make another
-    // buffer current if the selected window does not show the current
-    // buffer (bug#10114).
+    // Run replace_buffer_in_windows before making another buffer current since
+    // set-window-buffer-start-and-point will refuse to make another buffer
+    // current if the selected window does not show the current buffer
+    // (bug#10114).
     unsafe { replace_buffer_in_windows(b.into()) };
 
-    // Exit if replacing the buffer in windows has killed our buffer.
+    // Exit if replacing the buffer in windows displaying it has killed it.
     if !b.is_live() {
         return true;
     }
 
-    // Make this buffer not be current.  Exit if it is the sole visible
-    // buffer.
+    // Make this buffer not be current. Exit if it is the sole visible buffer.
     if b == current_buffer().into() {
         set_buffer(LispBufferRef::from(unsafe { Fother_buffer(b.into(), Qnil, Qnil) }).into());
         if b == current_buffer().into() {
@@ -2139,8 +2147,8 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
         }
     }
 
-    // If the buffer now current is shown in the minibuffer and our buffer
-    // is the sole other buffer give up.
+    // If the buffer now current is shown in the minibuffer and our buffer is
+    // the sole other buffer give up.
     if current_buffer() == minibuffer_window().contents
         && LispObject::from(b) == unsafe { Fother_buffer(b.into(), Qnil, Qnil) }
     {
@@ -2149,22 +2157,22 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
 
     // Now there is no question: we can kill the buffer.
 
-    // Unlock this buffer's file, if it is locked.
     unsafe {
+        // Unlock this buffer's file, if it is locked.
         unlock_buffer(b.as_mut());
 
         kill_buffer_processes(b.into());
         kill_buffer_xwidgets(b.into());
     }
 
-    // Killing buffer processes may run sentinels which may have killed
-    // our buffer.
+    // Killing buffer processes may run sentinels which may have killed our
+    // buffer.
     if !b.is_live() {
         return true;
     }
 
-    // These may run Lisp code and into infinite loops (if someone
-    // insisted on circular lists) so allow quitting here.
+    // This may run Lisp code and trigger infinite loops if a circular list is
+    // encountered, so allow quitting here.
     unsafe { frames_discard_buffer(b.into()) };
 
     clear_charpos_cache(b.as_mut());
@@ -2179,8 +2187,8 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
         globals.Vinhibit_quit = old_inhibit_quit;
     }
 
-    // Delete any auto-save file, if we saved it in this session.
-    // But not if the buffer is modified.
+    // Delete any auto-save file, if we saved it in this session and the buffer
+    // is not modified.
     if b.auto_save_file_name_.is_string()
         && b.auto_save_modified != 0
         && b.modifications_since_save() < b.auto_save_modified
@@ -2198,9 +2206,9 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
 
     match b.base_buffer() {
         Some(base) => {
-            // Unchain all markers that belong to this indirect buffer.
-            // Don't unchain the markers that belong to the base buffer
-            // or its other indirect buffers.
+            // Unchain all markers that belong to this indirect buffer. Don't
+            // unchain the markers that belong to the base buffer or its other
+            // indirect buffers.
             for mut mp in b.iter_markers() {
                 if mp.buffer == b.as_mut() {
                     mp.buffer = ptr::null_mut();
@@ -2216,8 +2224,8 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
             }
         }
         None => {
-            // Unchain all markers of this buffer and its indirect buffers.
-            // and leave them pointing nowhere.
+            // Unchain all markers of this buffer and its indirect buffers, and
+            // leave them pointing nowhere.
             let mut iter = itertools::put_back(b.iter_markers());
             while let Some(mut marker) = iter.next() {
                 let next = marker.next();
@@ -2242,49 +2250,48 @@ pub fn kill_buffer(buffer_or_name: Option<LispBufferOrName>) -> bool {
     b.overlays_before = ptr::null_mut();
     b.overlays_after = ptr::null_mut();
 
+    // Reset the local variables, so that this buffer's local values won't be
+    // protected from GC. They would be protected if they happened to remain
+    // cached in their symbols. This gets rid of them for certain.
+    unsafe { swap_out_buffer_local_variables(b.as_mut()) };
+    b.reset_local_variables(true);
+
+    b.name_ = Qnil;
+
+    unsafe { block_input() };
+    if let Some(base_buffer) = unsafe { b.base_buffer.as_mut() } {
+        // Notify our base buffer that we don't share the text anymore.
+        assert_eq!(b.indirections, -1);
+        base_buffer.indirections -= 1;
+        assert!(base_buffer.indirections >= 0);
+        // Make sure that we weren't confused.
+        assert_eq!(b.window_count, -1);
+    } else {
+        // Make sure that no one shows us.
+        assert_eq!(b.window_count, 0);
+        // No one shares our buffer text, so we can free it.
+        unsafe { free_buffer_text(b.as_mut()) };
+    }
+
+    if !b.newline_cache.is_null() {
+        unsafe { free_region_cache(b.newline_cache) };
+        b.newline_cache = ptr::null_mut();
+    }
+    if !b.width_run_cache.is_null() {
+        unsafe { free_region_cache(b.width_run_cache) };
+        b.width_run_cache = ptr::null_mut();
+    }
+    if !b.bidi_paragraph_cache.is_null() {
+        unsafe { free_region_cache(b.bidi_paragraph_cache) };
+        b.bidi_paragraph_cache = ptr::null_mut();
+    }
+
+    b.set_width_table(Qnil);
+    unsafe { unblock_input() };
+    b.set_undo_list(Qnil);
+
+    // Run buffer-list-update-hook.
     unsafe {
-        // Reset the local variables, so that this buffer's local values
-        // won't be protected from GC.  They would be protected
-        // if they happened to remain cached in their symbols.
-        // This gets rid of them for certain.
-        swap_out_buffer_local_variables(b.as_mut());
-        reset_buffer_local_variables(b, true);
-
-        b.name_ = Qnil;
-
-        block_input();
-        if !b.base_buffer.is_null() {
-            // Notify our base buffer that we don't share the text anymore.
-            assert_eq!(b.indirections, -1);
-            (*b.base_buffer).indirections -= 1;
-            assert!((*b.base_buffer).indirections >= 0);
-            // Make sure that we wasn't confused.
-            assert_eq!(b.window_count, -1);
-        } else {
-            // Make sure that no one shows us.
-            assert_eq!(b.window_count, 0);
-            // No one shares our buffer text, can free it.
-            free_buffer_text(b.as_mut());
-        }
-
-        if !b.newline_cache.is_null() {
-            free_region_cache(b.newline_cache);
-            b.newline_cache = ptr::null_mut();
-        }
-        if !b.width_run_cache.is_null() {
-            free_region_cache(b.width_run_cache);
-            b.width_run_cache = ptr::null_mut();
-        }
-        if !b.bidi_paragraph_cache.is_null() {
-            free_region_cache(b.bidi_paragraph_cache);
-            b.bidi_paragraph_cache = ptr::null_mut();
-        }
-
-        b.set_width_table(Qnil);
-        unblock_input();
-        b.set_undo_list(Qnil);
-
-        // Run buffer-list-update-hook.
         if Vrun_hooks.is_not_nil() {
             call!(Vrun_hooks, Qbuffer_list_update_hook);
         }
