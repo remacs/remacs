@@ -857,96 +857,103 @@ pub extern "C" fn do_switch_frame(
     // This used to check for a live frame, but apparently it's possible for
     // a switch-frame event to arrive after a frame is no longer live,
     // especially when deleting the initial frame during startup.
-    if let Some(mut target_frame) = frame.as_live_frame() {
-        if target_frame.eq(&current_frame_ref) {
-            return frame;
-        }
+    let mut target_frame = match frame.as_live_frame() {
+        Some(target_frame) => target_frame,
+        None => return Qnil,
+    };
 
-        // If a frame's focus has been redirected toward the currently
-        // selected frame, we should change the redirection to point to the
-        // newly selected frame.  This means that if the focus is redirected
-        // from a minibufferless frame to a surrogate minibuffer frame, we
-        // can use `other-window' to switch between all the frames using
-        // that minibuffer frame, and the focus redirection will follow us
-        // around.
+    // If a frame's focus has been redirected toward the currently
+    // selected frame, we should change the redirection to point to the
+    // newly selected frame.  This means that if the focus is redirected
+    // from a minibufferless frame to a surrogate minibuffer frame, we
+    // can use `other-window' to switch between all the frames using
+    // that minibuffer frame, and the focus redirection will follow us
+    // around.
 
-        // Apply it only to the frame we're pointing to.
-        #[cfg(feature = "window-system")]
-        {
-            if _track && target_frame.is_gui_window() {
-                let xfocus = unsafe { x_get_focus_frame(target_frame.as_mut()) };
-                if let Some(xfocus_frame) = xfocus.as_frame() {
-                    let focus = xfocus_frame.focus_frame;
-                    if (focus.is_frame() && focus.as_frame().unwrap().eq(&current_frame_ref))
-                        || (focus.is_nil()
-                            && target_frame
-                                .minibuffer_window
-                                .eq(current_frame_ref.selected_window))
-                    {
-                        unsafe {
-                            Fredirect_frame_focus(xfocus, frame);
-                        }
+    // Apply it only to the frame we're pointing to.
+    #[cfg(feature = "window-system")]
+    {
+        if _track && target_frame.is_gui_window() {
+            let xfocus = unsafe { x_get_focus_frame(target_frame.as_mut()) };
+
+            if let Some(xfocus_frame) = xfocus.as_frame() {
+                let focus = xfocus_frame.focus_frame;
+                match focus.as_frame() {
+                    Some(f) if f.eq(&current_frame_ref) => unsafe {
+                        Fredirect_frame_focus(xfocus, frame);
+                    },
+                    None if focus.is_nil()
+                        && target_frame
+                            .minibuffer_window
+                            .eq(current_frame_ref.selected_window) =>
+                    unsafe {
+                        Fredirect_frame_focus(xfocus, frame);
                     }
+                    _ => (),
                 }
             }
         }
+    }
 
-        if !for_deletion && !current_frame_ref.minibuffer_window.is_nil() {
-            let mut win: LispWindowRef = current_frame_ref.minibuffer_window.into();
+    if !for_deletion && !current_frame_ref.minibuffer_window.is_nil() {
+        let mut win: LispWindowRef = current_frame_ref.minibuffer_window.into();
+        unsafe {
+            resize_mini_window(win.as_mut(), true);
+        }
+    }
+
+    if target_frame.output_method() == output_method::output_termcap {
+        let mut tty = unsafe { &mut *(*(*target_frame.as_ptr()).terminal).display_info.tty };
+        let top_frame = tty.top_frame;
+
+        if !frame.eq(top_frame) {
+            let mut wcm = unsafe { &mut *tty.Wcm };
+
+            if let Some(mut tf) = top_frame.as_frame() {
+                // Mark previously displayed frame as now obscured.
+                unsafe {
+                    SET_FRAME_VISIBLE(tf.as_mut(), 2);
+                }
+            }
             unsafe {
-                resize_mini_window(win.as_mut(), true);
+                SET_FRAME_VISIBLE(target_frame.as_mut(), 1);
             }
-        }
 
-        if target_frame.output_method() == output_method::output_termcap {
-            // TODO: this should be much nicer
-            let mut tty = unsafe { (*(*target_frame.as_ptr()).terminal).display_info.tty };
-
-            let top_frame = unsafe { (*tty).top_frame };
-
-            if !frame.eq(top_frame) {
-                // TODO: refactor this code
-                unsafe {
-                    if let Some(mut tf) = top_frame.as_frame() {
-                        SET_FRAME_VISIBLE(tf.as_mut(), 2);
-                    }
-                    SET_FRAME_VISIBLE(target_frame.as_mut(), 1);
-
-                    if target_frame.text_cols != (*(*tty).Wcm).cm_cols {
-                        (*(*tty).Wcm).cm_cols = target_frame.text_cols;
-                    }
-                    if target_frame.total_lines != (*(*tty).Wcm).cm_rows {
-                        (*(*tty).Wcm).cm_rows = target_frame.total_lines;
-                    }
-                    (*tty).top_frame = frame;
-                }
+            // If the new TTY frame changed dimensions, we need to
+            // resync term.c's idea of the frame size with the new
+            // frame's data.
+            if target_frame.text_cols != wcm.cm_cols {
+                wcm.cm_cols = target_frame.text_cols;
             }
-        }
-        let minibuffer_window: LispWindowRef = current_frame_ref.minibuffer_window.into();
-        unsafe { current_frame = frame };
-        if minibuffer_window.is_minibuffer_only() {
-            set_last_nonminibuffer_frame(current_frame_ref);
-        }
-
-        select_window_lisp(target_frame.selected_window, norecord);
-
-        #[cfg(feature = "window-system")]
-        {
-            if target_frame.is_ancestor(current_frame_ref) {
-                unsafe {
-                    internal_last_event_frame = Qnil;
-                }
+            if target_frame.total_lines != wcm.cm_rows {
+                wcm.cm_rows = target_frame.total_lines;
             }
+            tty.top_frame = frame;
         }
-        #[cfg(not(feature = "window-system"))]
-        {
+    }
+    let minibuffer_window: LispWindowRef = current_frame_ref.minibuffer_window.into();
+    unsafe { current_frame = frame };
+    if minibuffer_window.is_minibuffer_only() {
+        set_last_nonminibuffer_frame(current_frame_ref);
+    }
+
+    select_window_lisp(target_frame.selected_window, norecord);
+
+    #[cfg(feature = "window-system")]
+    {
+        if target_frame.is_ancestor(current_frame_ref) {
             unsafe {
                 internal_last_event_frame = Qnil;
             }
         }
-        return frame;
     }
-    Qnil
+    #[cfg(not(feature = "window-system"))]
+    {
+        unsafe {
+            internal_last_event_frame = Qnil;
+        }
+    }
+    return frame;
 }
 
 /// Select FRAME.
