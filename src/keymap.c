@@ -1195,15 +1195,6 @@ bindings; see the description of `lookup-key' for more details about this.  */)
   return Flist (j, maps);
 }
 
-DEFUN ("current-minor-mode-maps", Fcurrent_minor_mode_maps, Scurrent_minor_mode_maps, 0, 0, 0,
-       doc: /* Return a list of keymaps for the minor modes of the current buffer.  */)
-  (void)
-{
-  Lisp_Object *maps;
-  int nmaps = current_minor_maps (0, &maps);
-
-  return Flist (nmaps, maps);
-}
 
 /* Help functions for describing and documenting keymaps.		*/
 
@@ -3057,7 +3048,6 @@ be preferred.  */);
   defsubr (&Scommand_remapping);
   defsubr (&Sminor_mode_key_binding);
   defsubr (&Sdefine_key);
-  defsubr (&Scurrent_minor_mode_maps);
   defsubr (&Scurrent_active_maps);
   defsubr (&Saccessible_keymaps);
   defsubr (&Skey_description);
