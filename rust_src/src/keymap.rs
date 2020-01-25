@@ -17,7 +17,7 @@ use crate::{
     keyboard,
     keyboard::lucid_event_type_list_p,
     lisp::LispObject,
-    lists::{nth, setcdr},
+    lists::{nth, setcdr, Flist},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     multibyte::LispStringRef,
     obarray::intern,
@@ -781,7 +781,9 @@ pub fn current_minor_mode_maps() -> LispObject {
     let mut maps: *mut LispObject = ptr::null_mut();
     unsafe {
         let num_of_maps = current_minor_maps(ptr::null_mut(), &mut maps);
-        list!(num_of_maps, maps)
+        // Invoking the Fname_of_fn form makes more sense here, as
+        // current_minor_maps returns a length and pointer
+        Flist(num_of_maps, maps)
     }
 }
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));
