@@ -7,11 +7,11 @@ use remacs_macros::lisp_fn;
 use crate::{
     lisp::LispObject,
     numbers::LispNumber,
-    remacs_sys::Ftext_properties_at,
     remacs_sys::{
         get_char_property_and_overlay, set_text_properties, textget, validate_interval_range,
     },
-    remacs_sys::{EmacsInt, Lisp_Interval, Qnil, Qt, ThreadState},
+    remacs_sys::{EmacsInt, Lisp_Interval, Qnil, Qt},
+    threads::ThreadState,
 };
 
 /// Return the value of POSITION's property PROP, in OBJECT.
