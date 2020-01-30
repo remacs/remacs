@@ -1182,7 +1182,7 @@ impl LispBufferIter {
     #[allow(dead_code)]
     pub fn with_start(buffer: LispBufferRef) -> Self {
         Self {
-            current: Some(buffer)
+            current: Some(buffer),
         }
     }
 
