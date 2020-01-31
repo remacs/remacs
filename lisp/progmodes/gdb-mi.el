@@ -1001,8 +1001,10 @@ no input, and GDB is waiting for input."
 	;; Sending an EOF does not work with GDB-MI; submit an
 	;; explicit quit command.
 	(progn
-	  (insert "quit")
-	  (comint-send-input t t))
+          (if (> gdb-control-level 0)
+              (process-send-eof proc)
+            (insert "quit")
+            (comint-send-input t t)))
       (delete-char arg))))
 
 (defvar gdb-define-alist nil "Alist of #define directives for GUD tooltips.")
