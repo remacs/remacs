@@ -324,8 +324,8 @@ in `gdb-handler-list' and clears all pending handlers invalidated
 by the reception of this reply."
   (let ((handler-function (gdb-get-handler-function token-number)))
     (when handler-function
+      ;; Protect against errors in handler-function.
       (condition-case err
-          ;; protect against errors in handler-function
           (funcall handler-function)
         (error (message (error-message-string err))))
       (gdb-delete-handler token-number))))
