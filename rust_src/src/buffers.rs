@@ -42,8 +42,9 @@ use crate::{
         buffer_window_count, del_range, delete_all_overlays, globals, last_per_buffer_idx,
         lookup_char_property, make_timespec, marker_position, modify_overlay,
         notify_variable_watchers, per_buffer_default, recenter_overlay_lists,
-        set_buffer_internal_1, set_per_buffer_value, specbind, unblock_input, unchain_both,
-        unchain_marker, update_mode_lines, windows_or_buffers_changed,
+        set_buffer_internal_1, set_per_buffer_value, specbind, swap_in_global_binding,
+        symbol_redirect, unblock_input, unchain_both, unchain_marker, update_mode_lines,
+        windows_or_buffers_changed,
     },
     remacs_sys::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
@@ -112,6 +113,28 @@ const fn buf_bytes_max() -> ptrdiff_t {
     q[((q[1] - q[0]) >> ((8 * std::mem::size_of::<ptrdiff_t>()) - 1)) as usize]
 }
 pub const BUF_BYTES_MAX: ptrdiff_t = buf_bytes_max();
+
+// When converting bytes from/to chars, we look through the list of
+// markers to try and find a good starting point (since markers keep
+// track of both bytepos and charpos at the same time).
+// But if there are many markers, it can take too much time to find a "good"
+// marker from which to start.  Worse yet: if it takes a long time and we end
+// up finding a nearby markers, we won't add a new marker to cache this
+// result, so next time around we'll have to go through this same long list
+// to (re)find this best marker.  So the further down the list of
+// markers we go, the less demanding we are w.r.t what is a good marker.
+
+// The previous code used INITIAL=50 and INCREMENT=0 and this lead to
+// really poor performance when there are many markers.
+// I haven't tried to tweak INITIAL, but experiments on my trusty Thinkpad
+// T61 using various artificial test cases seem to suggest that INCREMENT=50
+// might be "the best compromise": it significantly improved the
+// worst case and it was rarely slower and never by much.
+
+// The asymptotic behavior is still poor, tho, so in largish buffers with many
+// overlays (e.g. 300KB and 30K overlays), it can still be a bottlneck.
+const BYTECHAR_DISTANCE_INITIAL: isize = 50;
+const BYTECHAR_DISTANCE_INCREMENT: isize = 50;
 
 pub type LispBufferRef = ExternalPtr<Lisp_Buffer>;
 pub type LispOverlayRef = ExternalPtr<Lisp_Overlay>;
@@ -524,13 +547,17 @@ impl LispBufferRef {
             consider_known!(self.cached_bytepos, self.cached_charpos);
         }
 
+        let mut distance = BYTECHAR_DISTANCE_INITIAL;
+
         for m in self.markers().iter() {
             consider_known!(m.bytepos_or_error(), m.charpos_or_error());
             // If we are down to a range of 50 chars,
             // don't bother checking any other markers;
             // scan the intervening chars directly now.
-            if best_above - best_below < 50 {
+            if best_above - bytepos < distance || bytepos - best_below < distance {
                 break;
+            } else {
+                distance += BYTECHAR_DISTANCE_INCREMENT;
             }
         }
 
@@ -656,13 +683,17 @@ impl LispBufferRef {
             consider_known!(self.cached_charpos, self.cached_bytepos);
         }
 
+        let mut distance = BYTECHAR_DISTANCE_INITIAL;
+
         for m in self.markers().iter() {
             consider_known!(m.charpos_or_error(), m.bytepos_or_error());
             // If we are down to a range of 50 chars,
             // don't bother checking any other markers;
             // scan the intervening chars directly now.
-            if best_above - best_below < 50 {
+            if best_above - charpos < distance || charpos - best_below < distance {
                 break;
+            } else {
+                distance += BYTECHAR_DISTANCE_INCREMENT;
             }
         }
 
@@ -821,9 +852,32 @@ impl LispBufferRef {
             self.local_var_alist_ = Qnil;
         } else {
             let mut last = Qnil;
+
+            let buffer: LispObject = (*self).into();
+
             for tail in self.local_vars_tails_iter() {
                 let (local, list) = tail.car().into();
                 let prop = lists::get(local.force_symbol(), Qpermanent_local);
+                let sym = local;
+
+                // Watchers are run *before* modifying the var.
+                if local.force_symbol().get_trapped_write() == SYMBOL_TRAPPED_WRITE {
+                    unsafe { notify_variable_watchers(local, Qnil, Qmakunbound, current_buffer()) };
+                }
+
+                assert_eq!(
+                    sym.force_symbol().get_redirect(),
+                    symbol_redirect::SYMBOL_LOCALIZED
+                );
+
+                // Need not do anything if some other buffer's binding is
+                // now cached.
+                if unsafe { sym.force_symbol().get_blv().where_ } == buffer {
+                    // Symbol is set up for this buffer's old local value:
+                    // swap it out!
+                    unsafe { swap_in_global_binding(sym.force_symbol().as_mut()) };
+                }
+
                 // If permanent-local, keep it.
                 if prop.is_not_nil() {
                     last = tail.into();
@@ -862,10 +916,6 @@ impl LispBufferRef {
                     self.local_var_alist_ = tail.cdr();
                 } else {
                     last.force_cons().set_cdr(tail)
-                }
-
-                if local.force_symbol().get_trapped_write() == SYMBOL_TRAPPED_WRITE {
-                    unsafe { notify_variable_watchers(local, Qnil, Qmakunbound, current_buffer()) };
                 }
             }
         }
