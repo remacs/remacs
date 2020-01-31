@@ -4,6 +4,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     data::aref,
+    eval::unbind_to,
     hashtable::{
         gethash,
         HashLookupResult::{Found, Missing},
@@ -11,15 +12,19 @@ use crate::{
     },
     lisp::LispObject,
     lists::{get, put},
+    minibuf::completing_read,
     multibyte::LispStringRef,
+    obarray::intern_lisp,
     remacs_sys::{
         code_convert_string as c_code_convert_string, code_convert_string_norecord,
-        encode_file_name as c_encode_file_name, globals,
+        encode_file_name as c_encode_file_name, globals, specbind,
     },
     remacs_sys::{
-        safe_eval, Qcoding_system_define_form, Qcoding_system_error, Qcoding_system_p, Qnil,
-        Qno_conversion, Qutf_8, Vcoding_system_hash_table,
+        safe_eval, Qcoding_system_define_form, Qcoding_system_error, Qcoding_system_history,
+        Qcoding_system_p, Qcompletion_ignore_case, Qnil, Qno_conversion, Qt, Qutf_8,
+        Vcoding_system_hash_table,
     },
+    threads::c_specpdl_index,
 };
 
 /// Return the spec vector of CODING_SYSTEM_SYMBOL.
@@ -169,6 +174,41 @@ pub fn code_convert_string(
     norecord: bool,
 ) -> LispObject {
     unsafe { c_code_convert_string(string, coding_system, dst_object, encodep, nocopy, norecord) }
+}
+
+/// Read a coding system from the minibuffer, prompting with string PROMPT.
+/// If the user enters null input, return second argument DEFAULT-CODING-SYSTEM.
+/// Ignores case when completing coding systems (all Emacs coding systems
+/// are lower-case).
+#[lisp_fn(min = "1")]
+pub fn read_coding_system(prompt: LispObject, mut default_coding_system: LispObject) -> LispObject {
+    let count = c_specpdl_index();
+
+    if let Some(s) = default_coding_system.as_symbol() {
+        default_coding_system = s.symbol_name();
+    }
+
+    unsafe {
+        specbind(Qcompletion_ignore_case, Qt);
+    }
+    let val = completing_read(
+        prompt,
+        unsafe { globals.Vcoding_system_alist },
+        Qnil,
+        Qt,
+        Qnil,
+        Qcoding_system_history,
+        default_coding_system,
+        Qnil,
+    );
+    unbind_to(count, Qnil);
+
+    let tem: LispStringRef = val.into();
+    if tem.is_empty() {
+        Qnil
+    } else {
+        intern_lisp(tem, None)
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/coding_exports.rs"));

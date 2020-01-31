@@ -660,6 +660,7 @@ extern int string_char (const unsigned char *,
                         const unsigned char **, int *);
 
 extern int translate_char (Lisp_Object, int c);
+extern ptrdiff_t char_width (int, struct Lisp_Char_Table *);
 extern ptrdiff_t count_size_as_multibyte (const unsigned char *, ptrdiff_t);
 extern ptrdiff_t str_as_multibyte (unsigned char *, ptrdiff_t, ptrdiff_t,
 				   ptrdiff_t *);

@@ -11,7 +11,7 @@ use crate::{
     data::set,
     dispnew::ding_internal,
     editfns::{insert_and_inherit, line_beginning_position, line_end_position, preceding_char},
-    frames::selected_frame,
+    frame::selected_frame,
     keymap::{current_global_map, Ctl},
     lisp::LispObject,
     lists::get,

@@ -3,7 +3,7 @@
 use remacs_macros::lisp_fn;
 
 use crate::{
-    frames::{LispFrameOrSelected, LispFrameRef},
+    frame::{LispFrameOrSelected, LispFrameRef},
     multibyte::LispStringRef,
     remacs_sys::{
         clear_face_cache, face_color_supported_p, set_face_change, windows_or_buffers_changed,

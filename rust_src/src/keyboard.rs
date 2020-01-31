@@ -7,7 +7,7 @@ use crate::{
     dispnew::ding_internal,
     emacs::is_daemon,
     eval::{record_unwind_protect, unbind_to},
-    frames::{selected_frame, window_frame_live_or_selected_with_action},
+    frame::{selected_frame, window_frame_live_or_selected_with_action},
     lisp::LispObject,
     lists,
     lists::{car_safe, cdr_safe},

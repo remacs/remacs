@@ -18,7 +18,7 @@ use crate::{
     eval::unbind_to,
     fileio::{expand_file_name, find_file_name_handler},
     fns::{copy_sequence, nconc, nreverse},
-    frames::{LispFrameLiveOrSelected, LispFrameRef},
+    frame::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists,

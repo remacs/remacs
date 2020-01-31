@@ -14,7 +14,7 @@ use crate::{
     buffers::LispBufferRef,
     chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef},
     data::aref,
-    frames::LispFrameRef,
+    frame::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual, LispSubrRef},
     lists::{inorder, nth, sort_list},
@@ -127,7 +127,7 @@ impl Debug for LispVectorlikeRef {
                 write!(f, "[")?;
                 match v.as_slice() {
                     [] => {}
-                    [first, rest..] => {
+                    [first, rest @ ..] => {
                         write!(f, "{:?}", first)?;
                         for elt in rest {
                             write!(f, " {:?}", elt)?;

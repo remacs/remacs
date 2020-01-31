@@ -7,7 +7,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     data, fns,
-    frames::{LispFrameLiveOrSelected, LispFrameRef},
+    frame::{LispFrameLiveOrSelected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
