@@ -234,6 +234,9 @@ Sets the current buffer to the show buffer."
                (mh-add-missing-mime-version-header)
                (setf (mh-buffer-data) (mh-make-buffer-data))
                (mh-mime-display))
+             (mh-show-unquote-From)
+             (mh-show-xface)
+             (mh-show-addr)
              ;; Header cleanup
              (goto-char (point-min))
              (cond (clean-message-header
@@ -840,9 +843,6 @@ See also `mh-folder-mode'.
     (mh-tool-bar-init :show))
   (set (make-local-variable 'mail-header-separator) mh-mail-header-separator)
   (setq paragraph-start (default-value 'paragraph-start))
-  (mh-show-unquote-From)
-  (mh-show-xface)
-  (mh-show-addr)
   (setq buffer-invisibility-spec '((vanish . t) t))
   (set (make-local-variable 'line-move-ignore-invisible) t)
   (make-local-variable 'font-lock-defaults)
