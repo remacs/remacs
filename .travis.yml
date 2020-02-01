@@ -55,6 +55,7 @@ jobs:
       before_script:
         - sudo apt install -y libgtk-3-dev
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt
       script:
         # The -Wno-error allows MacOS code deprecation warnings to remain warnings.
         - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror -Wno-error=deprecated-declarations' ./configure --enable-checking=glyphs
@@ -66,7 +67,7 @@ jobs:
         - PATH="/usr/local/opt/texinfo/bin:$PATH"
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
-        - travis_wait rustup component add rustfmt-preview
+        - travis_wait rustup component add rustfmt
     - &NO_WINDOW_SYSTEM_TEST
       stage: test
       os: linux
@@ -77,6 +78,7 @@ jobs:
         - RUST_BACKTRACE=1
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt
       script:
         - ./autogen.sh && RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror  -Wno-error=deprecated-declarations' ./configure --without-makeinfo --with-x=no --with-ns=no --without-gconf --without-gsettings
         - make -j 3 && echo '==> Running nowindow tests' && make check
@@ -85,6 +87,7 @@ jobs:
       os: osx
       before_script:
         - travis_wait rustup install $(cat rust-toolchain)
+        - travis_wait rustup component add rustfmt
 
 notifications:
   fast_finish: true
