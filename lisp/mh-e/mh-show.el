@@ -63,7 +63,7 @@ you wish to see all of them, use the command \\[mh-header-display].
 Two hooks can be used to control how messages are displayed. The
 first hook, `mh-show-mode-hook', is called early on in the
 process of the message display. It is usually used to perform
-some action on the message's content. The second hook,
+some action on the message's buffer. The second hook,
 `mh-show-hook', is the last thing called after messages are
 displayed. It's used to affect the behavior of MH-E in general or
 when `mh-show-mode-hook' is too early.
