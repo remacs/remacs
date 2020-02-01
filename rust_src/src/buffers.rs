@@ -119,7 +119,7 @@ pub const BUF_BYTES_MAX: ptrdiff_t = buf_bytes_max();
 // track of both bytepos and charpos at the same time).
 // But if there are many markers, it can take too much time to find a "good"
 // marker from which to start.  Worse yet: if it takes a long time and we end
-// up finding a nearby markers, we won't add a new marker to cache this
+// up finding a nearby marker, we won't add a new marker to cache this
 // result, so next time around we'll have to go through this same long list
 // to (re)find this best marker.  So the further down the list of
 // markers we go, the less demanding we are w.r.t what is a good marker.
