@@ -1845,6 +1845,7 @@ COMPARE-FN if that's non-nil.
 If ELEMENT is added, it is added at the beginning of the list,
 unless the optional argument APPEND is non-nil, in which case
 ELEMENT is added at the end.
+LIST-VAR should not refer to a lexical variable.
 
 The return value is the new value of LIST-VAR.
 
