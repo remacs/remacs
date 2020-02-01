@@ -4751,6 +4751,75 @@ and runs the normal hook `command-history-hook'." t nil)
 ;;; Generated autoloads from emacs-lisp/cl-generic.el
 (push (purecopy '(cl-generic 1 0)) package--builtin-versions)
 
+(autoload 'cl-defgeneric "cl-generic" "\
+Create a generic function NAME.
+DOC-STRING is the base documentation for this class.  A generic
+function has no body, as its purpose is to decide which method body
+is appropriate to use.  Specific methods are defined with `cl-defmethod'.
+With this implementation the ARGS are currently ignored.
+OPTIONS-AND-METHODS currently understands:
+- (:documentation DOCSTRING)
+- (declare DECLARATIONS)
+- (:argument-precedence-order &rest ARGS)
+- (:method [QUALIFIERS...] ARGS &rest BODY)
+DEFAULT-BODY, if present, is used as the body of a default method.
+
+\(fn NAME ARGS [DOC-STRING] [OPTIONS-AND-METHODS...] &rest DEFAULT-BODY)" nil t)
+
+(function-put 'cl-defgeneric 'lisp-indent-function '2)
+
+(function-put 'cl-defgeneric 'doc-string-elt '3)
+
+(autoload 'cl-generic-define "cl-generic" "\
+
+
+\(fn NAME ARGS OPTIONS)" nil nil)
+
+(autoload 'cl-defmethod "cl-generic" "\
+Define a new method for generic function NAME.
+I.e. it defines the implementation of NAME to use for invocations where the
+values of the dispatch arguments match the specified TYPEs.
+The dispatch arguments have to be among the mandatory arguments, and
+all methods of NAME have to use the same set of arguments for dispatch.
+Each dispatch argument and TYPE are specified in ARGS where the corresponding
+formal argument appears as (VAR TYPE) rather than just VAR.
+
+The optional second argument QUALIFIER is a specifier that
+modifies how the method is combined with other methods, including:
+   :before  - Method will be called before the primary
+   :after   - Method will be called after the primary
+   :around  - Method will be called around everything else
+The absence of QUALIFIER means this is a \"primary\" method.
+The set of acceptable qualifiers and their meaning is defined
+\(and can be extended) by the methods of `cl-generic-combine-methods'.
+
+ARGS can also include so-called context specializers, introduced by
+`&context' (which should appear right after the mandatory arguments,
+before any &optional or &rest).  They have the form (EXPR TYPE) where
+EXPR is an Elisp expression whose value should match TYPE for the
+method to be applicable.
+
+The set of acceptable TYPEs (also called \"specializers\") is defined
+\(and can be extended) by the various methods of `cl-generic-generalizers'.
+
+\(fn NAME [QUALIFIER] ARGS &rest [DOCSTRING] BODY)" nil t)
+
+(function-put 'cl-defmethod 'doc-string-elt '3)
+
+(function-put 'cl-defmethod 'lisp-indent-function 'defun)
+
+(autoload 'cl-generic-define-method "cl-generic" "\
+
+
+\(fn NAME QUALIFIERS ARGS USES-CNM FUNCTION)" nil nil)
+
+(autoload 'cl-find-method "cl-generic" "\
+
+
+\(fn GENERIC QUALIFIERS SPECIALIZERS)" nil nil)
+
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "cl-generic" '("cl-")))
+
 ;;;***
 
 ;;;### (autoloads nil "cl-indent" "emacs-lisp/cl-indent.el" (0 0
@@ -33959,7 +34028,7 @@ Update the time stamp string(s) in the buffer.
 A template in a file can be automatically updated with a new time stamp
 every time you save the file.  Add this line to your init file:
     (add-hook \\='before-save-hook \\='time-stamp)
-or customize `before-save-hook' through Custom.
+or customize option `before-save-hook'.
 Normally the template must appear in the first 8 lines of a file and
 look like one of the following:
       Time-stamp: <>
@@ -34416,7 +34485,7 @@ names.  When calling `tramp-register-file-name-handlers', the
 initial value is overwritten by the car of `tramp-file-name-structure'.")
 
 (defvar tramp-ignored-file-name-regexp nil "\
-Regular expression matching file names that are not under Tramp’s control.")
+Regular expression matching file names that are not under Tramp's control.")
 
 (custom-autoload 'tramp-ignored-file-name-regexp "tramp" t)
 
