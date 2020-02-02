@@ -832,6 +832,7 @@ and unlike @code{setq}.  Quote the argument yourself if necessary.
 
 The ordering information is stored in a hash table on @var{symbol}'s
 @code{list-order} property.
+@var{symbol} cannot refer to a lexical variable.
 @end defun
 
 Here's a scenario showing how to use @code{add-to-ordered-list}:
