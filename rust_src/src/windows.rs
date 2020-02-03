@@ -799,14 +799,13 @@ pub fn window_scroll_bar_height(window: LispWindowLiveOrSelected) -> i32 {
 /// example when a frame is temporarily made very small and afterwards gets
 /// re-enlarged to its previous size.
 #[lisp_fn(min = "0")]
-pub fn window_normal_size(window: LispWindowValidOrSelected, horizontal: bool) -> EmacsDouble {
+pub fn window_normal_size(window: LispWindowValidOrSelected, horizontal: bool) -> LispObject {
     let win: LispWindowRef = window.into();
-    let frac = if horizontal {
+    if horizontal {
         win.normal_cols
     } else {
         win.normal_lines
-    };
-    EmacsDouble::from(frac)
+    }
 }
 
 /// Return t if OBJECT is a window and nil otherwise.
