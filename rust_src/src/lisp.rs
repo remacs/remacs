@@ -21,10 +21,8 @@ use crate::{
     multibyte::LispStringRef,
     process::LispProcessRef,
     remacs_sys::specbind_tag,
-    remacs_sys::{build_string, make_float, Fmake_hash_table},
-    remacs_sys::{
-        equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
-    },
+    remacs_sys::{build_string, Fmake_hash_table},
+    remacs_sys::{equal_kind, pvec_type, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK},
     remacs_sys::{specbinding, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
     remacs_sys::{QCtest, Qautoload, Qeq, Qnil, Qsubrp, Qt},
     remacs_sys::{Vbuffer_alist, Vprocess_alist},
@@ -69,10 +67,6 @@ impl LispObject {
 
     pub const fn to_C_unsigned(self) -> EmacsUint {
         self.0 as EmacsUint
-    }
-
-    pub fn from_float(v: EmacsDouble) -> Self {
-        unsafe { make_float(v) }
     }
 }
 

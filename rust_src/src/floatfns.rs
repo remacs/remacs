@@ -14,6 +14,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     math::ArithOp,
     numbers::{LispNumber, LispNumberOrFloat, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
+    remacs_sys::make_float,
     remacs_sys::{equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
     remacs_sys::{Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
 };
@@ -51,6 +52,10 @@ impl LispStructuralEqual for LispFloatRef {
 impl LispObject {
     pub fn is_float(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Float
+    }
+
+    pub fn from_float(v: EmacsDouble) -> Self {
+        unsafe { make_float(v) }
     }
 
     unsafe fn to_float_unchecked(self) -> LispFloatRef {
@@ -123,6 +128,12 @@ impl From<LispObject> for Option<EmacsDouble> {
         } else {
             Some(o.any_to_float_or_error())
         }
+    }
+}
+
+impl From<EmacsDouble> for LispObject {
+    fn from(v: EmacsDouble) -> Self {
+        Self::from_float(v)
     }
 }
 
