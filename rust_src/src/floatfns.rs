@@ -160,8 +160,8 @@ macro_rules! simple_float_op {
     ($lisp_name:expr, $float_func:ident, $lisp_docs:expr) => {
         #[doc = $lisp_docs]
         #[lisp_fn(name = $lisp_name, c_name = $lisp_name)]
-        fn $float_func(arg: EmacsDouble) -> EmacsDouble {
-            arg.$float_func()
+        fn $float_func(arg: LispNumberOrFloat) -> EmacsDouble {
+            arg.to_float().$float_func()
         }
     };
 }
