@@ -11,6 +11,7 @@ use crate::{
     frame::{LispFrameLiveOrSelected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
     lists::{LispConsCircularChecks, LispConsEndChecks},
+    numbers::LispNumberOrFloat,
     remacs_sys::{
         clear_current_matrices, detect_input_pending_run_timers, dtotimespec, fset_redisplay,
         mark_window_display_accurate, putchar_unlocked, redisplay_preserve_echo_area, ring_bell,
@@ -20,7 +21,7 @@ use crate::{
         globals, noninteractive, redisplaying_p, Qnil, Qredisplay_dont_pause, Qt, Vframe_list,
         WAIT_READING_MAX,
     },
-    remacs_sys::{EmacsDouble, EmacsInt, Lisp_Glyph},
+    remacs_sys::{EmacsInt, Lisp_Glyph},
     terminal::{clear_frame, update_begin, update_end},
     threads::c_specpdl_index,
     windows::{LispWindowOrSelected, LispWindowRef},
@@ -34,8 +35,8 @@ pub type LispGlyphRef = ExternalPtr<Lisp_Glyph>;
 /// additional wait period, in milliseconds; this is for backwards compatibility.
 /// (Not all operating systems support waiting for a fraction of a second.)
 #[lisp_fn(min = "1")]
-pub fn sleep_for(seconds: EmacsDouble, milliseconds: Option<EmacsInt>) {
-    let duration = seconds + (milliseconds.unwrap_or(0) as f64 / 1000.0);
+pub fn sleep_for(seconds: LispNumberOrFloat, milliseconds: Option<EmacsInt>) {
+    let duration = seconds.to_float() + (milliseconds.unwrap_or(0) as f64 / 1000.0);
     if duration > 0.0 {
         let mut t = unsafe { dtotimespec(duration) };
         let tend = unsafe { timespec_add(current_timespec(), t) };
