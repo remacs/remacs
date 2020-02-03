@@ -138,10 +138,10 @@ impl From<EmacsDouble> for LispObject {
 }
 
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
-/// TODO this is used from C in a few places; remove afterwards.
 #[no_mangle]
 pub extern "C" fn extract_float(f: LispObject) -> EmacsDouble {
-    f.any_to_float_or_error()
+    let n_or_f: LispNumberOrFloat = f.into();
+    n_or_f.to_float()
 }
 
 /// Calculate the modulus of two elisp floats.
