@@ -14,7 +14,7 @@ use crate::{
         equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK,
         USE_LSB_TAG,
     },
-    remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump},
+    remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qnumberp, Qwholenump},
 };
 
 lazy_static! {
@@ -264,6 +264,71 @@ impl LispObject {
 
     pub fn as_number_coerce_marker_or_error(self) -> LispNumber {
         self.into()
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum LispNumberOrFloat {
+    Fixnum(EmacsInt),
+    Float(EmacsDouble),
+}
+
+impl LispNumberOrFloat {
+    pub fn to_float(self) -> EmacsDouble {
+        match self {
+            Self::Fixnum(n) => n as EmacsDouble,
+            Self::Float(f) => f,
+        }
+    }
+
+    pub fn from_float(f: EmacsDouble) -> Self {
+        Self::Float(f)
+    }
+
+    pub fn to_fixnum(self) -> EmacsInt {
+        match self {
+            Self::Fixnum(n) => n,
+            Self::Float(f) => f as EmacsInt,
+        }
+    }
+
+    pub fn from_fixnum(n: EmacsInt) -> Self {
+        Self::Fixnum(n)
+    }
+
+    pub fn is_fixnum(self) -> bool {
+        match self {
+            Self::Fixnum(_) => true,
+            _ => false,
+        }
+    }
+}
+
+impl From<LispObject> for LispNumberOrFloat {
+    fn from(o: LispObject) -> Self {
+        let n_or_f: Option<Self> = o.into();
+        n_or_f.unwrap_or_else(|| wrong_type!(Qnumberp, o))
+    }
+}
+
+impl From<LispObject> for Option<LispNumberOrFloat> {
+    fn from(o: LispObject) -> Self {
+        if let Some(n) = o.as_fixnum() {
+            Some(LispNumberOrFloat::Fixnum(n))
+        } else if let Some(f) = o.as_float() {
+            Some(LispNumberOrFloat::Float(f))
+        } else {
+            None
+        }
+    }
+}
+
+impl From<LispNumberOrFloat> for LispObject {
+    fn from(n_or_f: LispNumberOrFloat) -> Self {
+        match n_or_f {
+            LispNumberOrFloat::Fixnum(n) => Self::from_fixnum(n),
+            LispNumberOrFloat::Float(f) => Self::from_float(f),
+        }
     }
 }
 

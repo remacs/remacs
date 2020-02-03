@@ -13,7 +13,7 @@ use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     math::ArithOp,
-    numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
+    numbers::{LispNumber, LispNumberOrFloat, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
     remacs_sys::{equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
     remacs_sys::{Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
 };
@@ -219,10 +219,11 @@ pub fn isnan(f: EmacsDouble) -> bool {
 /// divided by X, i.e. the angle in radians between the vector (X, Y)
 /// and the x-axis
 #[lisp_fn(min = "1")]
-pub fn atan(y: EmacsDouble, x: Option<EmacsDouble>) -> EmacsDouble {
+pub fn atan(y: LispNumberOrFloat, x: Option<LispNumberOrFloat>) -> EmacsDouble {
+    let d = y.to_float();
     match x {
-        None => y.atan(),
-        Some(x) => y.atan2(x),
+        None => d.atan(),
+        Some(x) => d.atan2(x.to_float()),
     }
 }
 
