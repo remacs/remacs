@@ -13,7 +13,7 @@ use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     math::ArithOp,
-    numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
+    numbers::{LispNumber, LispNumberOrFloat, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
     remacs_sys::{equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
     remacs_sys::{Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
 };
@@ -368,7 +368,7 @@ pub fn fround(arg: LispObject) -> EmacsDouble {
 /// This rounds the value towards +inf.
 /// With optional DIVISOR, return the smallest integer no less than ARG/DIVISOR.
 #[lisp_fn(min = "1")]
-pub fn ceiling(arg: LispObject, divisor: LispObject) -> EmacsInt {
+pub fn ceiling(arg: LispNumberOrFloat, divisor: Option<LispNumberOrFloat>) -> EmacsInt {
     rounding_driver(arg, divisor, |x| x.ceil(), ceiling2, "ceiling")
 }
 
@@ -376,7 +376,7 @@ pub fn ceiling(arg: LispObject, divisor: LispObject) -> EmacsInt {
 /// This rounds the value towards -inf.
 /// With optional DIVISOR, return the largest integer no greater than ARG/DIVISOR.
 #[lisp_fn(min = "1")]
-pub fn floor(arg: LispObject, divisor: LispObject) -> EmacsInt {
+pub fn floor(arg: LispNumberOrFloat, divisor: Option<LispNumberOrFloat>) -> EmacsInt {
     rounding_driver(arg, divisor, |x| x.floor(), floor2, "floor")
 }
 
@@ -388,7 +388,7 @@ pub fn floor(arg: LispObject, divisor: LispObject) -> EmacsInt {
 /// your machine.  For example, (round 2.5) can return 3 on some
 /// systems, but 2 on others.
 #[lisp_fn(min = "1")]
-pub fn round(arg: LispObject, divisor: LispObject) -> EmacsInt {
+pub fn round(arg: LispNumberOrFloat, divisor: Option<LispNumberOrFloat>) -> EmacsInt {
     rounding_driver(arg, divisor, |x| x.round(), round2, "round")
 }
 
@@ -396,31 +396,36 @@ pub fn round(arg: LispObject, divisor: LispObject) -> EmacsInt {
 /// Rounds ARG toward zero.
 /// With optional DIVISOR, truncate ARG/DIVISOR.
 #[lisp_fn(min = "1")]
-pub fn truncate(arg: LispObject, divisor: LispObject) -> EmacsInt {
+pub fn truncate(arg: LispNumberOrFloat, divisor: Option<LispNumberOrFloat>) -> EmacsInt {
     rounding_driver(arg, divisor, |x| x.trunc(), truncate2, "truncate")
 }
 
 fn rounding_driver(
-    arg: LispObject,
-    divisor: LispObject,
-    round: impl Fn(f64) -> f64,
+    arg: LispNumberOrFloat,
+    divisor: Option<LispNumberOrFloat>,
+    round: impl Fn(EmacsDouble) -> EmacsDouble,
     int_round: impl Fn(EmacsInt, EmacsInt) -> EmacsInt,
     name: &str,
 ) -> EmacsInt {
-    let value = if divisor.is_nil() {
-        if arg.is_fixnum() {
-            return arg.into();
-        }
-        arg.into()
-    } else {
-        if arg.is_fixnum() && divisor.is_fixnum() {
-            return int_round(EmacsInt::from(arg), EmacsInt::from(divisor));
-        }
-        let div: EmacsDouble = divisor.into();
-        if div == 0.0 {
-            arith_error!();
-        }
-        f64::from(arg) / div
+    let value = match divisor {
+        None => match arg {
+            LispNumberOrFloat::Fixnum(v) => {
+                return v;
+            }
+            LispNumberOrFloat::Float(f) => f,
+        },
+        Some(div) => match (arg, div) {
+            (LispNumberOrFloat::Fixnum(v), LispNumberOrFloat::Fixnum(d)) => {
+                return int_round(v, d);
+            }
+            _ => {
+                let div: EmacsDouble = div.into();
+                if div == 0.0 {
+                    arith_error!();
+                }
+                EmacsDouble::from(arg) / div
+            }
+        },
     };
     let result = round(value) as EmacsInt;
     if LispObject::fixnum_overflow(result) {

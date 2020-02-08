@@ -14,7 +14,7 @@ use crate::{
         equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK,
         USE_LSB_TAG,
     },
-    remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump},
+    remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qnumberp, Qwholenump},
 };
 
 lazy_static! {
@@ -264,6 +264,67 @@ impl LispObject {
 
     pub fn as_number_coerce_marker_or_error(self) -> LispNumber {
         self.into()
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum LispNumberOrFloat {
+    Fixnum(EmacsInt),
+    Float(EmacsDouble),
+}
+
+impl LispNumberOrFloat {
+    pub fn is_fixnum(self) -> bool {
+        match self {
+            LispNumberOrFloat::Fixnum(_) => true,
+            LispNumberOrFloat::Float(_) => false,
+        }
+    }
+}
+
+impl From<LispObject> for LispNumberOrFloat {
+    fn from(o: LispObject) -> Self {
+        Option::<Self>::from(o).unwrap_or_else(|| wrong_type!(Qnumberp, o))
+    }
+}
+
+impl From<LispObject> for Option<LispNumberOrFloat> {
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else if let Some(n) = o.as_fixnum() {
+            Some(LispNumberOrFloat::Fixnum(n))
+        } else {
+            let f: EmacsDouble = o.into();
+            Some(LispNumberOrFloat::Float(f))
+        }
+    }
+}
+
+impl From<LispNumberOrFloat> for LispObject {
+    fn from(n: LispNumberOrFloat) -> Self {
+        match n {
+            LispNumberOrFloat::Fixnum(v) => Self::from_fixnum(v),
+            LispNumberOrFloat::Float(v) => Self::from_float(v),
+        }
+    }
+}
+
+impl From<LispNumberOrFloat> for EmacsInt {
+    fn from(n_or_f: LispNumberOrFloat) -> Self {
+        match n_or_f {
+            LispNumberOrFloat::Fixnum(n) => n,
+            LispNumberOrFloat::Float(f) => f as EmacsInt,
+        }
+    }
+}
+
+impl From<LispNumberOrFloat> for EmacsDouble {
+    fn from(n_or_f: LispNumberOrFloat) -> Self {
+        match n_or_f {
+            LispNumberOrFloat::Fixnum(n) => n as EmacsDouble,
+            LispNumberOrFloat::Float(f) => f,
+        }
     }
 }
 
