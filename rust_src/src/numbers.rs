@@ -406,12 +406,4 @@ pub fn random(limit: LispObject) -> LispObject {
     }
 }
 
-#[no_mangle]
-pub extern "C" fn syms_of_numbers() {
-    #[rustfmt::skip]
-    defvar_int!(Vremacs_most_positive_fixnum, "remacs-most-positive-fixnum", MOST_POSITIVE_FIXNUM);
-    #[rustfmt::skip]
-    defvar_int!(Vremacs_most_negative_fixnum, "remacs-most-negative-fixnum", MOST_NEGATIVE_FIXNUM);
-}
-
 include!(concat!(env!("OUT_DIR"), "/numbers_exports.rs"));
