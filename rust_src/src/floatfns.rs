@@ -1,9 +1,9 @@
 //! Functions operating on float numbers.
 #![allow(clippy::float_cmp)]
 
-use libc;
-
 use std::mem;
+
+use libc;
 
 use remacs_macros::lisp_fn;
 
@@ -13,8 +13,7 @@ use crate::{
     lisp::defsubr,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual},
     math::ArithOp,
-    numbers::{LispNumber, LispNumberOrFloat, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
-    remacs_sys::make_float,
+    numbers::{LispNumber, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
     remacs_sys::{equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
     remacs_sys::{Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
 };
@@ -52,10 +51,6 @@ impl LispStructuralEqual for LispFloatRef {
 impl LispObject {
     pub fn is_float(self) -> bool {
         self.get_type() == Lisp_Type::Lisp_Float
-    }
-
-    pub fn from_float(v: EmacsDouble) -> Self {
-        unsafe { make_float(v) }
     }
 
     unsafe fn to_float_unchecked(self) -> LispFloatRef {
@@ -131,17 +126,11 @@ impl From<LispObject> for Option<EmacsDouble> {
     }
 }
 
-impl From<EmacsDouble> for LispObject {
-    fn from(v: EmacsDouble) -> Self {
-        Self::from_float(v)
-    }
-}
-
 /// Either extracts a floating point number from a lisp number (of any kind) or throws an error
+/// TODO this is used from C in a few places; remove afterwards.
 #[no_mangle]
 pub extern "C" fn extract_float(f: LispObject) -> EmacsDouble {
-    let n_or_f: LispNumberOrFloat = f.into();
-    n_or_f.to_float()
+    f.any_to_float_or_error()
 }
 
 /// Calculate the modulus of two elisp floats.
@@ -160,8 +149,8 @@ macro_rules! simple_float_op {
     ($lisp_name:expr, $float_func:ident, $lisp_docs:expr) => {
         #[doc = $lisp_docs]
         #[lisp_fn(name = $lisp_name, c_name = $lisp_name)]
-        fn $float_func(arg: LispNumberOrFloat) -> EmacsDouble {
-            arg.to_float().$float_func()
+        fn $float_func(arg: EmacsDouble) -> EmacsDouble {
+            arg.$float_func()
         }
     };
 }
@@ -230,11 +219,10 @@ pub fn isnan(f: EmacsDouble) -> bool {
 /// divided by X, i.e. the angle in radians between the vector (X, Y)
 /// and the x-axis
 #[lisp_fn(min = "1")]
-pub fn atan(y: LispNumberOrFloat, x: Option<LispNumberOrFloat>) -> EmacsDouble {
-    let d = y.to_float();
+pub fn atan(y: EmacsDouble, x: Option<EmacsDouble>) -> EmacsDouble {
     match x {
-        None => d.atan(),
-        Some(x) => d.atan2(x.to_float()),
+        None => y.atan(),
+        Some(x) => y.atan2(x),
     }
 }
 
@@ -401,7 +389,7 @@ pub fn floor(arg: LispObject, divisor: LispObject) -> EmacsInt {
 /// systems, but 2 on others.
 #[lisp_fn(min = "1")]
 pub fn round(arg: LispObject, divisor: LispObject) -> EmacsInt {
-    rounding_driver(arg, divisor, libm::rint, round2, "round")
+    rounding_driver(arg, divisor, |x| x.round(), round2, "round")
 }
 
 /// Truncate a floating point number to an int.
@@ -415,44 +403,30 @@ pub fn truncate(arg: LispObject, divisor: LispObject) -> EmacsInt {
 fn rounding_driver(
     arg: LispObject,
     divisor: LispObject,
-    double_round: impl Fn(f64) -> f64,
-    int_round2: fn(EmacsInt, EmacsInt) -> EmacsInt,
+    round: impl Fn(f64) -> f64,
+    int_round: impl Fn(EmacsInt, EmacsInt) -> EmacsInt,
     name: &str,
 ) -> EmacsInt {
-    let d;
-    if divisor.is_nil() {
+    let value = if divisor.is_nil() {
         if arg.is_fixnum() {
-            return arg.as_fixnum().unwrap();
-        } else if let Some(f) = arg.as_float() {
-            d = f;
-        } else {
-            wrong_type!(Qnumberp, arg)
+            return arg.into();
         }
+        arg.into()
     } else {
-        if let (Some(arg), Some(div)) = (arg.as_fixnum(), divisor.as_fixnum()) {
-            if div == 0 {
-                arith_error!();
-            }
-            return int_round2(arg, div);
+        if arg.is_fixnum() && divisor.is_fixnum() {
+            return int_round(EmacsInt::from(arg), EmacsInt::from(divisor));
         }
-        let arg = arg.any_to_float_or_error();
-        let div = divisor.any_to_float_or_error();
-        d = arg / div;
-    }
-
-    // Round, coarsely test for fixnum overflow before converting to
-    // EmacsInt (to avoid undefined behavior), and then exactly test
-    // for overflow after converting (as FIXNUM_OVERFLOW_P is inaccurate
-    // on floats).
-    let dr = double_round(d);
-    if dr.abs() < (2 * (MOST_POSITIVE_FIXNUM + 1)) as f64 {
-        let ir = dr as EmacsInt;
-        if !LispObject::fixnum_overflow(ir) {
-            return ir;
+        let div: EmacsDouble = divisor.into();
+        if div == 0.0 {
+            arith_error!();
         }
+        f64::from(arg) / div
+    };
+    let result = round(value) as EmacsInt;
+    if LispObject::fixnum_overflow(result) {
+        xsignal!(Qrange_error, name, arg);
     }
-
-    xsignal!(Qrange_error, name, arg)
+    result
 }
 
 const fn ceiling2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
@@ -468,10 +442,10 @@ const fn truncate2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
 }
 
 fn round2(i1: EmacsInt, i2: EmacsInt) -> EmacsInt {
-    // The division operator gives us one remainder R, but we want the
-    // remainder R1 on the other side of 0 if R1 is closer to 0 than R
-    // is; because we want to round to even, we also want R1 if R and R1
-    // are the same distance from 0 and if C's quotient is odd.
+    // We also want the remainder R1 on the other side of 0 if R1 is
+    // closer to 0 than R is; because we want to round to even, we also
+    // want R1 if R and R1 are the same distance from 0 and if the
+    // quotient is odd.
     let q = i1 / i2;
     let r = i1 % i2;
     let abs_r = r.abs();

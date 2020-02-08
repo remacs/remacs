@@ -48,7 +48,8 @@ use crate::{
         find_composition as c_find_composition, get_composition_id, string_char_to_byte,
     },
     remacs_sys::{
-        char_bits, composition_table, equal_kind, EmacsInt, Lisp_Interval, Lisp_String, Lisp_Type,
+        char_bits, composition_table, equal_kind, EmacsDouble, EmacsInt, Lisp_Interval,
+        Lisp_String, Lisp_Type,
     },
     remacs_sys::{Qcharacterp, Qnil, Qstringp},
     symbols::LispSymbolRef,
@@ -628,6 +629,12 @@ impl LispStringRef {
     #[allow(dead_code)]
     pub fn chars(&self) -> LispStringRefCharIterator {
         LispStringRefCharIterator(self.char_indices())
+    }
+}
+
+impl From<EmacsDouble> for LispObject {
+    fn from(v: EmacsDouble) -> Self {
+        Self::from_float(v)
     }
 }
 

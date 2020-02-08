@@ -16,7 +16,7 @@ use crate::{
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     minibuf::read_from_minibuffer,
     multibyte::{string_char_and_length, LispStringRef},
-    numbers::{LispNumber, LispNumberOrFloat},
+    numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
@@ -526,7 +526,7 @@ pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
                     Fdiscard_input();
                     message1("Please answer yes or no.\0".as_ptr() as *const libc::c_char);
                 }
-                sleep_for(LispNumberOrFloat::from_float(2.0), None);
+                sleep_for(2.0, None);
             }
         }
     }
