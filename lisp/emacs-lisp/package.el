@@ -3194,7 +3194,8 @@ The default regexp will hide only the package whose name is at point."
   (declare (interactive-only "change `package-hidden-regexps' instead."))
   (let* ((name (when (derived-mode-p 'package-menu-mode)
                  (concat "\\`" (regexp-quote (symbol-name (package-desc-name
-                                                           (tabulated-list-get-id)))))))
+                                                           (tabulated-list-get-id))))
+                         "\\'")))
          (re (read-string "Hide packages matching regexp: " name)))
     ;; Test if it is valid.
     (string-match re "")
