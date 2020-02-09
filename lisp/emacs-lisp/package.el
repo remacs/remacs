@@ -2714,9 +2714,8 @@ either a full name or nil, and EMAIL is a valid email address."
     ["Help" package-menu-quick-help :help "Show short key binding help for package-menu-mode"]
     "--"
     ["Refresh Package List" revert-buffer
-     :help "Redownload the ELPA archive"
+     :help "Redownload the package archive(s)"
      :active (not package--downloads-in-progress)]
-    ["Redisplay buffer" revert-buffer :help "Update the buffer with current list of packages"]
     ["Execute Marked Actions" package-menu-execute :help "Perform all the marked actions"]
 
     "--"
