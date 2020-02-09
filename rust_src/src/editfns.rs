@@ -21,7 +21,7 @@ use crate::{
     marker::{marker_position_lisp, point_marker, set_point_from_marker},
     multibyte::MAX_MULTIBYTE_LENGTH,
     multibyte::{multibyte_char_at, Codepoint, LispStringRef},
-    numbers::{check_range, LispNumber},
+    numbers::{check_range, LispNumber, LispNumberOrMarker},
     remacs_sys::EmacsInt,
     remacs_sys::{
         buffer_overflow, build_string, chars_in_text, current_message, del_range, del_range_1,
@@ -198,7 +198,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
 /// Return the byte position for character position POSITION.
 /// If POSITION is out of range, the value is nil.
 #[lisp_fn]
-pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
+pub fn position_bytes(position: LispNumberOrMarker) -> Option<EmacsInt> {
     let pos = position.to_fixnum() as ptrdiff_t;
     let cur_buf = ThreadState::current_buffer_unchecked();
 

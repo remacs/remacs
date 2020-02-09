@@ -10,6 +10,7 @@ use remacs_macros::lisp_fn;
 use crate::{
     hashtable::LispHashTableRef,
     lisp::{LispObject, LispStructuralEqual},
+    marker::LispMarkerRef,
     remacs_sys::{
         equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK,
         USE_LSB_TAG,
@@ -268,6 +269,41 @@ impl LispObject {
 }
 
 #[derive(Clone, Copy)]
+pub enum LispNumberOrMarker {
+    Fixnum(EmacsInt),
+    Marker(LispMarkerRef),
+}
+
+impl From<LispObject> for LispNumberOrMarker {
+    fn from(o: LispObject) -> Self {
+        Option::<Self>::from(o).unwrap_or_else(|| wrong_type!(Qinteger_or_marker_p, o))
+    }
+}
+
+impl From<LispObject> for Option<LispNumberOrMarker> {
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else if let Some(n) = o.as_fixnum() {
+            Some(LispNumberOrMarker::Fixnum(n))
+        } else if let Some(m) = o.as_marker() {
+            Some(LispNumberOrMarker::Marker(m))
+        } else {
+            wrong_type!(Qinteger_or_marker_p, o);
+        }
+    }
+}
+
+impl LispNumberOrMarker {
+    pub fn to_fixnum(self) -> EmacsInt {
+        match self {
+            Self::Fixnum(n) => n,
+            Self::Marker(m) => m.charpos as EmacsInt,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
 pub enum LispNumberOrFloat {
     Fixnum(EmacsInt),
     Float(EmacsDouble),
@@ -276,8 +312,8 @@ pub enum LispNumberOrFloat {
 impl LispNumberOrFloat {
     pub fn is_fixnum(self) -> bool {
         match self {
-            LispNumberOrFloat::Fixnum(_) => true,
-            LispNumberOrFloat::Float(_) => false,
+            Self::Fixnum(_) => true,
+            Self::Float(_) => false,
         }
     }
 }
