@@ -86,7 +86,7 @@
 ;; compiled runtime constants ready for use by (the byte compiled) CC
 ;; Mode, and the source definitions in this file don't have to be
 ;; loaded then.  However, if a byte compiled package is loaded that
-;; has been compiled with a different version of CC Mode than the one
+;; has been compiled with a different version of CC Mode from the one
 ;; currently loaded, then the compiled-in values will be discarded and
 ;; new ones will be built when the mode is initialized.  That will
 ;; automatically trig a load of the file(s) containing the source
