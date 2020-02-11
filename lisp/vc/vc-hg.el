@@ -1356,6 +1356,9 @@ REV is the revision to check out into WORKFILE."
   ;; XXX: We can't pass DIR directly to 'hg status' because that
   ;; returns all ignored files if FILES is non-nil (bug#22481).
   (let ((default-directory dir))
+    ;; TODO: Use "--config 'status.relative=1'" instead of "re:"
+    ;; when we're allowed to depend on Mercurial 4.2+
+    ;; (it's a bit faster).
     (vc-hg-command (current-buffer) 'async files
                    "status" "re:" "-I" "."
                    (concat "-mardu" (if files "i"))
