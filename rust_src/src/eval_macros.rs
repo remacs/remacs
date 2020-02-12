@@ -20,10 +20,10 @@ macro_rules! xsignal {
             crate::eval::signal($symbol, crate::remacs_sys::Qnil);
         }
     };
-    ($symbol:expr, $($tt:tt)+) => {
+    ($symbol:expr, $($obj:expr),+) => {
         #[allow(unused_unsafe)]
         unsafe {
-            crate::eval::signal($symbol, list!($($tt)+));
+            crate::eval::signal($symbol, list!($(LispObject::from($obj)),+));
         }
     };
 }
@@ -92,7 +92,9 @@ macro_rules! wrong_type {
 }
 
 macro_rules! args_out_of_range {
-    ($($tt:tt)+) => { xsignal!(crate::remacs_sys::Qargs_out_of_range, $($tt)+); };
+    ($($arg:expr),+) => {
+        xsignal!(crate::remacs_sys::Qargs_out_of_range, $($arg),+);
+    };
 }
 
 macro_rules! arith_error {

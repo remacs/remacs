@@ -6,7 +6,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::LispObject,
-    numbers::LispNumber,
+    numbers::LispNumberOrMarker,
     remacs_sys::Ftext_properties_at,
     remacs_sys::Qt,
     remacs_sys::{get_char_property_and_overlay, set_text_properties, textget},
@@ -21,7 +21,11 @@ use crate::{
 /// If OBJECT is a window, then that window's buffer is used, but window-specific
 /// overlays are considered only if they are associated with OBJECT.
 #[lisp_fn(min = "2")]
-pub fn get_char_property(position: LispNumber, prop: LispObject, object: LispObject) -> LispObject {
+pub fn get_char_property(
+    position: LispNumberOrMarker,
+    prop: LispObject,
+    object: LispObject,
+) -> LispObject {
     unsafe { get_char_property_and_overlay(position.into(), prop, object, ptr::null_mut()) }
 }
 
@@ -30,7 +34,11 @@ pub fn get_char_property(position: LispNumber, prop: LispObject, object: LispObj
 /// to the current buffer.
 /// If POSITION is at the end of OBJECT, the value is nil.
 #[lisp_fn(min = "2")]
-pub fn get_text_property(position: LispNumber, prop: LispObject, object: LispObject) -> LispObject {
+pub fn get_text_property(
+    position: LispNumberOrMarker,
+    prop: LispObject,
+    object: LispObject,
+) -> LispObject {
     unsafe { textget(Ftext_properties_at(position.into(), object), prop) }
 }
 

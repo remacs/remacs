@@ -35,7 +35,7 @@ pub unsafe extern "C" fn report_file_error(string: *const libc::c_char, name: Li
 /// Return t if (car A) is numerically less than (car B).
 #[lisp_fn]
 pub fn car_less_than_car(a: LispCons, b: LispCons) -> bool {
-    arithcompare(a.car(), b.car(), ArithComparison::Less)
+    arithcompare(a.car().into(), b.car().into(), ArithComparison::Less)
 }
 
 def_lisp_sym!(Qcar_less_than_car, "car-less-than-car");

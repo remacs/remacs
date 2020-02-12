@@ -1,6 +1,6 @@
 //! Functions operating on buffers.
 
-use std::{self, iter, mem, ops, ptr, slice};
+use std::{self, cmp, iter, mem, ops, ptr, slice};
 
 use field_offset::FieldOffset;
 use libc::{self, c_char, c_uchar, c_void, ptrdiff_t};
@@ -28,11 +28,10 @@ use crate::{
         build_marker, build_marker_rust, marker_buffer, marker_position_lisp, set_marker,
         set_marker_both, LispMarkerRef, MARKER_DEBUG,
     },
-    math::{max, min},
     multibyte::MAX_MULTIBYTE_LENGTH,
     multibyte::{multibyte_char_at, multibyte_chars_in_text, multibyte_length_by_head},
     multibyte::{Codepoint, LispStringRef, LispSymbolOrString},
-    numbers::{LispNumber, LispNumberOrMarker, MOST_POSITIVE_FIXNUM},
+    numbers::{LispNumberOrMarker, MOST_POSITIVE_FIXNUM},
     obarray::intern,
     remacs_sys::symbol_trapped_write::SYMBOL_TRAPPED_WRITE,
     remacs_sys::Fmake_marker,
@@ -49,13 +48,12 @@ use crate::{
         buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
         Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
     },
+    remacs_sys::{buffer_permanent_local_flags, UNKNOWN_MODTIME_NSECS},
     remacs_sys::{
-        buffer_permanent_local_flags, Qafter_string, Qbefore_string, Qbuffer_list_update_hook,
-        Qbuffer_read_only, Qbufferp, Qfundamental_mode, Qget_file_buffer, Qinhibit_quit,
-        Qinhibit_read_only, Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook,
-        Qt, Qunbound, UNKNOWN_MODTIME_NSECS,
+        Qafter_string, Qbefore_string, Qbuffer_list_update_hook, Qbuffer_read_only, Qbufferp,
+        Qerror, Qevaporate, Qfundamental_mode, Qget_file_buffer, Qinhibit_quit, Qinhibit_read_only,
+        Qmakunbound, Qnil, Qoverlayp, Qpermanent_local, Qpermanent_local_hook, Qt, Qunbound,
     },
-    remacs_sys::{Qerror, Qevaporate},
     strings::string_equal,
     textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
@@ -1834,8 +1832,8 @@ pub fn rename_buffer(newname: LispStringRef, unique: LispObject) -> LispStringRe
 #[lisp_fn(min = "3")]
 pub fn move_overlay(
     overlay: LispObject,
-    beg: LispObject,
-    end: LispObject,
+    beg: LispNumberOrMarker,
+    end: LispNumberOrMarker,
     buffer: LispObject,
 ) -> LispObject {
     let count = c_specpdl_index();
@@ -1849,21 +1847,24 @@ pub fn move_overlay(
         error!("Attempt to move overlay to a dead buffer");
     }
 
-    if beg.is_marker() && !buf.eq(&marker_buffer(beg.into()).unwrap()) {
-        xsignal!(Qerror, "Marker points into wrong buffer", beg);
+    if let Some(m) = beg.as_marker() {
+        if !buf.eq(&marker_buffer(m).unwrap()) {
+            xsignal!(Qerror, "Marker points into wrong buffer", beg);
+        }
     }
 
-    if end.is_marker() && !buf.eq(&marker_buffer(end.into()).unwrap()) {
-        xsignal!(Qerror, "Marker points into wrong buffer", end);
+    if let Some(m) = end.as_marker() {
+        if !buf.eq(&marker_buffer(m).unwrap()) {
+            xsignal!(Qerror, "Marker points into wrong buffer", end);
+        }
     }
 
-    let beg_num = LispNumber::from(beg);
-    let end_num = LispNumber::from(end);
-    let (beg_num, end_num) = if beg_num.to_fixnum() > end_num.to_fixnum() {
-        (end_num, beg_num)
+    let (beg, end) = if beg.to_fixnum() > end.to_fixnum() {
+        (end, beg)
     } else {
-        (beg_num, end_num)
+        (beg, end)
     };
+
     unsafe { specbind(Qinhibit_quit, Qt) };
     let obuffer = overlay_buffer(overlay_ref);
     let (o_beg, o_end) = match obuffer {
@@ -1878,14 +1879,10 @@ pub fn move_overlay(
     // Set the overlay boundaries, which may clip them
     set_marker(
         LispMarkerRef::from(overlay_ref.start),
-        beg_num.into(),
+        beg.into(),
         buf.into(),
     );
-    set_marker(
-        LispMarkerRef::from(overlay_ref.end),
-        end_num.into(),
-        buf.into(),
-    );
+    set_marker(LispMarkerRef::from(overlay_ref.end), end.into(), buf.into());
     let n_beg = overlay_start(overlay_ref);
     let n_end = overlay_end(overlay_ref);
     // If the overlay has changed buffers, do a thorough redisplay
@@ -1928,14 +1925,8 @@ pub fn move_overlay(
             unsafe {
                 modify_overlay(
                     buf.as_mut(),
-                    EmacsInt::from(min(&[
-                        LispObject::from(o_beg.unwrap_or(0)),
-                        LispObject::from(n_beg.unwrap_or(0)),
-                    ])) as ptrdiff_t,
-                    EmacsInt::from(max(&[
-                        LispObject::from(o_end.unwrap_or(0)),
-                        LispObject::from(n_end.unwrap_or(0)),
-                    ])) as ptrdiff_t,
+                    cmp::min(o_beg.unwrap_or(0), n_beg.unwrap_or(0)) as ptrdiff_t,
+                    cmp::max(o_end.unwrap_or(0), n_end.unwrap_or(0)) as ptrdiff_t,
                 )
             };
         }

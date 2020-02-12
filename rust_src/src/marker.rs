@@ -253,6 +253,10 @@ pub fn point_max_marker() -> LispMarkerRef {
 #[no_mangle]
 pub extern "C" fn set_point_from_marker(marker: LispObject) {
     let marker: LispMarkerRef = marker.into();
+    set_point_from_marker_rust(marker);
+}
+
+pub fn set_point_from_marker_rust(marker: LispMarkerRef) {
     let cur_buf = ThreadState::current_buffer_unchecked();
     let charpos = clip_to_bounds(
         cur_buf.begv,

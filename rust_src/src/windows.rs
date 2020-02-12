@@ -16,7 +16,7 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
-    numbers::{check_range, LispNumber, MOST_POSITIVE_FIXNUM},
+    numbers::{check_range, LispNumberOrMarker, MOST_POSITIVE_FIXNUM},
     remacs_sys::face_id::HEADER_LINE_FACE_ID,
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
@@ -1395,10 +1395,12 @@ pub fn set_window_point(window: LispWindowLiveOrSelected, pos: LispObject) -> Li
             .as_buffer()
             .map_or(false, |b| b == current_buffer)
         {
-            goto_char(pos);
+            // Fail immediately.
+            goto_char(pos.into());
         } else {
             // ... but here we want to catch type error before buffer change.
-            pos.as_number_coerce_marker_or_error();
+            // This is why the 'pos' parameter is a LispObject.
+            let pos = LispNumberOrMarker::from(pos);
             unsafe {
                 set_buffer_internal(win.contents_as_buffer().as_mut());
             }
@@ -1853,8 +1855,8 @@ pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool)
 #[lisp_fn(min = "0")]
 pub fn window_lines_pixel_dimensions(
     window: LispWindowLiveOrSelected,
-    first: Option<LispNumber>,
-    last: Option<LispNumber>,
+    first: Option<EmacsInt>,
+    last: Option<EmacsInt>,
     body: bool,
     inverse: bool,
     left: bool,
@@ -1892,7 +1894,7 @@ pub fn window_lines_pixel_dimensions(
     }
 
     let mut row = match first {
-        Some(first) => matrix.row(first.to_fixnum() as usize),
+        Some(first) => matrix.row(first as usize),
         None => {
             if body {
                 matrix.first_text_row()
@@ -1903,7 +1905,7 @@ pub fn window_lines_pixel_dimensions(
     };
 
     let end_row = match last {
-        Some(last) => matrix.row(last.to_fixnum() as usize),
+        Some(last) => matrix.row(last as usize),
         None => {
             if body {
                 matrix.bottom_text_row(window)
