@@ -242,7 +242,7 @@
     ;; maven
     ("FooBar.java:[111,53] no interface expected here"
      1 53 111 "FooBar.java" 2)
-    ("  [ERROR] /Users/cinsk/hello.java:[651,96] ';' expected"
+    ("[ERROR] /Users/cinsk/hello.java:[651,96] ';' expected"
      15 96 651 "/Users/cinsk/hello.java" 2) ;Bug#11517.
     ("[WARNING] /foo/bar/Test.java:[27,43] unchecked conversion"
      11 43 27 "/foo/bar/Test.java" 1) ;Bug#20556

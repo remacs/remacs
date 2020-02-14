@@ -268,12 +268,24 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2 nil (1))
     (jikes-file
      "^\\(?:Found\\|Issued\\) .* compiling \"\\(.+\\)\":$" 1 nil nil 0)
 
-
-    ;; This used to be pathologically slow on long lines (Bug#3441),
-    ;; due to matching filenames via \\(.*?\\).  This might be faster.
     (maven
      ;; Maven is a popular free software build tool for Java.
-     "\\(\\[WARNING\\] *\\)?\\([^ \n]\\(?:[^\n :]\\| [^-/\n]\\|:[^ \n]\\)*?\\):\\[\\([0-9]+\\),\\([0-9]+\\)\\] " 2 3 4 (1))
+     ,(rx bol
+          ;; It is unclear whether the initial [type] tag is always present.
+          (? "["
+             (or "ERROR" (group-n 1 "WARNING") (group-n 2 "INFO"))
+             "] ")
+          (group-n 3                    ; File
+                   (not (any "\n ["))
+                   (* (or (not (any "\n :"))
+                          (: " " (not (any "\n/-")))
+                          (: ":" (not (any "\n ["))))))
+          ":["
+          (group-n 4 (+ digit))         ; Line
+          ","
+          (group-n 5 (+ digit))         ; Column
+          "] ")
+     3 4 5 (1 . 2))
 
     (jikes-line
      "^ *\\([0-9]+\\)\\.[ \t]+.*\n +\\(<-*>\n\\*\\*\\* \\(?:Error\\|Warnin\\(g\\)\\)\\)"
