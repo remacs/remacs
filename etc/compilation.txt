@@ -384,6 +384,22 @@ symbol: watcom
 ..\src\ctrl\lister.c(120): Warning! W201: Unreachable code
 
 
+* OMake
+
+symbol: omake
+
+When using in -p or -P mode, OMake will detect changes to files and
+report critical build errors indented by 6 spaces.
+
+*** omake: file alpha.c changed
+*** omake: targets were not rebuilt because of errors:
+   alpha.o
+      depends on: alpha.c
+      - build . alpha.o
+      + cc -I. -c -o alpha.o alpha.c
+      alpha.c:5:15: error: expected ';' after expression
+
+
 * Oracle pro*c
 
 symbol: oracle

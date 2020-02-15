@@ -269,6 +269,9 @@
      1 nil 109 "..\\src\\ctrl\\lister.c")
     ("..\\src\\ctrl\\lister.c(120): Warning! W201: Unreachable code"
      1 nil 120 "..\\src\\ctrl\\lister.c")
+    ;; omake
+    ("      alpha.c:5:15: error: expected ';' after expression"
+     1 15 5 "alpha.c")
     ;; oracle
     ("Semantic error at line 528, column 5, file erosacqdb.pc:"
      1 5 528 "erosacqdb.pc")
@@ -428,7 +431,7 @@ The test data is in `compile-tests--test-regexps-data'."
           (compilation-num-warnings-found 0)
           (compilation-num-infos-found 0))
       (mapc #'compile--test-error-line compile-tests--test-regexps-data)
-      (should (eq compilation-num-errors-found 92))
+      (should (eq compilation-num-errors-found 93))
       (should (eq compilation-num-warnings-found 36))
       (should (eq compilation-num-infos-found 26)))))
 

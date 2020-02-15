@@ -306,7 +306,7 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2 nil (1))
      1 2 3 (4 . 5))
 
     (ruby-Test::Unit
-     "^[\t ]*\\[\\([^(].*\\):\\([1-9][0-9]*\\)\\(\\]\\)?:in " 1 2)
+     "^    [[ ]?\\([^ (].*\\):\\([1-9][0-9]*\\)\\(\\]\\)?:in " 1 2)
 
     (gmake
      ;; Set GNU make error messages as INFO level.
@@ -406,7 +406,7 @@ of[ \t]+\"?\\([a-zA-Z]?:?[^\":\n]+\\)\"?:" 3 2 nil (1))
     (omake
      ;; "omake -P" reports "file foo changed"
      ;; (useful if you do "cvs up" and want to see what has changed)
-     "omake: file \\(.*\\) changed" 1 nil nil nil nil
+     "^\\*\\*\\* omake: file \\(.*\\) changed" 1 nil nil nil nil
      ;; FIXME-omake: This tries to prevent reusing pre-existing markers
      ;; for subsequent messages, since those messages's line numbers
      ;; are about another version of the file.
@@ -1453,7 +1453,7 @@ to `compilation-error-regexp-alist' if RULES is nil."
        ((not (memq 'omake compilation-error-regexp-alist)) nil)
        ((string-match "\\`\\([^^]\\|\\^\\( \\*\\|\\[\\)\\)" pat)
         nil) ;; Not anchored or anchored but already allows empty spaces.
-       (t (setq pat (concat "^ *" (substring pat 1)))))
+       (t (setq pat (concat "^\\(?:      \\)?" (substring pat 1)))))
 
       (if (consp file)	(setq fmt (cdr file)	  file (car file)))
       (if (consp line)	(setq end-line (cdr line) line (car line)))
