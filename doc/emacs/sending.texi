@@ -340,7 +340,7 @@ Send the message, and leave the mail buffer selected (@code{message-send}).
 @findex message-send
 @vindex message-kill-buffer-on-exit
   The usual command to send a message is @kbd{C-c C-c}
-(@code{mail-send-and-exit}).  This sends the message and then
+(@code{message-send-and-exit}).  This sends the message and then
 buries the mail buffer, putting it at the lowest priority for
 reselection.  If you want it to kill the mail buffer instead, change
 the variable @code{message-kill-buffer-on-exit} to @code{t}.
