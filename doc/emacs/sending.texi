@@ -361,9 +361,12 @@ twice).
 @cindex Feedmail
 @cindex Sendmail
 @cindex Mailclient
+@vindex message-send-mail-function
 @vindex send-mail-function
-  The variable @code{send-mail-function} controls how the message is
-delivered.  Its value should be one of the following functions:
+  The variable @code{message-send-mail-function} controls how the
+message is delivered (@code{send-mail-function} is used for Mail mode).
+The value of @code{send-mail-function} should be one of the following
+functions:
 
 @table @code
 @item sendmail-query-once
