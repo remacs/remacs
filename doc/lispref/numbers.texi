@@ -132,8 +132,8 @@ memory, by machine characteristics such as the size of the word used
 to represent a bignum's exponent, and by the @code{integer-width}
 variable.  These limits are typically much more generous than the
 limits for fixnums.  A bignum is never numerically equal to a fixnum;
-if Emacs computes an integer in fixnum range, it represents the
-integer as a fixnum, not a bignum.
+Emacs always represents an integer in fixnum range as a fixnum, not a
+bignum.
 
   The range of values for a fixnum depends on the machine.  The
 minimum range is @minus{}536,870,912 to 536,870,911 (30 bits; i.e.,
