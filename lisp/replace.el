@@ -1937,8 +1937,10 @@ See also `multi-occur'."
       global-matches)))
 
 (defun occur-engine-line (beg end &optional keep-props)
-  (if (and keep-props font-lock-mode)
-      (font-lock-ensure beg end))
+  (if (and keep-props (if (boundp 'jit-lock-mode) jit-lock-mode)
+	   (text-property-not-all beg end 'fontified t))
+      (if (fboundp 'jit-lock-fontify-now)
+	  (jit-lock-fontify-now beg end)))
   (if (and keep-props (not (eq occur-excluded-properties t)))
       (let ((str (buffer-substring beg end)))
 	(remove-list-of-text-properties
