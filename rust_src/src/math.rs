@@ -1,10 +1,14 @@
 //! Functions doing math on numbers.
 #![allow(clippy::float_cmp)]
 
-use crate::remacs_sys::{EmacsInt, Qnumberp};
 use remacs_macros::lisp_fn;
 
-use crate::{floatfns, lisp::LispObject, numbers::LispNumberOrFloatOrMarker};
+use crate::{
+    floatfns,
+    lisp::LispObject,
+    numbers::{LispNumber, LispNumberOrFloatOrMarker},
+    remacs_sys::EmacsInt,
+};
 
 /// Return X modulo Y.
 /// The result falls between zero (inclusive) and Y (exclusive).
@@ -239,13 +243,10 @@ pub fn min(args: &[LispObject]) -> LispObject {
 
 /// Return the absolute value of ARG.
 #[lisp_fn]
-pub fn abs(arg: LispObject) -> LispObject {
-    if let Some(f) = arg.as_float() {
-        LispObject::from_float(f.abs())
-    } else if let Some(n) = arg.as_fixnum() {
-        LispObject::from(n.abs())
-    } else {
-        wrong_type!(Qnumberp, arg);
+pub fn abs(arg: LispNumber) -> LispNumber {
+    match arg {
+        LispNumber::Float(f) => LispNumber::Float(f.abs()),
+        LispNumber::Fixnum(n) => LispNumber::Fixnum(n.abs()),
     }
 }
 

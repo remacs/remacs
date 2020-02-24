@@ -15,7 +15,7 @@ use crate::{
     math::ArithOp,
     numbers::{LispNumber, LispNumberOrFloatOrMarker, MOST_NEGATIVE_FIXNUM, MOST_POSITIVE_FIXNUM},
     remacs_sys::{equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Float, Lisp_Type},
-    remacs_sys::{Qfloatp, Qinteger_or_marker_p, Qnumberp, Qrange_error},
+    remacs_sys::{Qfloatp, Qinteger_or_marker_p, Qrange_error},
 };
 
 // Float support (LispType == Lisp_Float == 7 )
@@ -85,34 +85,11 @@ impl LispObject {
             None
         }
     }
-
-    pub fn as_float_or_error(self) -> EmacsDouble {
-        if self.is_float() {
-            unsafe { self.get_float_data_unchecked() }
-        } else {
-            wrong_type!(Qfloatp, self)
-        }
-    }
-
-    /*
-    /// If the LispObject is a number (of any kind), get a floating point value for it
-    pub fn any_to_float(self) -> Option<EmacsDouble> {
-        self.as_float()
-            .or_else(|| self.as_fixnum().map(|i| i as EmacsDouble))
-    }
-    */
-
-    pub fn any_to_float_or_error(self) -> EmacsDouble {
-        self.as_float().unwrap_or_else(|| {
-            self.as_fixnum()
-                .unwrap_or_else(|| wrong_type!(Qnumberp, self)) as EmacsDouble
-        })
-    }
 }
 
 impl From<LispObject> for EmacsDouble {
     fn from(o: LispObject) -> Self {
-        o.any_to_float_or_error()
+        o.as_float().unwrap_or_else(|| wrong_type!(Qfloatp, o))
     }
 }
 
@@ -121,7 +98,7 @@ impl From<LispObject> for Option<EmacsDouble> {
         if o.is_nil() {
             None
         } else {
-            Some(o.any_to_float_or_error())
+            Some(o.into())
         }
     }
 }
@@ -130,7 +107,8 @@ impl From<LispObject> for Option<EmacsDouble> {
 /// TODO this is used from C in a few places; remove afterwards.
 #[no_mangle]
 pub extern "C" fn extract_float(f: LispObject) -> EmacsDouble {
-    f.any_to_float_or_error()
+    let value: LispNumber = f.into();
+    value.to_float()
 }
 
 /// Calculate the modulus of two elisp floats.
@@ -149,8 +127,8 @@ macro_rules! simple_float_op {
     ($lisp_name:expr, $float_func:ident, $lisp_docs:expr) => {
         #[doc = $lisp_docs]
         #[lisp_fn(name = $lisp_name, c_name = $lisp_name)]
-        fn $float_func(arg: EmacsDouble) -> EmacsDouble {
-            arg.$float_func()
+        fn $float_func(arg: LispNumber) -> EmacsDouble {
+            arg.to_float().$float_func()
         }
     };
 }
@@ -217,26 +195,28 @@ pub fn isnan(f: EmacsDouble) -> bool {
 /// divided by X, i.e. the angle in radians between the vector (X, Y)
 /// and the x-axis
 #[lisp_fn(min = "1")]
-pub fn atan(y: EmacsDouble, x: Option<EmacsDouble>) -> EmacsDouble {
+pub fn atan(y: LispNumber, x: Option<LispNumber>) -> EmacsDouble {
     match x {
-        None => y.atan(),
-        Some(x) => y.atan2(x),
+        None => y.to_float().atan(),
+        Some(x) => y.to_float().atan2(x.to_float()),
     }
 }
 
 /// Return the natural logarithm of ARG.
 /// If the optional argument BASE is given, return log ARG using that base.
 #[lisp_fn(min = "1")]
-pub fn log(arg: EmacsDouble, base: Option<EmacsDouble>) -> EmacsDouble {
+pub fn log(arg: LispNumber, base: Option<LispNumber>) -> EmacsDouble {
+    let d = arg.to_float();
     match base {
-        None => arg.ln(),
+        None => d.ln(),
         Some(base) => {
-            if base == 10.0 {
-                arg.log10()
-            } else if base == 2.0 {
-                arg.log2()
+            let b = base.to_float();
+            if b == 10.0 {
+                d.log10()
+            } else if b == 2.0 {
+                d.log2()
             } else {
-                arg.log(base)
+                d.log(b)
             }
         }
     }
@@ -247,41 +227,32 @@ pub fn log(arg: EmacsDouble, base: Option<EmacsDouble>) -> EmacsDouble {
 /// Return the smallest integer no less than ARG, as a float.
 /// (Round toward +inf.)
 #[lisp_fn]
-pub fn fceiling(arg: LispObject) -> EmacsDouble {
-    let d = arg.as_float_or_error();
-    d.ceil()
+pub fn fceiling(arg: EmacsDouble) -> EmacsDouble {
+    arg.ceil()
 }
 
 /// Return the largest integer no greater than ARG, as a float.
 /// (Round toward -inf.)
 #[lisp_fn]
-pub fn ffloor(arg: LispObject) -> EmacsDouble {
-    let d = arg.as_float_or_error();
-    d.floor()
+pub fn ffloor(arg: EmacsDouble) -> EmacsDouble {
+    arg.floor()
 }
 
 /// Truncate a floating point number to an integral float value.
 /// (Round toward zero.)
 #[lisp_fn]
-pub fn ftruncate(arg: LispObject) -> EmacsDouble {
-    let d = arg.as_float_or_error();
-    if d > 0.0 {
-        d.floor()
+pub fn ftruncate(arg: EmacsDouble) -> EmacsDouble {
+    if arg > 0.0 {
+        arg.floor()
     } else {
-        d.ceil()
+        arg.ceil()
     }
 }
 
 /// Return the floating point number equal to ARG.
 #[lisp_fn]
-pub fn float(arg: LispObject) -> LispObject {
-    if arg.is_float() {
-        arg
-    } else if let Some(n) = arg.as_fixnum() {
-        LispObject::from_float(n as EmacsDouble)
-    } else {
-        wrong_type!(Qnumberp, arg);
-    }
+pub fn float(arg: LispNumber) -> EmacsDouble {
+    arg.to_float()
 }
 
 /// Copy sign of X2 to value of X1, and return the result.
@@ -305,61 +276,56 @@ pub fn copysign(x1: EmacsDouble, x2: EmacsDouble) -> EmacsDouble {
 /// The function returns the cons cell (SGNFCAND . EXP).
 /// If X is zero, both parts (SGNFCAND and EXP) are zero.
 #[lisp_fn]
-pub fn frexp(x: EmacsDouble) -> (LispObject, libc::c_int) {
-    let (significand, exponent) = libm::frexp(x);
-    (LispObject::from_float(significand), exponent)
+pub fn frexp(x: LispNumber) -> (EmacsDouble, libc::c_int) {
+    let (significand, exponent) = libm::frexp(x.to_float());
+    (significand, exponent)
 }
 
 /// Return SGNFCAND * 2**EXPONENT, as a floating point number.
 /// EXPONENT must be an integer.
 #[lisp_fn]
-pub fn ldexp(significand: EmacsDouble, exponent: EmacsInt) -> EmacsDouble {
-    libm::ldexp(significand, exponent as libc::c_int)
+pub fn ldexp(significand: LispNumber, exponent: EmacsInt) -> EmacsDouble {
+    libm::ldexp(significand.to_float(), exponent as libc::c_int)
 }
 
 /// Return the exponential ARG1 ** ARG2.
 #[lisp_fn]
-pub fn expt(arg1: LispObject, arg2: LispObject) -> LispObject {
-    if let (Some(x), Some(y)) = (arg1.as_fixnum(), arg2.as_fixnum()) {
-        if y >= 0 && y <= EmacsInt::from(u32::max_value()) {
-            return x.pow(y as u32).into();
+pub fn expt(arg1: LispNumber, arg2: LispNumber) -> LispNumber {
+    match (arg1, arg2) {
+        (LispNumber::Fixnum(x), LispNumber::Fixnum(y)) if y >= 0 => {
+            LispNumber::Fixnum(x.pow(y as u32))
+        }
+        (x, y) => {
+            let b = x.to_float();
+            let e = y.to_float();
+            LispNumber::Float(b.powf(e))
         }
     }
-    let b = arg1.any_to_float_or_error();
-    let e = arg2.any_to_float_or_error();
-    LispObject::from_float(b.powf(e))
 }
 
 /// Returns largest integer <= the base 2 log of the magnitude of ARG.
 /// This is the same as the exponent of a float.
 #[lisp_fn]
-pub fn logb(arg: LispObject) -> EmacsInt {
-    if let Some(n) = arg.as_fixnum() {
-        let i = n.abs();
-        if i == 0 {
-            MOST_NEGATIVE_FIXNUM
-        } else {
-            (mem::size_of::<EmacsUint>() * 8) as EmacsInt - 1 - EmacsInt::from(i.leading_zeros())
-        }
-    } else if let Some(f) = arg.as_float() {
-        if f == 0.0 {
-            MOST_NEGATIVE_FIXNUM
-        } else if f.is_finite() {
+pub fn logb(arg: LispNumber) -> EmacsInt {
+    match arg {
+        LispNumber::Float(f) if f == 0.0 => MOST_NEGATIVE_FIXNUM,
+        LispNumber::Float(f) if f.is_finite() => {
             let (_, exp) = libm::frexp(f);
             EmacsInt::from(exp) - 1
-        } else {
-            MOST_POSITIVE_FIXNUM
         }
-    } else {
-        wrong_type!(Qnumberp, arg)
+        LispNumber::Float(_) => MOST_POSITIVE_FIXNUM,
+        LispNumber::Fixnum(n) if n == 0 => MOST_NEGATIVE_FIXNUM,
+        LispNumber::Fixnum(n) => {
+            let i = n.abs();
+            (mem::size_of::<EmacsUint>() * 8) as EmacsInt - 1 - EmacsInt::from(i.leading_zeros())
+        }
     }
 }
 
 /// Return the nearest integer to ARG, as a float.
 #[lisp_fn]
-pub fn fround(arg: LispObject) -> EmacsDouble {
-    let d = arg.as_float_or_error();
-    libm::rint(d)
+pub fn fround(arg: EmacsDouble) -> EmacsDouble {
+    libm::rint(arg)
 }
 
 /// Return the smallest integer no less than ARG.
