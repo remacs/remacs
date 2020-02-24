@@ -1,6 +1,6 @@
 ;;; gud.el --- Grand Unified Debugger mode for running GDB and other debuggers  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1992-1996, 1998, 2000-2018 Free Software Foundation,
+;; Copyright (C) 1992-1996, 1998, 2000-2020 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Eric S. Raymond <esr@snark.thyrsus.com>
@@ -545,8 +545,8 @@ required by the caller."
 		   nil
 		   (if gdb-show-changed-values
 		       (or parent (pcase status
-				    (`changed 'font-lock-warning-face)
-				    (`out-of-scope 'shadow)
+				    ('changed 'font-lock-warning-face)
+				    ('out-of-scope 'shadow)
 				    (_ t)))
 		     t)
 		   depth)
@@ -566,8 +566,8 @@ required by the caller."
 		     nil
 		     (if gdb-show-changed-values
 			 (or parent (pcase status
-				      (`changed 'font-lock-warning-face)
-				      (`out-of-scope 'shadow)
+				      ('changed 'font-lock-warning-face)
+				      ('out-of-scope 'shadow)
 				      (_ t)))
 		       t)
 		     depth)
@@ -678,7 +678,7 @@ The option \"--fullname\" must be included in this value."
     ;; gud-marker-acc until we receive the rest of it.  Since we
     ;; know the full marker regexp above failed, it's pretty simple to
     ;; test for marker starts.
-    (if (string-match "\n\\(\032.*\\)?\\'" gud-marker-acc)
+    (if (string-match "\\(\n\\)?\\(\032.*\\)?\\'" gud-marker-acc)
 	(progn
 	  ;; Everything before the potential marker start can be output.
 	  (setq output (concat output (substring gud-marker-acc
@@ -1605,8 +1605,14 @@ and source-file directory for your debugger."
 
 ;; Last group is for return value, e.g. "> test.py(2)foo()->None"
 ;; Either file or function name may be omitted: "> <string>(0)?()"
+;;
+;; We use [:graph:] to be very allowing with regards to which
+;; characters we match in the file name shown in the prompt.
+;; (Of course, this matches the "<string>" case too.)
 (defvar gud-pdb-marker-regexp
-  "^> \\([-a-zA-Z0-9_/.:@ \\]*\\|<string>\\)(\\([0-9]+\\))\\([a-zA-Z0-9_]*\\|\\?\\|<module>\\)()\\(->[^\n\r]*\\)?[\n\r]")
+  (concat "^> \\([[:graph:] \\]*\\)(\\([0-9]+\\))\\([a-zA-Z0-9_]*\\|\\?\\|"
+          "<\\(?:module\\|listcomp\\|dictcomp\\|setcomp\\|genexpr\\|lambda\\|\\)>"
+          "\\)()\\(->[^\n\r]*\\)?[\n\r]"))
 
 (defvar gud-pdb-marker-regexp-file-group 1)
 (defvar gud-pdb-marker-regexp-line-group 2)
@@ -1669,17 +1675,24 @@ and source-file directory for your debugger."
 
     output))
 
-(defcustom gud-pdb-command-name "pdb"
-  "File name for executing the Python debugger.
-This should be an executable on your path, or an absolute file name."
+(defcustom gud-pdb-command-name
+  (if (executable-find "pdb") "pdb" "python -m pdb")
+  "Command that executes the Python debugger."
+  :version "27.1"
   :type 'string
   :group 'gud)
 
 ;;;###autoload
 (defun pdb (command-line)
-  "Run pdb on program FILE in buffer `*gud-FILE*'.
-The directory containing FILE becomes the initial working directory
-and source-file directory for your debugger."
+  "Run COMMAND-LINE in the `*gud-FILE*' buffer.
+
+COMMAND-LINE should include the pdb executable
+name (`gud-pdb-command-name') and the file to be debugged.
+
+If called interactively, the command line will be prompted for.
+
+The directory containing this file becomes the initial working
+directory and source-file directory for your debugger."
   (interactive
    (list (gud-query-cmdline 'pdb)))
 
@@ -1695,8 +1708,7 @@ and source-file directory for your debugger."
   (gud-def gud-up     "up"           "<" "Up one stack frame.")
   (gud-def gud-down   "down"         ">" "Down one stack frame.")
   (gud-def gud-print  "p %e"         "\C-p" "Evaluate Python expression at point.")
-  ;; Is this right?
-  (gud-def gud-statement "! %e"      "\C-e" "Execute Python statement at point.")
+  (gud-def gud-statement "!%e"      "\C-e" "Execute Python statement at point.")
 
   ;; (setq comint-prompt-regexp "^(.*pdb[+]?) *")
   (setq comint-prompt-regexp "^(Pdb) *")
@@ -2238,7 +2250,7 @@ relative to a classpath directory."
 		    (split-string
 		     ;; Eliminate any subclass references in the class
 		     ;; name string. These start with a "$"
-                     (if (string-match "$.*" p)
+                     (if (string-match "\\$.*" p)
                          (replace-match "" t t p) p)
 		     "\\.") "/")
 	 ".java"))
@@ -2606,7 +2618,12 @@ comint mode, which see."
 		      file-subst)))
 	 (filepart (and file-word (concat "-" (file-name-nondirectory file))))
 	 (existing-buffer (get-buffer (concat "*gud" filepart "*"))))
-    (switch-to-buffer (concat "*gud" filepart "*"))
+    (select-window
+     (display-buffer
+      (get-buffer-create (concat "*gud" filepart "*"))
+      '(display-buffer-reuse-window
+        display-buffer-in-previous-window
+        display-buffer-same-window display-buffer-pop-up-window)))
     (when (and existing-buffer (get-buffer-process existing-buffer))
       (error "This program is already being debugged"))
     ;; Set the dir, in case the buffer already existed with a different dir.
@@ -2992,7 +3009,7 @@ Obeying it means displaying in another window the specified file and line."
 ;; Rich Schaefer <schaefer@asc.slb.com> Schlumberger, Austin, Tx.
 
 (defun gud-find-c-expr ()
-  "Returns the expr that surrounds point."
+  "Return the expr that surrounds point."
   (interactive)
   (save-excursion
     (let ((p (point))
@@ -3017,7 +3034,7 @@ Obeying it means displaying in another window the specified file and line."
       (buffer-substring (car expr) (cdr expr)))))
 
 (defun gud-innermost-expr ()
-  "Returns the smallest expr that point is in; move point to beginning of it.
+  "Return the smallest expr that point is in; move point to beginning of it.
 The expr is represented as a cons cell, where the car specifies the point in
 the current buffer that marks the beginning of the expr and the cdr specifies
 the character after the end of the expr."
@@ -3049,10 +3066,10 @@ the character after the end of the expr."
     (error t)))
 
 (defun gud-prev-expr ()
-  "Returns the previous expr, point is set to beginning of that expr.
+  "Return the previous expr, point is set to beginning of that expr.
 The expr is represented as a cons cell, where the car specifies the point in
 the current buffer that marks the beginning of the expr and the cdr specifies
-the character after the end of the expr"
+the character after the end of the expr."
   (let ((begin) (end))
     (gud-backward-sexp)
     (setq begin (point))
@@ -3062,7 +3079,7 @@ the character after the end of the expr"
     (cons begin end)))
 
 (defun gud-next-expr ()
-  "Returns the following expr, point is set to beginning of that expr.
+  "Return the following expr, point is set to beginning of that expr.
 The expr is represented as a cons cell, where the car specifies the point in
 the current buffer that marks the beginning of the expr and the cdr specifies
 the character after the end of the expr."
@@ -3359,10 +3376,7 @@ Treats actions as defuns."
 
 ;;;###autoload
 (define-minor-mode gud-tooltip-mode
-  "Toggle the display of GUD tooltips.
-With a prefix argument ARG, enable the feature if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-it if ARG is omitted or nil."
+  "Toggle the display of GUD tooltips."
   :global t
   :group 'gud
   :group 'tooltip
@@ -3515,11 +3529,11 @@ With arg, dereference expr if ARG is positive, otherwise do not dereference."
 (defun gud-tooltip-print-command (expr)
   "Return a suitable command to print the expression EXPR."
   (pcase gud-minor-mode
-    (`gdbmi (concat "-data-evaluate-expression \"" expr "\""))
-    (`guiler expr)
-    (`dbx (concat "print " expr))
-    ((or `xdb `pdb) (concat "p " expr))
-    (`sdb (concat expr "/"))))
+    ('gdbmi (concat "-data-evaluate-expression \"" expr "\""))
+    ('guiler expr)
+    ('dbx (concat "print " expr))
+    ((or 'xdb 'pdb) (concat "p " expr))
+    ('sdb (concat expr "/"))))
 
 (declare-function gdb-input "gdb-mi" (command handler &optional trigger))
 (declare-function tooltip-expr-to-print "tooltip" (event))

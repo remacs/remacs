@@ -1,8 +1,8 @@
 ;;; srecode/mode.el --- Minor mode for managing and using SRecode templates
 
-;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
-;; Author: Eric M. Ludlam <eric@siege-engine.com>
+;; Author: Eric M. Ludlam <zappo@gnu.org>
 
 ;; This file is part of GNU Emacs.
 
@@ -69,62 +69,44 @@
 (defvar srecode-menu-bar
   (list
    "SRecoder"
-   (semantic-menu-item
-    ["Insert Template"
-     srecode-insert
-     :active t
-     :help "Insert a template by name."
-     ])
-   (semantic-menu-item
-    ["Insert Template Again"
-     srecode-insert-again
-     :active t
-     :help "Run the same template as last time again."
-     ])
-   (semantic-menu-item
-    ["Edit Template"
-     srecode-edit
-     :active t
-     :help "Edit a template for this language by name."
-     ])
+   ["Insert Template"
+    srecode-insert
+    :active t
+    :help "Insert a template by name."]
+   ["Insert Template Again"
+    srecode-insert-again
+    :active t
+    :help "Run the same template as last time again."]
+     ["Edit Template"
+    srecode-edit
+    :active t
+    :help "Edit a template for this language by name."]
    "---"
    '( "Insert ..." :filter srecode-minor-mode-templates-menu )
-   `( "Generate ..." :filter srecode-minor-mode-generate-menu )
+   '( "Generate ..." :filter srecode-minor-mode-generate-menu )
    "---"
-    (semantic-menu-item
-     ["Customize..."
-      (customize-group "srecode")
-      :active t
-      :help "Customize SRecode options"
-      ])
+   ["Customize..."
+    (customize-group "srecode")
+    :active t
+    :help "Customize SRecode options"]
    (list
     "Debugging Tools..."
-    (semantic-menu-item
-     ["Dump Template MAP"
-      srecode-get-maps
-      :active t
-      :help "Calculate (if needed) and display the current template file map."
-      ])
-    (semantic-menu-item
-     ["Dump Tables"
-      srecode-dump-templates
-      :active t
-      :help "Dump the current template table."
-      ])
-    (semantic-menu-item
-     ["Dump Dictionary"
-      srecode-dictionary-dump
-      :active t
-      :help "Calculate and dump a dictionary for point."
-      ])
-    (semantic-menu-item
-     ["Show Macro Help"
-      srecode-macro-help
-      :active t
-      :help "Display the different types of macros available."
-      ])
-    )
-   )
+    ["Dump Template MAP"
+     srecode-get-maps
+     :active t
+     :help "Calculate (if needed) and display the current template file map."]
+    ["Dump Tables"
+     srecode-dump-templates
+     :active t
+     :help "Dump the current template table."]
+    ["Dump Dictionary"
+     srecode-dictionary-dump
+     :active t
+     :help "Calculate and dump a dictionary for point."]
+    ["Show Macro Help"
+     srecode-macro-help
+     :active t
+     :help "Display the different types of macros available."]))
   "Menu for srecode minor mode.")
 
 (defvar srecode-minor-menu nil
@@ -148,10 +130,10 @@
 ;;;###autoload
 (define-minor-mode srecode-minor-mode
   "Toggle srecode minor mode.
-With prefix argument ARG, turn on if positive, otherwise off.  The
-minor mode can be turned on only if semantic feature is available and
-the current buffer was set up for parsing.  Return non-nil if the
-minor mode is enabled.
+
+The minor mode can be turned on only if semantic feature is
+available and the current buffer was set up for parsing.  Return
+non-nil if the minor mode is enabled.
 
 \\{srecode-mode-map}"
   :keymap srecode-mode-map
@@ -176,8 +158,7 @@ minor mode is enabled.
 
 ;;;###autoload
 (define-minor-mode global-srecode-minor-mode
-  "Toggle global use of srecode minor mode.
-If ARG is positive or nil, enable, if it is negative, disable."
+  "Toggle global use of srecode minor mode."
   :global t :group 'srecode
   ;; Not needed because it's autoloaded instead.
   ;; :require 'srecode/mode
@@ -196,7 +177,7 @@ MENU-DEF is the menu to bind this into."
   ;;(srecode-load-tables-for-mode major-mode)
 
   (let* ((modetable (srecode-get-mode-table major-mode))
-	 (subtab (when modetable (oref modetable :tables)))
+	 (subtab (when modetable (oref modetable tables)))
 	 (context nil)
 	 (active nil)
 	 (ltab nil)
@@ -319,17 +300,17 @@ Template is chosen based on the mode of the starting buffer."
       (if (not temp)
 	  (error "No Template named %s" template-name))
       ;; We need a template specific table, since tables chain.
-      (let ((tab (oref temp :table))
+      (let ((tab (oref temp table))
 	    (names nil)
 	    )
-	(find-file (oref tab :file))
-	(setq names (semantic-find-tags-by-name (oref temp :object-name)
+	(find-file (oref tab file))
+	(setq names (semantic-find-tags-by-name (oref temp object-name)
 						(current-buffer)))
 	(cond ((= (length names) 1)
 	       (semantic-go-to-tag (car names))
 	       (semantic-momentary-highlight-tag (car names)))
 	      ((> (length names) 1)
-	       (let* ((ctxt (semantic-find-tags-by-name (oref temp :context)
+	       (let* ((ctxt (semantic-find-tags-by-name (oref temp context)
 							(current-buffer)))
 		      (cls (semantic-find-tags-by-class 'context ctxt))
 		      )

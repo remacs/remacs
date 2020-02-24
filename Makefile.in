@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1992-2018 Free Software Foundation, Inc.
+# Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -65,6 +65,8 @@
 #        fail unpredictably
 
 SHELL = @SHELL@
+
+DUMPING=@DUMPING@
 
 # This only matters when inheriting a CDPATH not starting with the
 # current directory.
@@ -158,6 +160,9 @@ libexecdir=@libexecdir@
 # Currently only used for the systemd service file.
 libdir=@libdir@
 
+# Where to install emacs-module.h.
+includedir=@includedir@
+
 # Where to install Emacs's man pages.
 # Note they contain cross-references that expect them to be in section 1.
 mandir=@mandir@
@@ -199,7 +204,7 @@ x_default_search_path=@x_default_search_path@
 desktopdir=$(datarootdir)/applications
 
 # Where the etc/emacs.appdata.xml file is to be installed.
-appdatadir=$(datarootdir)/appdata
+appdatadir=$(datarootdir)/metainfo
 
 # Where the etc/emacs.service file is to be installed.
 # The system value (typically /usr/lib/systemd/user) can be
@@ -326,7 +331,8 @@ SUBDIR_MAKEFILES = $(patsubst ${srcdir}/%,%,${SUBDIR_MAKEFILES_IN:.in=})
 # Non-makefile files created by config.status.
 CONFIG_STATUS_FILES_IN = \
  ${srcdir}/nt/emacs.rc.in ${srcdir}/nt/emacsclient.rc.in \
- ${srcdir}/doc/man/emacs.1.in
+ ${srcdir}/doc/man/emacs.1.in ${srcdir}/src/emacs-module.h.in \
+ ${srcdir}/src/module-env-*.h
 
 # Subdirectories to install, and where they'll go.  lib-src's and nt's
 # makefiles know how to install them, so we don't do that here.
@@ -498,7 +504,10 @@ install-arch-dep: src install-arch-indep install-etcdoc install-$(NTDIR)
 	umask 022; ${MKDIR_P} "$(DESTDIR)${bindir}"
 	$(MAKE) -C lib-src install
 ifeq (${ns_self_contained},no)
-	${INSTALL_PROGRAM} $(INSTALL_STRIP) src/remacs${EXEEXT} "$(DESTDIR)${bindir}/$(EMACSFULL)"
+	${INSTALL_PROGRAM} $(INSTALL_STRIP) src/emacs${EXEEXT} "$(DESTDIR)${bindir}/$(EMACSFULL)"
+ifeq (${DUMPING},pdumper)
+	${INSTALL_DATA} src/emacs.pdmp "$(DESTDIR)${libexecdir}/emacs/${version}/${configuration}"/emacs.pdmp
+endif
 	-chmod 755 "$(DESTDIR)${bindir}/$(EMACSFULL)"
 ifndef NO_BIN_LINK
 	rm -f "$(DESTDIR)${bindir}/$(EMACS)"
@@ -527,9 +536,11 @@ INSTALL_ARCH_INDEP_EXTRA = @INSTALL_ARCH_INDEP_EXTRA@
 ## https://lists.gnu.org/r/emacs-devel/2007-10/msg01672.html
 ## Needs to be the user running install, so configure can't set it.
 set_installuser=for installuser in $${LOGNAME} $${USERNAME} $${USER} \
-	  `id -un 2> /dev/null`; do \
+	  `(id -u) 2> /dev/null`; do \
 	  [ -n "$${installuser}" ] && break ; \
-	done
+	done; \
+	installgroup=`(id -g) 2>/dev/null` && [ -n "$$installgroup" ] && \
+	  installuser=$$installuser:$$installgroup
 
 ### Install the files that are machine-independent.
 ### Most of them come straight from the distribution; the exception is
@@ -569,6 +580,8 @@ set_installuser=for installuser in $${LOGNAME} $${USERNAME} $${USER} \
 ## See also these comments from 2004 about cp -r working fine:
 ## https://lists.gnu.org/r/autoconf-patches/2004-11/msg00005.html
 install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
+	umask 022 && $(MKDIR_P) "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) src/emacs-module.h "$(DESTDIR)$(includedir)/emacs-module.h"
 	-set ${COPYDESTS} ; \
 	unset CDPATH; \
 	$(set_installuser); \
@@ -752,6 +765,7 @@ install-strip:
 ###
 ### Don't delete the lisp and etc directories if they're in the source tree.
 uninstall: uninstall-$(NTDIR) uninstall-doc
+	rm -f "$(DESTDIR)$(includedir)/emacs-module.h"
 	$(MAKE) -C lib-src uninstall
 	-unset CDPATH; \
 	for dir in "$(DESTDIR)${lispdir}" "$(DESTDIR)${etcdir}" ; do 	\
@@ -789,7 +803,9 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	(if cd "$(DESTDIR)${icondir}"; then \
 	   rm -f hicolor/*x*/apps/"${EMACS_NAME}.png" \
 	     "hicolor/scalable/apps/${EMACS_NAME}.svg" \
-	     hicolor/scalable/mimetypes/`echo emacs-document | sed '$(TRANSFORM)'`.svg; \
+	     "hicolor/scalable/apps/${EMACS_NAME}.ico" \
+	     "hicolor/scalable/mimetypes/${EMACS_NAME}-document.svg" \
+	     "hicolor/scalable/mimetypes/${EMACS_NAME}-document23.svg"; \
 	fi)
 	-rm -f "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"
 	-rm -f "$(DESTDIR)${appdatadir}/${EMACS_NAME}.appdata.xml"
@@ -848,7 +864,7 @@ $(foreach dir,$(clean_dirs),$(eval $(call submake_template,$(dir),clean)))
 clean: $(clean_dirs:=_clean)
 	$(MAKE) -C admin/charsets $@
 	[ ! -d test ] || $(MAKE) -C test $@
-	-rm -f *.tmp etc/*.tmp*
+	-rm -f ./*.tmp etc/*.tmp*
 	-rm -rf info-dir.*
 	-rm -rf *.elc
 	-$(CARGO_CLEAN) --manifest-path ${cargo_manifest}
@@ -867,7 +883,7 @@ top_bootclean=\
 top_distclean=\
 	${top_bootclean}; \
 	rm -f config.status config.log~ \
-	  Makefile lib/gnulib.mk ${SUBDIR_MAKEFILES}
+	  Makefile makefile lib/gnulib.mk ${SUBDIR_MAKEFILES}
 
 distclean_dirs = $(clean_dirs) leim
 
@@ -930,33 +946,34 @@ maintainer-clean: bootstrap-clean $(maintainer_clean_dirs:=_maintainer-clean)
 ### Note that we abuse this in some subdirectories (eg leim),
 ### to delete some generated files that are slow to rebuild.
 extraclean_dirs = ${NTDIR} lib-src src leim \
-  admin/charsets admin/grammars admin/unidata
+  admin/charsets admin/grammars admin/unidata lisp lib
 
 $(foreach dir,$(extraclean_dirs),$(eval $(call submake_template,$(dir),extraclean)))
 
 extraclean: $(extraclean_dirs:=_extraclean)
 	${top_maintainer_clean}
-	-rm -f config-tmp-*
-	-rm -f *~ \#*
+	-rm -f config-tmp-* aclocal.m4 configure
+	-rm -f ./*~ \#* etc/refcards/emacsver.tex doc/emacs/emacsver.texi
+	-rm -f info/*.info info/dir
+	-rmdir info 2>/dev/null
 
 # The src subdir knows how to do the right thing
 # even when the build directory and source dir are different.
 .PHONY: TAGS tags
-TAGS tags: lib lib-src src
+# FIXME: We used to include `src` in the dependencies, not sure why.
+# I removed it because it causes `make tags` to build Emacs.
+TAGS tags: lib lib-src # src
 	$(MAKE) -C src tags
 
-.PHONY: have-tests
-have-tests:
-	@if test ! -d test; then \
-	  echo "You do not seem to have the test/ directory."; \
-	  echo "Maybe you are using a release tarfile, rather than a repository checkout."; \
-	 exit 1; \
-	fi
-
-.PHONY: check check-maybe check-expensive check-all
-check check-maybe check-expensive check-all: have-tests all
-	$(MAKE) -C src $@
+CHECK_TARGETS = check check-maybe check-expensive check-all
+.PHONY: $(CHECK_TARGETS)
+$(CHECK_TARGETS): all
+ifeq ($(wildcard test),test)
 	$(MAKE) -C test $@
+else
+	@echo "You do not seem to have the test/ directory."
+	@echo "Maybe you used a release tarfile that lacks tests."
+endif
 
 clippy:
 	$(MAKE) -C src $@
@@ -1140,7 +1157,7 @@ ChangeLog:
 	  ./$(emacslog) -o $(CHANGELOG) -n $(CHANGELOG_HISTORY_INDEX_MAX)
 
 # Check that we are in a good state for changing history.
-PREFERRED_BRANCH = emacs-26
+PREFERRED_BRANCH = emacs-27
 preferred-branch-is-current:
 	git branch | grep -q '^\* $(PREFERRED_BRANCH)$$'
 unchanged-history-files:

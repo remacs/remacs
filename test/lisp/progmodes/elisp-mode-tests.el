@@ -1,6 +1,6 @@
 ;;; elisp-mode-tests.el --- Tests for emacs-lisp-mode  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 ;; Author: Dmitry Gutov <dgutov@yandex.ru>
 ;; Author: Stephen Leake <stephen_leake@member.fsf.org>
@@ -298,6 +298,16 @@
       )))
 
 
+;; tmp may be on a different filesystem to the tests, but, ehh.
+(defvar xref--case-insensitive
+  (let ((dir (make-temp-file "xref-test" t)))
+    (unwind-protect
+        (progn
+          (with-temp-file (expand-file-name "hElLo" dir) "hello")
+          (file-exists-p (expand-file-name "HELLO" dir)))
+      (delete-directory dir t)))
+  "Non-nil if file system seems to be case-insensitive.")
+
 (defun xref-elisp-test-run (xrefs expected-xrefs)
   (should (= (length xrefs) (length expected-xrefs)))
   (while xrefs
@@ -306,11 +316,14 @@
            (expected-xref (or (when (consp expected) (car expected)) expected))
            (expected-source (when (consp expected) (cdr expected))))
 
-      (setf (xref-elisp-location-file (oref xref location))
-            (xref-elisp-location-file (oref xref location)))
+      ;; Downcase the filenames for case-insensitive file systems.
+      (when xref--case-insensitive
+        (setf (xref-elisp-location-file (oref xref location))
+              (downcase (xref-elisp-location-file (oref xref location))))
 
-      (setf (xref-elisp-location-file (oref expected-xref location))
-            (xref-elisp-location-file (oref expected-xref location)))
+        (setf (xref-elisp-location-file (oref expected-xref location))
+              (downcase (xref-elisp-location-file
+                         (oref expected-xref location)))))
 
       (should (equal xref expected-xref))
 
@@ -337,9 +350,18 @@ to (xref-elisp-test-descr-to-target xref)."
 ;; so we must provide this dir to expand-file-name in the expected
 ;; results. This also allows running these tests from other
 ;; directories.
-(defconst emacs-test-dir
-  (file-truename (file-name-directory
-                  (or load-file-name (buffer-file-name)))))
+;;
+;; We add 'downcase' here to deliberately cause a potential problem on
+;; case-insensitive file systems. On such systems, `load-file-name'
+;; may not have the same case as the real file system, since the user
+;; can set `load-path' to have the wrong case (on my Windows system,
+;; `load-path' has the correct case, so this causes the expected test
+;; values to have the wrong case). This is handled in
+;; `xref-elisp-test-run'.
+(defvar emacs-test-dir
+  (funcall (if xref--case-insensitive 'downcase 'identity)
+           (file-truename (file-name-directory
+                           (or load-file-name (buffer-file-name))))))
 
 
 ;; alphabetical by test name

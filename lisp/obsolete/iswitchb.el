@@ -1,9 +1,8 @@
 ;;; iswitchb.el --- switch between buffers using substrings
 
-;; Copyright (C) 1996-1997, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1997, 2000-2020 Free Software Foundation, Inc.
 
 ;; Author: Stephen Eglen <stephen@gnu.org>
-;; Maintainer: Stephen Eglen <stephen@gnu.org>
 ;; Keywords: completion convenience
 ;; Obsolete-since: 24.4
 
@@ -177,9 +176,6 @@
 ;; iswitch for all buffer selections in Emacs, add:
 ;; (setq read-buffer-function #'iswitchb-read-buffer)
 ;; (This variable was introduced in Emacs 20.3.)
-;; XEmacs users can get the same behavior by doing:
-;; (defalias 'read-buffer #'iswitchb-read-buffer)
-;; since `read-buffer' is defined in lisp.
 
 ;; Using iswitchb for other completion tasks.
 
@@ -1417,9 +1413,6 @@ See the variable `iswitchb-case' for details."
 ;;;###autoload
 (define-minor-mode iswitchb-mode
   "Toggle Iswitchb mode.
-With a prefix argument ARG, enable Iswitchb mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Iswitchb mode is a global minor mode that enables switching
 between buffers using substrings.  See `iswitchb' for details."

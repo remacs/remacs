@@ -1,5 +1,5 @@
 /* Declarations for `malloc' and friends.
-   Copyright (C) 1990-1993, 1995-1996, 1999, 2002-2007, 2013-2018 Free
+   Copyright (C) 1990-1993, 1995-1996, 1999, 2002-2007, 2013-2020 Free
    Software Foundation, Inc.
 		  Written May 1989 by Mike Haertel.
 
@@ -36,9 +36,7 @@ License along with this library.  If not, see <https://www.gnu.org/licenses/>.
 #include <pthread.h>
 #endif
 
-#ifdef emacs
-# include "lisp.h"
-#endif
+#include "lisp.h"
 
 #include "ptr-bounds.h"
 
@@ -78,7 +76,6 @@ extern void *(*__morecore) (ptrdiff_t);
 
 #ifdef HYBRID_MALLOC
 # include "sheap.h"
-# define DUMPED bss_sbrk_did_unexec
 #endif
 
 #ifdef	__cplusplus
@@ -180,7 +177,7 @@ struct list
   };
 
 /* Free list headers for each fragment size.  */
-extern struct list _fraghead[];
+static struct list _fraghead[BLOCKLOG];
 
 /* List of blocks allocated with aligned_alloc and friends.  */
 struct alignlist
@@ -338,9 +335,6 @@ size_t _heapindex;
 /* Limit of valid info table indices.  */
 size_t _heaplimit;
 
-/* Free lists for each fragment size.  */
-struct list _fraghead[BLOCKLOG];
-
 /* Instrumentation.  */
 size_t _chunks_used;
 size_t _bytes_used;
@@ -349,10 +343,6 @@ size_t _bytes_free;
 
 /* Are you experienced?  */
 int __malloc_initialized;
-
-#else
-
-static struct list _fraghead[BLOCKLOG];
 
 #endif /* HYBRID_MALLOC */
 
@@ -1506,7 +1496,7 @@ static void *
 gdefault_morecore (ptrdiff_t increment)
 {
 #ifdef HYBRID_MALLOC
-  if (!DUMPED)
+  if (!definitely_will_not_unexec_p ())
     {
       return bss_sbrk (increment);
     }
@@ -1724,6 +1714,8 @@ extern int posix_memalign (void **memptr, size_t alignment, size_t size);
 static bool
 allocated_via_gmalloc (void *ptr)
 {
+  if (!__malloc_initialized)
+    return false;
   size_t block = BLOCK (ptr);
   size_t blockmax = _heaplimit - 1;
   return block <= blockmax && _heapinfo[block].busy.type != 0;
@@ -1735,7 +1727,7 @@ allocated_via_gmalloc (void *ptr)
 void *
 hybrid_malloc (size_t size)
 {
-  if (DUMPED)
+  if (definitely_will_not_unexec_p ())
     return malloc (size);
   return gmalloc (size);
 }
@@ -1743,7 +1735,7 @@ hybrid_malloc (size_t size)
 void *
 hybrid_calloc (size_t nmemb, size_t size)
 {
-  if (DUMPED)
+  if (definitely_will_not_unexec_p ())
     return calloc (nmemb, size);
   return gcalloc (nmemb, size);
 }
@@ -1761,7 +1753,7 @@ hybrid_free (void *ptr)
 void *
 hybrid_aligned_alloc (size_t alignment, size_t size)
 {
-  if (!DUMPED)
+  if (!definitely_will_not_unexec_p ())
     return galigned_alloc (alignment, size);
   /* The following is copied from alloc.c */
 #ifdef HAVE_ALIGNED_ALLOC
@@ -1784,7 +1776,7 @@ hybrid_realloc (void *ptr, size_t size)
     return hybrid_malloc (size);
   if (!allocated_via_gmalloc (ptr))
     return realloc (ptr, size);
-  if (!DUMPED)
+  if (!definitely_will_not_unexec_p ())
     return grealloc (ptr, size);
 
   /* The dumped emacs is trying to realloc storage allocated before
@@ -2017,12 +2009,7 @@ mabort (enum mcheck_status status)
   __libc_fatal (msg);
 #else
   fprintf (stderr, "mcheck: %s\n", msg);
-  fflush (stderr);
-# ifdef emacs
   emacs_abort ();
-# else
-  abort ();
-# endif
 #endif
 }
 

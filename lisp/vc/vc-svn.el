@@ -1,6 +1,6 @@
 ;;; vc-svn.el --- non-resident support for Subversion version-control  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2003-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
 ;; Author:      FSF (see vc.el for full credits)
 ;; Maintainer:  Stefan Monnier <monnier@gnu.org>
@@ -127,6 +127,7 @@ switches."
 
 (defun vc-svn-revision-granularity () 'repository)
 (defun vc-svn-checkout-model (_files) 'implicit)
+(defun vc-svn-update-on-retrieve-tag () nil)
 
 ;;;
 ;;; State-querying functions
@@ -353,21 +354,25 @@ to the SVN command."
 
 (defun vc-svn-ignore (file &optional directory remove)
   "Ignore FILE under Subversion.
-FILE is a file wildcard, relative to the root directory of DIRECTORY."
-  (let* ((ignores (vc-svn-ignore-completion-table directory))
-         (file (file-relative-name file directory))
+FILE is a wildcard specification, either relative to
+DIRECTORY or absolute."
+  (let* ((path (directory-file-name (expand-file-name file directory)))
+         (directory (file-name-directory path))
+         (file (file-name-nondirectory path))
+         (ignores (vc-svn-ignore-completion-table directory))
          (ignores (if remove
                       (delete file ignores)
                     (push file ignores))))
     (vc-svn-command nil 0 nil nil "propset" "svn:ignore"
                     (mapconcat #'identity ignores "\n")
-                    (expand-file-name directory))))
+                    directory)))
 
 (defun vc-svn-ignore-completion-table (directory)
   "Return the list of ignored files in DIRECTORY."
   (with-temp-buffer
-    (vc-svn-command t t nil "propget" "svn:ignore" (expand-file-name directory))
-    (split-string (buffer-string))))
+    (when (zerop (vc-svn-command
+                  t t nil "propget" "svn:ignore" (expand-file-name directory)))
+      (split-string (buffer-string) "\n"))))
 
 (defun vc-svn-find-admin-dir (file)
   "Return the administrative directory of FILE."
@@ -479,7 +484,8 @@ The changes are between FIRST-VERSION and SECOND-VERSION."
                ((string= (match-string 2) "U")
                 (vc-file-setprop file 'vc-state 'up-to-date)
                 (vc-file-setprop file 'vc-checkout-time
-                                 (nth 5 (file-attributes file)))
+                                 (file-attribute-modification-time
+				  (file-attributes file)))
                 0);; indicate success to the caller
                ;; Merge successful, but our own changes are still in the file
                ((string= (match-string 2) "G")
@@ -573,13 +579,17 @@ If LIMIT is non-nil, show no more than this many entries."
 		       ;; subsequent commits.  At least that's what the
 		       ;; vc-cvs.el code does.
 		       "-rHEAD:0"))
-		    (when limit (list "--limit" (format "%s" limit))))))
+                    (if (eq vc-log-view-type 'with-diff)
+                        (list "--diff"))
+                    (when limit (list "--limit" (format "%s" limit))))))
 	;; Dump log for the entire directory.
 	(apply 'vc-svn-command buffer 0 nil "log"
 	       (append
 		(list
 		 (if start-revision (format "-r%s" start-revision) "-rHEAD:0"))
-		(when limit (list "--limit" (format "%s" limit)))))))))
+                (if (eq vc-log-view-type 'with-diff)
+                    (list "--diff"))
+                (when limit (list "--limit" (format "%s" limit)))))))))
 
 (defun vc-svn-diff (files &optional oldvers newvers buffer async)
   "Get a difference report using SVN between two revisions of fileset FILES."
@@ -729,7 +739,8 @@ Set file properties accordingly.  If FILENAME is non-nil, return its status."
 	   (if (eq (char-after (match-beginning 1)) ?*)
 	       'needs-update
              (vc-file-setprop file 'vc-checkout-time
-                              (nth 5 (file-attributes file)))
+                              (file-attribute-modification-time
+			       (file-attributes file)))
 	     'up-to-date))
 	  ((eq status ?A)
 	   ;; If the file was actually copied, (match-string 2) is "-".
@@ -757,7 +768,7 @@ Set file properties accordingly.  If FILENAME is non-nil, return its status."
   ;; an uppercase or lowercase letter and can contain uppercase and
   ;; lowercase letters, digits, `-', and `_'.
   (and (string-match "^[a-zA-Z]" tag)
-       (not (string-match "[^a-z0-9A-Z-_]" tag))))
+       (not (string-match "[^a-z0-9A-Z_-]" tag))))
 
 (defun vc-svn-valid-revision-number-p (tag)
   "Return non-nil if TAG is a valid revision number."

@@ -1,6 +1,6 @@
 ;;; prog-mode.el --- Generic major mode for programming  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: internal
@@ -39,7 +39,8 @@
 (defcustom prog-mode-hook nil
   "Normal hook run when entering programming modes."
   :type 'hook
-  :options '(flyspell-prog-mode abbrev-mode flymake-mode linum-mode
+  :options '(flyspell-prog-mode abbrev-mode flymake-mode
+                                display-line-numbers-mode
                                 prettify-symbols-mode)
   :group 'prog-mode)
 
@@ -138,9 +139,10 @@ Regexp match data 0 specifies the characters to be composed."
       ;; No composition for you.  Let's actually remove any
       ;; composition we may have added earlier and which is now
       ;; incorrect.
-      (remove-text-properties start end '(composition
-                                          prettify-symbols-start
-                                          prettify-symbols-end))))
+      (remove-list-of-text-properties start end
+                                      '(composition
+                                        prettify-symbols-start
+                                        prettify-symbols-end))))
   ;; Return nil because we're not adding any face property.
   nil)
 
@@ -191,14 +193,11 @@ on the symbol."
 	        (e (apply #'max e)))
       (with-silent-modifications
 	(setq prettify-symbols--current-symbol-bounds (list s e))
-	(remove-text-properties s e '(composition))))))
+        (remove-text-properties s e '(composition nil))))))
 
 ;;;###autoload
 (define-minor-mode prettify-symbols-mode
   "Toggle Prettify Symbols mode.
-With a prefix argument ARG, enable Prettify Symbols mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 When Prettify Symbols mode and font-locking are enabled, symbols are
 prettified (displayed as composed characters) according to the rules
@@ -214,6 +213,9 @@ You can enable this mode locally in desired buffers, or use
 `global-prettify-symbols-mode' to enable it for all modes that
 support it."
   :init-value nil
+  (when prettify-symbols--keywords
+    (font-lock-remove-keywords nil prettify-symbols--keywords)
+    (setq prettify-symbols--keywords nil))
   (if prettify-symbols-mode
       ;; Turn on
       (when (setq prettify-symbols--keywords (prettify-symbols--make-keywords))
@@ -229,9 +231,6 @@ support it."
         (font-lock-flush))
     ;; Turn off
     (remove-hook 'post-command-hook #'prettify-symbols--post-command-hook t)
-    (when prettify-symbols--keywords
-      (font-lock-remove-keywords nil prettify-symbols--keywords)
-      (setq prettify-symbols--keywords nil))
     (when (memq 'composition font-lock-extra-managed-props)
       (setq font-lock-extra-managed-props (delq 'composition
                                                 font-lock-extra-managed-props))

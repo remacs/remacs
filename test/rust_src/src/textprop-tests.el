@@ -1,6 +1,6 @@
 ;;; textprop-tests.el --- tests for textprops.rs functions
 
-;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 ;; Author: Wolfgang Jenkner <wjenkner@inode.at>
 ;; Keywords: internal

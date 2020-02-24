@@ -1,6 +1,6 @@
 ;;; scroll-lock.el --- Scroll lock scrolling.
 
-;; Copyright (C) 2005-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
 ;; Author: Ralf Angeli <angeli@iwi.uni-sb.de>
 ;; Maintainer: emacs-devel@gnu.org
@@ -36,6 +36,7 @@
     (define-key map [remap previous-line] 'scroll-lock-previous-line)
     (define-key map [remap forward-paragraph] 'scroll-lock-forward-paragraph)
     (define-key map [remap backward-paragraph] 'scroll-lock-backward-paragraph)
+    (define-key map [S-down] 'scroll-lock-next-line-always-scroll)
     map)
   "Keymap for Scroll Lock mode.")
 
@@ -49,12 +50,14 @@
 ;;;###autoload
 (define-minor-mode scroll-lock-mode
   "Buffer-local minor mode for pager-like scrolling.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.  When enabled, keys that normally move
-point by line or paragraph will scroll the buffer by the
-respective amount of lines instead and point will be kept
-vertically fixed relative to window boundaries during scrolling."
+
+When enabled, keys that normally move point by line or paragraph
+will scroll the buffer by the respective amount of lines instead
+and point will be kept vertically fixed relative to window
+boundaries during scrolling.
+
+Note that the default key binding to Scroll_Lock will not work on
+MS-Windows systems if `w32-scroll-lock-modifier' is non-nil."
   :lighter " ScrLck"
   :keymap scroll-lock-mode-map
   (if scroll-lock-mode
@@ -81,6 +84,16 @@ vertically fixed relative to window boundaries during scrolling."
 			   (window-width)))))
       (move-to-column column)
     (forward-char (min column (- (line-end-position) (point))))))
+
+(defun scroll-lock-next-line-always-scroll (&optional arg)
+  "Scroll up ARG lines keeping point fixed."
+  (interactive "p")
+  (or arg (setq arg 1))
+  (scroll-lock-update-goal-column)
+  (condition-case nil
+      (scroll-up arg)
+    (end-of-buffer (goto-char (point-max)) (recenter 1)))
+  (scroll-lock-move-to-column scroll-lock-temporary-goal-column))
 
 (defun scroll-lock-next-line (&optional arg)
   "Scroll up ARG lines keeping point fixed."

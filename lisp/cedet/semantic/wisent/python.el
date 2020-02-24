@@ -1,9 +1,8 @@
 ;;; wisent-python.el --- Semantic support for Python
 
-;; Copyright (C) 2002, 2004, 2006-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2002, 2004, 2006-2020 Free Software Foundation, Inc.
 
-;; Author: Richard Kim  <emacs18@gmail.com>
-;; Maintainer: Richard Kim  <emacs18@gmail.com>
+;; Author: Richard Kim <emacs18@gmail.com>
 ;; Created: June 2002
 ;; Keywords: syntax
 
@@ -40,9 +39,6 @@
 (require 'semantic/dep)
 (require 'semantic/ctxt)
 (require 'semantic/format)
-
-(eval-when-compile
-  (require 'cl))
 
 ;;; Customization
 ;;
@@ -358,7 +354,7 @@ Set attributes for constructors, special, private and static methods."
   ;; + first argument is self
   (when (and (> (length (semantic-tag-function-arguments tag)) 0)
 	     (string= (semantic-tag-name
-		       (first (semantic-tag-function-arguments tag)))
+		       (car (semantic-tag-function-arguments tag)))
 		      "self"))
     (semantic-tag-put-attribute tag :parent "dummy"))
 
@@ -533,11 +529,6 @@ Shortens `code' tags, but passes through for others."
 				      (package  . "Package")
 				      (code . "Code")))
    )
-
-;; Make sure the newer python modes pull in the same python
-;; mode overrides.
-(define-child-mode python-2-mode python-mode "Python 2 mode")
-(define-child-mode python-3-mode python-mode "Python 3 mode")
 
 
 ;;; Utility functions

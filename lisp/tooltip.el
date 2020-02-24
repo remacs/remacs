@@ -1,6 +1,6 @@
 ;;; tooltip.el --- show tooltip windows
 
-;; Copyright (C) 1997, 1999-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 1999-2020 Free Software Foundation, Inc.
 
 ;; Author: Gerd Moellmann <gerd@acm.org>
 ;; Keywords: help c mouse tools
@@ -42,9 +42,6 @@
 
 (define-minor-mode tooltip-mode
   "Toggle Tooltip mode.
-With a prefix argument ARG, enable Tooltip mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
 
 When this global minor mode is enabled, Emacs displays help
 text (e.g. for buttons and menu items that you put the mouse on)
@@ -204,7 +201,8 @@ This might return nil if the event did not occur over a buffer."
 (defun tooltip-delay ()
   "Return the delay in seconds for the next tooltip."
   (if (and tooltip-hide-time
-           (< (- (float-time) tooltip-hide-time) tooltip-recent-seconds))
+	   (time-less-p (time-since tooltip-hide-time)
+			tooltip-recent-seconds))
       tooltip-short-delay
     tooltip-delay))
 
@@ -367,7 +365,10 @@ It is also called if Tooltip mode is on, for text-only displays."
       (let ((message-log-max nil))
         (message "%s" tooltip-previous-message)
         (setq tooltip-previous-message nil)))
-     (t
+     ;; Only stop displaying the message when the current message is our own.
+     ;; This has the advantage of not clearing the echo area when
+     ;; running after an error message was displayed (Bug#3192).
+     ((equal-including-properties tooltip-help-message (current-message))
       (message nil)))))
 
 (defun tooltip-show-help (msg)

@@ -1,7 +1,7 @@
 /* -*- coding: utf-8 -*- */
 /* GNU Emacs case conversion functions.
 
-Copyright (C) 1985, 1994, 1997-1999, 2001-2018 Free Software Foundation,
+Copyright (C) 1985, 1994, 1997-1999, 2001-2020 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -150,7 +150,7 @@ case_character_impl (struct casing_str_buf *buf,
 	  prop = CHAR_TABLE_REF (ctx->titlecase_char_table, ch);
 	  if (CHARACTERP (prop))
 	    {
-	      cased = XFASTINT (prop);
+	      cased = XFIXNAT (prop);
 	      cased_is_set = true;
 	    }
 	}
@@ -223,7 +223,7 @@ do_casify_natnum (struct casing_context *ctx, Lisp_Object obj)
 {
   int flagbits = (CHAR_ALT | CHAR_SUPER | CHAR_HYPER
 		  | CHAR_SHIFT | CHAR_CTL | CHAR_META);
-  int ch = XFASTINT (obj);
+  int ch = XFIXNAT (obj);
 
   /* If the character has higher bits set above the flags, return it unchanged.
      It is not a real character.  */
@@ -248,7 +248,7 @@ do_casify_natnum (struct casing_context *ctx, Lisp_Object obj)
 
   if (! multibyte)
     MAKE_CHAR_UNIBYTE (cased);
-  return make_natnum (cased | flags);
+  return make_fixed_natnum (cased | flags);
 }
 
 static Lisp_Object
@@ -319,7 +319,7 @@ casify_object (enum case_action flag, Lisp_Object obj)
   struct casing_context ctx;
   prepare_casing_context (&ctx, flag, false);
 
-  if (NATNUMP (obj))
+  if (FIXNATP (obj))
     return do_casify_natnum (&ctx, obj);
   else if (!STRINGP (obj))
     wrong_type_argument (Qchar_or_string_p, obj);
@@ -436,8 +436,8 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
   struct casing_context ctx;
 
   validate_region (&b, &e);
-  ptrdiff_t start = XFASTINT (b);
-  ptrdiff_t end = XFASTINT (e);
+  ptrdiff_t start = XFIXNAT (b);
+  ptrdiff_t end = XFIXNAT (e);
   if (start == end)
     /* Not modifying because nothing marked.  */
     return end;
@@ -465,4 +465,182 @@ casify_region (enum case_action flag, Lisp_Object b, Lisp_Object e)
     }
 
   return orig_end + added;
+}
+
+/* Casify a possibly noncontiguous region according to FLAG.  BEG and
+   END specify the bounds, except that if REGION_NONCONTIGUOUS_P is
+   non-nil, the region's bounds are specified by (funcall
+   region-extract-function 'bounds) instead.  */
+
+static Lisp_Object
+casify_pnc_region (enum case_action flag, Lisp_Object beg, Lisp_Object end,
+		   Lisp_Object region_noncontiguous_p)
+{
+  if (!NILP (region_noncontiguous_p))
+    {
+      Lisp_Object bounds = call1 (Vregion_extract_function, Qbounds);
+      FOR_EACH_TAIL (bounds)
+	{
+	  CHECK_CONS (XCAR (bounds));
+	  casify_region (flag, XCAR (XCAR (bounds)), XCDR (XCAR (bounds)));
+	}
+      CHECK_LIST_END (bounds, bounds);
+    }
+  else
+    casify_region (flag, beg, end);
+
+  return Qnil;
+}
+
+DEFUN ("upcase-region", Fupcase_region, Supcase_region, 2, 3,
+       "(list (region-beginning) (region-end) (region-noncontiguous-p))",
+       doc: /* Convert the region to upper case.  In programs, wants two arguments.
+These arguments specify the starting and ending character numbers of
+the region to operate on.  When used as a command, the text between
+point and the mark is operated on.
+See also `capitalize-region'.  */)
+  (Lisp_Object beg, Lisp_Object end, Lisp_Object region_noncontiguous_p)
+{
+  return casify_pnc_region (CASE_UP, beg, end, region_noncontiguous_p);
+}
+
+DEFUN ("downcase-region", Fdowncase_region, Sdowncase_region, 2, 3,
+       "(list (region-beginning) (region-end) (region-noncontiguous-p))",
+       doc: /* Convert the region to lower case.  In programs, wants two arguments.
+These arguments specify the starting and ending character numbers of
+the region to operate on.  When used as a command, the text between
+point and the mark is operated on.  */)
+  (Lisp_Object beg, Lisp_Object end, Lisp_Object region_noncontiguous_p)
+{
+  return casify_pnc_region (CASE_DOWN, beg, end, region_noncontiguous_p);
+}
+
+DEFUN ("capitalize-region", Fcapitalize_region, Scapitalize_region, 2, 3,
+       "(list (region-beginning) (region-end) (region-noncontiguous-p))",
+       doc: /* Convert the region to capitalized form.
+This means that each word's first character is converted to either
+title case or upper case, and the rest to lower case.
+In programs, give two arguments, the starting and ending
+character positions to operate on.  */)
+  (Lisp_Object beg, Lisp_Object end, Lisp_Object region_noncontiguous_p)
+{
+  return casify_pnc_region (CASE_CAPITALIZE, beg, end, region_noncontiguous_p);
+}
+
+/* Like Fcapitalize_region but change only the initials.  */
+
+DEFUN ("upcase-initials-region", Fupcase_initials_region,
+       Supcase_initials_region, 2, 3,
+       "(list (region-beginning) (region-end) (region-noncontiguous-p))",
+       doc: /* Upcase the initial of each word in the region.
+This means that each word's first character is converted to either
+title case or upper case, and the rest are left unchanged.
+In programs, give two arguments, the starting and ending
+character positions to operate on.  */)
+     (Lisp_Object beg, Lisp_Object end, Lisp_Object region_noncontiguous_p)
+{
+  return casify_pnc_region (CASE_CAPITALIZE_UP, beg, end,
+			    region_noncontiguous_p);
+}
+
+static Lisp_Object
+casify_word (enum case_action flag, Lisp_Object arg)
+{
+  CHECK_FIXNUM (arg);
+  ptrdiff_t farend = scan_words (PT, XFIXNUM (arg));
+  if (!farend)
+    farend = XFIXNUM (arg) <= 0 ? BEGV : ZV;
+  SET_PT (casify_region (flag, make_fixnum (PT), make_fixnum (farend)));
+  return Qnil;
+}
+
+DEFUN ("upcase-word", Fupcase_word, Supcase_word, 1, 1, "p",
+       doc: /* Convert to upper case from point to end of word, moving over.
+
+If point is in the middle of a word, the part of that word before point
+is ignored when moving forward.
+
+With negative argument, convert previous words but do not move.
+See also `capitalize-word'.  */)
+  (Lisp_Object arg)
+{
+  return casify_word (CASE_UP, arg);
+}
+
+DEFUN ("downcase-word", Fdowncase_word, Sdowncase_word, 1, 1, "p",
+       doc: /* Convert to lower case from point to end of word, moving over.
+
+If point is in the middle of a word, the part of that word before point
+is ignored when moving forward.
+
+With negative argument, convert previous words but do not move.  */)
+  (Lisp_Object arg)
+{
+  return casify_word (CASE_DOWN, arg);
+}
+
+DEFUN ("capitalize-word", Fcapitalize_word, Scapitalize_word, 1, 1, "p",
+       doc: /* Capitalize from point to the end of word, moving over.
+With numerical argument ARG, capitalize the next ARG-1 words as well.
+This gives the word(s) a first character in upper case
+and the rest lower case.
+
+If point is in the middle of a word, the part of that word before point
+is ignored when moving forward.
+
+With negative argument, capitalize previous words but do not move.  */)
+  (Lisp_Object arg)
+{
+  return casify_word (CASE_CAPITALIZE, arg);
+}
+
+void
+syms_of_casefiddle (void)
+{
+  DEFSYM (Qbounds, "bounds");
+  DEFSYM (Qidentity, "identity");
+  DEFSYM (Qtitlecase, "titlecase");
+  DEFSYM (Qspecial_uppercase, "special-uppercase");
+  DEFSYM (Qspecial_lowercase, "special-lowercase");
+  DEFSYM (Qspecial_titlecase, "special-titlecase");
+
+  DEFVAR_LISP ("region-extract-function", Vregion_extract_function,
+	       doc: /* Function to get the region's content.
+Called with one argument METHOD which can be:
+- nil: return the content as a string (list of strings for
+  non-contiguous regions).
+- `delete-only': delete the region; the return value is undefined.
+- `bounds': return the boundaries of the region as a list of one
+  or more cons cells of the form (START . END).
+- anything else: delete the region and return its content
+  as a string (or list of strings for non-contiguous regions),
+  after filtering it with `filter-buffer-substring', which
+  is called, for each contiguous sub-region, with METHOD as its
+  3rd argument.  */);
+  Vregion_extract_function = Qnil; /* simple.el sets this.  */
+
+  defsubr (&Supcase);
+  defsubr (&Sdowncase);
+  defsubr (&Scapitalize);
+  defsubr (&Supcase_initials);
+  defsubr (&Supcase_region);
+  defsubr (&Sdowncase_region);
+  defsubr (&Scapitalize_region);
+  defsubr (&Supcase_initials_region);
+  defsubr (&Supcase_word);
+  defsubr (&Sdowncase_word);
+  defsubr (&Scapitalize_word);
+}
+
+void
+keys_of_casefiddle (void)
+{
+  initial_define_key (control_x_map, Ctl ('U'), "upcase-region");
+  Fput (intern ("upcase-region"), Qdisabled, Qt);
+  initial_define_key (control_x_map, Ctl ('L'), "downcase-region");
+  Fput (intern ("downcase-region"), Qdisabled, Qt);
+
+  initial_define_key (meta_map, 'u', "upcase-word");
+  initial_define_key (meta_map, 'l', "downcase-word");
+  initial_define_key (meta_map, 'c', "capitalize-word");
 }

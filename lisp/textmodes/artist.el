@@ -1,9 +1,8 @@
 ;;; artist.el --- draw ascii graphics with your mouse
 
-;; Copyright (C) 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
 ;; Author:       Tomas Abrahamsson <tab@lysator.liu.se>
-;; Maintainer:   Tomas Abrahamsson <tab@lysator.liu.se>
 ;; Keywords:     mouse
 ;; Version:	 1.2.6
 ;; Release-date: 6-Aug-2004
@@ -351,13 +350,12 @@ Example:
 (defvar artist-pointer-shape (if (eq window-system 'x) x-pointer-crosshair nil)
   "If in X Windows, use this pointer shape while drawing with the mouse.")
 
+(defvaralias 'artist-text-renderer 'artist-text-renderer-function)
 
 (defcustom artist-text-renderer-function 'artist-figlet
   "Function for doing text rendering."
   :group 'artist-text
   :type 'symbol)
-(defvaralias 'artist-text-renderer 'artist-text-renderer-function)
-
 
 (defcustom artist-figlet-program "figlet"
   "Program to run for `figlet'."
@@ -1199,7 +1197,7 @@ PREV-OP-ARG are used when invoked recursively during the build-up."
 ;;;###autoload
 (define-minor-mode artist-mode
   "Toggle Artist mode.
-With argument ARG, turn Artist mode on if ARG is positive.
+
 Artist lets you draw lines, squares, rectangles and poly-lines,
 ellipses and circles with your mouse and/or keyboard.
 
@@ -1401,7 +1399,10 @@ Keymap summary
 	 (artist-mode-exit))
 	(t
 	 ;; Turn mode on
-	 (artist-mode-init))))
+	 (artist-mode-init)
+         (let ((font (face-attribute 'default :font)))
+           (when (and (fontp font) (not (font-get font :spacing)))
+             (message "The default font isn't monospaced, so the drawings in this buffer may look odd"))))))
 
 ;; Init and exit
 (defun artist-mode-init ()
@@ -2893,7 +2894,7 @@ Returns a list of strings."
        dir-list)
       (mapcar
        (lambda (file)
-         (replace-regexp-in-string "\.flf\\'" "" file))
+         (replace-regexp-in-string "\\.flf\\'" "" file))
        result))))
 
 (defun artist-figlet-choose-font ()

@@ -1,6 +1,6 @@
 ;;; calc-comb.el --- combinatoric functions for Calc
 
-;; Copyright (C) 1990-1993, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1990-1993, 2001-2020 Free Software Foundation, Inc.
 
 ;; Author: David Gillespie <daveg@synaptics.com>
 
@@ -211,8 +211,8 @@
   (calc-invert-func)
   (calc-next-prime iters))
 
-(defun calc-prime-factors (iters)
-  (interactive "p")
+(defun calc-prime-factors (&optional _iters)
+  (interactive)
   (calc-slow-wrapper
    (let ((res (calcFunc-prfac (calc-top-n 1))))
      (if (not math-prime-factors-finished)
@@ -580,7 +580,7 @@
     ;; deduce a better value for RAND_MAX.
     (let ((i 0))
       (while (< (setq i (1+ i)) 30)
-        (if (> (lsh (math-abs (random)) math-random-shift) 4095)
+        (if (> (ash (math-abs (random)) math-random-shift) 4095)
             (setq math-random-shift (1- math-random-shift))))))
   (setq math-last-RandSeed var-RandSeed
 	math-gaussian-cache nil))
@@ -592,11 +592,11 @@
 				   (cdr math-random-table))
 	      math-random-ptr2 (or (cdr math-random-ptr2)
 				   (cdr math-random-table)))
-	(logand (lsh (setcar math-random-ptr1
+	(logand (ash (setcar math-random-ptr1
 			     (logand (- (car math-random-ptr1)
 					(car math-random-ptr2)) 524287))
 		     -6) 1023))
-    (logand (lsh (random) math-random-shift) 1023)))
+    (logand (ash (random) math-random-shift) 1023)))
 
 
 ;;; Produce a random digit in the range 0..999.
@@ -806,7 +806,6 @@
 		  ((Math-integer-negp n)
 		   '(nil))
 		  ((Math-natnum-lessp n 8000000)
-		   (setq n (math-fixnum n))
 		   (let ((i -1) v)
 		     (while (and (> (% n (setq v (aref math-primes-table
 						       (setq i (1+ i)))))

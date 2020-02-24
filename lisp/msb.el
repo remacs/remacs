@@ -1,6 +1,6 @@
 ;;; msb.el --- customizable buffer-selection with multiple menus
 
-;; Copyright (C) 1993-1995, 1997-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1995, 1997-2020 Free Software Foundation, Inc.
 
 ;; Author: Lars Lindberg <lars.lindberg@home.se>
 ;; Maintainer: emacs-devel@gnu.org
@@ -64,7 +64,7 @@
 ;;  Larry Rosenberg <ljr@ictv.com>
 ;;  Will Henney <will@astroscu.unam.mx>
 ;;  Jari Aalto <jaalto@tre.tele.nokia.fi>
-;;  Michael Kifer <kifer@sbkifer.cs.sunysb.edu>
+;;  Michael Kifer <kifer@cs.stonybrook.edu>
 ;;  Gael Marziou <gael@gnlab030.grenoble.hp.com>
 ;;  Dave Gillespie <daveg@thymus.synaptics.com>
 ;;  Alon Albert <alon@milcse.rtsg.mot.com>
@@ -1132,9 +1132,6 @@ variable `msb-menu-cond'."
 ;;;###autoload
 (define-minor-mode msb-mode
   "Toggle Msb mode.
-With a prefix argument ARG, enable Msb mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
 
 This mode overrides the binding(s) of `mouse-buffer-menu' to provide a
 different buffer menu using the function `msb'."

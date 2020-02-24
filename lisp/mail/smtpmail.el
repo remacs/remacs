@@ -1,9 +1,9 @@
 ;;; smtpmail.el --- simple SMTP protocol (RFC 821) for sending mail  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1995-1996, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1995-1996, 2001-2020 Free Software Foundation, Inc.
 
 ;; Author: Tomoji Kagatani <kagatani@rbc.ncl.omron.co.jp>
-;; Maintainer: Simon Josefsson <simon@josefsson.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; w32 Maintainer: Brian D. Carlstrom <bdc@ai.mit.edu>
 ;; ESMTP support: Simon Leinen <simon@switch.ch>
 ;; Hacked by Mike Taylor, 11th October 1999 to add support for
@@ -70,42 +70,36 @@
 (defcustom smtpmail-default-smtp-server nil
   "Specify default SMTP server.
 This only has effect if you specify it before loading the smtpmail library."
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-smtp-server
   (or (getenv "SMTPSERVER") smtpmail-default-smtp-server)
   "The name of the host running SMTP server."
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-smtp-service 25
   "SMTP service port number.
 The default value would be \"smtp\" or 25."
-  :type '(choice (integer :tag "Port") (string :tag "Service"))
-  :group 'smtpmail)
+  :type '(choice (integer :tag "Port") (string :tag "Service")))
 
 (defcustom smtpmail-smtp-user nil
   "User name to use when looking up credentials in the authinfo file.
 If non-nil, only consider credentials for the specified user."
   :version "24.1"
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-local-domain nil
   "Local domain name without a host name.
 If the function `system-name' returns the full internet address,
 don't define this value."
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-stream-type nil
   "Type of SMTP connections to use.
-This may be either nil (possibly upgraded to STARTTLS if possible),
-or `starttls' (refuse to send if STARTTLS isn't available), or `plain'
-\(never use STARTTLS), or `ssl' (to use TLS/SSL)."
+This may be either nil (upgrade with STARTTLS if possible),
+`starttls' (refuse to send if STARTTLS isn't available),
+`plain' (never use STARTTLS), or `ssl' (to use TLS/SSL)."
   :version "24.1"
-  :group 'smtpmail
   :type '(choice (const :tag "Possibly upgrade to STARTTLS" nil)
 		 (const :tag "Always use STARTTLS" starttls)
 		 (const :tag "Never use STARTTLS" plain)
@@ -119,54 +113,64 @@ not include an @-sign, so that each RCPT TO address is fully qualified.
 
 Don't bother to set this unless you have get an error like:
 	Sending failed; 501 <someone>: recipient address must contain a domain."
-  :type '(choice (const nil) string)
-  :group 'smtpmail)
+  :type '(choice (const nil) string))
 
 (defcustom smtpmail-debug-info nil
   "Whether to print info in buffer *trace of SMTP session to <somewhere>*.
 See also `smtpmail-debug-verb' which determines if the SMTP protocol should
 be verbose as well."
-  :type 'boolean
-  :group 'smtpmail)
+  :type 'boolean)
 
 (defcustom smtpmail-debug-verb nil
   "Whether this library sends the SMTP VERB command or not.
 The commands enables verbose information from the SMTP server."
-  :type 'boolean
-  :group 'smtpmail)
+  :type 'boolean)
 
 (defcustom smtpmail-code-conv-from nil
   "Coding system for encoding outgoing mail.
 Used for the value of `sendmail-coding-system' when
 `select-message-coding-system' is called."
-  :type 'coding-system
-  :group 'smtpmail)
+  :type 'coding-system)
 
 (defcustom smtpmail-queue-mail nil
   "Non-nil means mail is queued; otherwise it is sent immediately.
 If queued, it is stored in the directory `smtpmail-queue-dir'
 and sent with `smtpmail-send-queued-mail'."
-  :type 'boolean
-  :group 'smtpmail)
+  :type 'boolean)
 
 (defcustom smtpmail-queue-dir "~/Mail/queued-mail/"
-  "Directory where `smtpmail.el' stores queued mail."
-  :type 'directory
-  :group 'smtpmail)
+  "Directory where `smtpmail.el' stores queued mail.
+This directory should not be writable by other users."
+  :type 'directory)
 
 (defcustom smtpmail-warn-about-unknown-extensions nil
   "If set, print warnings about unknown SMTP extensions.
 This is mainly useful for development purposes, to learn about
 new SMTP extensions that might be useful to support."
   :type 'boolean
-  :version "21.1"
-  :group 'smtpmail)
+  :version "21.1")
 
 (defcustom smtpmail-queue-index-file "index"
   "File name of queued mail index.
 This is relative to `smtpmail-queue-dir'."
-  :type 'string
-  :group 'smtpmail)
+  :type 'string)
+
+(defcustom smtpmail-servers-requiring-authorization nil
+  "Regexp matching servers that require authorization.
+Normally smtpmail will try first to send emails via SMTP without
+user/password credentials, and then retry using credentials if
+the server says that it requires it.  If the server name matches
+this regexp, smtpmail will send over the credentials on the first
+attempt."
+  :type '(choice regexp (const :tag "None" nil))
+  :version "27.1")
+
+(defcustom smtpmail-retries 10
+  "The number of times smtpmail will retry sending when getting transient errors.
+These are errors with a code of 4xx from the SMTP server, which
+mean \"try again\"."
+  :type 'integer
+  :version "27.1")
 
 ;; End of customizable variables.
 
@@ -258,7 +262,7 @@ for `smtpmail-try-auth-method'.")
 			       (fullname-end (point-marker)))
 			   (goto-char fullname-start)
 			   ;; Look for a character that cannot appear unquoted
-			   ;; according to RFC 822.
+			   ;; according to RFC 822 or its successors.
 			   (if (re-search-forward "[^- !#-'*+/-9=?A-Z^-~]"
 						  fullname-end 1)
 			       (progn
@@ -276,8 +280,9 @@ for `smtpmail-try-auth-method'.")
 			   (insert fullname)
 			   (let ((fullname-end (point-marker)))
 			     (goto-char fullname-start)
-			     ;; RFC 822 says \ and nonmatching parentheses
-			     ;; must be escaped in comments.
+			     ;; RFC 822 and its successors say \ and
+			     ;; nonmatching parentheses must be
+			     ;; escaped in comments.
 			     ;; Escape every instance of ()\ ...
 			     (while (re-search-forward "[()\\]" fullname-end 1)
 			       (replace-match "\\\\\\&" t))
@@ -321,11 +326,11 @@ for `smtpmail-try-auth-method'.")
 	    (goto-char (1+ delimline))
 	    (if (eval mail-mailer-swallows-blank-line)
 		(newline))
-	    ;; Find and handle any FCC fields.
+	    ;; Find and handle any Fcc fields.
 	    (goto-char (point-min))
-	    (if (re-search-forward "^FCC:" delimline t)
+	    (if (re-search-forward "^Fcc:" delimline t)
 		;; Force `mail-do-fcc' to use the encoding of the mail
-		;; buffer to encode outgoing messages on FCC files.
+		;; buffer to encode outgoing messages on Fcc files.
 		(let ((coding-system-for-write
 		       ;; mbox files must have Unix EOLs.
 		       (coding-system-change-eol-conversion
@@ -349,7 +354,8 @@ for `smtpmail-try-auth-method'.")
 		  (when (setq result
 			      (smtpmail-via-smtp
 			       smtpmail-recipient-address-list tembuf))
-		    (error "Sending failed: %s" result))
+		    (error "Sending failed: %s"
+                           (smtpmail--sanitize-error-message result)))
 		(error "Sending failed; no recipients"))
 	    (let* ((file-data
 		    (expand-file-name
@@ -360,9 +366,7 @@ for `smtpmail-try-auth-method'.")
 		     smtpmail-queue-dir))
 		   (file-data (convert-standard-filename file-data))
 		   (file-elisp (concat file-data ".el"))
-		   (buffer-data (create-file-buffer file-data))
-		   (buffer-elisp (create-file-buffer file-elisp))
-		   (buffer-scratch "*queue-mail*"))
+		   (buffer-data (create-file-buffer file-data)))
 	      (unless (file-exists-p smtpmail-queue-dir)
 		(make-directory smtpmail-queue-dir t))
 	      (with-current-buffer buffer-data
@@ -377,22 +381,16 @@ for `smtpmail-try-auth-method'.")
 		 nil t)
 		(insert-buffer-substring tembuf)
 		(write-file file-data)
-		(set-buffer buffer-elisp)
-		(erase-buffer)
-		(insert (concat
-			 "(setq smtpmail-recipient-address-list '"
+                (write-region
+                 (concat "(setq smtpmail-recipient-address-list '"
 			 (prin1-to-string smtpmail-recipient-address-list)
-			 ")\n"))
-		(write-file file-elisp)
-		(set-buffer (generate-new-buffer buffer-scratch))
-		(insert (concat file-data "\n"))
-		(append-to-file (point-min)
-				(point-max)
-                                (expand-file-name smtpmail-queue-index-file
-                                                  smtpmail-queue-dir)))
-	      (kill-buffer buffer-scratch)
-	      (kill-buffer buffer-data)
-	      (kill-buffer buffer-elisp))))
+			 ")\n")
+                 nil file-elisp nil 'silent)
+		(write-region (concat file-data "\n") nil
+                              (expand-file-name smtpmail-queue-index-file
+                                                smtpmail-queue-dir)
+                              t 'silent))
+	      (kill-buffer buffer-data))))
       (kill-buffer tembuf)
       (if (bufferp errbuf)
 	  (kill-buffer errbuf)))))
@@ -404,21 +402,35 @@ for `smtpmail-try-auth-method'.")
   (with-temp-buffer
     ;; Get index, get first mail, send it, update index, get second
     ;; mail, send it, etc...
-    (let ((file-msg "")
+    (let (file-data file-elisp
           (qfile (expand-file-name smtpmail-queue-index-file
                                    smtpmail-queue-dir))
 	  result)
       (insert-file-contents qfile)
       (goto-char (point-min))
       (while (not (eobp))
-	(setq file-msg (buffer-substring (point) (line-end-position)))
-	(load file-msg)
+	(setq file-data (buffer-substring (point) (line-end-position)))
+	(setq file-elisp (concat file-data ".el"))
+        ;; FIXME: Avoid `load' which can execute arbitrary code and is hence
+        ;; a source of security holes.  Better read the file and extract the
+        ;; data "by hand".
+	;;(load file-elisp)
+        (with-temp-buffer
+          (insert-file-contents file-elisp)
+          (goto-char (point-min))
+          (pcase (read (current-buffer))
+            (`(setq smtpmail-recipient-address-list ',v)
+             (skip-chars-forward " \n\t")
+             (unless (eobp) (message "Ignoring trailing text in %S"
+                                     file-elisp))
+             (setq smtpmail-recipient-address-list v))
+            (sexp (error "Unexpected code in %S: %S" file-elisp sexp))))
 	;; Insert the message literally: it is already encoded as per
 	;; the MIME headers, and code conversions might guess the
 	;; encoding wrongly.
 	(with-temp-buffer
 	  (let ((coding-system-for-read 'no-conversion))
-	    (insert-file-contents file-msg))
+	    (insert-file-contents file-data))
           (let ((smtpmail-mail-address
                  (or (and mail-specify-envelope-from (mail-envelope-from))
                      user-mail-address)))
@@ -426,12 +438,17 @@ for `smtpmail-try-auth-method'.")
                 (when (setq result (smtpmail-via-smtp
 				    smtpmail-recipient-address-list
 				    (current-buffer)))
-		  (error "Sending failed: %s" result))
+		  (error "Sending failed: %s"
+                         (smtpmail--sanitize-error-message result)))
               (error "Sending failed; no recipients"))))
-	(delete-file file-msg)
-	(delete-file (concat file-msg ".el"))
+	(delete-file file-data)
+	(delete-file file-elisp)
 	(delete-region (point-at-bol) (point-at-bol 2)))
       (write-region (point-min) (point-max) qfile))))
+
+(defun smtpmail--sanitize-error-message (string)
+  "Try to remove passwords and the like from SMTP error messages."
+  (replace-regexp-in-string "\\bAUTH\\b.*" "AUTH" string))
 
 (defun smtpmail-fqdn ()
   (if smtpmail-local-domain
@@ -650,10 +667,12 @@ Returns an error if the server cannot be contacted."
 	      user-mail-address))))
 
 (defun smtpmail-via-smtp (recipient smtpmail-text-buffer
-				    &optional ask-for-password)
+				    &optional ask-for-password
+                                    send-attempts)
   (unless smtpmail-smtp-server
     (smtpmail-query-smtp-server))
   (let ((process nil)
+        (send-attempts (or send-attempts 1))
 	(host (or smtpmail-smtp-server
 		  (error "`smtpmail-smtp-server' not defined")))
 	(port smtpmail-smtp-service)
@@ -671,6 +690,12 @@ Returns an error if the server cannot be contacted."
 	result
 	auth-mechanisms
 	(supported-extensions '()))
+
+    (when (and smtpmail-servers-requiring-authorization
+               (string-match-p smtpmail-servers-requiring-authorization
+                               smtpmail-smtp-server))
+      (setq ask-for-password t))
+
     (unwind-protect
 	(catch 'done
 	  ;; get or create the trace buffer
@@ -809,6 +834,23 @@ Returns an error if the server cannot be contacted."
 	       ((smtpmail-ok-p (setq result (smtpmail-read-response process)))
 		;; Success.
 		)
+               ((and (numberp (car result))
+                     (<= 400 (car result) 499)
+                     (< send-attempts smtpmail-retries))
+                (message "Got transient error code %s when sending; retrying attempt %d..."
+                         (car result) send-attempts)
+                ;; Retry on getting a transient 4xx code; see
+                ;; https://tools.ietf.org/html/rfc5321#section-4.2.1
+                (ignore-errors
+		  (smtpmail-send-command process "QUIT")
+		  (smtpmail-read-response process))
+		(delete-process process)
+                (sleep-for 1)
+		(setq process nil)
+		(throw 'done
+		       (smtpmail-via-smtp recipient smtpmail-text-buffer
+                                          ask-for-password
+                                          (1+ send-attempts))))
 	       ((and auth-mechanisms
 		     (not ask-for-password)
 		     (eq (car result) 530))
@@ -992,9 +1034,9 @@ Returns an error if the server cannot be contacted."
 	  ;; RESENT-* fields should stop processing of regular fields.
 	  (save-excursion
 	    (setq addr-regexp
-		  (if (re-search-forward "^Resent-\\(to\\|cc\\|bcc\\):"
+		  (if (re-search-forward "^Resent-\\(To\\|Cc\\|Bcc\\):"
 					 header-end t)
-		      "^Resent-\\(to\\|cc\\|bcc\\):"
+		      "^Resent-\\(To\\|Cc\\|Bcc\\):"
 		    "^\\(To:\\|Cc:\\|Bcc:\\)")))
 
 	  (while (re-search-forward addr-regexp header-end t)
@@ -1027,14 +1069,14 @@ Returns an error if the server cannot be contacted."
 	    (setq smtpmail-recipient-address-list recipient-address-list))))))
 
 (defun smtpmail-do-bcc (header-end)
-  "Delete [Resent-]BCC: and their continuation lines from the header area.
-There may be multiple BCC: lines, and each may have arbitrarily
+  "Delete [Resent-]Bcc: and their continuation lines from the header area.
+There may be multiple Bcc: lines, and each may have arbitrarily
 many continuation lines."
   (let ((case-fold-search t))
     (save-excursion
       (goto-char (point-min))
-      ;; iterate over all BCC: lines
-      (while (re-search-forward "^\\(RESENT-\\)?BCC:" header-end t)
+      ;; iterate over all Bcc: lines
+      (while (re-search-forward "^\\(RESENT-\\)?Bcc:" header-end t)
 	(delete-region (match-beginning 0)
 		       (progn (forward-line 1) (point)))
 	;; get rid of any continuation lines

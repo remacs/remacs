@@ -1,6 +1,6 @@
 ;;; nxml-mode.el --- a new XML mode  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2003-2004, 2007-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2004, 2007-2020 Free Software Foundation, Inc.
 
 ;; Author: James Clark
 ;; Keywords: wp, hypermedia, languages, XML
@@ -56,8 +56,9 @@ The glyph is displayed in face `nxml-glyph'."
   :group 'nxml
   :type 'boolean)
 
-(defcustom nxml-sexp-element-flag nil
+(defcustom nxml-sexp-element-flag t
   "Non-nil means sexp commands treat an element as a single expression."
+  :version "27.1"                       ; nil -> t
   :group 'nxml
   :type 'boolean)
 
@@ -423,6 +424,15 @@ reference.")
     (when rng-validate-mode
       (rng-validate-while-idle (current-buffer)))))
 
+(defvar nxml-prolog-end) ;; nxml-rap.el
+
+(defun nxml-syntax-propertize (start end)
+  "Syntactic keywords for `nxml-mode'."
+  ;; Like `sgml-syntax-propertize', but rescan prolog if needed.
+  (when (< start nxml-prolog-end)
+    (nxml-scan-prolog))
+  (sgml-syntax-propertize start end))
+
 (defvar tildify-space-string)
 (defvar tildify-foreach-region-function)
 
@@ -471,11 +481,10 @@ The Emacs commands that normally operate on balanced expressions will
 operate on XML markup items.  Thus \\[forward-sexp] will move forward
 across one markup item; \\[backward-sexp] will move backward across
 one markup item; \\[kill-sexp] will kill the following markup item;
-\\[mark-sexp] will mark the following markup item.  By default, each
-tag each treated as a single markup item; to make the complete element
-be treated as a single markup item, set the variable
-`nxml-sexp-element-flag' to t.  For more details, see the function
-`nxml-forward-balanced-item'.
+\\[mark-sexp] will mark the following markup item.  By default, the
+complete element is treated as a single markup item; to make each tag be
+treated as a separate markup item, set the variable `nxml-sexp-element-flag'
+to nil.  For more details, see the function `nxml-forward-balanced-item'.
 
 \\[nxml-backward-up-element] and \\[nxml-down-element] move up and down the element structure.
 
@@ -518,19 +527,16 @@ Many aspects this mode can be customized using
 	(nxml-with-invisible-motion
 	  (nxml-scan-prolog)))))
   (setq-local syntax-ppss-table sgml-tag-syntax-table)
-  (setq-local syntax-propertize-function #'sgml-syntax-propertize)
+  (setq-local syntax-propertize-function #'nxml-syntax-propertize)
   (add-hook 'change-major-mode-hook #'nxml-cleanup nil t)
 
-  ;; Emacs 23 handles the encoding attribute on the xml declaration
-  ;; transparently to nxml-mode, so there is no longer a need for the below
-  ;; hook. The hook also had the drawback of overriding explicit user
-  ;; instruction to save as some encoding other than utf-8.
-  ;;(add-hook 'write-contents-hooks #'nxml-prepare-to-save)
   (when (not (and (buffer-file-name) (file-exists-p (buffer-file-name))))
     (when (and nxml-default-buffer-file-coding-system
 	       (not (local-variable-p 'buffer-file-coding-system)))
       (setq buffer-file-coding-system nxml-default-buffer-file-coding-system))
-    (when nxml-auto-insert-xml-declaration-flag
+    ;; When starting a new file, insert the XML declaraction.
+    (when (and nxml-auto-insert-xml-declaration-flag
+               (zerop (buffer-size)))
       (nxml-insert-xml-declaration)))
 
   (setq font-lock-defaults
@@ -540,7 +546,9 @@ Many aspects this mode can be customized using
           nil  ; no special syntax table
           (font-lock-extend-region-functions . (nxml-extend-region))
           (jit-lock-contextually . t)
-          (font-lock-unfontify-region-function . nxml-unfontify-region)))
+          (font-lock-unfontify-region-function . nxml-unfontify-region)
+          (font-lock-syntactic-face-function
+           . sgml-font-lock-syntactic-face)))
 
   (with-demoted-errors (rng-nxml-mode-init)))
 
@@ -553,7 +561,7 @@ Many aspects this mode can be customized using
     (widen)
     (with-silent-modifications
       (nxml-with-invisible-motion
-       (remove-text-properties (point-min) (point-max) '(face)))))
+       (remove-text-properties (point-min) (point-max) '(face nil)))))
   (remove-hook 'change-major-mode-hook #'nxml-cleanup t))
 
 (defun nxml-degrade (context err)
@@ -1510,17 +1518,18 @@ With ARG, do it that many times.  Negative arg -N means
 move backward across N balanced expressions.
 This is the equivalent of `forward-sexp' for XML.
 
-An element contains as items strings with no markup, tags, processing
-instructions, comments, CDATA sections, entity references and
-characters references.  However, if the variable
-`nxml-sexp-element-flag' is non-nil, then an element is treated as a
-single markup item.  A start-tag contains an element name followed by
-one or more attributes.  An end-tag contains just an element name.
-An attribute value literals contains strings with no markup, entity
-references and character references.  A processing instruction
-consists of a target and a content string.  A comment or a CDATA
-section contains a single string.  An entity reference contains a
-single name.  A character reference contains a character number."
+An element is by default treated as a single markup item.
+However, if the variable `nxml-sexp-element-flag' is nil, then an
+element contains as items strings with no markup, tags,
+processing instructions, comments, CDATA sections, entity
+references and character references.  A start-tag contains an
+element name followed by one or more attributes.  An end-tag
+contains just an element name.  An attribute value literals
+contains strings with no markup, entity references and character
+references.  A processing instruction consists of a target and a
+content string.  A comment or a CDATA section contains a single
+string.  An entity reference contains a single name.  A character
+reference contains a character number."
   (interactive "^p")
   (or arg (setq arg 1))
   (cond ((> arg 0)
@@ -2378,7 +2387,9 @@ With a prefix argument, inserts the character directly."
 (put 'nxml-char-ref 'evaporate t)
 
 (defun nxml-char-ref-display-extra (start end n)
-  (when nxml-char-ref-extra-display
+  (when (and ;; Displaying literal newline is unhelpful.
+         (not (eql n ?\n))
+         nxml-char-ref-extra-display)
     (let ((name (or (get-char-code-property n 'name)
                     (get-char-code-property n 'old-name)))
 	  (glyph-string (and nxml-char-ref-display-glyph-flag

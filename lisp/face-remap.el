@@ -1,6 +1,6 @@
 ;;; face-remap.el --- Functions for managing `face-remapping-alist'  -*- lexical-binding: t -*-
 ;;
-;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2020 Free Software Foundation, Inc.
 ;;
 ;; Author: Miles Bader <miles@gnu.org>
 ;; Keywords: faces, face remapping, display, user commands
@@ -64,12 +64,14 @@
 ;; Names of face attributes corresponding to lisp face-vector positions.
 ;; This variable should probably be defined in C code where the actual
 ;; definitions are available.
+;; :vector must be always at the end as a guard
 ;;
 (defvar internal-lisp-face-attributes
   [nil
-   :family :foundry :swidth :height :weight :slant :underline :inverse
-   :foreground :background :stipple :overline :strike :box
-   :font :inherit :fontset :vector])
+   :family :foundry :width :height :weight :slant :underline
+   :inverse-video
+   :foreground :background :stipple :overline :strike-through :box
+   :font :inherit :fontset :distant-foreground :extend :vector])
 
 (defun face-attrs-more-relative-p (attrs1 attrs2)
   "Return true if ATTRS1 contains a greater number of relative
@@ -229,9 +231,6 @@ Each positive or negative step scales the default face height by this amount."
 
 (define-minor-mode text-scale-mode
   "Minor mode for displaying buffer text in a larger/smaller font.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.
 
 The amount of scaling is determined by the variable
 `text-scale-mode-amount': one step scales the global default
@@ -387,10 +386,9 @@ plist, etc."
 ;;;###autoload
 (define-minor-mode buffer-face-mode
   "Minor mode for a buffer-specific default face.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.  When enabled, the face specified by the
-variable `buffer-face-mode-face' is used to display the buffer text."
+
+When enabled, the face specified by the variable
+`buffer-face-mode-face' is used to display the buffer text."
   :lighter " BufFace"
   (when buffer-face-mode-remapping
     (face-remap-remove-relative buffer-face-mode-remapping))
@@ -478,7 +476,7 @@ may be more appropriate."
 An interface to `buffer-face-mode' which uses the `variable-pitch' face.
 Besides the choice of face, it is the same as `buffer-face-mode'."
   (interactive (list (or current-prefix-arg 'toggle)))
-  (buffer-face-mode-invoke 'variable-pitch arg
+  (buffer-face-mode-invoke 'variable-pitch (or arg t)
 			   (called-interactively-p 'interactive)))
 
 

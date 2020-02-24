@@ -1,6 +1,6 @@
 ;;; lisp-mode.el --- Lisp mode, and its idiosyncratic commands  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1986, 1999-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1985-1986, 1999-2020 Free Software Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: lisp, languages
@@ -280,6 +280,19 @@ This will generate compile-time constants from BINDINGS."
          `(face ,font-lock-warning-face
                 help-echo "This \\ has no effect"))))
 
+(defun lisp--match-confusable-symbol-character  (limit)
+  ;; Match a confusable character within a Lisp symbol.
+  (catch 'matched
+    (while t
+      (if (re-search-forward help-uni-confusables-regexp limit t)
+          ;; Skip confusables which are backslash escaped, or inside
+          ;; strings or comments.
+          (save-match-data
+            (unless (or (eq (char-before (match-beginning 0)) ?\\)
+                        (nth 8 (syntax-ppss)))
+              (throw 'matched t)))
+        (throw 'matched nil)))))
+
 (let-when-compile
     ((lisp-fdefs '("defmacro" "defun"))
      (lisp-vdefs '("defvar"))
@@ -463,7 +476,10 @@ This will generate compile-time constants from BINDINGS."
            (3 'font-lock-regexp-grouping-construct prepend))
          (lisp--match-hidden-arg
           (0 '(face font-lock-warning-face
-               help-echo "Hidden behind deeper element; move to another line?")))
+                    help-echo "Hidden behind deeper element; move to another line?")))
+         (lisp--match-confusable-symbol-character
+          0 '(face font-lock-warning-face
+                    help-echo "Confusable character"))
          ))
       "Gaudy level highlighting for Emacs Lisp mode.")
 
@@ -516,6 +532,16 @@ This will generate compile-time constants from BINDINGS."
   "Default expressions to highlight in Emacs Lisp mode.")
 (defvar lisp-cl-font-lock-keywords lisp-cl-font-lock-keywords-1
   "Default expressions to highlight in Lisp modes.")
+
+;; Support backtrace mode.
+(defconst lisp-el-font-lock-keywords-for-backtraces lisp-el-font-lock-keywords
+  "Default highlighting from Emacs Lisp mod used in Backtrace mode.")
+(defconst lisp-el-font-lock-keywords-for-backtraces-1 lisp-el-font-lock-keywords-1
+  "Subdued highlighting from Emacs Lisp mode used in Backtrace mode.")
+(defconst lisp-el-font-lock-keywords-for-backtraces-2
+  (remove (assoc 'lisp--match-hidden-arg lisp-el-font-lock-keywords-2)
+          lisp-el-font-lock-keywords-2)
+  "Gaudy highlighting from Emacs Lisp mode used in Backtrace mode.")
 
 (defun lisp-string-in-doc-position-p (listbeg startpos)
    "Return true if a doc string may occur at STARTPOS inside a list.
@@ -812,7 +838,7 @@ by more than one line to cross a string literal."
                (setq last-sexp (nth 2 ppss)))
              (setq depth (car ppss))
              ;; Skip over newlines within strings.
-             (nth 3 ppss))
+             (and (not (eobp)) (nth 3 ppss)))
       (let ((string-start (nth 8 ppss)))
         (setq ppss (parse-partial-sexp (point) (point-max)
                                        nil nil ppss 'syntax-table))
@@ -828,13 +854,22 @@ by more than one line to cross a string literal."
                                        indent-stack)))))
     (prog1
         (let (indent)
-          (cond ((= (forward-line 1) 1) nil)
+          (cond ((= (forward-line 1) 1)
+                 ;; Can't move to the next line, apparently end of buffer.
+                 nil)
+                ((null indent-stack)
+                 ;; Negative depth, probably some kind of syntax
+                 ;; error.  Reset the state.
+                 (setq ppss (parse-partial-sexp (point) (point))))
                 ((car indent-stack))
                 ((integerp (setq indent (calculate-lisp-indent ppss)))
                  (setf (car indent-stack) indent))
                 ((consp indent)       ; (COLUMN CONTAINING-SEXP-START)
                  (car indent))
-                ;; This only happens if we're in a string.
+                ;; This only happens if we're in a string, but the
+                ;; loop should always skip over strings (unless we hit
+                ;; end of buffer, which is taken care of by the first
+                ;; clause).
                 (t (error "This shouldn't happen"))))
       (setf (lisp-indent-state-stack state) indent-stack)
       (setf (lisp-indent-state-ppss-point state) ppss-point)
@@ -1169,7 +1204,6 @@ Lisp function does not specify a special indentation."
 (put 'autoload 'lisp-indent-function 'defun) ;Elisp
 (put 'progn 'lisp-indent-function 0)
 (put 'prog1 'lisp-indent-function 1)
-(put 'prog2 'lisp-indent-function 2)
 (put 'save-excursion 'lisp-indent-function 0)      ;Elisp
 (put 'save-restriction 'lisp-indent-function 0)    ;Elisp
 (put 'save-current-buffer 'lisp-indent-function 0) ;Elisp
@@ -1196,7 +1230,27 @@ ENDPOS is encountered."
                   (if endpos endpos
                     ;; Get error now if we don't have a complete sexp
                     ;; after point.
-                    (save-excursion (forward-sexp 1) (point)))))
+                    (save-excursion
+                      (forward-sexp 1)
+                      (let ((eol (line-end-position)))
+                        ;; We actually look for a sexp which ends
+                        ;; after the current line so that we properly
+                        ;; indent things like #s(...).  This might not
+                        ;; be needed if Bug#15998 is fixed.
+                        (when (and (< (point) eol)
+                                   ;; Check if eol is within a sexp.
+                                   (> (nth 0 (save-excursion
+                                               (parse-partial-sexp
+                                                (point) eol)))
+                                      0))
+                          (condition-case ()
+                              (while (< (point) eol)
+                                (forward-sexp 1))
+                            ;; But don't signal an error for incomplete
+                            ;; sexps following the first complete sexp
+                            ;; after point.
+                            (scan-error nil))))
+                      (point)))))
     (save-excursion
       (while (let ((indent (lisp-indent-calc-next parse-state))
                    (ppss (lisp-indent-state-ppss parse-state)))

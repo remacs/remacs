@@ -1,6 +1,6 @@
 /* conf_post.h --- configure.ac includes this via AH_BOTTOM
 
-Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2018 Free Software
+Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2020 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -20,9 +20,16 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Put the code here rather than in configure.ac using AH_BOTTOM.
    This way, the code does not get processed by autoheader.  For
-   example, undefs here are not commented out.
+   example, undefs here are not commented out.  */
 
-   To help make dependencies clearer elsewhere, this file typically
+/* Disable 'assert' unless enabling checking.  Do this early, in
+   case some misguided implementation depends on NDEBUG in some
+   include file other than assert.h.  */
+#if !defined ENABLE_CHECKING && !defined NDEBUG
+# define NDEBUG
+#endif
+
+/* To help make dependencies clearer elsewhere, this file typically
    does not #include other files.  The exceptions are first stdbool.h
    because it is unlikely to interfere with configuration and bool is
    such a core part of the C language, and second ms-w32.h (DOS_NT
@@ -48,9 +55,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #endif
 
 /* The type of bool bitfields.  Needed to compile Objective-C with
-   standard GCC.  It was also needed to port to pre-C99 compilers,
-   although we don't care about that any more.  */
-#if NS_IMPL_GNUSTEP
+   standard GCC, and to make sure adjacent bool_bf fields are packed
+   into the same 1-, 2-, or 4-byte allocation unit in the MinGW
+   builds.  It was also needed to port to pre-C99 compilers, although
+   we don't care about that any more.  */
+#if NS_IMPL_GNUSTEP || defined __MINGW32__
 typedef unsigned int bool_bf;
 #else
 typedef bool bool_bf;
@@ -64,17 +73,12 @@ typedef bool bool_bf;
 # define __has_attribute(a) __has_attribute_##a
 # define __has_attribute_alloc_size GNUC_PREREQ (4, 3, 0)
 # define __has_attribute_cleanup GNUC_PREREQ (3, 4, 0)
+# define __has_attribute_cold GNUC_PREREQ (4, 3, 0)
 # define __has_attribute_externally_visible GNUC_PREREQ (4, 1, 0)
 # define __has_attribute_no_address_safety_analysis false
 # define __has_attribute_no_sanitize_address GNUC_PREREQ (4, 8, 0)
-#endif
-
-/* Simulate __has_builtin on compilers that lack it.  It is used only
-   on arguments like __builtin_assume_aligned that are handled in this
-   simulation.  */
-#ifndef __has_builtin
-# define __has_builtin(a) __has_builtin_##a
-# define __has_builtin___builtin_assume_aligned GNUC_PREREQ (4, 7, 0)
+# define __has_attribute_no_sanitize_undefined GNUC_PREREQ (4, 9, 0)
+# define __has_attribute_warn_unused_result GNUC_PREREQ (3, 4, 0)
 #endif
 
 /* Simulate __has_feature on compilers that lack it.  It is used only
@@ -90,18 +94,11 @@ typedef bool bool_bf;
 # define ADDRESS_SANITIZER false
 #endif
 
-/* Yield PTR, which must be aligned to ALIGNMENT.  */
-#if ! __has_builtin (__builtin_assume_aligned)
-# define __builtin_assume_aligned(ptr, ...) ((void *) (ptr))
+#if defined DARWIN_OS && defined emacs && defined HAVE_UNEXEC
+# define malloc unexec_malloc
+# define realloc unexec_realloc
+# define free unexec_free
 #endif
-
-#ifdef DARWIN_OS
-#if defined emacs && !defined CANNOT_DUMP
-#define malloc unexec_malloc
-#define realloc unexec_realloc
-#define free unexec_free
-#endif
-#endif  /* DARWIN_OS */
 
 /* If HYBRID_MALLOC is defined (e.g., on Cygwin), emacs will use
    gmalloc before dumping and the system malloc after dumping.
@@ -165,7 +162,7 @@ extern void _DebPrint (const char *fmt, ...);
 /* Tell regex.c to use a type compatible with Emacs.  */
 #define RE_TRANSLATE_TYPE Lisp_Object
 #define RE_TRANSLATE(TBL, C) char_table_translate (TBL, C)
-#define RE_TRANSLATE_P(TBL) (!EQ (TBL, make_number (0)))
+#define RE_TRANSLATE_P(TBL) (!EQ (TBL, make_fixnum (0)))
 #endif
 
 /* Tell time_rz.c to use Emacs's getter and setter for TZ.
@@ -174,6 +171,14 @@ extern void _DebPrint (const char *fmt, ...);
 #define setenv_TZ emacs_setenv_TZ
 extern char *emacs_getenv_TZ (void);
 extern int emacs_setenv_TZ (char const *);
+
+/* Avoid __attribute__ ((cold)) on MinGW; see thread starting at
+   <https://lists.gnu.org/r/emacs-devel/2019-04/msg01152.html>. */
+#if __has_attribute (cold) && !defined __MINGW32__
+# define ATTRIBUTE_COLD __attribute__ ((cold))
+#else
+# define ATTRIBUTE_COLD
+#endif
 
 #if __GNUC__ >= 3  /* On GCC 3.0 we might get a warning.  */
 #define NO_INLINE __attribute__((noinline))
@@ -229,6 +234,7 @@ extern int emacs_setenv_TZ (char const *);
 #define ATTRIBUTE_FORMAT_PRINTF(string_index, first_to_check) \
   ATTRIBUTE_FORMAT ((PRINTF_ARCHETYPE, string_index, first_to_check))
 
+#define ARG_NONNULL _GL_ARG_NONNULL
 #define ATTRIBUTE_CONST _GL_ATTRIBUTE_CONST
 #define ATTRIBUTE_UNUSED _GL_UNUSED
 
@@ -248,8 +254,10 @@ extern int emacs_setenv_TZ (char const *);
 
 #if 3 <= __GNUC__
 # define ATTRIBUTE_MALLOC __attribute__ ((__malloc__))
+# define ATTRIBUTE_SECTION(name) __attribute__((section (name)))
 #else
 # define ATTRIBUTE_MALLOC
+#define ATTRIBUTE_SECTION(name)
 #endif
 
 #if __has_attribute (alloc_size)
@@ -285,10 +293,26 @@ extern int emacs_setenv_TZ (char const *);
 # define ATTRIBUTE_NO_SANITIZE_ADDRESS
 #endif
 
-/* gcc -fsanitize=address does not work with vfork in Fedora 25 x86-64.
+/* Attribute of functions whose undefined behavior should not be sanitized.  */
+
+#if __has_attribute (no_sanitize_undefined)
+# define ATTRIBUTE_NO_SANITIZE_UNDEFINED __attribute__ ((no_sanitize_undefined))
+#elif __has_attribute (no_sanitize)
+# define ATTRIBUTE_NO_SANITIZE_UNDEFINED \
+    __attribute__ ((no_sanitize ("undefined")))
+#else
+# define ATTRIBUTE_NO_SANITIZE_UNDEFINED
+#endif
+
+/* gcc -fsanitize=address does not work with vfork in Fedora 28 x86-64.  See:
+   https://lists.gnu.org/r/emacs-devel/2017-05/msg00464.html
    For now, assume that this problem occurs on all platforms.  */
 #if ADDRESS_SANITIZER && !defined vfork
 # define vfork fork
+#endif
+
+#if ! (defined __FreeBSD__ || defined GNU_LINUX || defined __MINGW32__)
+# undef PROFILING
 #endif
 
 /* Some versions of GNU/Linux define noinline in their headers.  */
@@ -296,8 +320,13 @@ extern int emacs_setenv_TZ (char const *);
 #undef noinline
 #endif
 
-/* Use Gnulib's extern-inline module for extern inline functions.
-   An include file foo.h should prepend FOO_INLINE to function
+/* INLINE marks functions defined in Emacs-internal C headers.
+   INLINE is implemented via C99-style 'extern inline' if Emacs is built
+   with -DEMACS_EXTERN_INLINE; otherwise it is implemented via 'static'.
+   EMACS_EXTERN_INLINE is no longer the default, as 'static' seems to
+   have better performance with GCC.
+
+   An include file foo.h should prepend INLINE to function
    definitions, with the following overall pattern:
 
       [#include any other .h files first.]
@@ -322,20 +351,40 @@ extern int emacs_setenv_TZ (char const *);
    For Emacs, this is done by having emacs.c first '#define INLINE
    EXTERN_INLINE' and then include every .h file that uses INLINE.
 
-   The INLINE_HEADER_BEGIN and INLINE_HEADER_END suppress bogus
-   warnings in some GCC versions; see ../m4/extern-inline.m4.
+   The INLINE_HEADER_BEGIN and INLINE_HEADER_END macros suppress bogus
+   warnings in some GCC versions; see ../m4/extern-inline.m4.  */
+
+#ifdef EMACS_EXTERN_INLINE
+
+/* Use Gnulib's extern-inline module for extern inline functions.
 
    C99 compilers compile functions like 'incr' as C99-style extern
    inline functions.  Buggy GCC implementations do something similar with
    GNU-specific keywords.  Buggy non-GCC compilers use static
    functions, which bloats the code but is good enough.  */
 
-#ifndef INLINE
-# define INLINE _GL_INLINE
+# ifndef INLINE
+#  define INLINE _GL_INLINE
+# endif
+# define EXTERN_INLINE _GL_EXTERN_INLINE
+# define INLINE_HEADER_BEGIN _GL_INLINE_HEADER_BEGIN
+# define INLINE_HEADER_END _GL_INLINE_HEADER_END
+
+#else
+
+/* Use 'static' instead of 'extern inline' because 'static' typically
+   has better performance for Emacs.  Do not use the 'inline' keyword,
+   as modern compilers inline automatically.  ATTRIBUTE_UNUSED
+   pacifies gcc -Wunused-function.  */
+
+# ifndef INLINE
+#  define INLINE EXTERN_INLINE
+# endif
+# define EXTERN_INLINE static ATTRIBUTE_UNUSED
+# define INLINE_HEADER_BEGIN
+# define INLINE_HEADER_END
+
 #endif
-#define EXTERN_INLINE _GL_EXTERN_INLINE
-#define INLINE_HEADER_BEGIN _GL_INLINE_HEADER_BEGIN
-#define INLINE_HEADER_END _GL_INLINE_HEADER_END
 
 /* 'int x UNINIT;' is equivalent to 'int x;', except it cajoles GCC
    into not warning incorrectly about use of an uninitialized variable.  */

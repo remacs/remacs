@@ -1,6 +1,6 @@
 ;;; dns.el --- Domain Name Service lookups
 
-;; Copyright (C) 2002-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: network comm
@@ -106,7 +106,7 @@ updated.  Set this variable to t to disable the check.")
 
 (defun dns-read-string-name (string buffer)
   (with-temp-buffer
-    (unless (featurep 'xemacs) (set-buffer-multibyte nil))
+    (set-buffer-multibyte nil)
     (insert string)
     (goto-char (point-min))
     (dns-read-name buffer)))
@@ -117,7 +117,7 @@ updated.  Set this variable to t to disable the check.")
 	length)
     (while (not ended)
       (setq length (dns-read-bytes 1))
-      (if (= 192 (logand length (lsh 3 6)))
+      (if (= 192 (logand length (ash 3 6)))
 	  (let ((offset (+ (* (logand 63 length) 256)
 			   (dns-read-bytes 1))))
 	    (save-excursion
@@ -140,21 +140,21 @@ updated.  Set this variable to t to disable the check.")
   "Write a DNS packet according to SPEC.
 If TCP-P, the first two bytes of the package with be the length field."
   (with-temp-buffer
-    (unless (featurep 'xemacs) (set-buffer-multibyte nil))
+    (set-buffer-multibyte nil)
     (dns-write-bytes (dns-get 'id spec) 2)
     (dns-write-bytes
      (logior
-      (lsh (if (dns-get 'response-p spec) 1 0) -7)
-      (lsh
+      (ash (if (dns-get 'response-p spec) 1 0) 7)
+      (ash
        (cond
 	((eq (dns-get 'opcode spec) 'query) 0)
 	((eq (dns-get 'opcode spec) 'inverse-query) 1)
 	((eq (dns-get 'opcode spec) 'status) 2)
 	(t (error "No such opcode: %s" (dns-get 'opcode spec))))
-       -3)
-      (lsh (if (dns-get 'authoritative-p spec) 1 0) -2)
-      (lsh (if (dns-get 'truncated-p spec) 1 0) -1)
-      (lsh (if (dns-get 'recursion-desired-p spec) 1 0) 0)))
+       3)
+      (ash (if (dns-get 'authoritative-p spec) 1 0) 2)
+      (ash (if (dns-get 'truncated-p spec) 1 0) 1)
+      (ash (if (dns-get 'recursion-desired-p spec) 1 0) 0)))
     (dns-write-bytes
      (cond
       ((eq (dns-get 'response-code spec) 'no-error) 0)
@@ -191,27 +191,27 @@ If TCP-P, the first two bytes of the package with be the length field."
 
 (defun dns-read (packet)
   (with-temp-buffer
-    (unless (featurep 'xemacs) (set-buffer-multibyte nil))
+    (set-buffer-multibyte nil)
     (let ((spec nil)
           queries answers authorities additionals)
       (insert packet)
       (goto-char (point-min))
       (push (list 'id (dns-read-bytes 2)) spec)
       (let ((byte (dns-read-bytes 1)))
-        (push (list 'response-p (if (zerop (logand byte (lsh 1 7))) nil t))
+        (push (list 'response-p (if (zerop (logand byte (ash 1 7))) nil t))
               spec)
-        (let ((opcode (logand byte (lsh 7 3))))
+        (let ((opcode (logand byte (ash 7 3))))
           (push (list 'opcode
                       (cond ((eq opcode 0) 'query)
                             ((eq opcode 1) 'inverse-query)
                             ((eq opcode 2) 'status)))
                 spec))
-        (push (list 'authoritative-p (if (zerop (logand byte (lsh 1 2)))
+        (push (list 'authoritative-p (if (zerop (logand byte (ash 1 2)))
                                          nil t)) spec)
-        (push (list 'truncated-p (if (zerop (logand byte (lsh 1 2))) nil t))
+        (push (list 'truncated-p (if (zerop (logand byte (ash 1 2))) nil t))
               spec)
         (push (list 'recursion-desired-p
-                    (if (zerop (logand byte (lsh 1 0))) nil t)) spec))
+                    (if (zerop (logand byte (ash 1 0))) nil t)) spec))
       (let ((rc (logand (dns-read-bytes 1) 15)))
         (push (list 'response-code
                     (cond
@@ -268,7 +268,7 @@ If TCP-P, the first two bytes of the package with be the length field."
 	(point (point)))
     (prog1
         (with-temp-buffer
-	  (unless (featurep 'xemacs) (set-buffer-multibyte nil))
+	  (set-buffer-multibyte nil)
           (insert string)
           (goto-char (point-min))
           (cond
@@ -356,26 +356,21 @@ Parses \"/etc/resolv.conf\" or calls \"nslookup\"."
 
 ;;; Interface functions.
 (defmacro dns-make-network-process (server)
-  (if (featurep 'xemacs)
-      `(let ((coding-system-for-read 'binary)
-	     (coding-system-for-write 'binary))
-	 (open-network-stream "dns" (current-buffer)
-			      ,server "domain" 'udp))
-    `(let ((server ,server)
-	   (coding-system-for-read 'binary)
-	   (coding-system-for-write 'binary))
-       (if (fboundp 'make-network-process)
-	   (make-network-process
-	    :name "dns"
-	    :coding 'binary
-	    :buffer (current-buffer)
-	    :host server
-	    :service "domain"
-	    :type 'datagram)
-	 ;; Older versions of Emacs doesn't have
-	 ;; `make-network-process', so we fall back on opening a TCP
-	 ;; connection to the DNS server.
-	 (open-network-stream "dns" (current-buffer) server "domain")))))
+  `(let ((server ,server)
+	 (coding-system-for-read 'binary)
+	 (coding-system-for-write 'binary))
+     (if (fboundp 'make-network-process)
+	 (make-network-process
+	  :name "dns"
+	  :coding 'binary
+	  :buffer (current-buffer)
+	  :host server
+	  :service "domain"
+	  :type 'datagram)
+       ;; Older versions of Emacs doesn't have
+       ;; `make-network-process', so we fall back on opening a TCP
+       ;; connection to the DNS server.
+       (open-network-stream "dns" (current-buffer) server "domain"))))
 
 (defvar dns-cache (make-vector 4096 0))
 
@@ -409,7 +404,7 @@ If REVERSEP, look up an IP address."
   (if (not dns-servers)
       (message "No DNS server configuration found")
     (with-temp-buffer
-      (unless (featurep 'xemacs) (set-buffer-multibyte nil))
+      (set-buffer-multibyte nil)
       (let ((process (condition-case ()
                          (dns-make-network-process (car dns-servers))
                        (error
@@ -417,8 +412,6 @@ If REVERSEP, look up an IP address."
                          "dns: Got an error while trying to talk to %s"
                          (car dns-servers))
                         nil)))
-            (tcp-p (and (not (fboundp 'make-network-process))
-                        (not (featurep 'xemacs))))
             (step 100)
             (times (* dns-timeout 1000))
             (id (random 65000)))
@@ -428,20 +421,16 @@ If REVERSEP, look up an IP address."
            (dns-write `((id ,id)
                         (opcode query)
                         (queries ((,name (type ,type))))
-                        (recursion-desired-p t))
-                      tcp-p))
+                        (recursion-desired-p t))))
           (while (and (zerop (buffer-size))
                       (> times 0))
-            (sit-for (/ step 1000.0))
-            (accept-process-output process 0 step)
+	    (let ((step-sec (/ step 1000.0)))
+	      (sit-for step-sec)
+	      (accept-process-output process step-sec))
             (setq times (- times step)))
           (condition-case nil
               (delete-process process)
             (error nil))
-          (when (and tcp-p
-                     (>= (buffer-size) 2))
-            (goto-char (point-min))
-            (delete-region (point) (+ (point) 2)))
           (when (and (>= (buffer-size) 2)
                      ;; We had a time-out.
                      (> times 0))

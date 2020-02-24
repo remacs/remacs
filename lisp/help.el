@@ -1,6 +1,6 @@
 ;;; help.el --- help commands for Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985-1986, 1993-1994, 1998-2018 Free Software
+;; Copyright (C) 1985-1986, 1993-1994, 1998-2020 Free Software
 ;; Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -67,6 +67,7 @@
     (define-key map "\C-n" 'view-emacs-news)
     (define-key map "\C-o" 'describe-distribution)
     (define-key map "\C-p" 'view-emacs-problems)
+    (define-key map "\C-s" 'search-forward-help-for-help)
     (define-key map "\C-t" 'view-emacs-todo)
     (define-key map "\C-w" 'describe-no-warranty)
 
@@ -240,6 +241,7 @@ C-m         How to order printed Emacs manuals.
 C-n         News of recent Emacs changes.
 C-o         Emacs ordering and distribution information.
 C-p         Info about known Emacs problems.
+C-s         Search forward \"help window\".
 C-t         Emacs TODO list.
 C-w         Information on absence of warranty for GNU Emacs."
   help-map)
@@ -263,17 +265,19 @@ If that doesn't give a function, return nil."
         (condition-case ()
             (save-excursion
               (save-restriction
-                (narrow-to-region (max (point-min)
-                                       (- (point) 1000)) (point-max))
-                ;; Move up to surrounding paren, then after the open.
-                (backward-up-list 1)
-                (forward-char 1)
-                ;; If there is space here, this is probably something
-                ;; other than a real Lisp function call, so ignore it.
-                (if (looking-at "[ \t]")
-                    (error "Probably not a Lisp function call"))
-                (let ((obj (read (current-buffer))))
-                  (and (symbolp obj) (fboundp obj) obj))))
+                (let ((forward-sexp-function nil)) ;Use elisp-mode's value
+                  (narrow-to-region (max (point-min)
+                                         (- (point) 1000))
+                                    (point-max))
+                  ;; Move up to surrounding paren, then after the open.
+                  (backward-up-list 1)
+                  (forward-char 1)
+                  ;; If there is space here, this is probably something
+                  ;; other than a real Lisp function call, so ignore it.
+                  (if (looking-at "[ \t]")
+                      (error "Probably not a Lisp function call"))
+                  (let ((obj (read (current-buffer))))
+                    (and (symbolp obj) (fboundp obj) obj)))))
           (error nil))
         (let* ((str (find-tag-default))
                (sym (if str (intern-soft str))))
@@ -413,23 +417,25 @@ With argument, display info only for the selected version."
 
 (defun view-echo-area-messages ()
   "View the log of recent echo-area messages: the `*Messages*' buffer.
-The number of messages retained in that buffer
-is specified by the variable `message-log-max'."
+The number of messages retained in that buffer is specified by
+the variable `message-log-max'."
   (interactive)
   (with-current-buffer (messages-buffer)
     (goto-char (point-max))
-    (display-buffer (current-buffer))))
+    (let ((win (display-buffer (current-buffer))))
+      ;; If the buffer is already displayed, we need to forcibly set
+      ;; the window point to scroll to the end of the buffer.
+      (set-window-point win (point))
+      win)))
 
 (defun view-order-manuals ()
   "Display information on how to buy printed copies of Emacs manuals."
   (interactive)
-;;  (view-help-file "ORDERS")
   (info "(emacs)Printed Books"))
 
 (defun view-emacs-FAQ ()
   "Display the Emacs Frequently Asked Questions (FAQ) file."
   (interactive)
-  ;; (find-file-read-only (expand-file-name "FAQ" data-directory))
   (info "(efaq)"))
 
 (defun view-emacs-problems ()
@@ -442,7 +448,8 @@ is specified by the variable `message-log-max'."
   (interactive)
   (view-help-file "DEBUG"))
 
-;; This used to visit MORE.STUFF; maybe it should just be removed.
+;; This used to visit a plain text file etc/MORE.STUFF;
+;; maybe this command should just be removed.
 (defun view-external-packages ()
   "Display info on where to get more Emacs packages."
   (interactive)
@@ -477,7 +484,7 @@ To record all your input, use `open-dribble-file'."
         (while (not (eobp))
           (comment-indent)
 	  (forward-line 1)))
-      ;; jidanni wants to see the last keystrokes immediately.
+      ;; Show point near the end of "lossage", as we did in Emacs 24.
       (set-marker help-window-point-marker (point)))))
 
 
@@ -742,6 +749,7 @@ If NO-MOUSE-MOVEMENT is non-nil, ignore key sequences starting
 with `mouse-movement' events."
   (let ((enable-disabled-menus-and-buttons t)
         (cursor-in-echo-area t)
+        (side-event nil)
         saved-yank-menu)
     (unwind-protect
         (let (last-modifiers key-list)
@@ -760,7 +768,8 @@ with `mouse-movement' events."
                   (and (memq 'click last-modifiers)
                        (not (sit-for (/ double-click-time 1000.0) t))))
             (let* ((seq (read-key-sequence "\
-Describe the following key, mouse click, or menu item: "))
+Describe the following key, mouse click, or menu item: "
+                                           nil nil 'can-return-switch-frame))
                    (raw-seq (this-single-command-raw-keys))
                    (keyn (when (> (length seq) 0)
                            (aref seq (1- (length seq)))))
@@ -769,11 +778,18 @@ Describe the following key, mouse click, or menu item: "))
               (cond
                ((zerop (length seq)))   ;FIXME: Can this happen?
                ((and no-mouse-movement (eq base 'mouse-movement)) nil)
+               ((memq base '(mouse-movement switch-frame select-window))
+                ;; Mostly ignore these events since it's sometimes difficult to
+                ;; generate the event you care about without also generating
+                ;; these side-events along the way.
+                (setq side-event (cons seq raw-seq)))
                ((eq base 'help-echo) nil)
                (t
                 (setq last-modifiers modifiers)
                 (push (cons seq raw-seq) key-list)))))
-          (nreverse key-list))
+          (if side-event
+              (cons side-event (nreverse key-list))
+            (nreverse key-list)))
       ;; Put yank-menu back as it was, if we changed it.
       (when saved-yank-menu
         (setq yank-menu (copy-sequence saved-yank-menu))
@@ -853,7 +869,8 @@ current buffer."
                 (insert "\n\n"
                         ;; FIXME: Can't use eval-when-compile because purified
                         ;; strings lose their text properties :-(
-                        (propertize "\n" 'face '(:height 0.1 :inverse-video t))
+                        (propertize "\n" 'face
+                                    '(:height 0.1 :inverse-video t :extend t))
                         "\n")))
 
             (princ brief-desc)
@@ -906,6 +923,10 @@ documentation for the major and minor modes of that buffer."
 		   (push (list fmode pretty-minor-mode
 			       (format-mode-line (assq mode minor-mode-alist)))
 			 minor-modes)))))
+	;; Narrowing is not a minor mode, but its indicator is part of
+	;; mode-line-modes.
+	(when (buffer-narrowed-p)
+	  (push '(narrow-to-region "Narrow" " Narrow") minor-modes))
 	(setq minor-modes
 	      (sort minor-modes
 		    (lambda (a b) (string-lessp (cadr a) (cadr b)))))
@@ -931,7 +952,8 @@ documentation for the major and minor modes of that buffer."
 				     "no indicator"
 				   (format "indicator%s"
 					   indicator))))
-		  (princ (documentation mode-function)))
+		  (princ (help-split-fundoc (documentation mode-function)
+                                            nil 'doc)))
 		(insert-button pretty-minor-mode
 			       'action (car help-button-cache)
 			       'follow-link t
@@ -961,10 +983,17 @@ documentation for the major and minor modes of that buffer."
                                     nil t)
 		(help-xref-button 1 'help-function-def mode file-name)))))
 	(princ ":\n")
-	(princ (documentation major-mode)))))
+	(princ (help-split-fundoc (documentation major-mode) nil 'doc)))))
   ;; For the sake of IELM and maybe others
   nil)
 
+(defun search-forward-help-for-help ()
+  "Search forward \"help window\"."
+  (interactive)
+  ;; Move cursor to the "help window".
+  (pop-to-buffer " *Metahelp*")
+  ;; Do incremental search forward.
+  (isearch-forward nil t))
 
 (defun describe-minor-mode (minor-mode)
   "Display documentation of a minor mode given as MINOR-MODE.
@@ -995,7 +1024,7 @@ appeared on the mode-line."
   (delq nil (mapcar 'symbol-name minor-mode-list)))
 
 (defun describe-minor-mode-from-symbol (symbol)
-  "Display documentation of a minor mode given as a symbol, SYMBOL"
+  "Display documentation of a minor mode given as a symbol, SYMBOL."
   (interactive (list (intern (completing-read
 			      "Minor mode symbol: "
 			      (describe-minor-mode-completion-table-for-symbol)))))
@@ -1094,9 +1123,6 @@ function is called, the window to be resized is selected."
 
 (define-minor-mode temp-buffer-resize-mode
   "Toggle auto-resizing temporary buffer windows (Temp Buffer Resize Mode).
-With a prefix argument ARG, enable Temp Buffer Resize mode if ARG
-is positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 When Temp Buffer Resize mode is enabled, the windows in which we
 show a temporary buffer are automatically resized in height to
@@ -1185,7 +1211,10 @@ by `with-help-window'."
   :group 'help
   :version "23.1")
 
-(defcustom help-enable-auto-load t
+(define-obsolete-variable-alias 'help-enable-auto-load
+  'help-enable-autoload "27.1")
+
+(defcustom help-enable-autoload t
   "Whether Help commands can perform autoloading.
 If non-nil, whenever \\[describe-function] is called for an
 autoloaded function whose docstring contains any key substitution
@@ -1315,8 +1344,8 @@ This construct is like `with-temp-buffer-window' but unlike that
 puts the buffer specified by BUFFER-OR-NAME in `help-mode' and
 displays a message about how to delete the help window when it's no
 longer needed.  The help window will be selected if
-`help-window-select' is non-nil.  See `help-window-setup' for
-more options."
+`help-window-select' is non-nil.
+Most of this is done by `help-window-setup', which see."
   (declare (indent 1) (debug t))
   `(progn
      ;; Make `help-window-point-marker' point nowhere.  The only place
@@ -1349,27 +1378,39 @@ The result, when formatted by `substitute-command-keys', should equal STRING."
 ;; But for various reasons, they are more widely needed, so they were
 ;; moved to this file, which is preloaded.  https://debbugs.gnu.org/17001
 
-(defun help-split-fundoc (docstring def)
+(defun help-split-fundoc (docstring def &optional section)
   "Split a function DOCSTRING into the actual doc and the usage info.
-Return (USAGE . DOC) or nil if there's no usage info, where USAGE info
-is a string describing the argument list of DEF, such as
-\"(apply FUNCTION &rest ARGUMENTS)\".
-DEF is the function whose usage we're looking for in DOCSTRING."
+Return (USAGE . DOC), where USAGE is a string describing the argument
+list of DEF, such as \"(apply FUNCTION &rest ARGUMENTS)\".
+DEF is the function whose usage we're looking for in DOCSTRING.
+With SECTION nil, return nil if there is no usage info; conversely,
+SECTION t means to return (USAGE . DOC) even if there's no usage info.
+When SECTION is \\='usage or \\='doc, return only that part."
   ;; Functions can get the calling sequence at the end of the doc string.
   ;; In cases where `function' has been fset to a subr we can't search for
   ;; function's name in the doc string so we use `fn' as the anonymous
   ;; function name instead.
-  (when (and docstring (string-match "\n\n(fn\\(\\( .*\\)?)\\)\\'" docstring))
-    (let ((doc (unless (zerop (match-beginning 0))
-		 (substring docstring 0 (match-beginning 0))))
-	  (usage-tail (match-string 1 docstring)))
-      (cons (format "(%s%s"
-		    ;; Replace `fn' with the actual function name.
-		    (if (symbolp def)
-			(help--docstring-quote (format "%S" def))
-		      'anonymous)
-		    usage-tail)
-	    doc))))
+  (let* ((found (and docstring
+                     (string-match "\n\n(fn\\(\\( .*\\)?)\\)\\'" docstring)))
+         (doc (if found
+                  (and (memq section '(t nil doc))
+                       (not (zerop (match-beginning 0)))
+                       (substring docstring 0 (match-beginning 0)))
+                docstring))
+         (usage (and found
+                     (memq section '(t nil usage))
+                     (let ((tail (match-string 1 docstring)))
+                       (format "(%s%s"
+                               ;; Replace `fn' with the actual function name.
+                               (if (and (symbolp def) def)
+                                   (help--docstring-quote (format "%S" def))
+                                 'anonymous)
+                               tail)))))
+    (pcase section
+      (`nil (and usage (cons usage doc)))
+      (`t (cons usage doc))
+      (`usage usage)
+      (`doc doc))))
 
 (defun help-add-fundoc-usage (docstring arglist)
   "Add the usage info to DOCSTRING.
@@ -1442,13 +1483,22 @@ the same names as used in the original source code, when possible."
 (defun help--make-usage (function arglist)
   (cons (if (symbolp function) function 'anonymous)
 	(mapcar (lambda (arg)
-		  (if (not (symbolp arg)) arg
+		  (cond
+                   ;; Parameter name.
+                   ((symbolp arg)
 		    (let ((name (symbol-name arg)))
 		      (cond
                        ((string-match "\\`&" name) arg)
                        ((string-match "\\`_." name)
                         (intern (upcase (substring name 1))))
-                       (t (intern (upcase name)))))))
+                       (t (intern (upcase name))))))
+                   ;; Parameter with a default value (from
+                   ;; cl-defgeneric etc).
+                   ((and (consp arg)
+                         (symbolp (car arg)))
+                    (cons (intern (upcase (symbol-name (car arg)))) (cdr arg)))
+                   ;; Something else.
+                   (t arg)))
 		arglist)))
 
 (define-obsolete-function-alias 'help-make-usage 'help--make-usage "25.1")
@@ -1456,6 +1506,62 @@ the same names as used in the original source code, when possible."
 (defun help--make-usage-docstring (fn arglist)
   (let ((print-escape-newlines t))
     (help--docstring-quote (format "%S" (help--make-usage fn arglist)))))
+
+
+
+;; Just some quote-like characters for now.  TODO: generate this stuff
+;; from official Unicode data.
+(defconst help-uni-confusables
+  '((#x2018 . "'") ;; LEFT SINGLE QUOTATION MARK
+    (#x2019 . "'") ;; RIGHT SINGLE QUOTATION MARK
+    (#x201B . "'") ;; SINGLE HIGH-REVERSED-9 QUOTATION MARK
+    (#x201C . "\"") ;; LEFT DOUBLE QUOTATION MARK
+    (#x201D . "\"") ;; RIGHT DOUBLE QUOTATION MARK
+    (#x201F . "\"") ;; DOUBLE HIGH-REVERSED-9 QUOTATION MARK
+    (#x301E . "\"") ;; DOUBLE PRIME QUOTATION MARK
+    (#xFF02 . "'") ;; FULLWIDTH QUOTATION MARK
+    (#xFF07 . "'") ;; FULLWIDTH APOSTROPHE
+    )
+  "An alist of confusable characters to give hints about.
+Each alist element is of the form (CHAR . REPLACEMENT), where
+CHAR is the potentially confusable character, and REPLACEMENT is
+the suggested string to use instead.  See
+`help-uni-confusable-suggestions'.")
+
+(defconst help-uni-confusables-regexp
+  (concat "[" (mapcar #'car help-uni-confusables) "]")
+  "Regexp matching any character listed in `help-uni-confusables'.")
+
+(defun help-uni-confusable-suggestions (string)
+  "Return a message describing confusables in STRING."
+  (let ((i 0)
+        (confusables nil))
+    (while (setq i (string-match help-uni-confusables-regexp string i))
+      (let ((replacement (alist-get (aref string i) help-uni-confusables)))
+        (push (aref string i) confusables)
+        (setq string (replace-match replacement t t string))
+        (setq i (+ i (length replacement)))))
+    (when confusables
+      (format-message
+       (ngettext
+        "Found confusable character: %s, perhaps you meant: `%s'?"
+        "Found confusable characters: %s; perhaps you meant: `%s'?"
+        (length confusables))
+       (mapconcat (lambda (c) (format-message "`%c'" c))
+                  confusables ", ")
+       string))))
+
+(defun help-command-error-confusable-suggestions (data _context _signal)
+  (pcase data
+    (`(void-variable ,var)
+     (let ((suggestions (help-uni-confusable-suggestions
+                         (symbol-name var))))
+       (when suggestions
+         (princ (concat "\n  " suggestions) t))))
+    (_ nil)))
+
+(add-function :after command-error-function
+              #'help-command-error-confusable-suggestions)
 
 
 (provide 'help)

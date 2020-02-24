@@ -1,9 +1,8 @@
 ;;; tpu-edt.el --- Emacs emulating TPU emulating EDT
 
-;; Copyright (C) 1993-1995, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1995, 2000-2020 Free Software Foundation, Inc.
 
 ;; Author: Rob Riepel <riepel@networking.stanford.edu>
-;; Maintainer: Rob Riepel <riepel@networking.stanford.edu>
 ;; Version: 4.5
 ;; Keywords: emulations
 ;; Obsolete-since: 24.5
@@ -980,10 +979,7 @@ and the total number of lines in the buffer."
 ;;;
 ;;;###autoload
 (define-minor-mode tpu-edt-mode
-  "Toggle TPU/edt emulation on or off.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Toggle TPU/edt emulation on or off."
   :global t :group 'tpu
   (if tpu-edt-mode (tpu-edt-on) (tpu-edt-off)))
 

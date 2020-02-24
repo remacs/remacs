@@ -1,5 +1,5 @@
 ;;; epa-mail.el --- the EasyPG Assistant, minor-mode for mail composer -*- lexical-binding: t -*-
-;; Copyright (C) 2006-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
 ;; Author: Daiki Ueno <ueno@unixuser.org>
 ;; Keywords: PGP, GnuPG, mail, message
@@ -47,10 +47,7 @@
 
 ;;;###autoload
 (define-minor-mode epa-mail-mode
-  "A minor-mode for composing encrypted/clearsigned mails.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "A minor-mode for composing encrypted/clearsigned mails."
   nil " epa-mail" epa-mail-mode-map)
 
 (defun epa-mail--find-usable-key (keys usage)
@@ -73,7 +70,8 @@ USAGE would be `sign' or `encrypt'."
 The buffer is expected to contain a mail message."
   (declare (interactive-only t))
   (interactive)
-  (epa-decrypt-armor-in-region (point-min) (point-max)))
+  (with-suppressed-warnings ((interactive-only epa-decrypt-armor-in-region))
+    (epa-decrypt-armor-in-region (point-min) (point-max))))
 
 ;;;###autoload
 (defun epa-mail-verify ()
@@ -81,7 +79,8 @@ The buffer is expected to contain a mail message."
 The buffer is expected to contain a mail message."
   (declare (interactive-only t))
   (interactive)
-  (epa-verify-cleartext-in-region (point-min) (point-max)))
+  (with-suppressed-warnings ((interactive-only epa-verify-cleartext-in-region))
+    (epa-verify-cleartext-in-region (point-min) (point-max))))
 
 ;;;###autoload
 (defun epa-mail-sign (start end signers mode)
@@ -95,7 +94,7 @@ The buffer is expected to contain a mail message."
 	 (forward-line))
      (setq epa-last-coding-system-specified
 	   (or coding-system-for-write
-	       (epa--select-safe-coding-system (point) (point-max))))
+	       (select-safe-coding-system (point) (point-max))))
      (let ((verbose current-prefix-arg))
        (list (point) (point-max)
 	     (if verbose
@@ -107,7 +106,8 @@ If no one is selected, default secret key is used.  "
 		 (epa--read-signature-type)
 	       'clear)))))
   (let ((inhibit-read-only t))
-    (epa-sign-region start end signers mode)))
+    (with-suppressed-warnings ((interactive-only epa-sign-region))
+      (epa-sign-region start end signers mode))))
 
 (defun epa-mail-default-recipients ()
   "Return the default list of encryption recipients for a mail buffer."
@@ -153,7 +153,7 @@ If no one is selected, default secret key is used.  "
 		   (mapcar
 		    (lambda (recipient)
 		      (let ((tem (assoc recipient epa-mail-aliases)))
-			(if tem (cdr tem)
+			(if tem (copy-sequence (cdr tem))
 			  (list recipient))))
 		    real-recipients)))
       )))
@@ -222,11 +222,13 @@ If no one is selected, symmetric encryption will be performed.  "
 
       (setq epa-last-coding-system-specified
 	    (or coding-system-for-write
-		(epa--select-safe-coding-system (point) (point-max)))))
+		(select-safe-coding-system (point) (point-max)))))
 
     ;; Don't let some read-only text stop us from encrypting.
     (let ((inhibit-read-only t))
-      (epa-encrypt-region start (point-max) recipient-keys signers signers))))
+      (with-suppressed-warnings ((interactive-only epa-encrypt-region))
+        (epa-encrypt-region start (point-max)
+                            recipient-keys signers signers)))))
 
 ;;;###autoload
 (defun epa-mail-import-keys ()
@@ -238,10 +240,7 @@ The buffer is expected to contain a mail message."
 
 ;;;###autoload
 (define-minor-mode epa-global-mail-mode
-  "Minor mode to hook EasyPG into Mail mode.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Minor mode to hook EasyPG into Mail mode."
   :global t :init-value nil :group 'epa-mail :version "23.1"
   (remove-hook 'mail-mode-hook 'epa-mail-mode)
   (if epa-global-mail-mode

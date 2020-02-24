@@ -1,6 +1,6 @@
 ;; icalendar-tests.el --- Test suite for icalendar.el
 
-;; Copyright (C) 2005, 2008-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2005, 2008-2020 Free Software Foundation, Inc.
 
 ;; Author:         Ulf Jasper <ulf.jasper@web.de>
 ;; Created:        March 2005
@@ -57,17 +57,16 @@
 
 (ert-deftest icalendar--create-uid ()
   "Test for `icalendar--create-uid'."
-  (let* ((icalendar-uid-format "xxx-%t-%c-%h-%u-%s")
+  (let* ((icalendar-uid-format "xxx-%c-%h-%u-%s")
          (icalendar--uid-count 77)
          (entry-full "30.06.1964 07:01 blahblah")
          (hash (format "%d" (abs (sxhash entry-full))))
          (contents "DTSTART:19640630T070100\nblahblah")
          (username (or user-login-name "UNKNOWN_USER")))
-    (cl-letf (((symbol-function 'current-time) (lambda () '(1 2 3))))
-      (should (= 77 icalendar--uid-count))
-      (should (string=  (concat "xxx-123-77-" hash "-" username "-19640630")
-                        (icalendar--create-uid entry-full contents)))
-      (should (= 78 icalendar--uid-count)))
+    (should (= 77 icalendar--uid-count))
+    (should (string= (concat "xxx-77-" hash "-" username "-19640630")
+                     (icalendar--create-uid entry-full contents)))
+    (should (= 78 icalendar--uid-count))
     (setq contents "blahblah")
     (setq icalendar-uid-format "yyy%syyy")
     (should (string=  (concat "yyyDTSTARTyyy")
@@ -1303,6 +1302,24 @@ UID:9188710a-08a7-4061-bae3-d4cf4972599a
 "
 ))
 
+(ert-deftest icalendar-import-bug-33277 ()
+  ;;bug#33277 -- start time equals end time
+  (icalendar-tests--test-import
+   "DTSTART:20181105T200000Z
+DTSTAMP:20181105T181652Z
+DESCRIPTION:
+LAST-MODIFIED:20181105T181646Z
+LOCATION:
+SEQUENCE:0
+SUMMARY:event with same start/end time
+TRANSP:OPAQUE
+"
+
+   "&2018/11/5 21:00 event with same start/end time\n"
+   "&5/11/2018 21:00 event with same start/end time\n"
+   "&11/5/2018 21:00 event with same start/end time\n"
+   ))
+
 (ert-deftest icalendar-import-multiple-vcalendars ()
   (icalendar-tests--test-import
    "DTSTART;VALUE=DATE:20110723
@@ -2327,6 +2344,32 @@ END:VCALENDAR
 "
 )
   )
+
+(defun icalendar-test--format (string &optional day zone)
+  (let ((time (icalendar--decode-isodatetime string day zone)))
+    (format-time-string "%FT%T%z" (encode-time time) 0)))
+
+(defun icalendar-tests--decode-isodatetime (ical-string)
+  (should (equal (icalendar-test--format "20040917T050910-0200")
+                 "2004-09-17T03:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T050910")
+                 "2004-09-17T03:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T050910Z")
+                 "2004-09-17T05:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T0509")
+                 "2004-09-17T03:09:00+0000"))
+  (should (equal (icalendar-test--format "20040917")
+                 "2004-09-16T22:00:00+0000"))
+  (should (equal (icalendar-test--format "20040917T050910" 1)
+                 "2004-09-18T03:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T050910" 30)
+                 "2004-10-17T03:09:10+0000"))
+  (should (equal (icalendar-test--format "20040917T050910" -1)
+                 "2004-09-16T03:09:10+0000"))
+
+  (should (equal (icalendar-test--format "20040917T050910" nil -3600)
+                 "2004-09-17T06:09:10+0000")))
+
 
 (provide 'icalendar-tests)
 ;;; icalendar-tests.el ends here

@@ -1,6 +1,6 @@
 ;;; gnus-int.el --- backend interface functions for Gnus
 
-;; Copyright (C) 1996-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
 ;; Author: Lars Magne Ingebrigtsen <larsi@gnus.org>
 ;; Keywords: news
@@ -23,8 +23,6 @@
 ;;; Commentary:
 
 ;;; Code:
-
-(eval-when-compile (require 'cl))
 
 (require 'gnus)
 (require 'message)
@@ -65,6 +63,8 @@ server denied."
 		 (const :tag "Deny server" denied)
 		 (const :tag "Unplug Agent" offline)))
 
+;; Note: When this option is finally removed, also remove the entire
+;; `gnus-start-news-server' function.
 (defcustom gnus-nntp-server nil
   "The name of the host running the NNTP server."
   :group 'gnus-server
@@ -259,7 +259,8 @@ If it is down, start it up (again)."
       (insert (format-time-string "%H:%M:%S")
 	      (format " %.2fs %s %S\n"
 		      (if (numberp gnus-backend-trace-elapsed)
-			  (- (float-time) gnus-backend-trace-elapsed)
+			  (float-time
+			   (time-since gnus-backend-trace-elapsed))
 			0)
 		      type form))
       (setq gnus-backend-trace-elapsed (float-time)))))
@@ -351,7 +352,8 @@ If it is down, start it up (again)."
   (when (stringp gnus-command-method)
     (setq gnus-command-method (gnus-server-to-method gnus-command-method)))
   (funcall (gnus-get-function gnus-command-method 'close-server)
-	   (nth 1 gnus-command-method)))
+	   (nth 1 gnus-command-method)
+	   (nthcdr 2 gnus-command-method)))
 
 (defun gnus-request-list (gnus-command-method)
   "Request the active file from GNUS-COMMAND-METHOD."
@@ -725,7 +727,7 @@ If GROUP is nil, all groups on GNUS-COMMAND-METHOD are scanned."
 	       (let* ((range (if (= min 2) 1 (cons 1 (1- min))))
 		      (read (gnus-info-read info))
 		      (new-read (gnus-range-add read (list range))))
-		 (gnus-info-set-read info new-read)))
+		 (setf (gnus-info-read info) new-read)))
 	     info)))))
 
 (defun gnus-request-expire-articles (articles group &optional force)

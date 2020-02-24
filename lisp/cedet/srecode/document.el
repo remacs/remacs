@@ -1,8 +1,8 @@
 ;;; srecode/document.el --- Documentation (comment) generation
 
-;; Copyright (C) 2008-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
-;; Author: Eric M. Ludlam <eric@siege-engine.com>
+;; Author: Eric M. Ludlam <zappo@gnu.org>
 
 ;; This file is part of GNU Emacs.
 
@@ -385,7 +385,7 @@ It is assumed that the comment occurs just in front of FCN-IN."
 
     (when (or (not fcn-in)
 	      (not (semantic-tag-of-class-p fcn-in 'function)))
-      (error "No tag of class 'function to insert comment for"))
+      (error "No tag of class `function' to insert comment for"))
 
     (if (not (eq (current-buffer) (semantic-tag-buffer fcn-in)))
 	(error "Only insert comments for tags in the current buffer"))
@@ -496,7 +496,7 @@ It is assumed that the comment occurs just after VAR-IN."
 
     (when (or (not var-in)
 	      (not (semantic-tag-of-class-p var-in 'variable)))
-      (error "No tag of class 'variable to insert comment for"))
+      (error "No tag of class `variable' to insert comment for"))
 
     (if (not (eq (current-buffer) (semantic-tag-buffer var-in)))
 	(error "Only insert comments for tags in the current buffer"))

@@ -1,6 +1,6 @@
 ;;; deuglify.el --- deuglify broken Outlook (Express) articles
 
-;; Copyright (C) 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
 ;; Author: Raymond Scholz <rscholz@zonix.de>
 ;;         Thomas Steffen
@@ -299,8 +299,12 @@ It is run after `gnus-article-prepare-hook'."
     ;; it. Calling `gnus-article-prepare-display' on an already
     ;; prepared article removes all MIME parts.  I'm unsure whether
     ;; this is a bug or not.
-    (gnus-article-highlight t)
-    (gnus-treat-article nil)
+    (save-excursion
+      (save-restriction
+	(widen)
+	(article-goto-body)
+	(narrow-to-region (point) (point-max))
+	(gnus-treat-article nil)))
     (gnus-run-hooks 'gnus-article-prepare-hook
 		    'gnus-outlook-display-hook)))
 
@@ -452,11 +456,12 @@ If NODISPLAY is non-nil, don't redisplay the article buffer."
 ;;;###autoload
 (defun gnus-outlook-deuglify-article (&optional nodisplay)
   "Full deuglify of broken Outlook (Express) articles.
-Treat dumbquotes, unwrap lines, repair attribution and rearrange citation.  If
-NODISPLAY is non-nil, don't redisplay the article buffer."
+Treat \"smartquotes\", unwrap lines, repair attribution and
+rearrange citation.  If NODISPLAY is non-nil, don't redisplay the
+article buffer."
   (interactive "P")
   ;; apply treatment of dumb quotes
-  (gnus-article-treat-dumbquotes)
+  (gnus-article-treat-smartquotes)
   ;; repair wrapped cited lines
   (gnus-article-outlook-unwrap-lines 'nodisplay)
   ;; repair attribution line and rearrange citation.

@@ -1,5 +1,5 @@
 /* Call a Lisp function interactively.
-   Copyright (C) 1985-1986, 1993-1995, 1997, 2000-2018 Free Software
+   Copyright (C) 1985-1986, 1993-1995, 1997, 2000-2020 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -35,7 +35,82 @@ static Lisp_Object point_marker;
 /* String for the prompt text used in Fcall_interactively.  */
 static Lisp_Object callint_message;
 
-/* ARGSUSED */
+DEFUN ("interactive", Finteractive, Sinteractive, 0, UNEVALLED, 0,
+       doc: /* Specify a way of parsing arguments for interactive use of a function.
+For example, write
+ (defun foo (arg buf) "Doc string" (interactive "P\\nbbuffer: ") .... )
+ to make ARG be the raw prefix argument, and set BUF to an existing buffer,
+ when `foo' is called as a command.
+
+The "call" to `interactive' is actually a declaration rather than a
+ function; it tells `call-interactively' how to read arguments to pass
+ to the function.  When actually called, `interactive' just returns
+ nil.
+
+Usually the argument of `interactive' is a string containing a code
+ letter followed optionally by a prompt.  (Some code letters do not
+ use I/O to get the argument and do not use prompts.)  To pass several
+ arguments to the command, concatenate the individual strings,
+ separating them by newline characters.
+
+Prompts are passed to `format', and may use %s escapes to print the
+ arguments that have already been read.
+
+If the argument is not a string, it is evaluated to get a list of
+ arguments to pass to the command.
+
+Just `(interactive)' means pass no arguments to the command when
+ calling interactively.
+
+Code letters available are:
+a -- Function name: symbol with a function definition.
+b -- Name of existing buffer.
+B -- Name of buffer, possibly nonexistent.
+c -- Character (no input method is used).
+C -- Command name: symbol with interactive function definition.
+d -- Value of point as number.  Does not do I/O.
+D -- Directory name.
+e -- Parameterized event (i.e., one that's a list) that invoked this command.
+     If used more than once, the Nth `e' returns the Nth parameterized event.
+     This skips events that are integers or symbols.
+f -- Existing file name.
+F -- Possibly nonexistent file name.
+G -- Possibly nonexistent file name, defaulting to just directory name.
+i -- Ignored, i.e. always nil.  Does not do I/O.
+k -- Key sequence (downcase the last event if needed to get a definition).
+K -- Key sequence to be redefined (do not downcase the last event).
+m -- Value of mark as number.  Does not do I/O.
+M -- Any string.  Inherits the current input method.
+n -- Number read using minibuffer.
+N -- Numeric prefix arg, or if none, do like code `n'.
+p -- Prefix arg converted to number.  Does not do I/O.
+P -- Prefix arg in raw form.  Does not do I/O.
+r -- Region: point and mark as 2 numeric args, smallest first.  Does no I/O.
+s -- Any string.  Does not inherit the current input method.
+S -- Any symbol.
+U -- Mouse up event discarded by a previous k or K argument.
+v -- Variable name: symbol that is `custom-variable-p'.
+x -- Lisp expression read but not evaluated.
+X -- Lisp expression read and evaluated.
+z -- Coding system.
+Z -- Coding system, nil if no prefix arg.
+
+In addition, if the string begins with `*', an error is signaled if
+  the buffer is read-only.
+If `@' appears at the beginning of the string, and if the key sequence
+ used to invoke the command includes any mouse events, then the window
+ associated with the first of those events is selected before the
+ command is run.
+If the string begins with `^' and `shift-select-mode' is non-nil,
+ Emacs first calls the function `handle-shift-selection'.
+You may use `@', `*', and `^' together.  They are processed in the
+ order that they appear, before reading any arguments.
+usage: (interactive &optional ARG-DESCRIPTOR)  */
+       attributes: const)
+  (Lisp_Object args)
+{
+  return Qnil;
+}
 
 /* Quotify EXP: if EXP is constant, return it.
    If EXP is not constant, return (quote EXP).  */
@@ -126,8 +201,8 @@ fix_command (Lisp_Object input, Lisp_Object values)
 		  carelt = XCAR (elt);
 		  /* If it is (if X Y), look at Y.  */
 		  if (EQ (carelt, Qif)
-		      && EQ (Fnthcdr (make_number (3), elt), Qnil))
-		    elt = Fnth (make_number (2), elt);
+		      && NILP (Fnthcdr (make_fixnum (3), elt)))
+		    elt = Fnth (make_fixnum (2), elt);
 		  /* If it is (when ... Y), look at Y.  */
 		  else if (EQ (carelt, Qwhen))
 		    {
@@ -171,12 +246,13 @@ to the function `interactive' at the top level of the function body.
 See `interactive'.
 
 Optional second arg RECORD-FLAG non-nil
-means unconditionally put this command in the command-history.
+means unconditionally put this command in the variable `command-history'.
 Otherwise, this is done only if an arg is read using the minibuffer.
 
 Optional third arg KEYS, if given, specifies the sequence of events to
-supply, as a vector, if the command inquires which events were used to
-invoke it.  If KEYS is omitted or nil, the return value of
+supply, as a vector, if FUNCTION inquires which events were used to
+invoke it (via an `interactive' spec that contains, for instance, an
+\"e\" code letter).  If KEYS is omitted or nil, the return value of
 `this-command-keys-vector' is used.  */)
   (Lisp_Object function, Lisp_Object record_flag, Lisp_Object keys)
 {
@@ -237,18 +313,8 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	     and turn them into things we can eval.  */
 	  Lisp_Object values = quotify_args (Fcopy_sequence (specs));
 	  fix_command (input, values);
-	  Lisp_Object this_cmd = Fcons (function, values);
-	  if (history_delete_duplicates)
-	    Vcommand_history = Fdelete (this_cmd, Vcommand_history);
-	  Vcommand_history = Fcons (this_cmd, Vcommand_history);
-
-	  /* Don't keep command history around forever.  */
-	  if (INTEGERP (Vhistory_length) && XINT (Vhistory_length) > 0)
-	    {
-	      Lisp_Object teml = Fnthcdr (Vhistory_length, Vcommand_history);
-	      if (CONSP (teml))
-		XSETCDR (teml, Qnil);
-	    }
+          call4 (intern ("add-to-history"), intern ("command-history"),
+                 Fcons (function, values), Qnil, Qt);
 	}
 
       Vthis_command = save_this_command;
@@ -398,8 +464,8 @@ invoke it.  If KEYS is omitted or nil, the return value of
 
         case 'c':		/* Character.  */
 	  /* Prompt in `minibuffer-prompt' face.  */
-	  Fput_text_property (make_number (0),
-			      make_number (SCHARS (callint_message)),
+	  Fput_text_property (make_fixnum (0),
+			      make_fixnum (SCHARS (callint_message)),
 			      Qface, Qminibuffer_prompt, callint_message);
 	  args[i] = Fread_char (callint_message, Qnil, Qnil);
 	  message1_nolog (0);
@@ -450,8 +516,8 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	    ptrdiff_t speccount1 = SPECPDL_INDEX ();
 	    specbind (Qcursor_in_echo_area, Qt);
 	    /* Prompt in `minibuffer-prompt' face.  */
-	    Fput_text_property (make_number (0),
-				make_number (SCHARS (callint_message)),
+	    Fput_text_property (make_fixnum (0),
+				make_fixnum (SCHARS (callint_message)),
 				Qface, Qminibuffer_prompt, callint_message);
 	    args[i] = Fread_key_sequence (callint_message,
 					  Qnil, Qnil, Qnil, Qnil);
@@ -461,7 +527,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	    /* If the key sequence ends with a down-event,
 	       discard the following up-event.  */
 	    Lisp_Object teml
-	      = Faref (args[i], make_number (XINT (Flength (args[i])) - 1));
+	      = Faref (args[i], make_fixnum (XFIXNUM (Flength (args[i])) - 1));
 	    if (CONSP (teml))
 	      teml = XCAR (teml);
 	    if (SYMBOLP (teml))
@@ -480,8 +546,8 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	    ptrdiff_t speccount1 = SPECPDL_INDEX ();
 	    specbind (Qcursor_in_echo_area, Qt);
 	    /* Prompt in `minibuffer-prompt' face.  */
-	    Fput_text_property (make_number (0),
-				make_number (SCHARS (callint_message)),
+	    Fput_text_property (make_fixnum (0),
+				make_fixnum (SCHARS (callint_message)),
 				Qface, Qminibuffer_prompt, callint_message);
 	    args[i] = Fread_key_sequence_vector (callint_message,
 						 Qnil, Qt, Qnil, Qnil);
@@ -491,7 +557,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	    /* If the key sequence ends with a down-event,
 	       discard the following up-event.  */
 	    Lisp_Object teml
-	      = Faref (args[i], make_number (XINT (Flength (args[i])) - 1));
+	      = Faref (args[i], make_fixnum (ASIZE (args[i]) - 1));
 	    if (CONSP (teml))
 	      teml = XCAR (teml);
 	    if (SYMBOLP (teml))
@@ -508,7 +574,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	case 'U':		/* Up event from last k or K.  */
 	  if (!NILP (up_event))
 	    {
-	      args[i] = Fmake_vector (make_number (1), up_event);
+	      args[i] = make_vector (1, up_event);
 	      up_event = Qnil;
 	      visargs[i] = Fkey_description (args[i], Qnil);
 	    }
@@ -633,7 +699,7 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	default:
 	  {
 	    /* How many bytes are left unprocessed in the specs string?
-	       (Note that this excludes the trailing null byte.)  */
+	       (Note that this excludes the trailing NUL byte.)  */
 	    ptrdiff_t bytes_left = string_len - (tem - string);
 	    unsigned letter;
 
@@ -677,15 +743,8 @@ invoke it.  If KEYS is omitted or nil, the return value of
 	visargs[i] = (varies[i] > 0
 		      ? list1 (intern (callint_argfuns[varies[i]]))
 		      : quotify_arg (args[i]));
-      Vcommand_history = Fcons (Flist (nargs - 1, visargs + 1),
-				Vcommand_history);
-      /* Don't keep command history around forever.  */
-      if (INTEGERP (Vhistory_length) && XINT (Vhistory_length) > 0)
-	{
-	  Lisp_Object teml = Fnthcdr (Vhistory_length, Vcommand_history);
-	  if (CONSP (teml))
-	    XSETCDR (teml, Qnil);
-	}
+      call4 (intern ("add-to-history"), intern ("command-history"),
+             Flist (nargs - 1, visargs + 1), Qnil, Qt);
     }
 
   /* If we used a marker to hold point, mark, or an end of the region,
@@ -705,8 +764,30 @@ invoke it.  If KEYS is omitted or nil, the return value of
   specbind (Qcommand_debug_status, Qnil);
 
   Lisp_Object val = Ffuncall (nargs, args);
-  SAFE_FREE ();
-  return unbind_to (speccount, val);
+  return SAFE_FREE_UNBIND_TO (speccount, val);
+}
+
+DEFUN ("prefix-numeric-value", Fprefix_numeric_value, Sprefix_numeric_value,
+       1, 1, 0,
+       doc: /* Return numeric meaning of raw prefix argument RAW.
+A raw prefix argument is what you get from `(interactive "P")'.
+Its numeric meaning is what you would get from `(interactive "p")'.  */)
+  (Lisp_Object raw)
+{
+  Lisp_Object val;
+
+  if (NILP (raw))
+    XSETFASTINT (val, 1);
+  else if (EQ (raw, Qminus))
+    XSETINT (val, -1);
+  else if (CONSP (raw) && FIXNUMP (XCAR (raw)))
+    val = XCAR (raw);
+  else if (FIXNUMP (raw))
+    val = raw;
+  else
+    XSETFASTINT (val, 1);
+
+  return val;
 }
 
 void
@@ -718,11 +799,11 @@ syms_of_callint (void)
   callint_message = Qnil;
   staticpro (&callint_message);
 
-  preserved_fns = listn (CONSTYPE_PURE, 4,
-			 intern_c_string ("region-beginning"),
-			 intern_c_string ("region-end"),
-			 intern_c_string ("point"),
-			 intern_c_string ("mark"));
+  preserved_fns = pure_list (intern_c_string ("region-beginning"),
+			     intern_c_string ("region-end"),
+			     intern_c_string ("point"),
+			     intern_c_string ("mark"));
+  staticpro (&preserved_fns);
 
   DEFSYM (Qlist, "list");
   DEFSYM (Qlet, "let");

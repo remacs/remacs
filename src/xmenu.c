@@ -1,6 +1,6 @@
 /* X Communication module for terminals which understand the X protocol.
 
-Copyright (C) 1986, 1988, 1993-1994, 1996, 1999-2018 Free Software
+Copyright (C) 1986, 1988, 1993-1994, 1996, 1999-2020 Free Software
 Foundation, Inc.
 
 Author: Jon Arnold
@@ -45,6 +45,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "coding.h"
 #include "sysselect.h"
+#include "pdumper.h"
 
 /* This may include sys/types.h, and that somehow loses
    if this is not done before the other system files.  */
@@ -81,7 +82,7 @@ x_menu_set_in_use (bool in_use)
 {
   Lisp_Object frames, frame;
 
-  menu_items_inuse = in_use ? Qt : Qnil;
+  menu_items_inuse = in_use;
   popup_activated_flag = in_use;
 
   /* Don't let frames in `above' z-group obscure popups.  */
@@ -666,26 +667,32 @@ menu_position_func (GtkMenu *menu, gint *x, gint *y, gboolean *push_in, gpointer
   GtkRequisition req;
   int max_x = -1;
   int max_y = -1;
+#ifdef HAVE_GTK3
+  int scale;
+#endif
 
   Lisp_Object frame, workarea;
 
   XSETFRAME (frame, data->f);
 
+#ifdef HAVE_GTK3
+  scale = xg_get_scale (data->f);
+#endif
   /* TODO: Get the monitor workarea directly without calculating other
      items in x-display-monitor-attributes-list. */
   workarea = call3 (Qframe_monitor_workarea,
                     Qnil,
-                    make_number (data->x),
-                    make_number (data->y));
+                    make_fixnum (data->x),
+                    make_fixnum (data->y));
 
   if (CONSP (workarea))
     {
       int min_x, min_y;
 
-      min_x = XINT (XCAR (workarea));
-      min_y = XINT (Fnth (make_number (1), workarea));
-      max_x = min_x + XINT (Fnth (make_number (2), workarea));
-      max_y = min_y + XINT (Fnth (make_number (3), workarea));
+      min_x = XFIXNUM (XCAR (workarea));
+      min_y = XFIXNUM (Fnth (make_fixnum (1), workarea));
+      max_x = min_x + XFIXNUM (Fnth (make_fixnum (2), workarea));
+      max_y = min_y + XFIXNUM (Fnth (make_fixnum (3), workarea));
     }
 
   if (max_x < 0 || max_y < 0)
@@ -696,11 +703,20 @@ menu_position_func (GtkMenu *menu, gint *x, gint *y, gboolean *push_in, gpointer
       max_y = x_display_pixel_height (dpyinfo);
     }
 
+  /* frame-monitor-workarea and {x,y}_display_pixel_width/height all
+     return device pixels, but GTK wants scaled pixels.  The positions
+     passed in via data were already scaled for us.  */
+#ifdef HAVE_GTK3
+  max_x /= scale;
+  max_y /= scale;
+#endif
   *x = data->x;
   *y = data->y;
 
   /* Check if there is room for the menu.  If not, adjust x/y so that
-     the menu is fully visible.  */
+     the menu is fully visible.  gtk_widget_get_preferred_size returns
+     scaled pixels, so there is no need to apply the scaling
+     factor.  */
   gtk_widget_get_preferred_size (GTK_WIDGET (menu), NULL, &req);
   if (data->x + req.width > max_x)
     *x -= data->x + req.width - max_x;
@@ -864,7 +880,7 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
   i = 0;
   while (i < menu_items_used)
     {
-      if (EQ (AREF (menu_items, i), Qnil))
+      if (NILP (AREF (menu_items, i)))
 	{
 	  submenu_stack[submenu_depth++] = save_wv;
 	  save_wv = prev_wv;
@@ -1033,7 +1049,7 @@ x_menu_show (struct frame *f, int x, int y, int menuflags,
       i = 0;
       while (i < menu_items_used)
 	{
-	  if (EQ (AREF (menu_items, i), Qnil))
+	  if (NILP (AREF (menu_items, i)))
 	    {
 	      subprefix_stack[submenu_depth++] = prefix;
 	      prefix = entry;
@@ -1329,7 +1345,380 @@ xw_popup_dialog (struct frame *f, Lisp_Object header, Lisp_Object contents)
   return selection;
 }
 
-/* Detect if a dialog or menu has been posted.  */
+#else /* not USE_X_TOOLKIT && not USE_GTK */
+
+/* The frame of the last activated non-toolkit menu bar.
+   Used to generate menu help events.  */
+
+static struct frame *menu_help_frame;
+
+
+/* Show help HELP_STRING, or clear help if HELP_STRING is null.
+
+   PANE is the pane number, and ITEM is the menu item number in
+   the menu (currently not used).
+
+   This cannot be done with generating a HELP_EVENT because
+   XMenuActivate contains a loop that doesn't let Emacs process
+   keyboard events.  */
+
+static void
+menu_help_callback (char const *help_string, int pane, int item)
+{
+  Lisp_Object *first_item;
+  Lisp_Object pane_name;
+  Lisp_Object menu_object;
+
+  first_item = XVECTOR (menu_items)->contents;
+  if (EQ (first_item[0], Qt))
+    pane_name = first_item[MENU_ITEMS_PANE_NAME];
+  else if (EQ (first_item[0], Qquote))
+    /* This shouldn't happen, see x_menu_show.  */
+    pane_name = empty_unibyte_string;
+  else
+    pane_name = first_item[MENU_ITEMS_ITEM_NAME];
+
+  /* (menu-item MENU-NAME PANE-NUMBER)  */
+  menu_object = list3 (Qmenu_item, pane_name, make_fixnum (pane));
+  show_help_echo (help_string ? build_string (help_string) : Qnil,
+ 		  Qnil, menu_object, make_fixnum (item));
+}
+
+struct pop_down_menu
+{
+  struct frame *frame;
+  XMenu *menu;
+};
+
+static void
+pop_down_menu (void *arg)
+{
+  struct pop_down_menu *data = arg;
+  struct frame *f = data->frame;
+  XMenu *menu = data->menu;
+
+  block_input ();
+#ifndef MSDOS
+  XUngrabPointer (FRAME_X_DISPLAY (f), CurrentTime);
+  XUngrabKeyboard (FRAME_X_DISPLAY (f), CurrentTime);
+#endif
+  XMenuDestroy (FRAME_X_DISPLAY (f), menu);
+
+#ifdef HAVE_X_WINDOWS
+  /* Assume the mouse has moved out of the X window.
+     If it has actually moved in, we will get an EnterNotify.  */
+  x_mouse_leave (FRAME_DISPLAY_INFO (f));
+
+  /* State that no mouse buttons are now held.
+     (The oldXMenu code doesn't track this info for us.)
+     That is not necessarily true, but the fiction leads to reasonable
+     results, and it is a pain to ask which are actually held now.  */
+  FRAME_DISPLAY_INFO (f)->grabbed = 0;
+
+#endif /* HAVE_X_WINDOWS */
+
+  unblock_input ();
+}
+
+
+Lisp_Object
+x_menu_show (struct frame *f, int x, int y, int menuflags,
+	     Lisp_Object title, const char **error_name)
+{
+  Window root;
+  XMenu *menu;
+  int pane, selidx, lpane, status;
+  Lisp_Object entry = Qnil;
+  Lisp_Object pane_prefix;
+  char *datap;
+  int ulx, uly, width, height;
+  int dispwidth, dispheight;
+  int i, j, lines, maxlines;
+  int maxwidth;
+  int dummy_int;
+  unsigned int dummy_uint;
+  ptrdiff_t specpdl_count = SPECPDL_INDEX ();
+
+  eassert (FRAME_X_P (f) || FRAME_MSDOS_P (f));
+
+  *error_name = 0;
+  if (menu_items_n_panes == 0)
+    return Qnil;
+
+  if (menu_items_used <= MENU_ITEMS_PANE_LENGTH)
+    {
+      *error_name = "Empty menu";
+      return Qnil;
+    }
+
+  USE_SAFE_ALLOCA;
+  block_input ();
+
+  /* Figure out which root window F is on.  */
+  XGetGeometry (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f), &root,
+		&dummy_int, &dummy_int, &dummy_uint, &dummy_uint,
+		&dummy_uint, &dummy_uint);
+
+  /* Make the menu on that window.  */
+  menu = XMenuCreate (FRAME_X_DISPLAY (f), root, "emacs");
+  if (menu == NULL)
+    {
+      *error_name = "Can't create menu";
+      goto return_entry;
+    }
+
+  /* Don't GC while we prepare and show the menu,
+     because we give the oldxmenu library pointers to the
+     contents of strings.  */
+  inhibit_garbage_collection ();
+
+#ifdef HAVE_X_WINDOWS
+  {
+    /* Adjust coordinates to relative to the outer (window manager) window. */
+    int left_off, top_off;
+
+    x_real_pos_and_offsets (f, &left_off, NULL, &top_off, NULL,
+                            NULL, NULL, NULL, NULL, NULL);
+
+    x += left_off;
+    y += top_off;
+  }
+#endif /* HAVE_X_WINDOWS */
+
+  x += f->left_pos;
+  y += f->top_pos;
+
+  /* Create all the necessary panes and their items.  */
+  maxwidth = maxlines = lines = i = 0;
+  lpane = XM_FAILURE;
+  while (i < menu_items_used)
+    {
+      if (EQ (AREF (menu_items, i), Qt))
+	{
+	  /* Create a new pane.  */
+	  Lisp_Object pane_name, prefix;
+	  const char *pane_string;
+
+          maxlines = max (maxlines, lines);
+          lines = 0;
+	  pane_name = AREF (menu_items, i + MENU_ITEMS_PANE_NAME);
+	  prefix = AREF (menu_items, i + MENU_ITEMS_PANE_PREFIX);
+	  pane_string = (NILP (pane_name)
+			 ? "" : SSDATA (pane_name));
+	  if ((menuflags & MENU_KEYMAPS) && !NILP (prefix))
+	    pane_string++;
+
+	  lpane = XMenuAddPane (FRAME_X_DISPLAY (f), menu, pane_string, true);
+	  if (lpane == XM_FAILURE)
+	    {
+	      XMenuDestroy (FRAME_X_DISPLAY (f), menu);
+	      *error_name = "Can't create pane";
+	      goto return_entry;
+	    }
+	  i += MENU_ITEMS_PANE_LENGTH;
+
+	  /* Find the width of the widest item in this pane.  */
+	  j = i;
+	  while (j < menu_items_used)
+	    {
+	      Lisp_Object item;
+	      item = AREF (menu_items, j);
+	      if (EQ (item, Qt))
+		break;
+	      if (NILP (item))
+		{
+		  j++;
+		  continue;
+		}
+	      width = SBYTES (item);
+	      if (width > maxwidth)
+		maxwidth = width;
+
+	      j += MENU_ITEMS_ITEM_LENGTH;
+	    }
+	}
+      /* Ignore a nil in the item list.
+	 It's meaningful only for dialog boxes.  */
+      else if (EQ (AREF (menu_items, i), Qquote))
+	i += 1;
+      else
+	{
+	  /* Create a new item within current pane.  */
+	  Lisp_Object item_name, enable, descrip, help;
+	  char *item_data;
+	  char const *help_string;
+
+	  item_name = AREF (menu_items, i + MENU_ITEMS_ITEM_NAME);
+	  enable = AREF (menu_items, i + MENU_ITEMS_ITEM_ENABLE);
+	  descrip
+	    = AREF (menu_items, i + MENU_ITEMS_ITEM_EQUIV_KEY);
+	  help = AREF (menu_items, i + MENU_ITEMS_ITEM_HELP);
+	  help_string = STRINGP (help) ? SSDATA (help) : NULL;
+
+	  if (!NILP (descrip))
+	    {
+	      item_data = SAFE_ALLOCA (maxwidth + SBYTES (descrip) + 1);
+	      memcpy (item_data, SSDATA (item_name), SBYTES (item_name));
+	      for (j = SCHARS (item_name); j < maxwidth; j++)
+		item_data[j] = ' ';
+	      memcpy (item_data + j, SSDATA (descrip), SBYTES (descrip));
+	      item_data[j + SBYTES (descrip)] = 0;
+	    }
+	  else
+	    item_data = SSDATA (item_name);
+
+	  if (lpane == XM_FAILURE
+	      || (XMenuAddSelection (FRAME_X_DISPLAY (f),
+				     menu, lpane, 0, item_data,
+				     !NILP (enable), help_string)
+		  == XM_FAILURE))
+	    {
+	      XMenuDestroy (FRAME_X_DISPLAY (f), menu);
+	      *error_name = "Can't add selection to menu";
+	      goto return_entry;
+	    }
+	  i += MENU_ITEMS_ITEM_LENGTH;
+          lines++;
+	}
+    }
+
+  maxlines = max (maxlines, lines);
+
+  /* All set and ready to fly.  */
+  XMenuRecompute (FRAME_X_DISPLAY (f), menu);
+  dispwidth = DisplayWidth (FRAME_X_DISPLAY (f), FRAME_X_SCREEN_NUMBER (f));
+  dispheight = DisplayHeight (FRAME_X_DISPLAY (f), FRAME_X_SCREEN_NUMBER (f));
+  x = min (x, dispwidth);
+  y = min (y, dispheight);
+  x = max (x, 1);
+  y = max (y, 1);
+  XMenuLocate (FRAME_X_DISPLAY (f), menu, 0, 0, x, y,
+	       &ulx, &uly, &width, &height);
+  if (ulx+width > dispwidth)
+    {
+      x -= (ulx + width) - dispwidth;
+      ulx = dispwidth - width;
+    }
+  if (uly+height > dispheight)
+    {
+      y -= (uly + height) - dispheight;
+      uly = dispheight - height;
+    }
+#ifndef HAVE_X_WINDOWS
+  if (FRAME_HAS_MINIBUF_P (f) && uly+height > dispheight - 1)
+    {
+      /* Move the menu away of the echo area, to avoid overwriting the
+	 menu with help echo messages or vice versa.  */
+      if (BUFFERP (echo_area_buffer[0]) && WINDOWP (echo_area_window))
+	{
+	  y -= WINDOW_TOTAL_LINES (XWINDOW (echo_area_window));
+	  uly -= WINDOW_TOTAL_LINES (XWINDOW (echo_area_window));
+	}
+      else
+	{
+	  y--;
+	  uly--;
+	}
+    }
+#endif
+  if (ulx < 0) x -= ulx;
+  if (uly < 0) y -= uly;
+
+  if (!(menuflags & MENU_FOR_CLICK))
+    {
+      /* If position was not given by a mouse click, adjust so upper left
+         corner of the menu as a whole ends up at given coordinates.  This
+         is what x-popup-menu says in its documentation.  */
+      x += width/2;
+      y += 1.5*height/(maxlines+2);
+    }
+
+  XMenuSetAEQ (menu, true);
+  XMenuSetFreeze (menu, true);
+  pane = selidx = 0;
+
+#ifndef MSDOS
+  XMenuActivateSetWaitFunction (x_menu_wait_for_event, FRAME_X_DISPLAY (f));
+#endif
+
+  record_unwind_protect_ptr (pop_down_menu,
+			     &(struct pop_down_menu) {f, menu});
+
+  /* Help display under X won't work because XMenuActivate contains
+     a loop that doesn't give Emacs a chance to process it.  */
+  menu_help_frame = f;
+  status = XMenuActivate (FRAME_X_DISPLAY (f), menu, &pane, &selidx,
+                          x, y, ButtonReleaseMask, &datap,
+                          menu_help_callback);
+  pane_prefix = Qnil;
+
+  switch (status)
+    {
+    case XM_SUCCESS:
+#ifdef XDEBUG
+      fprintf (stderr, "pane= %d line = %d\n", panes, selidx);
+#endif
+
+      /* Find the item number SELIDX in pane number PANE.  */
+      i = 0;
+      while (i < menu_items_used)
+	{
+	  if (EQ (AREF (menu_items, i), Qt))
+	    {
+	      if (pane == 0)
+		pane_prefix
+		  = AREF (menu_items, i + MENU_ITEMS_PANE_PREFIX);
+	      pane--;
+	      i += MENU_ITEMS_PANE_LENGTH;
+	    }
+	  else
+	    {
+	      if (pane == -1)
+		{
+		  if (selidx == 0)
+		    {
+		      entry
+			= AREF (menu_items, i + MENU_ITEMS_ITEM_VALUE);
+		      if (menuflags & MENU_KEYMAPS)
+			{
+			  entry = list1 (entry);
+			  if (!NILP (pane_prefix))
+			    entry = Fcons (pane_prefix, entry);
+			}
+		      break;
+		    }
+		  selidx--;
+		}
+	      i += MENU_ITEMS_ITEM_LENGTH;
+	    }
+	}
+      break;
+
+    case XM_FAILURE:
+      *error_name = "Can't activate menu";
+    case XM_IA_SELECT:
+      break;
+    case XM_NO_SELECT:
+      /* Make "Cancel" equivalent to C-g unless FOR_CLICK (which means
+	 the menu was invoked with a mouse event as POSITION).  */
+      if (!(menuflags & MENU_FOR_CLICK))
+	{
+	  unblock_input ();
+	  quit ();
+	}
+      break;
+    }
+
+ return_entry:
+  unblock_input ();
+  return SAFE_FREE_UNBIND_TO (specpdl_count, entry);
+}
+
+#endif /* not USE_X_TOOLKIT */
+
+#ifndef MSDOS
+/* Detect if a dialog or menu has been posted.  MSDOS has its own
+   implementation on msdos.c.  */
 
 int
 popup_activated (void)
@@ -1347,6 +1736,9 @@ DEFUN ("menu-or-popup-active-p", Fmenu_or_popup_active_p, Smenu_or_popup_active_
   return (popup_activated ()) ? Qt : Qnil;
 }
 
+
+static void syms_of_xmenu_for_pdumper (void);
+
 void
 syms_of_xmenu (void)
 {
@@ -1357,5 +1749,18 @@ syms_of_xmenu (void)
 
   defsubr (&Sx_menu_bar_open_internal);
   Ffset (intern_c_string ("accelerate-menu"),
-	 intern_c_string (Sx_menu_bar_open_internal.symbol_name));
+	 intern_c_string (Sx_menu_bar_open_internal.s.symbol_name));
+#endif
+
+  pdumper_do_now_and_after_load (syms_of_xmenu_for_pdumper);
+}
+
+static void
+syms_of_xmenu_for_pdumper (void)
+{
+#ifdef USE_X_TOOLKIT
+  enum { WIDGET_ID_TICK_START = 1 << 16 };
+  widget_id_tick = WIDGET_ID_TICK_START;
+  next_menubar_widget_id = 1;
+#endif
 }

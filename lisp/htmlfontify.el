@@ -1,6 +1,6 @@
 ;;; htmlfontify.el --- htmlize a buffer/source tree with optional hyperlinks -*- lexical-binding: t -*-
 
-;; Copyright (C) 2002-2003, 2009-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2003, 2009-2020 Free Software Foundation, Inc.
 
 ;; Emacs Lisp Archive Entry
 ;; Package: htmlfontify
@@ -8,7 +8,6 @@
 ;; Version: 0.21
 ;; Keywords: html, hypermedia, markup, etags
 ;; Author: Vivek Dasmohapatra <vivek@etla.org>
-;; Maintainer: Vivek Dasmohapatra <vivek@etla.org>
 ;; Created: 2002-01-05
 ;; Description: htmlize a buffer/source tree with optional hyperlinks
 ;; URL: http://rtfm.etla.org/emacs/htmlfontify/
@@ -448,6 +447,7 @@ and so on."
              (background (choice (const :tag "Dark"          dark     )
                                  (const :tag "Bright"        light    ))) ))
 
+(define-obsolete-variable-alias 'hfy-optimisations 'hfy-optimizations "25.1")
 (defcustom hfy-optimizations (list 'keep-overlays)
   "Optimizations to turn on: So far, the following have been implemented:\n
   merge-adjacent-tags: If two (or more) span tags are adjacent, identical and
@@ -460,7 +460,7 @@ and so on."
   keep-overlays      : More of a bell (or possibly whistle) than an
                        optimization - If on, preserve overlay highlighting
                        (cf ediff or goo-font-lock) as well as basic faces.\n
-  body-text-only     : Emit only body-text. In concrete terms,
+  body-text-only     : Emit only body-text.  In concrete terms,
                        1. Suppress calls to `hfy-page-header' and
                           `hfy-page-footer'
                        2. Pretend that `div-wrapper' option above is
@@ -483,7 +483,6 @@ which can never slow you down, but may result in incomplete fontification."
                (const :tag "body-text-only"       body-text-only      ))
   :group 'htmlfontify
   :tag   "optimizations")
-(define-obsolete-variable-alias 'hfy-optimisations 'hfy-optimizations "25.1")
 
 (defvar hfy-tags-cache nil
   "Alist of the form:\n
@@ -567,7 +566,7 @@ therefore no longer care about) will be invalid at any time.\n
 (defvar hfy-tmpfont-stack nil
   "An alist of derived fonts resulting from overlays.")
 
-(defconst hfy-hex-regex "[0-9A-Fa-f]")
+(defconst hfy-hex-regex "[[:xdigit:]]")
 
 (defconst hfy-triplet-regex
   (concat
@@ -1067,7 +1066,7 @@ haven't encountered them yet.  Returns a `hfy-style-assoc'."
 
 (defun hfy-face-resolve-face (fn)
   "For FN return a face specification.
-FN may be either a face or a face specification. If the latter,
+FN may be either a face or a face specification.  If the latter,
 then the specification is returned unchanged."
   (cond
    ((facep fn)
@@ -1590,12 +1589,12 @@ Do not record undo information during evaluation of BODY."
   (when show-trailing-whitespace
     (hfy-save-buffer-state nil
       (remove-text-properties (point-min) (point-max)
-                              '(hfy-show-trailing-whitespace)))))
+                              '(hfy-show-trailing-whitespace nil)))))
 
 (defun hfy-begin-span (style text-block text-id text-begins-block-p)
   "Default handler to begin a span of text.
-Insert \"<span class=\"STYLE\" ...>\". See
-`hfy-begin-span-handler' for more information."
+Insert \"<span class=\"STYLE\" ...>\".
+See `hfy-begin-span-handler' for more information."
   (when text-begins-block-p
     (insert
      (format "<span onclick=\"toggle_invis('%s');\">…</span>" text-block)))
@@ -1625,8 +1624,8 @@ invisible text.
 
 TEXT-BLOCK is a string that identifies a single chunk of visible
 or invisible text of which the current position is a part.  For
-visible portions, it's value is \"nil\". For invisible portions,
-it's value is computed as part of `hfy-invisible-name'.
+visible portions, its value is \"nil\".  For invisible portions,
+its value is computed as part of `hfy-invisible-name'.
 
 TEXT-ID marks a unique position within a block.  It is set to
 value of `point' at the current buffer position.
@@ -1652,7 +1651,8 @@ The default handler is `hfy-end-span'.")
 SRCDIR, if set, is the directory being htmlfontified.
 FILE, if set, is the file name."
   (if srcdir (setq srcdir (directory-file-name srcdir)))
-  (let* ( (html-buffer        (hfy-buffer))
+  (let* ( (inhibit-read-only             t)
+          (html-buffer        (hfy-buffer))
           (css-sheet                   nil)
           (css-map                     nil)
           (invis-ranges                nil)
@@ -1677,7 +1677,8 @@ FILE, if set, is the file name."
     (copy-to-buffer html-buffer (point-min) (point-max))
     (set-buffer     html-buffer)
     ;; rip out props that could interfere with our htmlization of the buffer:
-    (remove-text-properties (point-min) (point-max) hfy-ignored-properties)
+    (remove-list-of-text-properties (point-min) (point-max)
+                                    hfy-ignored-properties)
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;; at this point, html-buffer retains the fontification of the parent:
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1937,9 +1938,9 @@ adding an extension of `hfy-extn'.  Fontification is actually done by
                  (set-buffer  html)
                  (write-file (concat target hfy-extn))
                  (kill-buffer html))
-        ;; #o0200 == 128, but emacs20 doesn't know that
-        (if (and (file-exists-p target) (not (file-writable-p target)))
-            (set-file-modes target (logior (file-modes target) 128)))
+	(let ((modes (file-modes target)))
+	  (if (and modes (not (file-writable-p target)))
+	      (set-file-modes target (logior modes #o0200))))
         (copy-file (buffer-file-name source) target 'overwrite))
       (kill-buffer source)) ))
 

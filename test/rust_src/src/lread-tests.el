@@ -1,6 +1,6 @@
 ;;; lread-tests.el --- tests for lread.c -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
 ;; Author: Philipp Stephani <phst@google.com>
 
@@ -140,24 +140,9 @@ literals (Bug#20852)."
     (should (equal (lread-tests--last-message)
                    (concat (format-message "Loading `%s': " file-name)
                            "unescaped character literals "
-                           "`?\"', `?(', `?)', `?;', `?[', `?]' detected!")))))
-
-(ert-deftest lread-tests--funny-quote-symbols ()
-  "Check that 'smart quotes' or similar trigger errors in symbol names."
-  (dolist (quote-char
-           '(#x2018 ;; LEFT SINGLE QUOTATION MARK
-             #x2019 ;; RIGHT SINGLE QUOTATION MARK
-             #x201B ;; SINGLE HIGH-REVERSED-9 QUOTATION MARK
-             #x201C ;; LEFT DOUBLE QUOTATION MARK
-             #x201D ;; RIGHT DOUBLE QUOTATION MARK
-             #x201F ;; DOUBLE HIGH-REVERSED-9 QUOTATION MARK
-             #x301E ;; DOUBLE PRIME QUOTATION MARK
-             #xFF02 ;; FULLWIDTH QUOTATION MARK
-             #xFF07 ;; FULLWIDTH APOSTROPHE
-             ))
-    (let ((str (format "%cfoo" quote-char)))
-     (should-error (read str) :type 'invalid-read-syntax)
-     (should (eq (read (concat "\\" str)) (intern str))))))
+                           "`?\"', `?(', `?)', `?;', `?[', `?]' detected, "
+                           "`?\\\"', `?\\(', `?\\)', `?\\;', `?\\[', `?\\]' "
+                           "expected!")))))
 
 (ert-deftest lread-test-bug26837 ()
   "Test for https://debbugs.gnu.org/26837 ."
@@ -194,34 +179,31 @@ literals (Bug#20852)."
     (lread--substitute-object-in-subtree x 1 t)
     (should (eq x (cdr x)))))
 
-(ert-deftest lread-test-eval-region ()
-  (let ((buf (get-buffer-create "test-eval-region"))
-        (string "(defun test-eval-region-func () nil)
-                 (defvar test-eval-region-var)
-                 (setq test-eval-region-var 1)"))
-    (with-current-buffer buf
-      (insert string)
-      (eval-region (point-min) (point-max))
-      (should (functionp 'test-eval-region-func))
-      (should (boundp 'test-eval-region-var)))))
+(ert-deftest lread-long-hex-integer ()
+  (should (bignump (read "#xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))))
 
-(ert-deftest unintern-tests ()
-  (let ((obarray (obarray-make 1)))
-    (obarray-put obarray "a")
-    (should (eq (unintern "b" obarray) nil))
-    (should (eq (unintern "a" obarray) t))
-    (should (equal obarray [0])))
-  (let ((obarray (obarray-make 1)))
-    (obarray-put obarray "a")
-    (obarray-put obarray "b")
-    (should (eq (unintern "b" obarray) t))
-    (should (eq (obarray-get obarray "a") (intern "a"))))
-  (let ((obarray (obarray-make 1)))
-    (obarray-put obarray "a")
-    (obarray-put obarray "b")
-    (should (eq (unintern "a" obarray) t))
-    (should (eq (obarray-get obarray "b") (intern "b")))
-    (should (eq (unintern "b" obarray) t))
-    (should (equal obarray [0]))))
+(ert-deftest lread-test-bug-31186 ()
+  (with-temp-buffer
+    (insert ";; -*- -:*-")
+    (should-not
+     ;; This used to crash in lisp_file_lexically_bound_p before the
+     ;; bug was fixed.
+     (eval-buffer))))
+
+(ert-deftest lread-invalid-bytecodes ()
+  (should-error
+   (let ((load-force-doc-strings t)) (read "#[0 \"\"]"))))
+
+(ert-deftest lread-string-to-number-trailing-dot ()
+  (dolist (n (list (* most-negative-fixnum most-negative-fixnum)
+                   (1- most-negative-fixnum) most-negative-fixnum
+                   (1+ most-negative-fixnum) -1 0 1
+                   (1- most-positive-fixnum) most-positive-fixnum
+                   (1+ most-positive-fixnum)
+                   (* most-positive-fixnum most-positive-fixnum)))
+    (should (= n (string-to-number (format "%d." n))))))
+
+(ert-deftest lread-circular-hash ()
+  (should-error (read "#s(hash-table data #0=(#0# . #0#))")))
 
 ;;; lread-tests.el ends here

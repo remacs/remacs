@@ -1,6 +1,6 @@
 ;;; url-auth.el --- Uniform Resource Locator authorization modules -*- lexical-binding: t -*-
 
-;; Copyright (C) 1996-1999, 2004-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1996-1999, 2004-2020 Free Software Foundation, Inc.
 
 ;; Keywords: comm, data, processes, hypermedia
 
@@ -82,11 +82,11 @@ instead of the filename inheritance method."
     (cond
      ((and user pass)
       ;; Explicit http://user:pass@foo/ URL.  Just return the credentials.
-      (setq retval (base64-encode-string (format "%s:%s" user pass))))
+      (setq retval (base64-encode-string (format "%s:%s" user pass) t)))
      ((and prompt (not byserv))
       (setq user (or
 		  (url-do-auth-source-search server type :user)
-		  (read-string (url-auth-user-prompt url realm)
+		  (read-string (url-auth-user-prompt href realm)
 			       (or user (user-real-login-name))))
 	    pass (or
 		  (url-do-auth-source-search server type :secret)
@@ -97,7 +97,8 @@ instead of the filename inheritance method."
 			     (setq retval
 				   (base64-encode-string
 				    (format "%s:%s" user
-					    (encode-coding-string pass 'utf-8))))))
+					    (encode-coding-string pass 'utf-8))
+                                    t))))
 		 (symbol-value url-basic-auth-storage))))
      (byserv
       (setq retval (cdr-safe (assoc file byserv)))
@@ -115,12 +116,12 @@ instead of the filename inheritance method."
 	  (progn
 	    (setq user (or
 			(url-do-auth-source-search server type :user)
-			(read-string (url-auth-user-prompt url realm)
+			(read-string (url-auth-user-prompt href realm)
 				     (user-real-login-name)))
 		  pass (or
 			(url-do-auth-source-search server type :secret)
 			(read-passwd "Password: "))
-		  retval (base64-encode-string (format "%s:%s" user pass))
+		  retval (base64-encode-string (format "%s:%s" user pass) t)
 		  byserv (assoc server (symbol-value url-basic-auth-storage)))
 	    (setcdr byserv
 		    (cons (cons file retval) (cdr byserv))))))
@@ -192,7 +193,8 @@ key cache `url-digest-auth-storage'."
 (defun url-digest-auth-make-cnonce ()
   "Compute a new unique client nonce value."
   (base64-encode-string
-   (apply 'format "%016x%04x%04x%05x%05x" (random) (current-time)) t))
+   (format "%016x%016x" (random) (car (time-convert nil t)))
+   t))
 
 (defun url-digest-auth-nonce-count (_nonce)
   "The number requests sent to server with the given NONCE.
@@ -477,6 +479,8 @@ PROMPT is boolean - specifies whether to ask the user for a username/password
        if one cannot be found in the cache"
   (if (not realm)
       (setq realm (cdr-safe (assoc "realm" args))))
+  (if (equal realm "")
+      (setq realm nil))
   (if (stringp url)
       (setq url (url-generic-parse-url url)))
   (if (or (null type) (eq type 'any))
