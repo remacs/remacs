@@ -277,7 +277,7 @@ pub fn copysign(x1: EmacsDouble, x2: EmacsDouble) -> EmacsDouble {
 /// If X is zero, both parts (SGNFCAND and EXP) are zero.
 #[lisp_fn]
 pub fn frexp(x: LispNumber) -> (EmacsDouble, libc::c_int) {
-    let (significand, exponent) = libm::frexp(x.to_float());
+    libm::frexp(x.to_float())
     (significand, exponent)
 }
 
