@@ -278,7 +278,6 @@ pub fn copysign(x1: EmacsDouble, x2: EmacsDouble) -> EmacsDouble {
 #[lisp_fn]
 pub fn frexp(x: LispNumber) -> (EmacsDouble, libc::c_int) {
     libm::frexp(x.to_float())
-    (significand, exponent)
 }
 
 /// Return SGNFCAND * 2**EXPONENT, as a floating point number.

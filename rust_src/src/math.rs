@@ -211,7 +211,7 @@ fn minmax_driver(args: &[LispObject], comparison: ArithComparison) -> LispObject
     assert!(!args.is_empty());
     let mut accum = args[0];
     for &arg in &args[1..] {
-        if arithcompare(arg.into(), accum.into(), comparison) {
+        if arithcompare(arg, accum, comparison) {
             accum = arg;
         } else if arg.as_float().map_or(false, |f| f.is_nan()) {
             return arg;
@@ -261,7 +261,11 @@ pub enum ArithComparison {
     GrtrOrEqual,
 }
 
-pub fn arithcompare(
+pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithComparison) -> bool {
+    arithcompare_1(obj1.into(), obj2.into(), comparison)
+}
+
+pub fn arithcompare_1(
     obj1: LispNumberOrFloatOrMarker,
     obj2: LispNumberOrFloatOrMarker,
     comparison: ArithComparison,
@@ -338,7 +342,7 @@ pub fn arithcompare(
 
 fn arithcompare_driver(args: &[LispObject], comparison: ArithComparison) -> bool {
     args.windows(2)
-        .all(|i| arithcompare(i[0].into(), i[1].into(), comparison))
+        .all(|i| arithcompare(i[0], i[1], comparison))
 }
 
 /// Return t if args, all numbers or markers, are equal.
@@ -379,7 +383,7 @@ pub fn geq(args: &[LispObject]) -> bool {
 /// Return t if first arg is not equal to second arg.  Both must be numbers or markers.
 #[lisp_fn(name = "/=")]
 pub fn neq(num1: LispNumberOrFloatOrMarker, num2: LispNumberOrFloatOrMarker) -> bool {
-    arithcompare(num1, num2, ArithComparison::Notequal)
+    arithcompare_1(num1, num2, ArithComparison::Notequal)
 }
 
 /// Return remainder of X divided by Y.
