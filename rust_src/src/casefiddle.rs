@@ -1,17 +1,15 @@
 //! Case conversion functions.
-use std::ffi::CString;
-
 use remacs_macros::lisp_fn;
 
 use crate::{
-    keymap::Ctl,
+    keymap::{initial_define_key, Ctl, KeyChar},
     lisp::LispObject,
     lists::put,
     lists::{LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
     remacs_sys::EmacsInt,
     remacs_sys::{case_action, casify_object, casify_region},
-    remacs_sys::{control_x_map, initial_define_key, meta_map, scan_words, set_point},
+    remacs_sys::{control_x_map, meta_map, scan_words, set_point},
     remacs_sys::{Qdisabled, Qt},
     symbols::symbol_value,
     threads::ThreadState,
@@ -200,20 +198,15 @@ pub extern "C" fn syms_of_casefiddle() {
 #[no_mangle]
 pub extern "C" fn keys_of_casefiddle() {
     unsafe {
-        let downcase_region = CString::new("downcase-region").unwrap();
-        initial_define_key(control_x_map, Ctl('L'), downcase_region.as_ptr());
-        let upcase_region = CString::new("upcase-region").unwrap();
-        initial_define_key(control_x_map, Ctl('U'), upcase_region.as_ptr());
-        let capitalize_word = CString::new("capitalize-word").unwrap();
-        initial_define_key(meta_map, 'c' as i32, capitalize_word.as_ptr());
-        let downcase_word = CString::new("downcase-word").unwrap();
-        initial_define_key(meta_map, 'l' as i32, downcase_word.as_ptr());
-        let upcase_word = CString::new("upcase-word").unwrap();
-        initial_define_key(meta_map, 'u' as i32, upcase_word.as_ptr());
-    }
+        initial_define_key(control_x_map, Ctl('U'), "upcase-region");
+        put(intern("upcase-region"), Qdisabled, Qt);
+        initial_define_key(control_x_map, Ctl('L'), "downcase-region");
+        put(intern("downcase-region"), Qdisabled, Qt);
 
-    put(intern("upcase-region"), Qdisabled, Qt);
-    put(intern("downcase-region"), Qdisabled, Qt);
+        initial_define_key(meta_map, KeyChar('u'), "upcase-word");
+        initial_define_key(meta_map, KeyChar('l'), "downcase-word");
+        initial_define_key(meta_map, KeyChar('c'), "capitalize-word");
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/casefiddle_exports.rs"));

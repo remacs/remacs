@@ -20,6 +20,7 @@ use crate::{
     fns::{copy_sequence, nconc, nreverse},
     frame::LispFrameRef,
     hashtable::LispHashTableRef,
+    keymap::{initial_define_key, KeyChar},
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual, LiveBufferIter},
     lists,
     lists::{car, cdr, list, member, rassq, setcar},
@@ -46,8 +47,9 @@ use crate::{
         unchain_marker, update_mode_lines, windows_or_buffers_changed,
     },
     remacs_sys::{
-        buffer_defaults, equal_kind, pvec_type, EmacsInt, Lisp_Buffer, Lisp_Buffer_Local_Value,
-        Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist, Vrun_hooks,
+        buffer_defaults, control_x_map, equal_kind, pvec_type, EmacsInt, Lisp_Buffer,
+        Lisp_Buffer_Local_Value, Lisp_Misc_Type, Lisp_Overlay, Lisp_Type, Vbuffer_alist,
+        Vrun_hooks,
     },
     remacs_sys::{
         buffer_permanent_local_flags, Qafter_string, Qbefore_string, Qbuffer_list_update_hook,
@@ -1756,17 +1758,6 @@ pub extern "C" fn reset_buffer_local_variables(mut buffer: LispBufferRef, includ
     buffer.reset_local_variables(include_permanent)
 }
 
-#[allow(unused_doc_comments)]
-#[no_mangle]
-pub extern "C" fn rust_syms_of_buffer() {
-    def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
-
-    /// Analogous to `mode-line-format', but controls the header line.
-    /// The header line appears, optionally, at the top of a window;
-    /// the mode line appears at the bottom.
-    defvar_per_buffer!(header_line_format_, "header-line-format", Qnil);
-}
-
 /// Change current buffer's name to NEWNAME (a string).  If second arg
 /// UNIQUE is nil or omitted, it is an error if a buffer named NEWNAME
 /// already exists.  If UNIQUE is non-nil, come up with a new name
@@ -1980,6 +1971,25 @@ pub fn byte_char_debug_check(b: LispBufferRef, charpos: isize, bytepos: isize) {
     if charpos - 1 != nchars {
         panic!("byte_char_debug_check failed.")
     }
+}
+
+#[no_mangle]
+pub extern "C" fn keys_of_buffer() {
+    unsafe {
+        initial_define_key(control_x_map, KeyChar('b'), "switch-to-buffer");
+        initial_define_key(control_x_map, KeyChar('k'), "kill-buffer");
+    }
+}
+
+#[allow(unused_doc_comments)]
+#[no_mangle]
+pub extern "C" fn rust_syms_of_buffer() {
+    def_lisp_sym!(Qget_file_buffer, "get-file-buffer");
+
+    /// Analogous to `mode-line-format', but controls the header line.
+    /// The header line appears, optionally, at the top of a window;
+    /// the mode line appears at the bottom.
+    defvar_per_buffer!(header_line_format_, "header-line-format", Qnil);
 }
 
 include!(concat!(env!("OUT_DIR"), "/buffers_exports.rs"));

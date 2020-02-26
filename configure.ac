@@ -5466,8 +5466,14 @@ fi || AC_MSG_ERROR(['src/epaths.h' could not be made.])
 
 
 CARGO_DEFAULT_FEATURES=""
+if test "$HAVE_DBUS" = "yes"; then
+    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-dbus\", "
+fi
 if test "$HAVE_LIBXML2" = "yes"; then
     CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
+fi
+if test "$USE_FILE_NOTIFY" = "yes"; then
+    CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-file-notify\", "
 fi
 if test "$CANNOT_DUMP" != "yes"; then
     if test "$opsys" = "darwin"; then

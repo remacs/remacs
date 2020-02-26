@@ -11460,6 +11460,7 @@ signals.  */);
   Vwhile_no_input_ignore_events = Qnil;
 }
 
+#ifdef IGNORE_RUST_PORT
 void
 keys_of_keyboard (void)
 {
@@ -11538,6 +11539,7 @@ keys_of_keyboard (void)
   initial_define_lispy_key (Vspecial_event_map, "move-frame",
 			    "handle-move-frame");
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Mark the pointers in the kboard objects.
    Called by Fgarbage_collect.  */

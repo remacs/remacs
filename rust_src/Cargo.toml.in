@@ -67,6 +67,10 @@ unexecmacosx = ["alloc_unexecmacosx"]
 unexec = []
 # Compile with C xml2 library support.
 use-xml2 = []
+# Compile with C DBUS support.
+use-dbus = []
+# Compile with File notify support.
+use-file-notify = []
 # Use a window system
 window-system = []
 # Use the x11 window system

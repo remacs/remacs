@@ -1,6 +1,6 @@
 //! Keymap support
-
 use std;
+use std::ffi::CString;
 use std::ptr;
 
 use libc::c_void;
@@ -23,9 +23,9 @@ use crate::{
     obarray::intern,
     remacs_sys::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
-        current_minor_maps, describe_vector, make_save_funcptr_ptr_obj, map_char_table,
-        map_keymap_call, map_keymap_char_table_item, map_keymap_function_t, map_keymap_item,
-        map_obarray, maybe_quit, specbind,
+        current_minor_maps, describe_vector, intern_c_string, make_save_funcptr_ptr_obj,
+        map_char_table, map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
+        map_keymap_item, map_obarray, maybe_quit, specbind, store_in_keymap,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
@@ -43,6 +43,10 @@ use crate::{
 
 pub const fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
+}
+
+pub const fn KeyChar(c: char) -> i32 {
+    c as i32
 }
 
 // Hash table used to cache a reverse-map to speed up calls to where-is.
@@ -167,6 +171,29 @@ pub fn make_keymap(string: LispObject) -> (LispObject, (LispObject, LispObject))
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
     (Qkeymap, (char_table, tail))
+}
+
+pub fn initial_define_key<T: AsRef<str>>(keymap: LispObject, key: i32, defname: T) {
+    // The C String will be copied on the other end. This is safe.
+    let c_string = CString::new(defname.as_ref()).unwrap();
+
+    unsafe {
+        store_in_keymap(keymap, key.into(), intern_c_string(c_string.as_ptr()));
+    }
+}
+
+pub fn initial_define_lispy_key<T: AsRef<str>>(keymap: LispObject, keyname: T, defname: T) {
+    // The C String will be copied on the other end. This is safe.
+    let c_keyname = CString::new(keyname.as_ref()).unwrap();
+    let c_defname = CString::new(defname.as_ref()).unwrap();
+
+    unsafe {
+        store_in_keymap(
+            keymap,
+            intern_c_string(c_keyname.as_ptr()),
+            intern_c_string(c_defname.as_ptr()),
+        );
+    }
 }
 
 /// Return t if OBJECT is a keymap.
@@ -786,4 +813,13 @@ pub fn current_minor_mode_maps() -> LispObject {
         Flist(num_of_maps, maps)
     }
 }
+
+#[no_mangle]
+pub extern "C" fn keys_of_keymap() {
+    let global_map = current_global_map();
+
+    initial_define_key(global_map, 0x1b, "ESC-prefix"); // aka Octal 33.
+    initial_define_key(global_map, Ctl('X'), "Control-X-prefix");
+}
+
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));

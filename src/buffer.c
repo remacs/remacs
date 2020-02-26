@@ -5278,12 +5278,14 @@ Functions running this hook are, `get-buffer-create',
   Fput (intern_c_string ("erase-buffer"), Qdisabled, Qt);
 }
 
+#ifdef IGNORE_RUST_PORT
 void
 keys_of_buffer (void)
 {
   initial_define_key (control_x_map, 'b', "switch-to-buffer");
   initial_define_key (control_x_map, 'k', "kill-buffer");
 }
+#endif
 
 extern void
 set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)

@@ -1,8 +1,8 @@
 //! Commands
 
-use libc;
 use std;
-use std::ffi::CString;
+
+use libc;
 
 use remacs_macros::lisp_fn;
 
@@ -12,7 +12,7 @@ use crate::{
     dispnew::ding_internal,
     editfns::{insert_and_inherit, line_beginning_position, line_end_position, preceding_char},
     frame::selected_frame,
-    keymap::{current_global_map, Ctl},
+    keymap::{current_global_map, initial_define_key, Ctl},
     lisp::LispObject,
     lists::get,
     multibyte::{Codepoint, MAX_MULTIBYTE_LENGTH},
@@ -20,9 +20,9 @@ use crate::{
     obarray::intern,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        concat2, current_column, del_range, frame_make_pointer_invisible, globals,
-        initial_define_key, memory_full, replace_range, run_hook, scan_newline_from_point,
-        set_point, set_point_both, syntax_property, syntaxcode, translate_char,
+        concat2, current_column, del_range, frame_make_pointer_invisible, globals, memory_full,
+        replace_range, run_hook, scan_newline_from_point, set_point, set_point_both,
+        syntax_property, syntaxcode, translate_char,
     },
     remacs_sys::{Fchar_width, Fmake_string, Fmove_to_column},
     remacs_sys::{
@@ -484,25 +484,18 @@ fn internal_self_insert(mut c: Codepoint, n: usize) -> EmacsInt {
 pub extern "C" fn keys_of_cmds() {
     let global_map = current_global_map();
 
-    unsafe {
-        let sic = CString::new("self-insert-command").unwrap();
-        initial_define_key(global_map, Ctl('I'), sic.as_ptr());
-        for n in 0x20..0x7f {
-            initial_define_key(global_map, n, sic.as_ptr());
-        }
-        for n in 0xa0..0x100 {
-            initial_define_key(global_map, n, sic.as_ptr());
-        }
-
-        let bol = CString::new("beginning-of-line").unwrap();
-        initial_define_key(global_map, Ctl('A'), bol.as_ptr());
-        let bc = CString::new("backward-char").unwrap();
-        initial_define_key(global_map, Ctl('B'), bc.as_ptr());
-        let eol = CString::new("end-of-line").unwrap();
-        initial_define_key(global_map, Ctl('E'), eol.as_ptr());
-        let fc = CString::new("forward-char").unwrap();
-        initial_define_key(global_map, Ctl('F'), fc.as_ptr());
+    initial_define_key(global_map, Ctl('I'), "self-insert-command");
+    for n in 0x20..0x7f {
+        initial_define_key(global_map, n, "self-insert-command");
     }
+    for n in 0xa0..0x100 {
+        initial_define_key(global_map, n, "self-insert-command");
+    }
+
+    initial_define_key(global_map, Ctl('A'), "beginning-of-line");
+    initial_define_key(global_map, Ctl('B'), "backward-char");
+    initial_define_key(global_map, Ctl('E'), "end-of-line");
+    initial_define_key(global_map, Ctl('F'), "forward-char");
 }
 
 #[allow(unused_doc_comments)]

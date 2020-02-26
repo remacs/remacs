@@ -4266,6 +4266,7 @@ extern void keys_of_casefiddle (void);
 /* Defined in keyboard.c.  */
 extern bool get_input_pending (int);
 extern void process_special_events (void);
+extern Lisp_Object store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def);
 
 extern void recursive_edit_unwind (Lisp_Object buffer);
 extern Lisp_Object echo_message_buffer;
