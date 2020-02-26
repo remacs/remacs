@@ -6182,6 +6182,7 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sset_window_vscroll);
 }
 
+#ifdef IGNORE_RUST_PORT
 void
 keys_of_window (void)
 {
@@ -6192,3 +6193,4 @@ keys_of_window (void)
   initial_define_key (meta_map, Ctl ('V'), "scroll-other-window");
   initial_define_key (meta_map, 'v', "scroll-down-command");
 }
+#endif

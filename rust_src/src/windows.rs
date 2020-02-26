@@ -13,6 +13,7 @@ use crate::{
     fns::{copy_alist, nreverse},
     frame::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
     interactive::InteractiveNumericPrefix,
+    keymap::{initial_define_key, Ctl, KeyChar},
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
     marker::{marker_position_lisp, set_marker_restricted},
@@ -29,7 +30,10 @@ use crate::{
         update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
         windows_or_buffers_changed, wset_redisplay,
     },
-    remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
+    remacs_sys::{
+        control_x_map, face_id, global_map, glyph_matrix, glyph_row, meta_map, pvec_type,
+        vertical_scroll_bar_type,
+    },
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
     remacs_sys::{
         Qceiling, Qfloor, Qheader_line_format, Qleft, Qmode_line_format, Qnil, Qnone, Qright, Qt,
@@ -2056,4 +2060,15 @@ extern "C" fn rust_syms_of_window() {
     /// with the relevant frame selected.
     #[rustfmt::skip]
     defvar_lisp!(Vwindow_configuration_change_hook, "window-configuration-change-hook", Qnil);
+}
+
+#[no_mangle]
+pub extern "C" fn keys_of_window() {
+    unsafe {
+        initial_define_key(control_x_map, KeyChar('<'), "scroll-left");
+        initial_define_key(control_x_map, KeyChar('>'), "scroll-right");
+        initial_define_key(global_map, Ctl('V'), "scroll-up-command");
+        initial_define_key(meta_map, Ctl('V'), "scroll-other-window");
+        initial_define_key(meta_map, KeyChar('v'), "scroll-down-command");
+    }
 }

@@ -84,7 +84,7 @@ static Lisp_Object exclude_keys;
 /* Pre-allocated 2-element vector for Fcommand_remapping to use.  */
 static Lisp_Object command_remapping_vector;
 
-static Lisp_Object store_in_keymap (Lisp_Object, Lisp_Object, Lisp_Object);
+Lisp_Object store_in_keymap (Lisp_Object, Lisp_Object, Lisp_Object);
 
 static Lisp_Object define_as_prefix (Lisp_Object, Lisp_Object);
 static void describe_command (Lisp_Object, Lisp_Object);
@@ -99,6 +99,7 @@ void map_keymap_item (map_keymap_function_t, Lisp_Object, Lisp_Object, Lisp_Obje
 void map_keymap_char_table_item (Lisp_Object, Lisp_Object, Lisp_Object);
 
 
+#ifdef IGNORE_RUST_PORT
 /* This function is used for installing the standard key bindings
    at initialization time.
 
@@ -111,12 +112,15 @@ initial_define_key (Lisp_Object keymap, int key, const char *defname)
 {
   store_in_keymap (keymap, make_number (key), intern_c_string (defname));
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 void
 initial_define_lispy_key (Lisp_Object keymap, const char *keyname, const char *defname)
 {
   store_in_keymap (keymap, intern_c_string (keyname), intern_c_string (defname));
 }
+#endif
 
 /* Look up IDX in MAP.  IDX may be any sort of event.
    Note that this does only one level of lookup; IDX must be a single
@@ -415,7 +419,7 @@ get_keyelt (Lisp_Object object, bool autoload)
     }
 }
 
-static Lisp_Object
+Lisp_Object
 store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
 {
   /* Flush any reverse-map cache.  */
@@ -3057,9 +3061,11 @@ be preferred.  */);
   defsubr (&Sdescribe_buffer_bindings);
 }
 
+#ifdef IGNORE_RUST_PORT
 void
 keys_of_keymap (void)
 {
   initial_define_key (global_map, 033, "ESC-prefix");
   initial_define_key (global_map, Ctl ('X'), "Control-X-prefix");
 }
+#endif

@@ -8,6 +8,7 @@ use crate::{
     emacs::is_daemon,
     eval::{record_unwind_protect, unbind_to},
     frame::{selected_frame, window_frame_live_or_selected_with_action},
+    keymap::{initial_define_key, initial_define_lispy_key, Ctl, KeyChar},
     lisp::LispObject,
     lists,
     lists::{car_safe, cdr_safe},
@@ -22,6 +23,7 @@ use crate::{
         recursive_edit_1, recursive_edit_unwind, temporarily_switch_to_single_kboard,
         totally_unblock_input, update_mode_lines, window_box_left_offset,
     },
+    remacs_sys::{control_x_map, global_map, meta_map},
     remacs_sys::{Fdiscard_input, Fkill_emacs, Fpos_visible_in_window_p, Fterpri, Fthrow},
     remacs_sys::{
         Qevent_kind, Qexit, Qexternal_debugging_output, Qheader_line, Qhelp_echo, Qmode_line, Qnil,
@@ -262,37 +264,6 @@ pub fn recursive_edit() {
     }
 }
 
-#[allow(unused_doc_comments)]
-#[no_mangle]
-pub extern "C" fn rust_syms_of_keyboard() {
-    /// The last command executed.
-    /// Normally a symbol with a function definition, but can be whatever was found
-    /// in the keymap, or whatever the variable `this-command' was set to by that
-    /// command.
-    ///
-    /// The value `mode-exit' is special; it means that the previous command
-    /// read an event that told it to exit, and it did so and unread that event.
-    /// In other words, the present command is the event that made the previous
-    /// command exit.
-    ///
-    /// The value `kill-region' is special; it means that the previous command
-    /// was a kill command.
-    ///
-    /// `last-command' has a separate binding for each terminal device.
-    /// See Info node `(elisp)Multiple Terminals'.
-    defvar_kboard!(Vlast_command_, "last-command");
-
-    /// Same as `last-command', but never altered by Lisp code.
-    /// Taken from the previous value of `real-this-command'.
-    defvar_kboard!(Vreal_last_command_, "real-last-command");
-
-    /// Last command that may be repeated.
-    /// The last command executed that was not bound to an input event.
-    /// This is the command `repeat' will try to repeat.
-    /// Taken from a previous value of `real-this-command'.  */
-    defvar_kboard!(Vlast_repeatable_command_, "last-repeatable-command");
-}
-
 /// Produce default output for unhandled error message.
 /// Default value of `command-error-function'.
 #[lisp_fn]
@@ -475,6 +446,133 @@ pub fn read_key_sequence(
             true,
         )
     }
+}
+
+#[no_mangle]
+pub extern "C" fn keys_of_keyboard() {
+    unsafe {
+        initial_define_key(global_map, Ctl('Z'), "suspend-emacs");
+        initial_define_key(control_x_map, Ctl('Z'), "suspend-emacs");
+        initial_define_key(meta_map, Ctl('C'), "exit-recursive-edit");
+        initial_define_key(global_map, Ctl(']'), "abort-recursive-edit");
+        initial_define_key(meta_map, KeyChar('x'), "execute-extended-command");
+
+        initial_define_lispy_key(
+            globals.Vspecial_event_map,
+            "delete-frame",
+            "handle-delete-frame",
+        );
+
+        if cfg!(feature = "window-system-w32") {
+            initial_define_lispy_key(globals.Vspecial_event_map, "end-session", "kill-emacs");
+        }
+
+        if cfg!(feature = "use-dbus") {
+            // Define a special event which is raised for dbus callback functions.
+            initial_define_lispy_key(
+                globals.Vspecial_event_map,
+                "dbus-event",
+                "dbus-handle-event",
+            );
+        }
+
+        if cfg!(feature = "use-file-notify") {
+            // Define a special event which is raised for notification callback functions.
+            initial_define_lispy_key(
+                globals.Vspecial_event_map,
+                "file-notify",
+                "file-notify-handle-event",
+            );
+        }
+
+        initial_define_lispy_key(
+            globals.Vspecial_event_map,
+            "ns-put-working-text",
+            "ns-put-working-text",
+        );
+        initial_define_lispy_key(
+            globals.Vspecial_event_map,
+            "ns-unput-working-text",
+            "ns-unput-working-text",
+        );
+        // Here we used to use `ignore-event' which would simple set prefix-arg to
+        // current-prefix-arg, as is done in `handle-switch-frame'.
+        // But `handle-switch-frame is not run from the special-map.
+        // Commands from that map are run in a special way that automatically
+        // preserves the prefix-arg.  Restoring the prefix arg here is not just
+        // redundant but harmful:
+        // - C-u C-x v =
+        // - current-prefix-arg is set to non-nil, prefix-arg is set to nil.
+        // - after the first prompt, the exit-minibuffer-hook is run which may
+        //   iconify a frame and thus push a `iconify-frame' event.
+        // - after running exit-minibuffer-hook, current-prefix-arg is
+        //   restored to the non-nil value it had before the prompt.
+        // - we enter the second prompt.
+        //   current-prefix-arg is non-nil, prefix-arg is nil.
+        // - before running the first real event, we run the special iconify-frame
+        //   event, but we pass the `special' arg to command-execute so
+        //   current-prefix-arg and prefix-arg are left untouched.
+        // - here we foolishly copy the non-nil current-prefix-arg to prefix-arg.
+        // - the next key event will have a spuriously non-nil current-prefix-arg.
+        initial_define_lispy_key(globals.Vspecial_event_map, "iconify-frame", "ignore");
+        initial_define_lispy_key(globals.Vspecial_event_map, "make-frame-visible", "ignore");
+        // Handling it at such a low-level causes read_key_sequence to get
+        // confused because it doesn't realize that the current_buffer was
+        // changed by read_char.
+        //
+        // initial_define_lispy_key (globals.Vspecial_event_map, "select-window",
+        // 			    "handle-select-window");
+        initial_define_lispy_key(
+            globals.Vspecial_event_map,
+            "save-session",
+            "handle-save-session",
+        );
+
+        initial_define_lispy_key(globals.Vspecial_event_map, "config-changed-event", "ignore");
+
+        if cfg!(windows) {
+            initial_define_lispy_key(globals.Vspecial_event_map, "language-change", "ignore");
+        }
+
+        initial_define_lispy_key(globals.Vspecial_event_map, "focus-in", "handle-focus-in");
+        initial_define_lispy_key(globals.Vspecial_event_map, "focus-out", "handle-focus-out");
+        initial_define_lispy_key(
+            globals.Vspecial_event_map,
+            "move-frame",
+            "handle-move-frame",
+        );
+    }
+}
+
+#[allow(unused_doc_comments)]
+#[no_mangle]
+pub extern "C" fn rust_syms_of_keyboard() {
+    /// The last command executed.
+    /// Normally a symbol with a function definition, but can be whatever was found
+    /// in the keymap, or whatever the variable `this-command' was set to by that
+    /// command.
+    ///
+    /// The value `mode-exit' is special; it means that the previous command
+    /// read an event that told it to exit, and it did so and unread that event.
+    /// In other words, the present command is the event that made the previous
+    /// command exit.
+    ///
+    /// The value `kill-region' is special; it means that the previous command
+    /// was a kill command.
+    ///
+    /// `last-command' has a separate binding for each terminal device.
+    /// See Info node `(elisp)Multiple Terminals'.
+    defvar_kboard!(Vlast_command_, "last-command");
+
+    /// Same as `last-command', but never altered by Lisp code.
+    /// Taken from the previous value of `real-this-command'.
+    defvar_kboard!(Vreal_last_command_, "real-last-command");
+
+    /// Last command that may be repeated.
+    /// The last command executed that was not bound to an input event.
+    /// This is the command `repeat' will try to repeat.
+    /// Taken from a previous value of `real-this-command'.  */
+    defvar_kboard!(Vlast_repeatable_command_, "last-repeatable-command");
 }
 
 include!(concat!(env!("OUT_DIR"), "/keyboard_exports.rs"));
