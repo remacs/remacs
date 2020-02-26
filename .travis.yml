@@ -21,11 +21,6 @@ jobs:
         - WERROR_CFLAGS="-Werror"
       script:
         - rustc --version
-        - ./autogen.sh
-        - ./configure --enable-checking=glyphs --without-makeinfo  --with-x=no --without-gconf --without-gsettings
-        - make -j 3
-        - echo '==> Running tests'
-        - make check
 
 notifications:
   fast_finish: true
