@@ -21,7 +21,7 @@ jobs:
         - WERROR_CFLAGS="-Werror"
      before_script:
         - travis_wait rustup install $(cat rust-toolchain)
-      script:
+     script:
         - rustc --version
 
 notifications:
