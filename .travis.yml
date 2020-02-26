@@ -19,6 +19,8 @@ jobs:
         - RUST_BACKTRACE=1
         - RUSTFLAGS="-Dwarnings"
         - WERROR_CFLAGS="-Werror"
+     before_script:
+        - travis_wait rustup install $(cat rust-toolchain)
       script:
         - rustc --version
 
