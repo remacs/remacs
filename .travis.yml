@@ -7,7 +7,7 @@ git:
   quiet: true
   submodules: false
 
-# cache: cargo
+cache: cargo
 
 jobs:
   include:
