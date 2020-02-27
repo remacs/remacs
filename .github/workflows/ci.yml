@@ -40,6 +40,8 @@ jobs:
       # This is more expedient than running configure. Unlike Clippy, none of it matters.
       run: |
         grep -v '@CARGO' ${{github.workspace}}/rust_src/Cargo.toml.in > ${{github.workspace}}/rust_src/Cargo.toml
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v1
     - name: run rustfmt
       run: cargo fmt --all -- --config-path ${{github.workspace}}/rust_src --check
 
