@@ -462,11 +462,12 @@ Changes to files matching one of the regexps in this list are not listed.")
     ;; ada-mode has been deleted, now in GNU ELPA
     "ada-mode.texi"
     "GNUS-NEWS"
-    "gnus-news.el"
-    "fingerprint-dummy.c"
-    "fingerprint.h"
+    "doc/misc/gnus-news.el"
+    "src/fingerprint-dummy.c"
+    "src/fingerprint.h"
     ;; Replaced by lisp/thread.el
-    "thread-list.el"
+    "lisp/emacs-lisp/thread-list.el"
+    "etc/images/slash.bmp"
     )
   "List of files and directories to ignore.
 Changes to files in this list are not listed.")
@@ -1111,7 +1112,7 @@ in the repository.")
     ("lisp/net/starttls.el" . "lisp/obsolete/starttls.el")
     ("url-ns.el" . "lisp/obsolete/url-ns.el")
     ("gnus-news.texi" . "doc/misc/gnus.texi")
-    ("multifile.el". "fileloop.el")
+    ("lisp/multifile.el". "lisp/fileloop.el")
     ("lisp/emacs-lisp/thread.el". "lisp/thread.el")
     )
   "Alist of files which have been renamed during their lifetime.
