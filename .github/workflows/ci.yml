@@ -78,7 +78,9 @@ jobs:
       run: ./configure --without-makeinfo
     - name: make clean
       run: make clean
-    - name: run Cliippy
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v1
+    - name: run Clippy
       run: make clippy
 
   linux-no-gui-build:
