@@ -14,11 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Cache cargo registry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo index
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo build
+      uses: actions/cache@v1
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
     - uses: actions/checkout@v2
     - name: setup Rust version
       run: rustup toolchain install $(cat rust-toolchain)
     - name: install Clippy
-      run: rustup toolchain component add clippy
+      run: rustup component add clippy
     - name: install dependencies
       run: sudo apt-get update -y && sudo apt-get install -y libgnutls28-dev libgif-dev libxmp-dev libgtk-3-dev libxpm-dev
     - name: autogen
@@ -33,6 +48,21 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Cache cargo registry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo index
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo build
+      uses: actions/cache@v1
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
     - uses: actions/checkout@v2
     - name: setup Rust version
       run: rustup toolchain install $(cat rust-toolchain)
