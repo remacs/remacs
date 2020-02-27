@@ -9,6 +9,39 @@ on:
     # - 'rust_src/**'
 
 jobs:
+  rustfmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache cargo registry
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo index
+      uses: actions/cache@v1
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache cargo build
+      uses: actions/cache@v1
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+    - name: setup Rust version
+      run: rustup toolchain install $(cat rust-toolchain)
+    - name: install Rustfmt
+      run: rustup component add rustfmt
+    - name: rustfmt version
+      run: cargo fmt -- --version
+    - name: setup Cargo.toml
+      # This is more expedient than running configure. Unlike Clippy, none of it matters.
+      run: grep -v '@CARGO' $(PWD)/rust_src/Cargo.toml.in > $(PWD)/rust_src/Cargo.toml
+    - name: run rustfmt
+      run: cargo fmt --all -- --config-path $(PWD)/rust_src --check
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
@@ -48,7 +81,7 @@ jobs:
   linux-no-gui-build:
     name: Linux no GUI build
     runs-on: ubuntu-latest
-    needs: clippy
+    needs: [rustfmt, clippy]
     
     steps:
     - uses: actions/checkout@v2
