@@ -144,7 +144,6 @@ jobs:
       run: rustup toolchain install $(cat rust-toolchain)
     - name: Dependencies
       run: sudo apt-get update -y && sudo apt-get install -y libgnutls28-dev libgif-dev libxmp-dev libgtk-3-dev libxpm-dev
-
     - name: autogen
       run: ./autogen.sh
     - name: configure
@@ -179,9 +178,7 @@ jobs:
     - name: setup Rust version
       run: rustup toolchain install $(cat rust-toolchain)
     - name: Dependencies
-      run:
-        - brew install gnutls
-        - brew install pkg-config
+      run: brew install gnutls pkg-config
     - name: autogen
       run: ./autogen.sh
     - name: configure
