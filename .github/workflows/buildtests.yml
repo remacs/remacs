@@ -20,7 +20,7 @@ jobs:
     - name: autogen
       run: ./autogen.sh
     - name: configure
-      run: ./configure --without-makeinfo --with-z=no --without-gconf --without-gsettings
+      run: ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings
     - name: make
       run: make -j 3
     - name: make check
