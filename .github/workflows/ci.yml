@@ -38,9 +38,9 @@ jobs:
       run: cargo fmt -- --version
     - name: setup Cargo.toml
       # This is more expedient than running configure. Unlike Clippy, none of it matters.
-      run: grep -v '@CARGO' $(PWD)/rust_src/Cargo.toml.in > $(PWD)/rust_src/Cargo.toml
+      run: grep -v '@CARGO' ${PWD}/rust_src/Cargo.toml.in > ${PWD}/rust_src/Cargo.toml
     - name: run rustfmt
-      run: cargo fmt --all -- --config-path $(PWD)/rust_src --check
+      run: cargo fmt --all -- --config-path ${PWD}/rust_src --check
 
   clippy:
     name: Clippy
@@ -112,3 +112,4 @@ jobs:
       run: make -j 3
     - name: make check
       run: make check
+      
