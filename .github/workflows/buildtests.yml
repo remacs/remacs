@@ -1,4 +1,4 @@
-name: Linux no GUI build
+name: Remacs CI
 
 on:
   pull_request:
@@ -40,12 +40,15 @@ jobs:
       run: ./autogen.sh
     - name: configure
       run: ./configure --without-makeinfo
+    - name: make clean
+      run: make clean
     - name: run Cliippy
       run: make clippy
 
   linux-no-gui-build:
     name: Linux no GUI build
     runs-on: ubuntu-latest
+    needs: clippy
     
     steps:
     - uses: actions/checkout@v2
