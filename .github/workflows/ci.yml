@@ -179,7 +179,9 @@ jobs:
     - name: setup Rust version
       run: rustup toolchain install $(cat rust-toolchain)
     - name: Dependencies
-      run: brew install gnutls
+      run:
+        - brew install gnutls
+        - brew install pkg-config
     - name: autogen
       run: ./autogen.sh
     - name: configure
