@@ -76,10 +76,10 @@ jobs:
       run: ./autogen.sh
     - name: configure
       run: ./configure --without-makeinfo
-    - name: make clean
-      run: make clean
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v1
+    - name: make-docfile
+      run: make -C lib-src make-docfile
+    - name: globals.h
+      run: make -C src globals.h
     - name: run Clippy
       run: make clippy
 
