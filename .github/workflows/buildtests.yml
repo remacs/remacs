@@ -17,6 +17,8 @@ jobs:
     - uses: actions/checkout@v2
     - name: setup Rust version
       run: rustup toolchain install $(cat rust-toolchain)
+    - name: Dependencies
+      run: sudo apt-get update -y && sudo apt-get install libgnutls28-dev
     - name: autogen
       run: ./autogen.sh
     - name: configure
