@@ -9,6 +9,25 @@ on:
     # - 'rust_src/**'
 
 jobs:
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: setup Rust version
+      run: rustup toolchain install $(cat rust-toolchain)
+    - name: install Clippy
+      run: rustup toolchain component add clippy
+    - name: install dependencies
+      run: sudo apt-get update -y && sudo apt-get install -y libgnutls28-dev libgif-dev libxmp-dev libgtk-3-dev libxpm-dev
+    - name: autogen
+      run: ./autogen.sh
+    - name: configure
+      run: ./configure --without-makeinfo
+    - name: run Cliippy
+      run: make clippy
+
   linux-no-gui-build:
     name: Linux no GUI build
     runs-on: ubuntu-latest
@@ -18,7 +37,7 @@ jobs:
     - name: setup Rust version
       run: rustup toolchain install $(cat rust-toolchain)
     - name: Dependencies
-      run: sudo apt-get update -y && sudo apt-get install libgnutls28-dev
+      run: sudo apt-get update -y && sudo apt-get install -y libgnutls28-dev
     - name: autogen
       run: ./autogen.sh
     - name: configure
