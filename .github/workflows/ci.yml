@@ -38,7 +38,8 @@ jobs:
       run: cargo fmt -- --version
     - name: setup Cargo.toml in ${{github.workspace}}/rust_src
       # This is more expedient than running configure. Unlike Clippy, none of it matters.
-      run: grep -v '@CARGO' ${{github.workspace}}/rust_src/Cargo.toml.in > ${{github.workspace}}/rust_src/Cargo.toml
+      run: |
+        grep -v '@CARGO' ${{github.workspace}}/rust_src/Cargo.toml.in > ${{github.workspace}}/rust_src/Cargo.toml
     - name: run rustfmt
       run: cargo fmt --all -- --config-path ${{github.workspace}}/rust_src --check
 
