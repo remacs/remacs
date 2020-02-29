@@ -305,7 +305,7 @@ Return (REGEXP . PRECEDENCE)."
   "Whether FORM looks like a charset, only consisting of character intervals
 and set operations."
   (or (and (consp form)
-           (or (and (memq (car form) '(any 'in 'char))
+           (or (and (memq (car form) '(any in char))
                     (rx--every (lambda (x) (not (symbolp x))) (cdr form)))
                (and (memq (car form) '(not or | intersection))
                     (rx--every #'rx--charset-p (cdr form)))))
@@ -450,6 +450,10 @@ classes."
            (not negated))
       (cons (list (regexp-quote (char-to-string (caar items))))
             t))
+     ;; Negated newline.
+     ((and (equal items '((?\n . ?\n)))
+           negated)
+      (rx--translate-symbol 'nonl))
      ;; At least one character or class, possibly negated.
      (t
       (cons

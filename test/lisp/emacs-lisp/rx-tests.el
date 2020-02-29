@@ -130,7 +130,10 @@
   (should (equal (rx (any "") (not (any "")))
                  "\\`a\\`[^z-a]"))
   (should (equal (rx (any space ?a digit space))
-                 "[a[:space:][:digit:]]")))
+                 "[a[:space:][:digit:]]"))
+  (should (equal (rx (not "\n") (not ?\n) (not (any "\n")) (not-char ?\n)
+                     (| (not (in "a\n")) (not (char ?\n (?b . ?b)))))
+          ".....")))
 
 (ert-deftest rx-pcase ()
   (should (equal (pcase "a 1 2 3 1 1 b"
@@ -298,7 +301,11 @@
                          (not (any "a-k"))))
                  "[^abh-k]"))
   (should (equal (rx (or ?f (any "b-e") "a") (not (or ?x "y" (any "s-w"))))
-                 "[a-f][^s-y]")))
+                 "[a-f][^s-y]"))
+  (should (equal (rx (not (or (in "abc") (char "bcd"))))
+                 "[^a-d]"))
+  (should (equal (rx (or (not (in "abc")) (not (char "bcd"))))
+                 "[^bc]")))
 
 (ert-deftest rx-def-in-charset-or ()
   (rx-let ((a (any "badc"))
