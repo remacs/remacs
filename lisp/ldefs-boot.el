@@ -27423,11 +27423,8 @@ nil
     necessary to ensure that a postfix operator appended to it will
     apply to the whole expression.
 
-The optional argument KEEP-ORDER, if non-nil, forces the match to
-be performed in the order given, as if the strings were made into
-a regexp by joining them with the `\\|' operator.  If nil or
-omitted, the returned regexp is will always match the longest
-string possible.
+The returned regexp is ordered in such a way that it will always
+match the longest string possible.
 
 Up to reordering, the resulting regexp is equivalent to but
 usually more efficient than that of a simplified version:
@@ -27443,7 +27440,7 @@ usually more efficient than that of a simplified version:
              (mapconcat \\='regexp-quote strings \"\\\\|\")
              (cdr parens))))
 
-\(fn STRINGS &optional PAREN KEEP-ORDER)" nil nil)
+\(fn STRINGS &optional PAREN)" nil nil)
 
 (autoload 'regexp-opt-depth "regexp-opt" "\
 Return the depth of REGEXP.
@@ -31063,7 +31060,11 @@ Use \\[untabify] to convert tabs to spaces before sorting.
 
 (autoload 'reverse-region "sort" "\
 Reverse the order of lines in a region.
-From a program takes two point or marker arguments, BEG and END.
+When called from Lisp, takes two point or marker arguments, BEG and END.
+If BEG is not at the beginning of a line, the first line of those
+to be reversed is the line starting after BEG.
+If END is not at the end of a line, the last line to be reversed
+is the one that ends before END.
 
 \(fn BEG END)" t nil)
 
