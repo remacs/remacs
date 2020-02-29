@@ -312,12 +312,13 @@ font.
 *** Consider changing the default display of Variation Selectors
 
 Emacs by default displays the Variation Selector (VS) codepoints not
-composed with base characters as thin 1-pixel space glyphs.  The
-Unicode FAQ says that if variation sequences cannot be supported, the
-VS characters should not be shown, leaving just the base character of
-the sequence visible.  This could be handled via
-glyphless-char-display, by changing the entries for VS codepoints to
-'zero-width'.
+composed with base characters as hex codes in a box.  The Unicode FAQ
+says that if variation sequences cannot be supported, the VS
+characters should not be shown, leaving just the base character of the
+sequence visible.  This could be handled via glyphless-char-display,
+by changing the entries for VS codepoints to 'zero-width'.  Or we
+could display them as a thin 1-pixel space, as we do with format
+control characters, by using 'thin-space' there.
 
 *** Special face for displaying text presentation of Emoji
 
