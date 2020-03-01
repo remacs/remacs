@@ -2327,7 +2327,7 @@ expressions from simpler parts.
 
 +++
 *** Nested 'or' forms of strings guarantee a longest match.
-For example, (or (or "IN" "OUT") (or "INPUT" "OUTPUT")) now matches
+For example, '(or (or "IN" "OUT") (or "INPUT" "OUTPUT"))' now matches
 the whole string "INPUT" if present, not just "IN".  Previously, this
 was only guaranteed inside a single 'or' form of string literals.
 
