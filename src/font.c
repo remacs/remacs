@@ -3884,6 +3884,27 @@ font_range (ptrdiff_t pos, ptrdiff_t pos_byte, ptrdiff_t *limit,
 
 /* Lisp API.  */
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("fontp", Ffontp, Sfontp, 1, 2, 0,
+       doc: /* Return t if OBJECT is a font-spec, font-entity, or font-object.
+Return nil otherwise.
+Optional 2nd argument EXTRA-TYPE, if non-nil, specifies to check
+which kind of font it is.  It must be one of `font-spec', `font-entity',
+`font-object'.  */)
+  (Lisp_Object object, Lisp_Object extra_type)
+{
+  if (NILP (extra_type))
+    return (FONTP (object) ? Qt : Qnil);
+  if (EQ (extra_type, Qfont_spec))
+    return (FONT_SPEC_P (object) ? Qt : Qnil);
+  if (EQ (extra_type, Qfont_entity))
+    return (FONT_ENTITY_P (object) ? Qt : Qnil);
+  if (EQ (extra_type, Qfont_object))
+    return (FONT_OBJECT_P (object) ? Qt : Qnil);
+  wrong_type_argument (intern ("font-extra-type"), extra_type);
+}
+#endif /* IGNORE_RUST_PORT */
+
 DEFUN ("font-spec", Ffont_spec, Sfont_spec, 0, MANY, 0,
        doc: /* Return a newly created font-spec with arguments as properties.
 
@@ -4752,6 +4773,8 @@ corresponding character.  */)
 }
 #endif	/* 0 */
 
+#ifdef FONT_DEBUG
+
 DEFUN ("open-font", Fopen_font, Sopen_font, 1, 3, 0,
        doc: /* Open FONT-ENTITY.  */)
   (Lisp_Object font_entity, Lisp_Object size, Lisp_Object frame)
@@ -4777,6 +4800,17 @@ DEFUN ("open-font", Fopen_font, Sopen_font, 1, 3, 0,
     }
   return font_open_entity (f, font_entity, isize);
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("close-font", Fclose_font, Sclose_font, 1, 2, 0,
+       doc: /* Close FONT-OBJECT.  */)
+  (Lisp_Object font_object, Lisp_Object frame)
+{
+  CHECK_FONT_OBJECT (font_object);
+  font_close_object (decode_live_frame (frame), font_object);
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("query-font", Fquery_font, Squery_font, 1, 1, 0,
        doc: /* Return information about FONT-OBJECT.
@@ -5045,6 +5079,25 @@ Type C-l to recover what previously shown.  */)
   return make_fixnum (len);
 }
 #endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("frame-font-cache", Fframe_font_cache, Sframe_font_cache, 0, 1, 0,
+       doc: /* Return FRAME's font cache.  Mainly used for debugging.
+If FRAME is omitted or nil, use the selected frame.  */)
+  (Lisp_Object frame)
+{
+#ifdef HAVE_WINDOW_SYSTEM
+  struct frame *f = decode_live_frame (frame);
+
+  if (FRAME_WINDOW_P (f))
+    return FRAME_DISPLAY_INFO (f)->name_list_element;
+  else
+#endif
+    return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#endif	/* FONT_DEBUG */
 
 #ifdef HAVE_WINDOW_SYSTEM
 
@@ -5364,13 +5417,22 @@ syms_of_font (void)
 #endif	/* HAVE_LIBOTF */
 #endif	/* 0 */
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sfontp);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sfont_spec);
   defsubr (&Sfont_get);
 #ifdef HAVE_WINDOW_SYSTEM
   defsubr (&Sfont_face_attributes);
 #endif
   defsubr (&Sfont_put);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Slist_fonts);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sfont_family_list);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sfind_font);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sfont_xlfd_name);
   defsubr (&Sclear_font_cache);
   defsubr (&Sfont_shape_gstring);
@@ -5381,12 +5443,24 @@ syms_of_font (void)
   defsubr (&Sfont_otf_alternates);
 #endif	/* 0 */
 
+#ifdef FONT_DEBUG
   defsubr (&Sopen_font);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sclose_font);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Squery_font);
   defsubr (&Sfont_get_glyphs);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sfont_match_p);
+  defsubr (&Sfont_at);
+#endif /* IGNORE_RUST_PORT */
 #if 0
   defsubr (&Sdraw_string);
 #endif
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sframe_font_cache);
+#endif /* IGNORE_RUST_PORT */
+#endif	/* FONT_DEBUG */
 #ifdef HAVE_WINDOW_SYSTEM
   defsubr (&Sfont_info);
 #endif

@@ -267,6 +267,7 @@ xml_cleanup_parser (void)
     xmlCleanupParser ();
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("libxml-parse-html-region", Flibxml_parse_html_region,
        Slibxml_parse_html_region,
        2, 4, 0,
@@ -281,7 +282,9 @@ function to strip comments before calling this function.  */)
     return parse_region (start, end, base_url, discard_comments, true);
   return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("libxml-parse-xml-region", Flibxml_parse_xml_region,
        Slibxml_parse_xml_region,
        2, 4, 0,
@@ -296,28 +299,46 @@ function to strip comments before calling this function.  */)
     return parse_region (start, end, base_url, discard_comments, false);
   return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 #endif /* HAVE_LIBXML2 */
 
-//DEFUN ("libxml-available-p", Flibxml_available_p, Slibxml_available_p, 0, 0, 0,
-//       doc: /* Return t if libxml2 support is available in this instance of Emacs.*/)
-//  (void)
-//{
-//#ifdef HAVE_LIBXML2
-//# ifdef WINDOWSNT
-//  Lisp_Object found = Fassq (Qlibxml2, Vlibrary_cache);
-//  if (CONSP (found))
-//    return XCDR (found);
-//  else
-//    {
-//      Lisp_Object status;
-//      status = init_libxml2_functions () ? Qt : Qnil;
-//      Vlibrary_cache = Fcons (Fcons (Qlibxml2, status), Vlibrary_cache);
-//      return status;
-//    }
-//# else
-//  return Qt;
-//# endif /* WINDOWSNT */
-//#else
-//  return Qnil;
-//#endif	/* HAVE_LIBXML2 */
-//}
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("libxml-available-p", Flibxml_available_p, Slibxml_available_p, 0, 0, 0,
+       doc: /* Return t if libxml2 support is available in this instance of Emacs.*/)
+  (void)
+{
+#ifdef HAVE_LIBXML2
+# ifdef WINDOWSNT
+  Lisp_Object found = Fassq (Qlibxml2, Vlibrary_cache);
+  if (CONSP (found))
+    return XCDR (found);
+  else
+    {
+      Lisp_Object status;
+      status = init_libxml2_functions () ? Qt : Qnil;
+      Vlibrary_cache = Fcons (Fcons (Qlibxml2, status), Vlibrary_cache);
+      return status;
+    }
+# else
+  return Qt;
+# endif /* WINDOWSNT */
+#else
+  return Qnil;
+#endif	/* HAVE_LIBXML2 */
+}
+#endif /* IGNORE_RUST_PORT */
+/***********************************************************************
+			    Initialization
+ ***********************************************************************/
+#ifdef IGNORE_RUST_PORT
+void
+syms_of_xml (void)
+{
+#ifdef HAVE_LIBXML2
+  defsubr (&Slibxml_parse_html_region);
+  defsubr (&Slibxml_parse_xml_region);
+#endif
+  defsubr (&Slibxml_available_p);
+}
+#endif /* IGNORE_RUST_PORT */

@@ -302,21 +302,4 @@ extern void dissociate_controlling_tty (void);
 
 INLINE_HEADER_END
 
-Lisp_Object
-get_process (register Lisp_Object name);
-
-void
-update_status (struct Lisp_Process *p);
-
-void
-send_process (Lisp_Object proc, const char *buf, ptrdiff_t len,
-	      Lisp_Object object);
-void
-process_send_signal (Lisp_Object process, int signo, Lisp_Object current_group,
-		     bool nomsg);
-
-void pset_filter (struct Lisp_Process *, Lisp_Object);
-void pset_sentinel (struct Lisp_Process *, Lisp_Object);
-void set_process_filter_masks (struct Lisp_Process *);
-
 #endif /* EMACS_PROCESS_H */

@@ -50,7 +50,9 @@ streq (char const *x, char const *y)
 static bool
 filename_eq (char const *x, char const *y)
 {
-#ifdef WINDOWSNT
+#ifdef __MSDOS__
+  return strcasecmp (x, y) == 0;
+#elif defined WINDOWSNT
   return stricmp (x, y) == 0;
 #else
   return streq (x, y);

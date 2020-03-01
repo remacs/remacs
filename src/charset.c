@@ -140,7 +140,64 @@ int iso_charset_table[ISO_MAX_DIMENSION][ISO_MAX_CHARS][ISO_MAX_FINAL];
        | (((charset)->code_space[12] + ((idx) / (charset)->code_space[11]))  \
 	  << 24))))
 
-TempCharsetWork *temp_charset_work;
+/* Structure to hold mapping tables for a charset.  Used by temacs
+   invoked for dumping.  */
+
+static struct
+{
+  /* The current charset for which the following tables are setup.  */
+  struct charset *current;
+
+  /* 1 iff the following table is used for encoder.  */
+  short for_encoder;
+
+  /* When the following table is used for encoding, minimum and
+     maximum character of the current charset.  */
+  int min_char, max_char;
+
+  /* A Unicode character corresponding to the code index 0 (i.e. the
+     minimum code-point) of the current charset, or -1 if the code
+     index 0 is not a Unicode character.  This is checked when
+     table.encoder[CHAR] is zero.  */
+  int zero_index_char;
+
+  union {
+    /* Table mapping code-indices (not code-points) of the current
+       charset to Unicode characters.  If decoder[CHAR] is -1, CHAR
+       doesn't belong to the current charset.  */
+    int decoder[0x10000];
+    /* Table mapping Unicode characters to code-indices of the current
+       charset.  The first 0x10000 elements are for BMP (0..0xFFFF),
+       and the last 0x10000 are for SMP (0x10000..0x1FFFF) or SIP
+       (0x20000..0x2FFFF).  Note that there is no charset map that
+       uses both SMP and SIP.  */
+    unsigned short encoder[0x20000];
+  } table;
+} *temp_charset_work;
+
+#define SET_TEMP_CHARSET_WORK_ENCODER(C, CODE)			\
+  do {								\
+    if ((CODE) == 0)						\
+      temp_charset_work->zero_index_char = (C);			\
+    else if ((C) < 0x20000)					\
+      temp_charset_work->table.encoder[(C)] = (CODE);		\
+    else							\
+      temp_charset_work->table.encoder[(C) - 0x10000] = (CODE);	\
+  } while (0)
+
+#define GET_TEMP_CHARSET_WORK_ENCODER(C)				  \
+  ((C) == temp_charset_work->zero_index_char ? 0			  \
+   : (C) < 0x20000 ? (temp_charset_work->table.encoder[(C)]		  \
+		      ? (int) temp_charset_work->table.encoder[(C)] : -1) \
+   : temp_charset_work->table.encoder[(C) - 0x10000]			  \
+   ? temp_charset_work->table.encoder[(C) - 0x10000] : -1)
+
+#define SET_TEMP_CHARSET_WORK_DECODER(C, CODE)	\
+  (temp_charset_work->table.decoder[(CODE)] = (C))
+
+#define GET_TEMP_CHARSET_WORK_DECODER(CODE)	\
+  (temp_charset_work->table.decoder[(CODE)])
+
 
 /* Set to 1 to warn that a charset map is loaded and thus a buffer
    text and a string data may be relocated.  */
@@ -587,6 +644,15 @@ load_charset (struct charset *charset, int control_flag)
   else
     load_charset_map_from_vector (charset, map, control_flag);
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("charsetp", Fcharsetp, Scharsetp, 1, 1, 0,
+       doc: /* Return non-nil if and only if OBJECT is a charset.*/)
+  (Lisp_Object object)
+{
+  return (CHARSETP (object) ? Qt : Qnil);
+}
+#endif
 
 static void
 map_charset_for_dump (void (*c_function) (Lisp_Object, Lisp_Object),
@@ -2048,6 +2114,28 @@ DIMENSION, CHARS, and FINAL-CHAR.  */)
   return (id >= 0 ? CHARSET_NAME (CHARSET_FROM_ID (id)) : Qnil);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("clear-charset-maps", Fclear_charset_maps, Sclear_charset_maps,
+       0, 0, 0,
+       doc: /*
+Internal use only.
+Clear temporary charset mapping tables.
+It should be called only from temacs invoked for dumping.  */)
+  (void)
+{
+  if (temp_charset_work)
+    {
+      xfree (temp_charset_work);
+      temp_charset_work = NULL;
+    }
+
+  if (CHAR_TABLE_P (Vchar_unify_table))
+    Foptimize_char_table (Vchar_unify_table, Qnil);
+
+  return Qnil;
+}
+#endif
+
 DEFUN ("charset-priority-list", Fcharset_priority_list,
        Scharset_priority_list, 0, 1, 0,
        doc: /* Return the list of charsets ordered by priority.
@@ -2208,7 +2296,7 @@ init_charset (void)
          obscure problem (eg bug#6401), so better exit.  */
       fprintf (stderr,
 	       ("Error: %s: %s\n"
-		"Emacs will not function correctly "
+		"Remacs will not function correctly "
 		"without the character map files.\n"
 		"%s"
 		"Please check your installation!\n"),
@@ -2296,6 +2384,9 @@ syms_of_charset (void)
   charset_table_used = 0;
   PDUMPER_REMEMBER_SCALAR (charset_table_used);
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scharsetp);
+#endif
   defsubr (&Smap_charset_chars);
   defsubr (&Sdefine_charset_internal);
   defsubr (&Sdefine_charset_alias);
@@ -2313,6 +2404,9 @@ syms_of_charset (void)
   defsubr (&Schar_charset);
   defsubr (&Scharset_after);
   defsubr (&Siso_charset);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sclear_charset_maps);
+#endif
   defsubr (&Scharset_priority_list);
   defsubr (&Sset_charset_priority);
   defsubr (&Scharset_id_internal);

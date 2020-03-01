@@ -385,11 +385,18 @@ x_load_resources (Display *display, const char *xrm_string,
 
 #if defined USE_MOTIF || !(defined USE_CAIRO || defined HAVE_XFT) || !defined USE_LUCID
   const char *helv = "-*-helvetica-medium-r-*--*-120-*-*-*-*-iso8859-1";
+#endif
+
+#ifdef USE_MOTIF
+  const char *courier = "-*-courier-medium-r-*-*-*-120-*-*-*-*-iso8859-1";
+#endif
 
   x_rm_string = XrmStringToQuark (XrmStringType);
+#ifndef USE_X_TOOLKIT
   /* pmr@osf.org says this shouldn't be done if USE_X_TOOLKIT.
      I suspect it's because the toolkit version does this elsewhere.  */
   XrmInitialize ();
+#endif
   rdb = XrmGetStringDatabase ("");
 
   /* Add some font defaults.  If the font `helv' doesn't exist, widgets
@@ -454,12 +461,15 @@ x_load_resources (Display *display, const char *xrm_string,
   XrmPutLineResource (&rdb, line);
   sprintf (line, "*XlwMenu*font: %s", helv);
   XrmPutLineResource (&rdb, line);
+#endif
   sprintf (line, "*XlwMenu*background: grey75");
   XrmPutLineResource (&rdb, line);
   sprintf (line, "Emacs*verticalScrollBar.background: grey75");
   XrmPutLineResource (&rdb, line);
   sprintf (line, "Emacs*horizontalScrollBar.background: grey75");
   XrmPutLineResource (&rdb, line);
+
+#endif /* not USE_MOTIF */
 
   user_database = get_user_db (display);
 

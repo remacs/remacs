@@ -56,6 +56,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "window.h"
 
 /* Actually allocate storage for these variables.  */
+
 Lisp_Object current_global_map;	/* Current global keymap.  */
 
 Lisp_Object global_map;		/* Default global key bindings.  */
@@ -74,15 +75,18 @@ Lisp_Object control_x_map;	/* The keymap used for globally bound
 				   bindings when spaces are not encouraged
 				   in the minibuf.  */
 
-/* Apropos - finding all symbols whose names match a regexp.		*/
-Lisp_Object apropos_predicate;
-Lisp_Object apropos_accumulate;
-
 /* Alist of elements like (DEL . "\d").  */
 static Lisp_Object exclude_keys;
 
 /* Pre-allocated 2-element vector for Fcommand_remapping to use.  */
 static Lisp_Object command_remapping_vector;
+
+#ifdef IGNORE_RUST_PORT
+/* Hash table used to cache a reverse-map to speed up calls to where-is.  */
+static Lisp_Object where_is_cache;
+/* Which keymaps are reverse-stored in the cache.  */
+static Lisp_Object where_is_cache_keymaps;
+#endif /* IGNORE_RUST_PORT */
 
 static Lisp_Object store_in_keymap (Lisp_Object, Lisp_Object, Lisp_Object);
 
@@ -92,11 +96,21 @@ static void describe_translation (Lisp_Object, Lisp_Object);
 static void describe_map (Lisp_Object, Lisp_Object,
                           void (*) (Lisp_Object, Lisp_Object),
 			  bool, Lisp_Object, Lisp_Object *, bool, bool);
+#ifdef IGNORE_RUST_PORT
+static void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
+                             void (*) (Lisp_Object, Lisp_Object), bool,
+                             Lisp_Object, Lisp_Object, bool, bool);
+#endif /* IGNORE_RUST_PORT */
 static void silly_event_symbol_error (Lisp_Object);
 static Lisp_Object get_keyelt (Lisp_Object, bool);
 
-void map_keymap_item (map_keymap_function_t, Lisp_Object, Lisp_Object, Lisp_Object, void *);
-void map_keymap_char_table_item (Lisp_Object, Lisp_Object, Lisp_Object);
+#ifdef IGNORE_RUST_PORT
+static void
+CHECK_VECTOR_OR_CHAR_TABLE (Lisp_Object x)
+{
+  CHECK_TYPE (VECTORP (x) || CHAR_TABLE_P (x), Qvector_or_char_table_p, x);
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* Keymap object support - constructors and predicates.			*/
 
@@ -608,6 +622,29 @@ map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy)
   call2 (fun, key, val);
 }
 
+#ifdef IGNORE_RUST_PORT
+/* Same as map_keymap_internal, but traverses parent keymaps as well.
+   AUTOLOAD indicates that autoloaded keymaps should be loaded.  */
+void
+map_keymap (Lisp_Object map, map_keymap_function_t fun, Lisp_Object args,
+	    void *data, bool autoload)
+{
+  map = get_keymap (map, 1, autoload);
+  while (CONSP (map))
+    {
+      if (KEYMAPP (XCAR (map)))
+	{
+	  map_keymap (XCAR (map), fun, args, data, autoload);
+	  map = XCDR (map);
+	}
+      else
+	map = map_keymap_internal (map, fun, args, data);
+      if (!CONSP (map))
+	map = get_keymap (map, 0, autoload);
+    }
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Same as map_keymap, but does it right, properly eliminating duplicate
    bindings due to inheritance.   */
 void
@@ -619,6 +656,40 @@ map_keymap_canonical (Lisp_Object map, map_keymap_function_t fun, Lisp_Object ar
   /* No need to use `map_keymap' here because canonical map has no parent.  */
   map_keymap_internal (map, fun, args, data);
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("map-keymap-internal", Fmap_keymap_internal, Smap_keymap_internal, 2, 2, 0,
+       doc: /* Call FUNCTION once for each event binding in KEYMAP.
+FUNCTION is called with two arguments: the event that is bound, and
+the definition it is bound to.  The event may be a character range.
+If KEYMAP has a parent, this function returns it without processing it.  */)
+  (Lisp_Object function, Lisp_Object keymap)
+{
+  keymap = get_keymap (keymap, 1, 1);
+  keymap = map_keymap_internal (keymap, map_keymap_call, function, NULL);
+  return keymap;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("map-keymap", Fmap_keymap, Smap_keymap, 2, 3, 0,
+       doc: /* Call FUNCTION once for each event binding in KEYMAP.
+FUNCTION is called with two arguments: the event that is bound, and
+the definition it is bound to.  The event may be a character range.
+
+If KEYMAP has a parent, the parent's bindings are included as well.
+This works recursively: if the parent has itself a parent, then the
+grandparent's bindings are also included and so on.
+usage: (map-keymap FUNCTION KEYMAP)  */)
+  (Lisp_Object function, Lisp_Object keymap, Lisp_Object sort_first)
+{
+  if (! NILP (sort_first))
+    return call2 (intern ("map-keymap-sorted"), function, keymap);
+
+  map_keymap (keymap, map_keymap_call, function, NULL, 1);
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* Given OBJECT which was found in a slot in a keymap,
    trace indirect definitions to get the actual definition of that slot.
@@ -690,8 +761,8 @@ static Lisp_Object
 store_in_keymap (Lisp_Object keymap, register Lisp_Object idx, Lisp_Object def)
 {
   /* Flush any reverse-map cache.  */
-  set_where_is_cache(Qnil);
-  set_where_is_cache_keymaps(Qt);
+  where_is_cache = Qnil;
+  where_is_cache_keymaps = Qt;
 
   if (EQ (idx, Qkeymap))
     error ("`keymap' is reserved for embedded parent maps");
@@ -1711,6 +1782,88 @@ bindings; see the description of `lookup-key' for more details about this.  */)
   return Flist (j, maps);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("define-prefix-command", Fdefine_prefix_command, Sdefine_prefix_command, 1, 3, 0,
+       doc: /* Define COMMAND as a prefix command.  COMMAND should be a symbol.
+A new sparse keymap is stored as COMMAND's function definition and its
+value.
+This prepares COMMAND for use as a prefix key's binding.
+If a second optional argument MAPVAR is given, it should be a symbol.
+The map is then stored as MAPVAR's value instead of as COMMAND's
+value; but COMMAND is still defined as a function.
+The third optional argument NAME, if given, supplies a menu name
+string for the map.  This is required to use the keymap as a menu.
+This function returns COMMAND.  */)
+  (Lisp_Object command, Lisp_Object mapvar, Lisp_Object name)
+{
+  Lisp_Object map;
+  map = Fmake_sparse_keymap (name);
+  Ffset (command, map);
+  if (!NILP (mapvar))
+    Fset (mapvar, map);
+  else
+    Fset (command, map);
+  return command;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("use-global-map", Fuse_global_map, Suse_global_map, 1, 1, 0,
+       doc: /* Select KEYMAP as the global keymap.  */)
+  (Lisp_Object keymap)
+{
+  keymap = get_keymap (keymap, 1, 1);
+  current_global_map = keymap;
+
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("use-local-map", Fuse_local_map, Suse_local_map, 1, 1, 0,
+       doc: /* Select KEYMAP as the local keymap.
+If KEYMAP is nil, that means no local keymap.  */)
+  (Lisp_Object keymap)
+{
+  if (!NILP (keymap))
+    keymap = get_keymap (keymap, 1, 1);
+
+  bset_keymap (current_buffer, keymap);
+
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("current-local-map", Fcurrent_local_map, Scurrent_local_map, 0, 0, 0,
+       doc: /* Return current buffer's local keymap, or nil if it has none.
+Normally the local keymap is set by the major mode with `use-local-map'.  */)
+  (void)
+{
+  return BVAR (current_buffer, keymap);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("current-global-map", Fcurrent_global_map, Scurrent_global_map, 0, 0, 0,
+       doc: /* Return the current global keymap.  */)
+  (void)
+{
+  return current_global_map;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("current-minor-mode-maps", Fcurrent_minor_mode_maps, Scurrent_minor_mode_maps, 0, 0, 0,
+       doc: /* Return a list of keymaps for the minor modes of the current buffer.  */)
+  (void)
+{
+  Lisp_Object *maps;
+  int nmaps = current_minor_maps (0, &maps);
+
+  return Flist (nmaps, maps);
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* Help functions for describing and documenting keymaps.		*/
 
@@ -2294,23 +2447,23 @@ where_is_internal (Lisp_Object definition, Lisp_Object keymaps,
   if (nomenus && !noindirect)
     {
       /* Check heuristic-consistency of the cache.  */
-      if (NILP (Fequal (keymaps, get_where_is_cache_keymaps())))
-	set_where_is_cache(Qnil);
+      if (NILP (Fequal (keymaps, where_is_cache_keymaps)))
+	where_is_cache = Qnil;
 
-      if (NILP (get_where_is_cache()))
+      if (NILP (where_is_cache))
 	{
 	  /* We need to create the cache.  */
-	  set_where_is_cache(Fmake_hash_table (0, NULL));
-	  set_where_is_cache_keymaps(Qt);
+	  where_is_cache = Fmake_hash_table (0, NULL);
+	  where_is_cache_keymaps = Qt;
 	}
       else
 	/* We can reuse the cache.  */
-	return Fgethash (definition, get_where_is_cache(), Qnil);
+	return Fgethash (definition, where_is_cache, Qnil);
     }
   else
     /* Kill the cache so that where_is_internal_1 doesn't think
        we're filling it up.  */
-    set_where_is_cache(Qnil);
+    where_is_cache = Qnil;
 
   found = keymaps;
   while (CONSP (found))
@@ -2364,10 +2517,10 @@ where_is_internal (Lisp_Object definition, Lisp_Object keymaps,
     { /* Remember for which keymaps this cache was built.
 	 We do it here (late) because we want to keep where_is_cache_keymaps
 	 set to t while the cache isn't fully filled.  */
-      set_where_is_cache_keymaps(keymaps);
+      where_is_cache_keymaps = keymaps;
       /* During cache-filling, data.sequences is not filled by
 	 where_is_internal_1.  */
-      return Fgethash (definition, get_where_is_cache(), Qnil);
+      return Fgethash (definition, where_is_cache, Qnil);
     }
   else
     return data.sequences;
@@ -2584,7 +2737,7 @@ where_is_internal_1 (Lisp_Object key, Lisp_Object binding, Lisp_Object args, voi
   /* End this iteration if this element does not match
      the target.  */
 
-  if (!(!NILP (get_where_is_cache())	/* everything "matches" during cache-fill.  */
+  if (!(!NILP (where_is_cache)	/* everything "matches" during cache-fill.  */
 	|| EQ (binding, definition)
 	|| (CONSP (definition) && !NILP (Fequal (binding, definition)))))
     /* Doesn't match.  */
@@ -2603,10 +2756,10 @@ where_is_internal_1 (Lisp_Object key, Lisp_Object binding, Lisp_Object args, voi
       sequence = append_key (this, key);
     }
 
-  if (!NILP (get_where_is_cache()))
+  if (!NILP (where_is_cache))
     {
-      Lisp_Object sequences = Fgethash (binding, get_where_is_cache(), Qnil);
-      Fputhash (binding, Fcons (sequence, sequences), get_where_is_cache());
+      Lisp_Object sequences = Fgethash (binding, where_is_cache, Qnil);
+      Fputhash (binding, Fcons (sequence, sequences), where_is_cache);
     }
   else
     d->sequences = Fcons (sequence, d->sequences);
@@ -3422,6 +3575,9 @@ describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
     }
 }
 
+/* Apropos - finding all symbols whose names match a regexp.		*/
+Lisp_Object apropos_predicate;
+Lisp_Object apropos_accumulate;
 
 void
 apropos_accum (Lisp_Object symbol, Lisp_Object string)
@@ -3435,6 +3591,26 @@ apropos_accum (Lisp_Object symbol, Lisp_Object string)
     apropos_accumulate = Fcons (symbol, apropos_accumulate);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("apropos-internal", Fapropos_internal, Sapropos_internal, 1, 2, 0,
+       doc: /* Show all symbols whose names contain match for REGEXP.
+If optional 2nd arg PREDICATE is non-nil, (funcall PREDICATE SYMBOL) is done
+for each symbol and a symbol is mentioned only if that returns non-nil.
+Return list of symbols found.  */)
+  (Lisp_Object regexp, Lisp_Object predicate)
+{
+  Lisp_Object tem;
+  CHECK_STRING (regexp);
+  apropos_predicate = predicate;
+  apropos_accumulate = Qnil;
+  map_obarray (Vobarray, apropos_accum, regexp);
+  tem = Fsort (apropos_accumulate, Qstring_lessp);
+  apropos_accumulate = Qnil;
+  apropos_predicate = Qnil;
+  return tem;
+}
+#endif /* IGNORE_RUST_PORT */
+
 void
 syms_of_keymap (void)
 {
@@ -3549,16 +3725,54 @@ be preferred.  */);
   command_remapping_vector = make_vector (2, Qremap);
   staticpro (&command_remapping_vector);
 
+#ifdef IGNORE_RUST_PORT
+  where_is_cache_keymaps = Qt;
+  where_is_cache = Qnil;
+  staticpro (&where_is_cache);
+  staticpro (&where_is_cache_keymaps);
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Skeymapp);
+  defsubr (&Skeymap_parent);
+  defsubr (&Skeymap_prompt);
+  defsubr (&Sset_keymap_parent);
+  defsubr (&Smake_keymap);
+  defsubr (&Smake_sparse_keymap);
+  defsubr (&Smap_keymap_internal);
+  defsubr (&Smap_keymap);
+  defsubr (&Scopy_keymap);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Scommand_remapping);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Skey_binding);
+  defsubr (&Slocal_key_binding);
+  defsubr (&Sglobal_key_binding);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sminor_mode_key_binding);
   defsubr (&Sdefine_key);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Slookup_key);
+  defsubr (&Sdefine_prefix_command);
+  defsubr (&Suse_global_map);
+  defsubr (&Suse_local_map);
+  defsubr (&Scurrent_local_map);
+  defsubr (&Scurrent_global_map);
+  defsubr (&Scurrent_minor_mode_maps);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Scurrent_active_maps);
   defsubr (&Saccessible_keymaps);
   defsubr (&Skey_description);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sdescribe_vector);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Ssingle_key_description);
   defsubr (&Stext_char_description);
   defsubr (&Swhere_is_internal);
   defsubr (&Sdescribe_buffer_bindings);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sapropos_internal);
+#endif /* IGNORE_RUST_PORT */
 }
 
 void

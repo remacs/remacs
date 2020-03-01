@@ -63,8 +63,20 @@ Lisp_Object backtrace_function (union specbinding *) EXTERNALLY_VISIBLE;
 union specbinding *backtrace_next (union specbinding *) EXTERNALLY_VISIBLE;
 union specbinding *backtrace_top (void) EXTERNALLY_VISIBLE;
 
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object funcall_lambda (Lisp_Object, ptrdiff_t, Lisp_Object *);
+#endif /* IGNORE_RUST_PORT */
 static Lisp_Object apply_lambda (Lisp_Object, Lisp_Object, ptrdiff_t);
 static Lisp_Object lambda_arity (Lisp_Object);
+
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object
+specpdl_symbol (union specbinding *pdl)
+{
+  eassert (pdl->kind >= SPECPDL_LET);
+  return pdl->let.symbol;
+}
+#endif /* IGNORE_RUST_PORT */
 
 static enum specbind_tag
 specpdl_kind (union specbinding *pdl)
@@ -72,6 +84,24 @@ specpdl_kind (union specbinding *pdl)
   eassert (pdl->kind >= SPECPDL_LET);
   return pdl->let.kind;
 }
+
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object
+specpdl_old_value (union specbinding *pdl)
+{
+  eassert (pdl->kind >= SPECPDL_LET);
+  return pdl->let.old_value;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+static void
+set_specpdl_old_value (union specbinding *pdl, Lisp_Object val)
+{
+  eassert (pdl->kind >= SPECPDL_LET);
+  pdl->let.old_value = val;
+}
+#endif /* IGNORE_RUST_PORT */
 
 static Lisp_Object
 specpdl_where (union specbinding *pdl)
@@ -252,6 +282,10 @@ restore_stack_limits (Lisp_Object data)
   integer_to_intmax (XCDR (data), &max_lisp_eval_depth);
 }
 
+#ifdef IGNORE_RUST_PORT
+static void grow_specpdl (void);
+#endif /* IGNORE_RUST_PORT */
+
 /* Call the Lisp debugger, giving it argument ARG.  */
 
 Lisp_Object
@@ -334,7 +368,7 @@ do_debug_on_call (Lisp_Object code, ptrdiff_t count)
 /* NOTE!!! Every function that can call EVAL must protect its args
    and temporaries from garbage collection while it needs them.
    The definition of `For' shows what you have to do.  */
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("or", For, Sor, 0, UNEVALLED, 0,
        doc: /* Eval args until one of them yields non-nil, then return that value.
 The remaining args are not evalled at all.
@@ -355,7 +389,9 @@ usage: (or CONDITIONS...)  */)
 
   return val;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("and", Fand, Sand, 0, UNEVALLED, 0,
        doc: /* Eval args until one of them yields nil, then return nil.
 The remaining args are not evalled at all.
@@ -376,7 +412,9 @@ usage: (and CONDITIONS...)  */)
 
   return val;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("if", Fif, Sif, 2, UNEVALLED, 0,
        doc: /* If COND yields non-nil, do THEN, else do ELSE...
 Returns the value of THEN or the value of the last of the ELSE's.
@@ -393,7 +431,9 @@ usage: (if COND THEN ELSE...)  */)
     return eval_sub (Fcar (XCDR (args)));
   return Fprogn (Fcdr (XCDR (args)));
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("cond", Fcond, Scond, 0, UNEVALLED, 0,
        doc: /* Try each clause until one succeeds.
 Each clause looks like (CONDITION BODY...).  CONDITION is evaluated
@@ -423,7 +463,9 @@ usage: (cond CLAUSES...)  */)
 
   return val;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("progn", Fprogn, Sprogn, 0, UNEVALLED, 0,
        doc: /* Eval BODY forms sequentially and return value of last one.
 usage: (progn BODY...)  */)
@@ -440,6 +482,7 @@ usage: (progn BODY...)  */)
 
   return val;
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Evaluate BODY sequentially, discarding its value.  */
 
@@ -710,6 +753,7 @@ value.  */)
   return Qnil;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("defvar", Fdefvar, Sdefvar, 1, UNEVALLED, 0,
        doc: /* Define SYMBOL as a variable, and return SYMBOL.
 You are not required to define a variable in order to use it, but
@@ -785,6 +829,7 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
 
   return sym;
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("defconst", Fdefconst, Sdefconst, 2, UNEVALLED, 0,
        doc: /* Define SYMBOL as a constant variable.
@@ -1171,6 +1216,24 @@ Both TAG and VALUE are evalled.  */
       }
   xsignal2 (Qno_catch, tag, value);
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("unwind-protect", Funwind_protect, Sunwind_protect, 1, UNEVALLED, 0,
+       doc: /* Do BODYFORM, protecting with UNWINDFORMS.
+If BODYFORM completes normally, its value is returned
+after executing the UNWINDFORMS.
+If BODYFORM exits nonlocally, the UNWINDFORMS are executed anyway.
+usage: (unwind-protect BODYFORM UNWINDFORMS...)  */)
+  (Lisp_Object args)
+{
+  Lisp_Object val;
+  ptrdiff_t count = SPECPDL_INDEX ();
+
+  record_unwind_protect (prog_ignore, XCDR (args));
+  val = eval_sub (XCAR (args));
+  return unbind_to (count, val);
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("condition-case", Fcondition_case, Scondition_case, 2, UNEVALLED, 0,
        doc: /* Regain control when an error is signaled.
@@ -1465,6 +1528,9 @@ push_handler_nosignal (Lisp_Object tag_ch_val, enum handlertype handlertype)
 }
 
 
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object signal_or_quit (Lisp_Object, Lisp_Object, bool);
+#endif /* IGNORE_RUST_PORT */
 static Lisp_Object find_handler_clause (Lisp_Object, Lisp_Object);
 static bool maybe_call_debugger (Lisp_Object conditions, Lisp_Object sig,
 				 Lisp_Object data);
@@ -2386,6 +2452,138 @@ usage: (apply FUNCTION &rest ARGUMENTS)  */)
 }
 
 /* Run hook variables in various ways.  */
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object
+funcall_nil (ptrdiff_t nargs, Lisp_Object *args)
+{
+  Ffuncall (nargs, args);
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("run-hooks", Frun_hooks, Srun_hooks, 0, MANY, 0,
+       doc: /* Run each hook in HOOKS.
+Each argument should be a symbol, a hook variable.
+These symbols are processed in the order specified.
+If a hook symbol has a non-nil value, that value may be a function
+or a list of functions to be called to run the hook.
+If the value is a function, it is called with no arguments.
+If it is a list, the elements are called, in order, with no arguments.
+
+Major modes should not use this function directly to run their mode
+hook; they should use `run-mode-hooks' instead.
+
+Do not use `make-local-variable' to make a hook variable buffer-local.
+Instead, use `add-hook' and specify t for the LOCAL argument.
+usage: (run-hooks &rest HOOKS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  ptrdiff_t i;
+
+  for (i = 0; i < nargs; i++)
+    run_hook (args[i]);
+
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("run-hook-with-args", Frun_hook_with_args,
+       Srun_hook_with_args, 1, MANY, 0,
+       doc: /* Run HOOK with the specified arguments ARGS.
+HOOK should be a symbol, a hook variable.  The value of HOOK
+may be nil, a function, or a list of functions.  Call each
+function in order with arguments ARGS.  The final return value
+is unspecified.
+
+Do not use `make-local-variable' to make a hook variable buffer-local.
+Instead, use `add-hook' and specify t for the LOCAL argument.
+usage: (run-hook-with-args HOOK &rest ARGS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return run_hook_with_args (nargs, args, funcall_nil);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* NB this one still documents a specific non-nil return value.
+   (As did run-hook-with-args and run-hook-with-args-until-failure
+   until they were changed in 24.1.)  */
+DEFUN ("run-hook-with-args-until-success", Frun_hook_with_args_until_success,
+       Srun_hook_with_args_until_success, 1, MANY, 0,
+       doc: /* Run HOOK with the specified arguments ARGS.
+HOOK should be a symbol, a hook variable.  The value of HOOK
+may be nil, a function, or a list of functions.  Call each
+function in order with arguments ARGS, stopping at the first
+one that returns non-nil, and return that value.  Otherwise (if
+all functions return nil, or if there are no functions to call),
+return nil.
+
+Do not use `make-local-variable' to make a hook variable buffer-local.
+Instead, use `add-hook' and specify t for the LOCAL argument.
+usage: (run-hook-with-args-until-success HOOK &rest ARGS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return run_hook_with_args (nargs, args, Ffuncall);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object
+funcall_not (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return NILP (Ffuncall (nargs, args)) ? Qt : Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("run-hook-with-args-until-failure", Frun_hook_with_args_until_failure,
+       Srun_hook_with_args_until_failure, 1, MANY, 0,
+       doc: /* Run HOOK with the specified arguments ARGS.
+HOOK should be a symbol, a hook variable.  The value of HOOK
+may be nil, a function, or a list of functions.  Call each
+function in order with arguments ARGS, stopping at the first
+one that returns nil, and return nil.  Otherwise (if all functions
+return non-nil, or if there are no functions to call), return non-nil
+\(do not rely on the precise return value in this case).
+
+Do not use `make-local-variable' to make a hook variable buffer-local.
+Instead, use `add-hook' and specify t for the LOCAL argument.
+usage: (run-hook-with-args-until-failure HOOK &rest ARGS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return NILP (run_hook_with_args (nargs, args, funcall_not)) ? Qt : Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object
+run_hook_wrapped_funcall (ptrdiff_t nargs, Lisp_Object *args)
+{
+  Lisp_Object tmp = args[0], ret;
+  args[0] = args[1];
+  args[1] = tmp;
+  ret = Ffuncall (nargs, args);
+  args[1] = args[0];
+  args[0] = tmp;
+  return ret;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("run-hook-wrapped", Frun_hook_wrapped, Srun_hook_wrapped, 2, MANY, 0,
+       doc: /* Run HOOK, passing each function through WRAP-FUNCTION.
+I.e. instead of calling each function FUN directly with arguments ARGS,
+it calls WRAP-FUNCTION with arguments FUN and ARGS.
+As soon as a call to WRAP-FUNCTION returns non-nil, `run-hook-wrapped'
+aborts and returns that value.
+usage: (run-hook-wrapped HOOK WRAP-FUNCTION &rest ARGS)  */)
+     (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return run_hook_with_args (nargs, args, run_hook_wrapped_funcall);
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* ARGS[0] should be a hook symbol.
    Call each of the functions in the hook value, passing each of them
@@ -2458,6 +2656,15 @@ run_hook_with_args (ptrdiff_t nargs, Lisp_Object *args,
     }
 }
 
+#ifdef IGNORE_RUST_PORT
+/* Run the hook HOOK, giving each function no args.  */
+void
+run_hook (Lisp_Object hook)
+{
+  Frun_hook_with_args (1, &hook);
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Run the hook HOOK, giving each function the two args ARG1 and ARG2.  */
 
 void
@@ -2465,6 +2672,15 @@ run_hook_with_args_2 (Lisp_Object hook, Lisp_Object arg1, Lisp_Object arg2)
 {
   CALLN (Frun_hook_with_args, hook, arg1, arg2);
 }
+
+#ifdef IGNORE_RUST_PORT
+/* Apply fn to arg.  */
+Lisp_Object
+apply1 (Lisp_Object fn, Lisp_Object arg)
+{
+  return NILP (arg) ? Ffuncall (1, &fn) : CALLN (Fapply, fn, arg);
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* Call function fn on no arguments.  */
 Lisp_Object
@@ -3376,6 +3592,38 @@ set_unwind_protect_ptr (ptrdiff_t count, void (*func) (void *), void *arg)
   p->unwind_ptr.arg = arg;
 }
 
+#ifdef IGNORE_RUST_PORT
+/* Pop and execute entries from the unwind-protect stack until the
+   depth COUNT is reached.  Return VALUE.  */
+
+Lisp_Object
+unbind_to (ptrdiff_t count, Lisp_Object value)
+{
+  Lisp_Object quitf = Vquit_flag;
+
+  Vquit_flag = Qnil;
+
+  while (specpdl_ptr != specpdl + count)
+    {
+      /* Copy the binding, and decrement specpdl_ptr, before we do
+	 the work to unbind it.  We decrement first
+	 so that an error in unbinding won't try to unbind
+	 the same entry again, and we copy the binding first
+	 in case more bindings are made during some of the code we run.  */
+
+      union specbinding this_binding;
+      this_binding = *--specpdl_ptr;
+
+      do_one_unbind (&this_binding, true, SET_INTERNAL_UNBIND);
+    }
+
+  if (NILP (Vquit_flag) && !NILP (quitf))
+    Vquit_flag = quitf;
+
+  return value;
+}
+#endif /* IGNORE_RUST_PORT */
+
 void
 unbind_for_thread_switch (struct thread_state *thr)
 {
@@ -3391,6 +3639,18 @@ unbind_for_thread_switch (struct thread_state *thr)
 	}
     }
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("special-variable-p", Fspecial_variable_p, Sspecial_variable_p, 1, 1, 0,
+       doc: /* Return non-nil if SYMBOL's global binding has been declared special.
+A special variable is one that will be bound dynamically, even in a
+context where binding is lexical by default.  */)
+  (Lisp_Object symbol)
+{
+   CHECK_SYMBOL (symbol);
+   return XSYMBOL (symbol)->u.s.declared_special ? Qt : Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
 
 
 static union specbinding *
@@ -3848,7 +4108,13 @@ To prevent this happening, set `quit-flag' to nil
 before making `inhibit-quit' nil.  */);
   Vinhibit_quit = Qnil;
 
+#ifdef IGNORE_RUST_PORT
+  DEFSYM (Qsetq, "setq");
+#endif /* IGNORE_RUST_PORT */
   DEFSYM (Qinhibit_quit, "inhibit-quit");
+#ifdef IGNORE_RUST_PORT
+  DEFSYM (Qautoload, "autoload");
+#endif /* IGNORE_RUST_PORT */
   DEFSYM (Qinhibit_debugger, "inhibit-debugger");
   DEFSYM (Qmacro, "macro");
 
@@ -3857,6 +4123,9 @@ before making `inhibit-quit' nil.  */);
   DEFSYM (Qexit, "exit");
 
   DEFSYM (Qinteractive, "interactive");
+#ifdef IGNORE_RUST_PORT
+  DEFSYM (Qcommandp, "commandp");
+#endif /* IGNORE_RUST_PORT */
   DEFSYM (Qand_rest, "&rest");
   DEFSYM (Qand_optional, "&optional");
   DEFSYM (Qclosure, "closure");
@@ -3977,17 +4246,22 @@ alist of active lexical bindings.  */);
   Qcatch_all_memory_full
     = Fmake_symbol (build_pure_c_string ("catch-all-memory-full"));
 
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sor);
   defsubr (&Sand);
   defsubr (&Sif);
   defsubr (&Scond);
   defsubr (&Sprogn);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sprog1);
   defsubr (&Ssetq);
   defsubr (&Squote);
   defsubr (&Sfunction);
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sdefvar);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
   defsubr (&Sdefconst);
@@ -3999,8 +4273,27 @@ alist of active lexical bindings.  */);
   defsubr (&Smacroexpand);
   defsubr (&Scatch);
   defsubr (&Sthrow);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sunwind_protect);
+  defsubr (&Scondition_case);
+  defsubr (&Ssignal);
+  defsubr (&Scommandp);
+  defsubr (&Sautoload);
+  defsubr (&Sautoload_do_load);
+  defsubr (&Seval);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sapply);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sfuncall);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sfunc_arity);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Srun_hooks);
+  defsubr (&Srun_hook_with_args);
+  defsubr (&Srun_hook_with_args_until_success);
+  defsubr (&Srun_hook_with_args_until_failure);
+  defsubr (&Srun_hook_wrapped);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sfetch_bytecode);
   defsubr (&Sbacktrace_debug);
   DEFSYM (QCdebug_on_exit, ":debug-on-exit");
@@ -4009,4 +4302,8 @@ alist of active lexical bindings.  */);
   defsubr (&Sbacktrace_frames_from_thread);
   defsubr (&Sbacktrace_eval);
   defsubr (&Sbacktrace__locals);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sspecial_variable_p);
+  defsubr (&Sfunctionp);
+#endif /* IGNORE_RUST_PORT */
 }

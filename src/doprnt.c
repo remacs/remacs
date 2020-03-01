@@ -503,7 +503,7 @@ esprintf (char *buf, char const *format, ...)
   return nbytes;
 }
 
-#if defined HAVE_X_WINDOWS
+#if defined HAVE_X_WINDOWS && defined USE_X_TOOLKIT
 
 /* Format to buffer *BUF of positive size *BUFSIZE, reallocating *BUF
    and updating *BUFSIZE if the buffer is too small, and otherwise

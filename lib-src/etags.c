@@ -88,11 +88,20 @@ University of California, as described above. */
 #include <config.h>
 
 /* WIN32_NATIVE is for XEmacs.
-   WINDOWSNT, DOS_NT are for Emacs. */
+   MSDOS, WINDOWSNT, DOS_NT are for Emacs. */
 #ifdef WIN32_NATIVE
+# undef MSDOS
 # undef  WINDOWSNT
 # define WINDOWSNT
 #endif /* WIN32_NATIVE */
+
+#ifdef MSDOS
+# undef MSDOS
+# define MSDOS true
+# include <sys/param.h>
+#else
+# define MSDOS false
+#endif /* MSDOS */
 
 #ifdef WINDOWSNT
 # include <direct.h>
@@ -121,8 +130,6 @@ University of California, as described above. */
 #include <assert.h>
 #include <getopt.h>
 #include <regex.h>
-
-#include "remacs-lib.h"
 
 /* Define CTAGS to make the program "ctags" compatible with the usual one.
  Leave it undefined to make the program "etags", which makes emacs-style
@@ -1422,13 +1429,15 @@ get_compressor_from_suffix (char *file, char **extptr)
     *extptr = suffix;
   suffix += 1;
   /* Let those poor souls who live with DOS 8+3 file name limits get
-     some solace by treating foo.cgz as if it were foo.c.gz, etc.  */
+     some solace by treating foo.cgz as if it were foo.c.gz, etc.
+     Only the first do loop is run if not MSDOS */
   do
     {
       for (compr = compressors; compr->suffix != NULL; compr++)
 	if (streq (compr->suffix, suffix))
 	  return compr;
-      break;			/* do it only once: not really a loop */
+      if (!MSDOS)
+	break;			/* do it only once: not really a loop */
       if (extptr != NULL)
 	*extptr = ++suffix;
     } while (*suffix != '\0');
@@ -1588,6 +1597,23 @@ process_file_name (char *file, language *lang)
 		  real_name = compressed_name;
 		  break;
 		}
+	      if (MSDOS)
+		{
+		  char *suf = compressed_name + strlen (file);
+		  size_t suflen = strlen (compr->suffix) + 1;
+		  for ( ; suf[1]; suf++, suflen--)
+		    {
+		      memmove (suf, suf + 1, suflen);
+		      inf = fopen (compressed_name, "r" FOPEN_BINARY);
+		      if (inf)
+			{
+			  real_name = compressed_name;
+			  break;
+			}
+		    }
+		  if (inf)
+		    break;
+		}
 	      free (compressed_name);
 	      compressed_name = NULL;
 	    }
@@ -1608,7 +1634,7 @@ process_file_name (char *file, language *lang)
 	inf = NULL;
       else
 	{
-#if defined (DOS_NT)
+#if MSDOS || defined (DOS_NT)
 	  char *cmd1 = concat (compr->command, " \"", real_name);
 	  char *cmd = concat (cmd1, "\" > ", tmp_name);
 #else
@@ -7020,7 +7046,7 @@ etags_mktmp (void)
   const char *tmpdir = getenv ("TMPDIR");
   const char *slash = "/";
 
-#if defined (DOS_NT)
+#if MSDOS || defined (DOS_NT)
   if (!tmpdir)
     tmpdir = getenv ("TEMP");
   if (!tmpdir)

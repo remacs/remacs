@@ -38,7 +38,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "process.h"
 #include "keyboard.h"
 
-#if !defined HAVE_GTK3
+#if defined USE_GTK && !defined HAVE_GTK3
 #define gdk_x11_set_sm_client_id(w) gdk_set_sm_client_id (w)
 #endif
 
@@ -362,6 +362,31 @@ ice_conn_watch_CB (IceConn iceConn, IcePointer clientData,
 
 /* Create the client leader window.  */
 
+#ifndef USE_GTK
+static void
+create_client_leader_window (struct x_display_info *dpyinfo, char *client_ID)
+{
+  Window w;
+  XClassHint class_hints;
+
+  w = XCreateSimpleWindow (dpyinfo->display,
+                           dpyinfo->root_window,
+                           -1, -1, 1, 1,
+                           CopyFromParent, CopyFromParent, CopyFromParent);
+
+  validate_x_resource_name ();
+  class_hints.res_name = SSDATA (Vx_resource_name);
+  class_hints.res_class = SSDATA (Vx_resource_class);
+  XSetClassHint (dpyinfo->display, w, &class_hints);
+  XStoreName (dpyinfo->display, w, class_hints.res_name);
+
+  XChangeProperty (dpyinfo->display, w, dpyinfo->Xatom_SM_CLIENT_ID,
+                   XA_STRING, 8, PropModeReplace,
+                   (unsigned char *) client_ID, strlen (client_ID));
+
+  dpyinfo->client_leader_window = w;
+}
+#endif /* ! USE_GTK */
 
 
 /* Try to open a connection to the session manager.  */
@@ -446,9 +471,13 @@ x_session_initialize (struct x_display_info *dpyinfo)
     {
       Vx_session_id = build_string (client_id);
 
+#ifdef USE_GTK
       /* GTK creates a leader window by itself, but we need to tell
          it about our client_id.  */
       gdk_x11_set_sm_client_id (client_id);
+#else
+      create_client_leader_window (dpyinfo, client_id);
+#endif
     }
 }
 

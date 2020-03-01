@@ -7593,12 +7593,7 @@ the cursor have no effect.  */);
 
   DEFVAR_BOOL ("x-underline-at-descent-line",
 	       x_underline_at_descent_line,
-     doc: /* Non-nil means to draw the underline at the same place as the descent line.
-(If `line-spacing' is in effect, that moves the underline lower by
-that many pixels.)
-A value of nil means to draw the underline according to the value of the
-variable `x-use-underline-position-properties', which is usually at the
-baseline level.  The default value is nil.  */);
+     doc: /* SKIP: real doc in xterm.c.  */);
   x_underline_at_descent_line = 0;
   DEFSYM (Qx_underline_at_descent_line, "x-underline-at-descent-line");
 

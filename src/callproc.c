@@ -194,6 +194,7 @@ static mode_t const default_output_mode = S_IREAD | S_IWRITE;
 static mode_t const default_output_mode = 0666;
 #endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("call-process", Fcall_process, Scall_process, 1, MANY, 0,
        doc: /* Call PROGRAM synchronously in separate process.
 The remaining arguments are optional.
@@ -255,6 +256,7 @@ usage: (call-process PROGRAM &optional INFILE DESTINATION DISPLAY &rest ARGS)  *
   record_unwind_protect_int (close_file_unwind, filefd);
   return unbind_to (count, call_process (nargs, args, filefd, -1));
 }
+#endif
 
 /* Like Fcall_process (NARGS, ARGS), except use FILEFD as the input file.
 
@@ -957,6 +959,7 @@ create_temp_file (ptrdiff_t nargs, Lisp_Object *args,
   return fd;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("call-process-region", Fcall_process_region, Scall_process_region,
        3, MANY, 0,
        doc: /* Send text from START to END to a synchronous process running PROGRAM.
@@ -1040,6 +1043,7 @@ usage: (call-process-region START END PROGRAM &optional DELETE BUFFER DISPLAY &r
   val = call_process (nargs, args, fd, empty_input ? -1 : count);
   return unbind_to (count, val);
 }
+#endif
 
 static char **
 add_env (char **env, char **new_env, char *string)
@@ -1649,5 +1653,11 @@ use.
 See `setenv' and `getenv'.  */);
   Vprocess_environment = Qnil;
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scall_process);
+#endif
   defsubr (&Sgetenv_internal);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scall_process_region);
+#endif
 }

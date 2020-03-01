@@ -63,8 +63,6 @@ Lisp_Object minibuf_prompt;
 
 static ptrdiff_t minibuf_prompt_width;
 
-Lisp_Object read_minibuf (Lisp_Object, Lisp_Object, Lisp_Object, bool, Lisp_Object, Lisp_Object, Lisp_Object, bool, bool);
-
 
 /* Put minibuf on currently selected frame's minibuffer.
    We do this whenever the user starts a new minibuffer
@@ -110,6 +108,34 @@ choose_minibuf_frame (void)
 	Fset_frame_selected_window (frame, Fframe_first_window (frame), Qnil);
   }
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("active-minibuffer-window", Factive_minibuffer_window,
+       Sactive_minibuffer_window, 0, 0, 0,
+       doc: /* Return the currently active minibuffer window, or nil if none.  */)
+     (void)
+{
+  return minibuf_level ? minibuf_window : Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("set-minibuffer-window", Fset_minibuffer_window,
+       Sset_minibuffer_window, 1, 1, 0,
+       doc: /* Specify which minibuffer window to use for the minibuffer.
+This affects where the minibuffer is displayed if you put text in it
+without invoking the usual minibuffer commands.  */)
+  (Lisp_Object window)
+{
+  CHECK_WINDOW (window);
+  if (! MINI_WINDOW_P (XWINDOW (window)))
+    error ("Window is not a minibuffer window");
+
+  minibuf_window = window;
+
+  return window;
+}
+#endif /* IGNORE_RUST_PORT */
 
 
 /* Actual minibuffer invocation.  */
@@ -1098,6 +1124,20 @@ function, instead of the usual behavior.  */)
 			  CONSP (def) ? XCAR (def) : def);
 	}
 
+      result = Fcompleting_read (prompt, intern ("internal-complete-buffer"),
+				 predicate, require_match, Qnil,
+				 Qbuffer_name_history, def, Qnil);
+    }
+  else
+    result = (NILP (predicate)
+	      /* Partial backward compatibility for older read_buffer_functions
+		 which don't expect a `predicate' argument.  */
+	      ? call3 (Vread_buffer_function, prompt, def, require_match)
+	      : call4 (Vread_buffer_function, prompt, def, require_match,
+		       predicate));
+  return unbind_to (count, result);
+}
+
 static Lisp_Object
 minibuf_conform_representation (Lisp_Object string, Lisp_Object basis)
 {
@@ -1556,6 +1596,76 @@ with a space are ignored unless STRING itself starts with a space.  */)
   return Fnreverse (allmatches);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("completing-read", Fcompleting_read, Scompleting_read, 2, 8, 0,
+       doc: /* Read a string in the minibuffer, with completion.
+PROMPT is a string to prompt with; normally it ends in a colon and a space.
+COLLECTION can be a list of strings, an alist, an obarray or a hash table.
+COLLECTION can also be a function to do the completion itself.
+PREDICATE limits completion to a subset of COLLECTION.
+See `try-completion', `all-completions', `test-completion',
+and `completion-boundaries', for more details on completion,
+COLLECTION, and PREDICATE.  See also Info node `(elisp)Basic Completion'
+for the details about completion, and Info node `(elisp)Programmed
+Completion' for expectations from COLLECTION when it's a function.
+
+REQUIRE-MATCH can take the following values:
+- t means that the user is not allowed to exit unless the input is (or
+  completes to) an element of COLLECTION or is null.
+- nil means that the user can exit with any input.
+- `confirm' means that the user can exit with any input, but she needs
+  to confirm her choice if the input is not an element of COLLECTION.
+- `confirm-after-completion' means that the user can exit with any
+  input, but she needs to confirm her choice if she called
+  `minibuffer-complete' right before `minibuffer-complete-and-exit'
+  and the input is not an element of COLLECTION.
+- anything else behaves like t except that typing RET does not exit if it
+  does non-null completion.
+
+If the input is null, `completing-read' returns DEF, or the first
+element of the list of default values, or an empty string if DEF is
+nil, regardless of the value of REQUIRE-MATCH.
+
+If INITIAL-INPUT is non-nil, insert it in the minibuffer initially,
+  with point positioned at the end.  If it is (STRING . POSITION), the
+  initial input is STRING, but point is placed at _zero-indexed_
+  position POSITION in STRING.  (*Note* that this is different from
+  `read-from-minibuffer' and related functions, which use one-indexing
+  for POSITION.)  This feature is deprecated--it is best to pass nil
+  for INITIAL-INPUT and supply the default value DEF instead.  The
+  user can yank the default value into the minibuffer easily using
+  \\<minibuffer-local-map>\\[next-history-element].
+
+HIST, if non-nil, specifies a history list and optionally the initial
+  position in the list.  It can be a symbol, which is the history list
+  variable to use, or it can be a cons cell (HISTVAR . HISTPOS).  In
+  that case, HISTVAR is the history list variable to use, and HISTPOS
+  is the initial position (the position in the list used by the
+  minibuffer history commands).  For consistency, you should also
+  specify that element of the history as the value of INITIAL-INPUT.
+  (This is the only case in which you should use INITIAL-INPUT instead
+  of DEF.)  Positions are counted starting from 1 at the beginning of
+  the list.  The variable `history-length' controls the maximum length
+  of a history list.
+
+DEF, if non-nil, is the default value or the list of default values.
+
+If INHERIT-INPUT-METHOD is non-nil, the minibuffer inherits the
+  current input method and the setting of `enable-multibyte-characters'.
+
+Completion ignores case if the ambient value of
+  `completion-ignore-case' is non-nil.
+
+See also `completing-read-function'.  */)
+  (Lisp_Object prompt, Lisp_Object collection, Lisp_Object predicate, Lisp_Object require_match, Lisp_Object initial_input, Lisp_Object hist, Lisp_Object def, Lisp_Object inherit_input_method)
+{
+  return CALLN (Ffuncall,
+		Fsymbol_value (intern ("completing-read-function")),
+		prompt, collection, predicate, require_match, initial_input,
+		hist, def, inherit_input_method);
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Test whether TXT is an exact completion.  */
 DEFUN ("test-completion", Ftest_completion, Stest_completion, 2, 3, 0,
        doc: /* Return non-nil if STRING is a valid completion.
@@ -1995,10 +2105,34 @@ This variable also overrides the default character that `read-passwd'
 uses to hide passwords.  */);
   Vread_hide_char = Qnil;
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sactive_minibuffer_window);
+  defsubr (&Sset_minibuffer_window);
+  defsubr (&Sread_from_minibuffer);
+  defsubr (&Sread_string);
+  defsubr (&Sread_command);
+  defsubr (&Sread_variable);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sinternal_complete_buffer);
+#endif /* IGNORE_RUST_PORT */
+  defsubr (&Sread_buffer);
+  defsubr (&Sread_no_blanks_input);
+  defsubr (&Sminibuffer_depth);
+  defsubr (&Sminibuffer_prompt);
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sminibufferp);
+  defsubr (&Sminibuffer_prompt_end);
+  defsubr (&Sminibuffer_contents);
+  defsubr (&Sminibuffer_contents_no_properties);
+#endif /* IGNORE_RUST_PORT */
 
   defsubr (&Stry_completion);
   defsubr (&Sall_completions);
   defsubr (&Stest_completion);
   defsubr (&Sassoc_string);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scompleting_read);
+#endif /* IGNORE_RUST_PORT */
 }

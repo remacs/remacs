@@ -37,7 +37,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <langinfo.h>
 
 #include "ntlib.h"
-#include "remacs-lib.h"
 
 char *sys_ctime (const time_t *);
 FILE *sys_fopen (const char *, const char *);

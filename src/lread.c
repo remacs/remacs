@@ -108,6 +108,23 @@ static Lisp_Object read_objects_map;
    (to reduce allocations), or nil.  */
 static Lisp_Object read_objects_completed;
 
+#ifdef IGNORE_RUST_PORT
+/* File and lookahead for get-file-char and get-emacs-mule-file-char
+   to read from.  Used by Fload.  */
+static struct infile
+{
+  /* The input stream.  */
+  FILE *stream;
+
+  /* Lookahead byte count.  */
+  signed char lookahead;
+
+  /* Lookahead bytes, in reverse order.  Keep these here because it is
+     not portable to ungetc more than one byte at a time.  */
+  unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
+} *infile;
+#endif /* IGNORE_RUST_PORT */
+
 /* For use within read-from-string (this reader is non-reentrant!!)  */
 static ptrdiff_t read_from_string_index;
 static ptrdiff_t read_from_string_index_byte;
@@ -150,6 +167,12 @@ static Lisp_Object Vloads_in_progress;
 
 static int read_emacs_mule_char (int, int (*) (int, Lisp_Object),
                                  Lisp_Object);
+
+#ifdef IGNORE_RUST_PORT
+static void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
+                          Lisp_Object, Lisp_Object,
+                          Lisp_Object, Lisp_Object);
+#endif /* IGNORE_RUST_PORT */
 
 static void build_load_history (Lisp_Object, bool);
 
@@ -580,8 +603,8 @@ read_emacs_mule_char (int c, int (*readbyte) (int, Lisp_Object), Lisp_Object rea
     }
   c = DECODE_CHAR (charset, code);
   if (c < 0)
-    xsignal1 (Qinvalid_read_syntax,
-              build_string ("invalid multibyte form"));
+    Fsignal (Qinvalid_read_syntax,
+	     list1 (build_string ("invalid multibyte form")));
   return c;
 }
 
@@ -600,6 +623,10 @@ struct subst
   Lisp_Object seen;
 };
 
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object read_internal_start (Lisp_Object, Lisp_Object,
+                                        Lisp_Object);
+#endif /* IGNORE_RUST_PORT */
 static Lisp_Object read0 (Lisp_Object);
 static Lisp_Object read1 (Lisp_Object, int *, bool);
 
@@ -2164,6 +2191,43 @@ This function preserves the position of point.  */)
   return unbind_to (count, Qnil);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("eval-region", Feval_region, Seval_region, 2, 4, "r",
+       doc: /* Execute the region as Lisp code.
+When called from programs, expects two arguments,
+giving starting and ending indices in the current buffer
+of the text to be executed.
+Programs can pass third argument PRINTFLAG which controls output:
+ a value of nil means discard it; anything else is stream for printing it.
+ See Info node `(elisp)Output Streams' for details on streams.
+Also the fourth argument READ-FUNCTION, if non-nil, is used
+instead of `read' to read each expression.  It gets one argument
+which is the input stream for reading characters.
+
+This function does not move point.  */)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object printflag, Lisp_Object read_function)
+{
+  /* FIXME: Do the eval-sexp-add-defvars dance!  */
+  ptrdiff_t count = SPECPDL_INDEX ();
+  Lisp_Object tem, cbuf;
+
+  cbuf = Fcurrent_buffer ();
+
+  if (NILP (printflag))
+    tem = Qsymbolp;
+  else
+    tem = printflag;
+  specbind (Qstandard_output, tem);
+  specbind (Qeval_buffer_list, Fcons (cbuf, Veval_buffer_list));
+
+  /* `readevalloop' calls functions which check the type of start and end.  */
+  readevalloop (cbuf, 0, BVAR (XBUFFER (cbuf), filename),
+		!NILP (printflag), Qnil, read_function,
+		start, end);
+
+  return unbind_to (count, Qnil);
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("read", Fread, Sread, 0, 1, 0,
        doc: /* Read one Lisp expression as text from STREAM, return as Lisp object.
@@ -4037,6 +4101,27 @@ Lisp_Object initial_obarray;
 
 size_t oblookup_last_bucket_number;
 
+#ifdef IGNORE_RUST_PORT
+/* Get an error if OBARRAY is not an obarray.
+   If it is one, return it.  */
+
+Lisp_Object
+check_obarray (Lisp_Object obarray)
+{
+  /* We don't want to signal a wrong-type-argument error when we are
+     shutting down due to a fatal error, and we don't want to hit
+     assertions in VECTORP and ASIZE if the fatal error was during GC.  */
+  if (!fatal_error_in_progress
+      && (!VECTORP (obarray) || ASIZE (obarray) == 0))
+    {
+      /* If Vobarray is now invalid, force it to be valid.  */
+      if (EQ (Vobarray, obarray)) Vobarray = initial_obarray;
+      wrong_type_argument (Qvectorp, obarray);
+    }
+  return obarray;
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Intern symbol SYM in OBARRAY using bucket INDEX.  */
 
 Lisp_Object
@@ -4060,6 +4145,52 @@ intern_sym (Lisp_Object sym, Lisp_Object obarray, Lisp_Object index)
   *ptr = sym;
   return sym;
 }
+
+#ifdef IGNORE_RUST_PORT
+/* Intern a symbol with name STRING in OBARRAY using bucket INDEX.  */
+
+Lisp_Object
+intern_driver (Lisp_Object string, Lisp_Object obarray, Lisp_Object index)
+{
+  return intern_sym (Fmake_symbol (string), obarray, index);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Intern the C string STR: return a symbol with that name,
+   interned in the current obarray.  */
+
+Lisp_Object
+intern_1 (const char *str, ptrdiff_t len)
+{
+  Lisp_Object obarray = check_obarray (Vobarray);
+  Lisp_Object tem = oblookup (obarray, str, len, len);
+
+  return (SYMBOLP (tem) ? tem
+	  /* The above `oblookup' was done on the basis of nchars==nbytes, so
+	     the string has to be unibyte.  */
+	  : intern_driver (make_unibyte_string (str, len),
+			   obarray, tem));
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+Lisp_Object
+intern_c_string_1 (const char *str, ptrdiff_t len)
+{
+  Lisp_Object obarray = check_obarray (Vobarray);
+  Lisp_Object tem = oblookup (obarray, str, len, len);
+
+  if (!SYMBOLP (tem))
+    {
+      /* Creating a non-pure string from a string literal not implemented yet.
+	 We could just use make_string here and live with the extra copy.  */
+      eassert (!NILP (Vpurify_flag));
+      tem = intern_driver (make_pure_c_string (str, len), obarray, tem);
+    }
+  return tem;
+}
+#endif /* IGNORE_RUST_PORT */
 
 static void
 define_symbol (Lisp_Object sym, char const *str)
@@ -4196,6 +4327,8 @@ usage: (unintern NAME OBARRAY)  */)
 	}
     }
 
+  return Qt;
+}
 
 /* Return the symbol in OBARRAY whose names matches the string
    of SIZE characters (SIZE_BYTE bytes) at PTR.
@@ -4236,6 +4369,50 @@ oblookup (Lisp_Object obarray, register const char *ptr, ptrdiff_t size, ptrdiff
   return tem;
 }
 
+#ifdef IGNORE_RUST_PORT
+void
+map_obarray (Lisp_Object obarray, void (*fn) (Lisp_Object, Lisp_Object), Lisp_Object arg)
+{
+  ptrdiff_t i;
+  register Lisp_Object tail;
+  CHECK_VECTOR (obarray);
+  for (i = ASIZE (obarray) - 1; i >= 0; i--)
+    {
+      tail = AREF (obarray, i);
+      if (SYMBOLP (tail))
+	while (1)
+	  {
+	    (*fn) (tail, arg);
+	    if (XSYMBOL (tail)->u.s.next == 0)
+	      break;
+	    XSETSYMBOL (tail, XSYMBOL (tail)->u.s.next);
+	  }
+    }
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+static void
+mapatoms_1 (Lisp_Object sym, Lisp_Object function)
+{
+  call1 (function, sym);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("mapatoms", Fmapatoms, Smapatoms, 1, 2, 0,
+       doc: /* Call FUNCTION on every symbol in OBARRAY.
+OBARRAY defaults to the value of `obarray'.  */)
+  (Lisp_Object function, Lisp_Object obarray)
+{
+  if (NILP (obarray)) obarray = Vobarray;
+  obarray = check_obarray (obarray);
+
+  map_obarray (obarray, mapatoms_1, function);
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
 #define OBARRAY_SIZE 15121
 
 void
@@ -4243,6 +4420,7 @@ init_obarray_once (void)
 {
   Vobarray = make_vector (OBARRAY_SIZE, make_fixnum (0));
   initial_obarray = Vobarray;
+  oblookup_last_bucket_number = 0;
   staticpro (&initial_obarray);
 
   for (int i = 0; i < ARRAYELTS (lispsym); i++)
@@ -4617,11 +4795,27 @@ dir_warning (char const *use, Lisp_Object dirname)
 void
 syms_of_lread (void)
 {
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sread);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sread_from_string);
   defsubr (&Slread__substitute_object_in_subtree);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sintern);
+  defsubr (&Sintern_soft);
+  defsubr (&Sunintern);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sget_load_suffixes);
   defsubr (&Sload);
   defsubr (&Seval_buffer);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Seval_region);
+  defsubr (&Sread_char);
+  defsubr (&Sread_char_exclusive);
+  defsubr (&Sread_event);
+  defsubr (&Sget_file_char);
+  defsubr (&Smapatoms);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Slocate_file_internal);
 
   DEFVAR_LISP ("obarray", Vobarray,
@@ -4899,6 +5093,9 @@ this variable will become obsolete.  */);
 
   DEFSYM (Qcurrent_load_list, "current-load-list");
   DEFSYM (Qstandard_input, "standard-input");
+#ifdef IGNORE_RUST_PORT
+  DEFSYM (Qread_char, "read-char");
+#endif /* IGNORE_RUST_PORT */
   DEFSYM (Qget_file_char, "get-file-char");
 
   /* Used instead of Qget_file_char while loading *.elc files compiled
@@ -4913,6 +5110,9 @@ this variable will become obsolete.  */);
 
   DEFSYM (Qinhibit_file_name_operation, "inhibit-file-name-operation");
   DEFSYM (Qascii_character, "ascii-character");
+#ifdef IGNORE_RUST_PORT
+  DEFSYM (Qfunction, "function");
+#endif /* IGNORE_RUST_PORT */
   DEFSYM (Qload, "load");
   DEFSYM (Qload_file_name, "load-file-name");
   DEFSYM (Qeval_buffer_list, "eval-buffer-list");

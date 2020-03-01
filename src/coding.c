@@ -6352,6 +6352,7 @@ utf8_string_p (Lisp_Object string)
   return check_utf_8 (&coding) != -1;
 }
 
+#ifdef IGNORE_RUST_PORT
 /* Like make_string, but always returns a multibyte Lisp string, and
    avoids decoding if TEXT is encoded in UTF-8.  */
 Lisp_Object
@@ -6382,6 +6383,7 @@ make_string_from_utf8 (const char *text, ptrdiff_t nbytes)
   return decode_string_utf_8 (Qnil, text, nbytes, Qnil, false, Qt, Qt);
 #endif
 }
+#endif
 
 /* Detect how end-of-line of a text of length SRC_BYTES pointed by
    SOURCE is encoded.  If CATEGORY is one of
@@ -8508,6 +8510,22 @@ to_unicode (Lisp_Object str, Lisp_Object *buf)
 
 
 /*** 8. Emacs Lisp library functions ***/
+#ifdef IGNORE_RUST_PORT
+DEFUN ("coding-system-p", Fcoding_system_p, Scoding_system_p, 1, 1, 0,
+       doc: /* Return t if OBJECT is nil or a coding-system.
+See the documentation of `define-coding-system' for information
+about coding-system objects.  */)
+  (Lisp_Object object)
+{
+  if (NILP (object)
+      || CODING_SYSTEM_ID (object) >= 0)
+    return Qt;
+  if (! SYMBOLP (object)
+      || NILP (Fget (object, Qcoding_system_define_form)))
+    return Qnil;
+  return Qt;
+}
+#endif
 
 DEFUN ("read-non-nil-coding-system", Fread_non_nil_coding_system,
        Sread_non_nil_coding_system, 1, 1, 0,
@@ -8524,6 +8542,7 @@ DEFUN ("read-non-nil-coding-system", Fread_non_nil_coding_system,
   return (Fintern (val, Qnil));
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("read-coding-system", Fread_coding_system, Sread_coding_system, 1, 2, 0,
        doc: /* Read a coding system from the minibuffer, prompting with string PROMPT.
 If the user enters null input, return second argument DEFAULT-CODING-SYSTEM.
@@ -8543,7 +8562,9 @@ are lower-case).  */)
   val = unbind_to (count, val);
   return (SCHARS (val) == 0 ? Qnil : Fintern (val, Qnil));
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("check-coding-system", Fcheck_coding_system, Scheck_coding_system,
        1, 1, 0,
        doc: /* Check validity of CODING-SYSTEM.
@@ -8564,6 +8585,7 @@ function `define-coding-system'.  */)
     return coding_system;
   xsignal1 (Qcoding_system_error, coding_system);
 }
+#endif
 
 
 /* Detect how the bytes at SRC of length SRC_BYTES are encoded.  If
@@ -9521,7 +9543,7 @@ code_convert_string_norecord (Lisp_Object string, Lisp_Object coding_system,
   return code_convert_string (string, coding_system, Qt, encodep, 0, 1);
 }
 
-
+#ifdef IGNORE_RUST_PORT
 /* Return the gap address of BUFFER.  If the gap size is less than
    NBYTES, enlarge the gap in advance.  */
 
@@ -9542,7 +9564,9 @@ get_buffer_gap_address (Lisp_Object buffer, ptrdiff_t nbytes)
     make_gap_1 (buf, nbytes);
   return BUF_GPT_ADDR (buf);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 /* Return a pointer to the byte sequence for C, and its byte length in
    LEN.  This function is used to get a byte sequence for HANDLE_8_BIT
    and HANDLE_OVER_UNI arguments of encode_string_utf_8 and
@@ -9575,7 +9599,9 @@ get_char_bytes (int c, int *len)
   *len = nbytes[last_index] = CHAR_STRING (c, bytes[last_index]);
   return bytes[last_index];
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 /* Encode STRING by the coding system utf-8-unix.
 
    This function is optimized for speed when the input string is
@@ -9842,7 +9868,9 @@ encode_string_utf_8 (Lisp_Object string, Lisp_Object buffer,
     }
   return val;
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 /* Decode input string by the coding system utf-8-unix.
 
    This function is optimized for speed when the input string is
@@ -10154,6 +10182,7 @@ decode_string_utf_8 (Lisp_Object string, const char *str, ptrdiff_t str_len,
     }
   return val;
 }
+#endif
 
 /* #define ENABLE_UTF_8_CONVERTER_TEST */
 
@@ -11478,6 +11507,20 @@ DEFUN ("coding-system-plist", Fcoding_system_plist, Scoding_system_plist,
   return CODING_ATTR_PLIST (attrs);
 }
 
+
+DEFUN ("coding-system-aliases", Fcoding_system_aliases, Scoding_system_aliases,
+       1, 1, 0,
+       doc: /* Return the list of aliases of CODING-SYSTEM.  */)
+  (Lisp_Object coding_system)
+{
+  Lisp_Object spec;
+
+  if (NILP (coding_system))
+    coding_system = Qno_conversion;
+  CHECK_CODING_SYSTEM_GET_SPEC (coding_system, spec);
+  return AREF (spec, 1);
+}
+
 DEFUN ("coding-system-eol-type", Fcoding_system_eol_type,
        Scoding_system_eol_type, 1, 1, 0,
        doc: /* Return eol-type of CODING-SYSTEM.
@@ -11716,9 +11759,14 @@ syms_of_coding (void)
 
   DEFSYM (Qignored, "ignored");
 
+#ifdef IGNORE_RUST_PORT
   defsubr (&Scoding_system_p);
   defsubr (&Sread_coding_system);
+#endif
   defsubr (&Sread_non_nil_coding_system);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scheck_coding_system);
+#endif
   defsubr (&Sdetect_coding_region);
   defsubr (&Sdetect_coding_string);
   defsubr (&Sfind_coding_systems_region_internal);
@@ -11726,8 +11774,10 @@ syms_of_coding (void)
   defsubr (&Scheck_coding_systems_region);
   defsubr (&Sdecode_coding_region);
   defsubr (&Sencode_coding_region);
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sdecode_coding_string);
   defsubr (&Sencode_coding_string);
+#endif
 #ifdef ENABLE_UTF_8_CONVERTER_TEST
   defsubr (&Sinternal_encode_string_utf_8);
   defsubr (&Sinternal_decode_string_utf_8);
@@ -11748,6 +11798,9 @@ syms_of_coding (void)
   defsubr (&Scoding_system_put);
   defsubr (&Scoding_system_base);
   defsubr (&Scoding_system_plist);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scoding_system_aliases);
+#endif
   defsubr (&Scoding_system_eol_type);
   defsubr (&Scoding_system_priority_list);
 

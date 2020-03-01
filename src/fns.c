@@ -345,6 +345,45 @@ If string STR1 is greater, the value is a positive number N;
   return Qt;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("string-lessp", Fstring_lessp, Sstring_lessp, 2, 2, 0,
+       doc: /* Return non-nil if STRING1 is less than STRING2 in lexicographic order.
+Case is significant.
+Symbols are also allowed; their print names are used instead.  */)
+  (register Lisp_Object string1, Lisp_Object string2)
+{
+  register ptrdiff_t end;
+  register ptrdiff_t i1, i1_byte, i2, i2_byte;
+
+  if (SYMBOLP (string1))
+    string1 = SYMBOL_NAME (string1);
+  if (SYMBOLP (string2))
+    string2 = SYMBOL_NAME (string2);
+  CHECK_STRING (string1);
+  CHECK_STRING (string2);
+
+  i1 = i1_byte = i2 = i2_byte = 0;
+
+  end = SCHARS (string1);
+  if (end > SCHARS (string2))
+    end = SCHARS (string2);
+
+  while (i1 < end)
+    {
+      /* When we find a mismatch, we must compare the
+	 characters, not just the bytes.  */
+      int c1, c2;
+
+      FETCH_STRING_CHAR_ADVANCE (c1, string1, i1, i1_byte);
+      FETCH_STRING_CHAR_ADVANCE (c2, string2, i2, i2_byte);
+
+      if (c1 != c2)
+	return c1 < c2 ? Qt : Qnil;
+    }
+  return i1 < SCHARS (string2) ? Qt : Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
 DEFUN ("string-version-lessp", Fstring_version_lessp,
        Sstring_version_lessp, 2, 2, 0,
        doc: /* Return non-nil if S1 is less than S2, as version strings.
@@ -492,8 +531,8 @@ Do NOT use this function to compare file names for equality.  */)
 #endif /* !__STDC_ISO_10646__, !WINDOWSNT */
 }
 
-extern Lisp_Object concat (ptrdiff_t nargs, Lisp_Object *args,
-			   enum Lisp_Type target_type, bool last_special);
+Lisp_Object concat (ptrdiff_t nargs, Lisp_Object *args,
+                    enum Lisp_Type target_type, bool last_special);
 
 Lisp_Object
 concat2 (Lisp_Object s1, Lisp_Object s2)
@@ -507,6 +546,79 @@ concat3 (Lisp_Object s1, Lisp_Object s2, Lisp_Object s3)
   return concat (3, ((Lisp_Object []) {s1, s2, s3}), Lisp_String, 0);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("append", Fappend, Sappend, 0, MANY, 0,
+       doc: /* Concatenate all the arguments and make the result a list.
+The result is a list whose elements are the elements of all the arguments.
+Each argument may be a list, vector or string.
+The last argument is not copied, just used as the tail of the new list.
+usage: (append &rest SEQUENCES)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return concat (nargs, args, Lisp_Cons, 1);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("concat", Fconcat, Sconcat, 0, MANY, 0,
+       doc: /* Concatenate all the arguments and make the result a string.
+The result is a string whose elements are the elements of all the arguments.
+Each argument may be a string or a list or vector of characters (integers).
+usage: (concat &rest SEQUENCES)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return concat (nargs, args, Lisp_String, 0);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("vconcat", Fvconcat, Svconcat, 0, MANY, 0,
+       doc: /* Concatenate all the arguments and make the result a vector.
+The result is a vector whose elements are the elements of all the arguments.
+Each argument may be a list, vector or string.
+usage: (vconcat &rest SEQUENCES)   */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return concat (nargs, args, Lisp_Vectorlike, 0);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("copy-sequence", Fcopy_sequence, Scopy_sequence, 1, 1, 0,
+       doc: /* Return a copy of a list, vector, string, char-table or record.
+The elements of a list, vector or record are not copied; they are
+shared with the original.
+If the original sequence is empty, this function may return
+the same empty object instead of its copy.  */)
+  (Lisp_Object arg)
+{
+  if (NILP (arg)) return arg;
+
+  if (RECORDP (arg))
+    {
+      return Frecord (PVSIZE (arg), XVECTOR (arg)->contents);
+    }
+
+  if (CHAR_TABLE_P (arg))
+    {
+      return copy_char_table (arg);
+    }
+
+  if (BOOL_VECTOR_P (arg))
+    {
+      EMACS_INT nbits = bool_vector_size (arg);
+      ptrdiff_t nbytes = bool_vector_bytes (nbits);
+      Lisp_Object val = make_uninit_bool_vector (nbits);
+      memcpy (bool_vector_data (val), bool_vector_data (arg), nbytes);
+      return val;
+    }
+
+  if (!CONSP (arg) && !VECTORP (arg) && !STRINGP (arg))
+    wrong_type_argument (Qsequencep, arg);
+
+  return concat (1, &arg, XTYPE (arg), 0);
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* This structure holds information of an argument of `concat' that is
    a string and has text properties to be copied.  */
@@ -517,7 +629,7 @@ struct textprop_rec
   ptrdiff_t to;			/* refer to VAL (the target string) */
 };
 
-extern Lisp_Object
+Lisp_Object
 concat (ptrdiff_t nargs, Lisp_Object *args,
 	enum Lisp_Type target_type, bool last_special)
 {
@@ -1526,6 +1638,30 @@ assq_no_quit (Lisp_Object key, Lisp_Object list)
   return Qnil;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("assoc", Fassoc, Sassoc, 2, 3, 0,
+       doc: /* Return non-nil if KEY is equal to the car of an element of LIST.
+The value is actually the first element of LIST whose car equals KEY.
+
+Equality is defined by TESTFN if non-nil or by `equal' if nil.  */)
+     (Lisp_Object key, Lisp_Object list, Lisp_Object testfn)
+{
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
+    {
+      Lisp_Object car = XCAR (tail);
+      if (CONSP (car)
+	  && (NILP (testfn)
+	      ? (EQ (XCAR (car), key) || !NILP (Fequal
+						(XCAR (car), key)))
+	      : !NILP (call2 (testfn, XCAR (car), key))))
+	return car;
+    }
+  CHECK_LIST_END (tail, list);
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Like Fassoc but never report an error and do not allow quits.
    Use only on keys and lists known to be non-circular, and on keys
    that are not too deep and are not window configurations.  */
@@ -1542,6 +1678,73 @@ assoc_no_quit (Lisp_Object key, Lisp_Object list)
     }
   return Qnil;
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("rassq", Frassq, Srassq, 2, 2, 0,
+       doc: /* Return non-nil if KEY is `eq' to the cdr of an element of LIST.
+The value is actually the first element of LIST whose cdr is KEY.  */)
+  (Lisp_Object key, Lisp_Object list)
+{
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
+    if (CONSP (XCAR (tail)) && EQ (XCDR (XCAR (tail)), key))
+      return XCAR (tail);
+  CHECK_LIST_END (tail, list);
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("rassoc", Frassoc, Srassoc, 2, 2, 0,
+       doc: /* Return non-nil if KEY is `equal' to the cdr of an element of LIST.
+The value is actually the first element of LIST whose cdr equals KEY.  */)
+  (Lisp_Object key, Lisp_Object list)
+{
+  Lisp_Object tail = list;
+  FOR_EACH_TAIL (tail)
+    {
+      Lisp_Object car = XCAR (tail);
+      if (CONSP (car)
+	  && (EQ (XCDR (car), key) || !NILP (Fequal (XCDR (car), key))))
+	return car;
+    }
+  CHECK_LIST_END (tail, list);
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("delq", Fdelq, Sdelq, 2, 2, 0,
+       doc: /* Delete members of LIST which are `eq' to ELT, and return the result.
+More precisely, this function skips any members `eq' to ELT at the
+front of LIST, then removes members `eq' to ELT from the remaining
+sublist by modifying its list structure, then returns the resulting
+list.
+
+Write `(setq foo (delq element foo))' to be sure of correctly changing
+the value of a list `foo'.  See also `remq', which does not modify the
+argument.  */)
+  (Lisp_Object elt, Lisp_Object list)
+{
+  Lisp_Object prev = Qnil, tail = list;
+
+  FOR_EACH_TAIL (tail)
+    {
+      Lisp_Object tem = XCAR (tail);
+      if (EQ (elt, tem))
+	{
+	  if (NILP (prev))
+	    list = XCDR (tail);
+	  else
+	    Fsetcdr (prev, XCDR (tail));
+	}
+      else
+	prev = tail;
+    }
+  CHECK_LIST_END (tail, list);
+  return list;
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("delete", Fdelete, Sdelete, 2, 2, 0,
        doc: /* Delete members of SEQ which are `equal' to ELT, and return the result.
@@ -1667,49 +1870,61 @@ changing the value of a sequence `foo'.  */)
   return seq;
 }
 
-
-DEFUN ("fillarray", Ffillarray, Sfillarray, 2, 2, 0,
-       doc: /* Store each element of ARRAY with ITEM.
-ARRAY is a vector, string, char-table, or bool-vector.  */)
-  (Lisp_Object array, Lisp_Object item)
+#ifdef IGNORE_RUST_PORT
+DEFUN ("nreverse", Fnreverse, Snreverse, 1, 1, 0,
+       doc: /* Reverse order of items in a list, vector or string SEQ.
+If SEQ is a list, it should be nil-terminated.
+This function may destructively modify SEQ to produce the value.  */)
+  (Lisp_Object seq)
 {
-  register ptrdiff_t size, idx;
-
-  if (VECTORP (array))
-    for (idx = 0, size = ASIZE (array); idx < size; idx++)
-      ASET (array, idx, item);
-  else if (CHAR_TABLE_P (array))
+  if (NILP (seq))
+    return seq;
+  else if (STRINGP (seq))
+    return Freverse (seq);
+  else if (CONSP (seq))
     {
-      int i;
+      Lisp_Object prev, tail, next;
 
-      for (i = 0; i < (1 << CHARTAB_SIZE_BITS_0); i++)
-	set_char_table_contents (array, i, item);
-      set_char_table_defalt (array, item);
-    }
-  else if (STRINGP (array))
-    {
-      register unsigned char *p = SDATA (array);
-      int charval;
-      CHECK_CHARACTER (item);
-      charval = XFASTINT (item);
-      size = SCHARS (array);
-      if (STRING_MULTIBYTE (array))
+      for (prev = Qnil, tail = seq; CONSP (tail); tail = next)
 	{
-	  unsigned char str[MAX_MULTIBYTE_LENGTH];
-	  int len = CHAR_STRING (charval, str);
-	  ptrdiff_t size_byte = SBYTES (array);
-	  ptrdiff_t product;
+	  next = XCDR (tail);
+	  /* If SEQ contains a cycle, attempting to reverse it
+	     in-place will inevitably come back to SEQ.  */
+	  if (EQ (next, seq))
+	    circular_list (seq);
+	  Fsetcdr (tail, prev);
+	  prev = tail;
+	}
+      CHECK_LIST_END (tail, seq);
+      seq = prev;
+    }
+  else if (VECTORP (seq))
+    {
+      ptrdiff_t i, size = ASIZE (seq);
 
-	  if (INT_MULTIPLY_WRAPV (size, len, &product) || product != size_byte)
-	    error ("Attempt to change byte length of a string");
-	  for (idx = 0; idx < size_byte; idx++)
-	    *p++ = str[idx % len];
+      for (i = 0; i < size / 2; i++)
+	{
+	  Lisp_Object tem = AREF (seq, i);
+	  ASET (seq, i, AREF (seq, size - i - 1));
+	  ASET (seq, size - i - 1, tem);
+	}
+    }
+  else if (BOOL_VECTOR_P (seq))
+    {
+      ptrdiff_t i, size = bool_vector_size (seq);
+
+      for (i = 0; i < size / 2; i++)
+	{
+	  bool tem = bool_vector_bitref (seq, i);
+	  bool_vector_set (seq, i, bool_vector_bitref (seq, size - i - 1));
+	  bool_vector_set (seq, size - i - 1, tem);
 	}
     }
   else
     wrong_type_argument (Qarrayp, seq);
   return seq;
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("reverse", Freverse, Sreverse, 1, 1, 0,
        doc: /* Return the reversed copy of list, vector, or string SEQ.
@@ -2364,6 +2579,22 @@ ARRAY is a vector, string, char-table, or bool-vector.  */)
   return array;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("clear-string", Fclear_string, Sclear_string,
+       1, 1, 0,
+       doc: /* Clear the contents of STRING.
+This makes STRING unibyte and may change its length.  */)
+  (Lisp_Object string)
+{
+  ptrdiff_t len;
+  CHECK_STRING (string);
+  len = SBYTES (string);
+  memset (SDATA (string), 0, len);
+  STRING_SET_CHARS (string, len);
+  STRING_SET_UNIBYTE (string);
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
 
 Lisp_Object
 nconc2 (Lisp_Object s1, Lisp_Object s2)
@@ -2404,6 +2635,72 @@ usage: (nconc &rest LISTS)  */)
   return val;
 }
 
+#ifdef IGNORE_RUST_PORT
+/* This is the guts of all mapping functions.
+   Apply FN to each element of SEQ, one by one, storing the results
+   into elements of VALS, a C vector of Lisp_Objects.  LENI is the
+   length of VALS, which should also be the length of SEQ.  Return the
+   number of results; although this is normally LENI, it can be less
+   if SEQ is made shorter as a side effect of FN.  */
+
+static EMACS_INT
+mapcar1 (EMACS_INT leni, Lisp_Object *vals, Lisp_Object fn, Lisp_Object seq)
+{
+  Lisp_Object tail, dummy;
+  EMACS_INT i;
+
+  if (VECTORP (seq) || COMPILEDP (seq))
+    {
+      for (i = 0; i < leni; i++)
+	{
+	  dummy = call1 (fn, AREF (seq, i));
+	  if (vals)
+	    vals[i] = dummy;
+	}
+    }
+  else if (BOOL_VECTOR_P (seq))
+    {
+      for (i = 0; i < leni; i++)
+	{
+	  dummy = call1 (fn, bool_vector_ref (seq, i));
+	  if (vals)
+	    vals[i] = dummy;
+	}
+    }
+  else if (STRINGP (seq))
+    {
+      ptrdiff_t i_byte;
+
+      for (i = 0, i_byte = 0; i < leni;)
+	{
+	  int c;
+	  ptrdiff_t i_before = i;
+
+	  FETCH_STRING_CHAR_ADVANCE (c, seq, i, i_byte);
+	  XSETFASTINT (dummy, c);
+	  dummy = call1 (fn, dummy);
+	  if (vals)
+	    vals[i_before] = dummy;
+	}
+    }
+  else   /* Must be a list, since Flength did not get an error */
+    {
+      tail = seq;
+      for (i = 0; i < leni; i++)
+	{
+	  if (! CONSP (tail))
+	    return i;
+	  dummy = call1 (fn, XCAR (tail));
+	  if (vals)
+	    vals[i] = dummy;
+	  tail = XCDR (tail);
+	}
+    }
+
+  return leni;
+}
+#endif /* IGNORE_RUST_PORT */
+
 DEFUN ("mapconcat", Fmapconcat, Smapconcat, 3, 3, 0,
        doc: /* Apply FUNCTION to each element of SEQUENCE, and concat the results as strings.
 In between each pair of results, stick in SEPARATOR.  Thus, " " as
@@ -2662,8 +2959,9 @@ If the optional third argument NOERROR is non-nil, then return nil if
 the file is not found instead of signaling an error.  Normally the
 return value is FEATURE.
 
-Lisp_Object
-do_yes_or_no_p (Lisp_Object prompt)
+The normal messages at start and end of loading FILENAME are
+suppressed.  */)
+  (Lisp_Object feature, Lisp_Object filename, Lisp_Object noerror)
 {
   Lisp_Object tem;
   bool from_file = load_in_progress;
@@ -3418,7 +3716,7 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 	return -1;
       unsigned int value = (v1 - 1) << 18;
 
-`codeset', returning the character set as a string (locale item CODESET);
+      /* Process second byte of a quadruplet.  */
 
       do
 	{
@@ -3440,8 +3738,7 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
 	*e++ = c;
       nchars++;
 
-If the system can't provide such information through a call to
-`nl_langinfo', or if ITEM isn't from the list above, return nil.
+      /* Process third byte of a quadruplet.  */
 
       do
 	{
@@ -3457,24 +3754,7 @@ If the system can't provide such information through a call to
 	}
       while (v1 < 0);
 
-The data read from the system are decoded using `locale-coding-system'.  */)
-  (Lisp_Object item)
-{
-  char *str = NULL;
-#ifdef HAVE_LANGINFO_CODESET
-  if (EQ (item, Qcodeset))
-    {
-      str = nl_langinfo (CODESET);
-      return build_string (str);
-    }
-#ifdef DAY_1
-  else if (EQ (item, Qdays))	/* e.g. for calendar-day-name-array */
-    {
-      Lisp_Object v = Fmake_vector (make_number (7), Qnil);
-      const int days[7] = {DAY_1, DAY_2, DAY_3, DAY_4, DAY_5, DAY_6, DAY_7};
-      int i;
-      synchronize_system_time_locale ();
-      for (i = 0; i < 7; i++)
+      if (c == '=')
 	{
 	  do
 	    {
@@ -3530,16 +3810,8 @@ The data read from the system are decoded using `locale-coding-system'.  */)
 	*e++ = c;
       nchars++;
     }
-#endif	/* MON_1 */
-/* LC_PAPER stuff isn't defined as accessible in glibc as of 2.3.1,
-   but is in the locale files.  This could be used by ps-print.  */
-#ifdef PAPER_WIDTH
-  else if (EQ (item, Qpaper))
-    return list2i (nl_langinfo (PAPER_WIDTH), nl_langinfo (PAPER_HEIGHT));
-#endif	/* PAPER_WIDTH */
-#endif	/* HAVE_LANGINFO_CODESET*/
-  return Qnil;
 }
+
 
 
 /***********************************************************************
@@ -5254,7 +5526,24 @@ syms_of_fns (void)
   defsubr (&Ssxhash_eql);
   defsubr (&Ssxhash_equal);
   defsubr (&Smake_hash_table);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scopy_hash_table);
+  defsubr (&Shash_table_count);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Shash_table_rehash_size);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Shash_table_rehash_threshold);
+  defsubr (&Shash_table_size);
+  defsubr (&Shash_table_test);
+  defsubr (&Shash_table_weakness);
+  defsubr (&Shash_table_p);
+  defsubr (&Sclrhash);
+  defsubr (&Sgethash);
+  defsubr (&Sputhash);
+  defsubr (&Sremhash);
+  defsubr (&Smaphash);
+  defsubr (&Sdefine_hash_table_test);
+#endif /* IGNORE_RUST_PORT */
 
   /* Crypto and hashing stuff.  */
   DEFSYM (Qiv_auto, "iv-auto");
@@ -5270,6 +5559,9 @@ syms_of_fns (void)
 
   DEFSYM (Qstring_lessp, "string-lessp");
   DEFSYM (Qprovide, "provide");
+#ifdef IGNORE_RUST_PORT
+  DEFSYM (Qrequire, "require");
+#endif /* IGNORE_RUST_PORT */
   DEFSYM (Qyes_or_no_p_history, "yes-or-no-p-history");
   DEFSYM (Qcursor_in_echo_area, "cursor-in-echo-area");
   DEFSYM (Qwidget_type, "widget-type");
@@ -5283,6 +5575,11 @@ compilation.  */);
 
   staticpro (&string_char_byte_cache_string);
   string_char_byte_cache_string = Qnil;
+
+#ifdef IGNORE_RUST_PORT
+  require_nesting_list = Qnil;
+  staticpro (&require_nesting_list);
+#endif /* IGNORE_RUST_PORT */
 
   Fset (Qyes_or_no_p_history, Qnil);
 
@@ -5331,19 +5628,78 @@ this variable.  */);
   defsubr (&Sstring_distance);
   defsubr (&Sstring_equal);
   defsubr (&Scompare_strings);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sstring_lessp);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sappend);
+  defsubr (&Sconcat);
+  defsubr (&Svconcat);
+  defsubr (&Scopy_sequence);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sstring_make_multibyte);
   defsubr (&Sstring_make_unibyte);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sstring_as_multibyte);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sstring_as_unibyte);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sstring_to_multibyte);
+  defsubr (&Sstring_to_unibyte);
+  defsubr (&Scopy_alist);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Ssubstring);
   defsubr (&Ssubstring_no_properties);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Snthcdr);
+  defsubr (&Snth);
+  defsubr (&Selt);
+  defsubr (&Smember);
+  defsubr (&Smemq);
+  defsubr (&Smemql);
+  defsubr (&Sassq);
+  defsubr (&Sassoc);
+  defsubr (&Srassq);
+  defsubr (&Srassoc);
+  defsubr (&Sdelq);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sdelete);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Snreverse);
+  defsubr (&Sreverse);
+  defsubr (&Ssort);
+  defsubr (&Splist_get);
+  defsubr (&Sget);
+  defsubr (&Splist_put);
+  defsubr (&Sput);
+  defsubr (&Slax_plist_get);
+  defsubr (&Slax_plist_put);
+  defsubr (&Seql);
+  defsubr (&Sequal);
+  defsubr (&Sequal_including_properties);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sfillarray);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sclear_string);
+  defsubr (&Snconc);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Smapcar);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Smapc);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Smapcan);
   defsubr (&Smapconcat);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Syes_or_no_p);
+  defsubr (&Sload_average);
+  defsubr (&Sfeaturep);
+  defsubr (&Srequire);
+  defsubr (&Sprovide);
+  defsubr (&Splist_member);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Swidget_put);
   defsubr (&Swidget_get);
   defsubr (&Swidget_apply);
@@ -5355,5 +5711,9 @@ this variable.  */);
   defsubr (&Sbase64url_encode_string);
   defsubr (&Smd5);
   defsubr (&Ssecure_hash_algorithms);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Ssecure_hash);
+  defsubr (&Sbuffer_hash);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Slocale_info);
 }

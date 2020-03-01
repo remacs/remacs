@@ -19,7 +19,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifndef MENU_H
 #define MENU_H
 
-#include "lwlib-widget.h"
+#include "../lwlib/lwlib-widget.h"
 
 /* Bit fields used by terminal-specific menu_show_hook.  */
 
@@ -44,7 +44,7 @@ extern widget_value *make_widget_value (const char *, char *, bool, Lisp_Object)
 extern widget_value *digest_single_submenu (int, int, bool);
 #endif
 
-#if defined (HAVE_X_WINDOWS)
+#if defined (HAVE_X_WINDOWS) || defined (MSDOS)
 extern Lisp_Object x_menu_show (struct frame *, int, int, int,
 				Lisp_Object, const char **);
 extern void x_activate_menubar (struct frame *);

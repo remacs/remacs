@@ -58,6 +58,7 @@
    DGUX
    eunice                       UNIX emulator under VMS.
    hpux
+   __MSDOS__                    No-op for MSDOS.
    NeXT
    sgi
    UMAX
@@ -749,7 +750,8 @@ getloadavg (double loadavg[], int nelem)
        : (load_ave.tl_avenrun.l[0] / (double) load_ave.tl_lscale));
 # endif /* OSF_MIPS */
 
-# if !defined (LDAV_DONE) && defined (WINDOWS32)
+# if !defined (LDAV_DONE) && (defined (__MSDOS__) || defined (WINDOWS32))
+                                                           /* DJGPP */
 #  define LDAV_DONE
 
   /* A faithful emulation is going to have to be saved for a rainy day.  */
@@ -757,7 +759,7 @@ getloadavg (double loadavg[], int nelem)
     {
       loadavg[elem] = 0.0;
     }
-# endif  /* WINDOWS32 */
+# endif  /* __MSDOS__ || WINDOWS32 */
 
 # if !defined (LDAV_DONE) && defined (OSF_ALPHA)           /* OSF/1 */
 #  define LDAV_DONE

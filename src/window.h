@@ -454,9 +454,6 @@ struct window
     ptrdiff_t window_end_bytepos;
   } GCALIGNED_STRUCT;
 
-Lisp_Object
-window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames);
-
 INLINE bool
 WINDOWP (Lisp_Object a)
 {
@@ -543,17 +540,6 @@ wset_next_buffers (struct window *w, Lisp_Object val)
 {
   w->next_buffers = val;
 }
-
-struct glyph_matrix*
-wget_current_matrix(const struct window *w);
-int
-wget_mode_line_height(const struct window *w);
-Lisp_Object
-wget_parent(struct window *w);
-int
-wget_pixel_height(struct window *w);
-bool
-wget_pseudo_window_p(struct window *w);
 
 /* True if W is a minibuffer window.  */
 #define MINI_WINDOW_P(W) ((W)->mini)
@@ -759,9 +745,15 @@ wget_pseudo_window_p(struct window *w);
   (FRAME_INTERNAL_BORDER_WIDTH (WINDOW_XFRAME (W)) \
    + WINDOW_RIGHT_PIXEL_EDGE (W))
 
-bool
-window_menu_bar_p(struct window *W);
-#define WINDOW_MENU_BAR_P(W) window_menu_bar_p(W)
+/* True if W is a menu bar window.  */
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
+#define WINDOW_MENU_BAR_P(W) \
+  (WINDOWP (WINDOW_XFRAME (W)->menu_bar_window) \
+   && (W) == XWINDOW (WINDOW_XFRAME (W)->menu_bar_window))
+#else
+/* No menu bar windows if X toolkit is in use.  */
+#define WINDOW_MENU_BAR_P(W) false
+#endif
 
 /* True if W is a tab bar window.  */
 #if defined (HAVE_WINDOW_SYSTEM)
@@ -883,7 +875,9 @@ window_menu_bar_p(struct window *W);
   (WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_LEFT (W)		\
    || WINDOW_HAS_VERTICAL_SCROLL_BAR_ON_RIGHT (W))
 
-#if defined (HAVE_WINDOW_SYSTEM)
+#if (defined (HAVE_WINDOW_SYSTEM)					\
+     && ((defined (USE_TOOLKIT_SCROLL_BARS))	\
+	 || defined (HAVE_NTGUI)))
 # define USE_HORIZONTAL_SCROLL_BARS true
 #else
 # define USE_HORIZONTAL_SCROLL_BARS false
@@ -1210,13 +1204,6 @@ extern void init_window_once (void);
 extern void init_window (void);
 extern void syms_of_window (void);
 extern void keys_of_window (void);
-extern Lisp_Object select_window (Lisp_Object window, Lisp_Object norecord,
-                                  bool inhibit_point_swap);
-extern struct window *set_window_fringes (struct window *w, Lisp_Object left_width,
-                                          Lisp_Object right_width, Lisp_Object outside_margins);
-extern void apply_window_adjustment (struct window *);
-extern void run_window_configuration_change_hook (struct frame *);
-
 /* Move cursor to row/column position VPOS/HPOS, pixel coordinates
    Y/X. HPOS/VPOS are window-relative row and column numbers and X/Y
    are window-relative pixel positions.  This is always done during
@@ -1232,58 +1219,6 @@ output_cursor_to (struct window *w, int vpos, int hpos, int y, int x)
   w->output_cursor.x = x;
   w->output_cursor.y = y;
 }
-
-/***********************************************************************
-			 Window Configuration
- ***********************************************************************/
-
-struct save_window_data
-  {
-    union vectorlike_header header;
-    Lisp_Object selected_frame;
-    Lisp_Object current_window;
-    Lisp_Object f_current_buffer;
-    Lisp_Object minibuf_scroll_window;
-    Lisp_Object minibuf_selected_window;
-    Lisp_Object root_window;
-    Lisp_Object focus_frame;
-    /* A vector, each of whose elements is a struct saved_window
-       for one window.  */
-    Lisp_Object saved_windows;
-
-    /* All fields above are traced by the GC.
-       From `frame-cols' down, the fields are ignored by the GC.  */
-    /* We should be able to do without the following two.  */
-    int frame_cols, frame_lines;
-    /* These two should get eventually replaced by their pixel
-       counterparts.  */
-    int frame_menu_bar_lines, frame_tool_bar_lines;
-    int frame_text_width, frame_text_height;
-    /* These are currently unused.  We need them as soon as we convert
-       to pixels.  */
-    int frame_menu_bar_height, frame_tool_bar_height;
-  };
-
-/* This is saved as a Lisp_Vector.  */
-struct saved_window
-{
-  union vectorlike_header header;
-
-  Lisp_Object window, buffer, start, pointm, old_pointm;
-  Lisp_Object pixel_left, pixel_top, pixel_height, pixel_width;
-  Lisp_Object pixel_height_before_size_change, pixel_width_before_size_change;
-  Lisp_Object left_col, top_line, total_cols, total_lines;
-  Lisp_Object normal_cols, normal_lines;
-  Lisp_Object hscroll, min_hscroll, hscroll_whole, suspend_auto_hscroll;
-  Lisp_Object parent, prev;
-  Lisp_Object start_at_line_beg;
-  Lisp_Object display_table;
-  Lisp_Object left_margin_cols, right_margin_cols;
-  Lisp_Object left_fringe_width, right_fringe_width, fringes_outside_margins;
-  Lisp_Object scroll_bar_width, vertical_scroll_bar_type, dedicated;
-  Lisp_Object scroll_bar_height, horizontal_scroll_bar_type;
-  Lisp_Object combination_limit, window_parameters;
-};
 
 INLINE_HEADER_END
 

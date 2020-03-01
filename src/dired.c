@@ -40,34 +40,37 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "buffer.h"
 #include "coding.h"
 
+#ifdef MSDOS
+#include "msdos.h"	/* for fstatat */
+#endif
+
 #ifdef WINDOWSNT
 extern int is_slow_fs (const char *);
 #endif
 
 static ptrdiff_t scmp (const char *, const char *, ptrdiff_t);
 static Lisp_Object file_attributes_static (int, char const *, Lisp_Object,
-					   Lisp_Object, Lisp_Object);
-
+                                           Lisp_Object, Lisp_Object);
 #ifndef WINDOWSNT
 extern Lisp_Object file_attributes(Lisp_Object, Lisp_Object);
 
 extern Lisp_Object file_attributes_rust_internal (Lisp_Object,
-						  Lisp_Object,
-						  Lisp_Object);
+                                                  Lisp_Object,
+                                                  Lisp_Object);
 
 Lisp_Object file_attributes_c_internal (char const *,
-					Lisp_Object,
-					Lisp_Object,
-					Lisp_Object);
+                                        Lisp_Object,
+                                        Lisp_Object,
+                                        Lisp_Object);
 Lisp_Object filemode_string(Lisp_Object);
 #endif
 
 #ifdef WINDOWSNT
 Lisp_Object directory_files_c(Lisp_Object, Lisp_Object, Lisp_Object,
-			      Lisp_Object);
+                             Lisp_Object);
 Lisp_Object directory_files_and_attributes_c(Lisp_Object, Lisp_Object,
-					     Lisp_Object, Lisp_Object,
-					     Lisp_Object);
+                                             Lisp_Object, Lisp_Object,
+                                             Lisp_Object);
 Lisp_Object file_attributes_c(Lisp_Object, Lisp_Object);
 #endif
 
@@ -180,7 +183,6 @@ read_dirent (DIR *dir, Lisp_Object dirname)
    If not ATTRS, return a list of directory filenames;
    if ATTRS, return a list of directory filenames and their attributes.
    In the latter case, pass ID_FORMAT to file_attributes.  */
-
 #ifdef WINDOWSNT
 Lisp_Object
 directory_files_internal (Lisp_Object directory, Lisp_Object full,
@@ -210,7 +212,6 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   ptrdiff_t count = SPECPDL_INDEX ();
   record_unwind_protect_ptr (directory_files_internal_unwind, d);
 
-#ifdef WINDOWSNT
   Lisp_Object w32_save = Qnil;
   if (attrs)
     {
@@ -229,7 +230,6 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 	    Vw32_get_true_file_attributes = Qt;
 	}
     }
-#endif
 
   ptrdiff_t directory_nbytes = SBYTES (directory);
   re_match_object = Qt;
@@ -240,9 +240,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
 
   /* Windows users want case-insensitive wildcards.  */
   Lisp_Object case_table = Qnil;
-#ifdef WINDOWSNT
   case_table = BVAR (&buffer_defaults, case_canon_table);
-#endif
 
   /* Read directory entries and accumulate them into LIST.  */
   Lisp_Object list = Qnil;
@@ -291,10 +289,8 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
     }
 
   closedir (d);
-#ifdef WINDOWSNT
   if (attrs)
     Vw32_get_true_file_attributes = w32_save;
-#endif
 
   /* Discard the unwind protect.  */
   specpdl_ptr = specpdl + count;
@@ -306,8 +302,7 @@ directory_files_internal (Lisp_Object directory, Lisp_Object full,
   (void) directory_volatile;
   return list;
 }
-#endif /* WINDOWSNT*/
-
+#endif /* WINDOWSNT */
 
 DEFUN ("directory-files", Fdirectory_files, Sdirectory_files, 1, 4, 0,
        doc: /* Return a list of names of files in DIRECTORY.
@@ -332,7 +327,6 @@ If NOSORT is non-nil, the list is not sorted--its order is unpredictable.
 
   return directory_files_internal (directory, full, match, nosort, false, Qnil);
 }
-#endif
 
 DEFUN ("directory-files-and-attributes", Fdirectory_files_and_attributes,
        Sdirectory_files_and_attributes, 1, 5, 0,
@@ -370,8 +364,6 @@ which see.  */)
   return directory_files_internal (directory, full, match, nosort,
 				   true, id_format);
 }
-#endif
-
 
 
 static Lisp_Object file_name_completion (Lisp_Object, Lisp_Object, bool,
@@ -941,15 +933,13 @@ so last access time will always be midnight of that day.  */)
 
   encoded = ENCODE_FILE (filename);
   return file_attributes_static (AT_FDCWD, SSDATA (encoded), Qnil, filename,
-				 id_format);
+                                 id_format);
 }
-#endif /* WINDOWSNT */
-
 
 static Lisp_Object
 file_attributes_static (int fd, char const *name,
-		 Lisp_Object dirname, Lisp_Object filename,
-		 Lisp_Object id_format)
+                        Lisp_Object dirname, Lisp_Object filename,
+                        Lisp_Object id_format)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
   struct stat s;
@@ -1062,27 +1052,22 @@ DEFUN ("file-attributes-lessp", Ffile_attributes_lessp,
 Comparison is in lexicographic order and case is significant.  */)
   (Lisp_Object f1, Lisp_Object f2)
 {
-  return file_attributes_static(AT_FDCWD, name,
-				dirname, filename,
-				id_format);
+  return Fstring_lessp (Fcar (f1), Fcar (f2));
 }
-#endif /* !WINDOWSNT */
 
-
-#ifndef WINDOWSNT
-/*
- * (temp) Filemode support for Remacs
- */
-
-static Lisp_Object
-filemode_string_core (int fd, char const *name)
+#ifdef IGNORE_RUST_PORT
+DEFUN ("system-users", Fsystem_users, Ssystem_users, 0, 0, 0,
+       doc: /* Return a list of user names currently registered in the system.
+If we don't know how to determine that on this platform, just
+return a list with one element, taken from `user-real-login-name'.  */)
+     (void)
 {
-  struct stat s;
-  int lstat_result;
+  Lisp_Object users = Qnil;
+#if defined HAVE_GETPWENT && defined HAVE_ENDPWENT
+  struct passwd *pw;
 
-  /* An array to hold the mode string generated by filemodestring, 
-     including its terminating space and null byte.  */
-  char modes[sizeof "-rwxr-xr-x "];
+  while ((pw = getpwent ()))
+    users = Fcons (DECODE_SYSTEM (build_string (pw->pw_name)), users);
 
   endpwent ();
 #endif
@@ -1091,27 +1076,26 @@ filemode_string_core (int fd, char const *name)
     users = list1 (Vuser_real_login_name);
   return users;
 }
+#endif /* IGNORE_RUST_PORT */
 
-  if (lstat_result < 0)
-    return Qnil;
-
-  filemodestring (&s, modes);
-
-  return make_string(modes, 10);
-}
-
-Lisp_Object
-filemode_string (Lisp_Object filename)
+#ifdef IGNORE_RUST_PORT
+DEFUN ("system-groups", Fsystem_groups, Ssystem_groups, 0, 0, 0,
+       doc: /* Return a list of user group names currently registered in the system.
+The value may be nil if not supported on this platform.  */)
+     (void)
 {
-  Lisp_Object encoded;
-  filename = internal_condition_case_2 (Fexpand_file_name, filename, Qnil,
-					Qt, Fidentity);
-  if (!STRINGP (filename))
-    return Qnil;
-  encoded = ENCODE_FILE (filename);
-  return filemode_string_core (AT_FDCWD, SSDATA (encoded));
+  Lisp_Object groups = Qnil;
+#if defined HAVE_GETGRENT && defined HAVE_ENDGRENT
+  struct group *gr;
+
+  while ((gr = getgrent ()))
+    groups = Fcons (DECODE_SYSTEM (build_string (gr->gr_name)), groups);
+
+  endgrent ();
+#endif
+  return groups;
 }
-#endif /* !WINDOWSNT */
+#endif /* IGNORE_RUST_PORT */
 
 void
 syms_of_dired (void)
@@ -1125,8 +1109,18 @@ syms_of_dired (void)
   DEFSYM (Qdefault_directory, "default-directory");
   DEFSYM (Qdecomposed_characters, "decomposed-characters");
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sdirectory_files);
+  defsubr (&Sdirectory_files_and_attributes);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sfile_name_completion);
   defsubr (&Sfile_name_all_completions);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sfile_attributes);
+  defsubr (&Sfile_attributes_lessp);
+  defsubr (&Ssystem_users);
+  defsubr (&Ssystem_groups);
+#endif /* IGNORE_RUST_PORT */
 
   DEFVAR_LISP ("completion-ignored-extensions", Vcompletion_ignored_extensions,
 	       doc: /* Completion ignores file names ending in any string in this list.

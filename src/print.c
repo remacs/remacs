@@ -781,11 +781,12 @@ to make it write to the debugging output.  */)
   return character;
 }
 
-/* This function is only ever called from gdb. Its primary purpose is
-   to prevent print_output_debug_flag from being optimized away.  */
-extern void set_output_debug_flag (bool) EXTERNALLY_VISIBLE;
+/* This function is never called.  Its purpose is to prevent
+   print_output_debug_flag from being optimized away.  */
+
+extern void debug_output_compilation_hack (bool) EXTERNALLY_VISIBLE;
 void
-set_output_debug_flag (bool x)
+debug_output_compilation_hack (bool x)
 {
   print_output_debug_flag = x;
 }
@@ -871,6 +872,7 @@ debug_format (const char *fmt, Lisp_Object arg)
 }
 
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("error-message-string", Ferror_message_string, Serror_message_string,
        1, 1, 0,
        doc: /* Convert an error value (ERROR-SYMBOL . DATA) to an error message.
@@ -900,6 +902,7 @@ error message is constructed.  */)
 
   return value;
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Print an error message for the error DATA onto Lisp output stream
    STREAM (suitable for the print functions).
@@ -2329,6 +2332,9 @@ priorities.  Values other than nil or t are also treated as
 
   defsubr (&Sprin1);
   defsubr (&Sprin1_to_string);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Serror_message_string);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sprinc);
   defsubr (&Sprint);
   defsubr (&Sterpri);

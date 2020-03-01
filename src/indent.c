@@ -51,6 +51,7 @@ ptrdiff_t last_known_column_point;
 static modiff_count last_known_column_modified;
 
 static ptrdiff_t current_column_1 (void);
+static ptrdiff_t position_indentation (ptrdiff_t);
 
 /* Get the display table to use for the current buffer.  */
 
@@ -297,6 +298,37 @@ skip_invisible (ptrdiff_t pos, ptrdiff_t *next_boundary_p, ptrdiff_t to, Lisp_Ob
 	  width = CHARACTER_WIDTH (ch);					\
       }									\
   } while (0)
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("current-column", Fcurrent_column, Scurrent_column, 0, 0, 0,
+       doc: /* Return the horizontal position of point.  Beginning of line is column 0.
+This is calculated by adding together the widths of all the displayed
+representations of the character between the start of the previous line
+and point (e.g., control characters will have a width of 2 or 4, tabs
+will have a variable width).
+Ignores finite width of frame, which means that this function may return
+values greater than (frame-width).
+Whether the line is visible (if `selective-display' is t) has no effect;
+however, ^M is treated as end of line when `selective-display' is t.
+Text that has an invisible property is considered as having width 0, unless
+`buffer-invisibility-spec' specifies that it is replaced by an ellipsis.  */)
+  (void)
+{
+  Lisp_Object temp;
+  XSETFASTINT (temp, current_column ());
+  return temp;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Cancel any recorded value of the horizontal position.  */
+
+void
+invalidate_current_column (void)
+{
+  last_known_column_point = 0;
+}
+#endif /* IGNORE_RUST_PORT */
 
 ptrdiff_t
 current_column (void)
@@ -2340,12 +2372,23 @@ whether or not it is currently displayed in some window.  */)
 void
 syms_of_indent (void)
 {
+  last_known_column = 0;
+
   DEFVAR_BOOL ("indent-tabs-mode", indent_tabs_mode,
 	       doc: /* Indentation can insert tabs if this is non-nil.  */);
   indent_tabs_mode = 1;
 
   DEFSYM (Qcolumns, "columns");
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scurrent_indentation);
+  defsubr (&Sindent_to);
+  defsubr (&Scurrent_column);
+  defsubr (&Smove_to_column);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sline_number_display_width);
   defsubr (&Svertical_motion);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scompute_motion);
+#endif /* IGNORE_RUST_PORT */
 }

@@ -112,7 +112,7 @@ post_acquire_global_lock (struct thread_state *self)
 
       current_thread->error_symbol = Qnil;
       current_thread->error_data = Qnil;
-      xsignal (sym, data);
+      Fsignal (sym, data);
     }
 }
 
@@ -852,6 +852,32 @@ If NAME is given, it must be a string; it names the new thread.  */)
   return result;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("current-thread", Fcurrent_thread, Scurrent_thread, 0, 0, 0,
+       doc: /* Return the current thread.  */)
+  (void)
+{
+  Lisp_Object result;
+  XSETTHREAD (result, current_thread);
+  return result;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("thread-name", Fthread_name, Sthread_name, 1, 1, 0,
+       doc: /* Return the name of the THREAD.
+The name is the same object that was passed to `make-thread'.  */)
+     (Lisp_Object thread)
+{
+  struct thread_state *tstate;
+
+  CHECK_THREAD (thread);
+  tstate = XTHREAD (thread);
+
+  return tstate->name;
+}
+#endif /* IGNORE_RUST_PORT */
+
 static void
 thread_signal_callback (void *arg)
 {
@@ -877,7 +903,7 @@ If THREAD is the main thread, just the error message is shown.  */)
   tstate = XTHREAD (thread);
 
   if (tstate == current_thread)
-    xsignal (error_symbol, data);
+    Fsignal (error_symbol, data);
 
 #ifdef THREADS_ENABLED
   if (main_thread_p (tstate))
@@ -1071,9 +1097,16 @@ syms_of_threads (void)
     {
       defsubr (&Sthread_yield);
       defsubr (&Smake_thread);
+#ifdef IGNORE_RUST_PORT
+      defsubr (&Scurrent_thread);
+      defsubr (&Sthread_name);
+#endif /* IGNORE_RUST_PORT */
       defsubr (&Sthread_signal);
       defsubr (&Sthread_live_p);
       defsubr (&Sthread_join);
+#ifdef IGNORE_RUST_PORT
+      defsubr (&Sthread_blocker);
+#endif /* IGNORE_RUST_PORT */
       defsubr (&Sall_threads);
       defsubr (&Smake_mutex);
       defsubr (&Smutex_lock);

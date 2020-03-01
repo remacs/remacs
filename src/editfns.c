@@ -79,7 +79,14 @@ init_editfns (void)
   init_and_cache_system_name ();
 
   pw = getpwuid (getuid ());
+#ifdef MSDOS
+  /* We let the real user name default to "root" because that's quite
+     accurate on MS-DOS and because it lets Emacs find the init file.
+     (The DVX libraries override the Djgpp libraries here.)  */
+  Vuser_real_login_name = build_string (pw ? pw->pw_name : "root");
+#else
   Vuser_real_login_name = build_string (pw ? pw->pw_name : "unknown");
+#endif
 
   /* Get the effective user name, by consulting environment variables,
      or the effective uid if those are unset.  */
@@ -171,6 +178,7 @@ DEFUN ("string-to-char", Fstring_to_char, Sstring_to_char, 1, 1, 0,
   return val;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("point", Fpoint, Spoint, 0, 0, 0,
        doc: /* Return value of point, as an integer.
 Beginning of buffer is position (point-min).  */)
@@ -180,13 +188,16 @@ Beginning of buffer is position (point-min).  */)
   XSETFASTINT (temp, PT);
   return temp;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("point-marker", Fpoint_marker, Spoint_marker, 0, 0, 0,
        doc: /* Return value of point, as a marker object.  */)
   (void)
 {
   return build_marker (current_buffer, PT, PT_BYTE);
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("goto-char", Fgoto_char, Sgoto_char, 1, 1, "NGoto char: ",
        doc: /* Set point to POSITION, a number or marker.
@@ -229,20 +240,25 @@ region_limit (bool beginningp)
 		      : clip_to_bounds (BEGV, XFIXNAT (m), ZV));
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("region-beginning", Fregion_beginning, Sregion_beginning, 0, 0, 0,
        doc: /* Return the integer value of point or mark, whichever is smaller.  */)
   (void)
 {
   return region_limit (1);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("region-end", Fregion_end, Sregion_end, 0, 0, 0,
        doc: /* Return the integer value of point or mark, whichever is larger.  */)
   (void)
 {
   return region_limit (0);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("mark-marker", Fmark_marker, Smark_marker, 0, 0, 0,
        doc: /* Return this buffer's mark, as a marker object.
 Watch out!  Moving this marker changes the mark position.
@@ -251,6 +267,7 @@ If you set the marker not to point anywhere, the buffer will have no mark.  */)
 {
   return BVAR (current_buffer, mark);
 }
+#endif /* IGNORE_RUST_PORT */
 
 
 /* Find all the overlays in the current buffer that touch position POS.
@@ -1152,6 +1169,7 @@ This ignores the environment variables LOGNAME and USER, so it differs from
   return Vuser_real_login_name;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("user-uid", Fuser_uid, Suser_uid, 0, 0, 0,
        doc: /* Return the effective uid of Emacs.
 Value is a fixnum, if it's small enough, otherwise a bignum.  */)
@@ -1160,7 +1178,9 @@ Value is a fixnum, if it's small enough, otherwise a bignum.  */)
   uid_t euid = geteuid ();
   return INT_TO_INTEGER (euid);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("user-real-uid", Fuser_real_uid, Suser_real_uid, 0, 0, 0,
        doc: /* Return the real uid of Emacs.
 Value is a fixnum, if it's small enough, otherwise a bignum.  */)
@@ -1169,6 +1189,7 @@ Value is a fixnum, if it's small enough, otherwise a bignum.  */)
   uid_t uid = getuid ();
   return INT_TO_INTEGER (uid);
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("group-name", Fgroup_name, Sgroup_name, 1, 1, 0,
        doc: /* Return the name of the group whose numeric group ID is GID.
@@ -1188,6 +1209,7 @@ Return nil if a group with such GID does not exists or is not known.  */)
   return gr ? build_string (gr->gr_name) : Qnil;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("group-gid", Fgroup_gid, Sgroup_gid, 0, 0, 0,
        doc: /* Return the effective gid of Emacs.
 Value is a fixnum, if it's small enough, otherwise a bignum.  */)
@@ -1196,7 +1218,9 @@ Value is a fixnum, if it's small enough, otherwise a bignum.  */)
   gid_t egid = getegid ();
   return INT_TO_INTEGER (egid);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("group-real-gid", Fgroup_real_gid, Sgroup_real_gid, 0, 0, 0,
        doc: /* Return the real gid of Emacs.
 Value is a fixnum, if it's small enough, otherwise a bignum.  */)
@@ -1205,6 +1229,7 @@ Value is a fixnum, if it's small enough, otherwise a bignum.  */)
   gid_t gid = getgid ();
   return INT_TO_INTEGER (gid);
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("user-full-name", Fuser_full_name, Suser_full_name, 0, 1, 0,
        doc: /* Return the full name of the user logged in, as a string.
@@ -1681,6 +1706,7 @@ of the buffer.  */)
   return make_buffer_string_both (BEGV, BEGV_BYTE, ZV, ZV_BYTE, 1);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("insert-buffer-substring", Finsert_buffer_substring, Sinsert_buffer_substring,
        1, 3, 0,
        doc: /* Insert before point a substring of the contents of BUFFER.
@@ -1737,6 +1763,7 @@ using `string-make-multibyte' or `string-make-unibyte', which see.  */)
   insert_from_buffer (bp, b, e - b, 0);
   return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("compare-buffer-substrings", Fcompare_buffer_substrings, Scompare_buffer_substrings,
        6, 6, 0,
@@ -2635,6 +2662,7 @@ It returns the number of characters changed.  */)
   return make_fixnum (characters_changed);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("delete-region", Fdelete_region, Sdelete_region, 2, 2, "r",
        doc: /* Delete the text between START and END.
 If called interactively, delete the region between point and mark.
@@ -2645,7 +2673,9 @@ This command deletes buffer text without modifying the kill ring.  */)
   del_range (XFIXNUM (start), XFIXNUM (end));
   return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("delete-and-extract-region", Fdelete_and_extract_region,
        Sdelete_and_extract_region, 2, 2, 0,
        doc: /* Delete the text between START and END and return it.  */)
@@ -2656,7 +2686,25 @@ DEFUN ("delete-and-extract-region", Fdelete_and_extract_region,
     return empty_unibyte_string;
   return del_range_1 (XFIXNUM (start), XFIXNUM (end), 1, 1);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("widen", Fwiden, Swiden, 0, 0, "",
+       doc: /* Remove restrictions (narrowing) from current buffer.
+This allows the buffer's full text to be seen and edited.  */)
+  (void)
+{
+  if (BEG != BEGV || Z != ZV)
+    current_buffer->clip_changed = 1;
+  BEGV = BEG;
+  BEGV_BYTE = BEG_BYTE;
+  SET_BUF_ZV_BOTH (current_buffer, Z, Z_BYTE);
+  /* Changing the buffer bounds invalidates any recorded current column.  */
+  invalidate_current_column ();
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
 DEFUN ("narrow-to-region", Fnarrow_to_region, Snarrow_to_region, 2, 2, "r",
        doc: /* Restrict editing in this buffer to the current region.
 The rest of the text becomes temporarily invisible and untouchable
@@ -2787,6 +2835,35 @@ save_restriction_restore (Lisp_Object data)
   if (cur)
     set_buffer_internal (cur);
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("save-restriction", Fsave_restriction, Ssave_restriction, 0, UNEVALLED, 0,
+       doc: /* Execute BODY, saving and restoring current buffer's restrictions.
+The buffer's restrictions make parts of the beginning and end invisible.
+\(They are set up with `narrow-to-region' and eliminated with `widen'.)
+This special form, `save-restriction', saves the current buffer's restrictions
+when it is entered, and restores them when it is exited.
+So any `narrow-to-region' within BODY lasts only until the end of the form.
+The old restrictions settings are restored
+even in case of abnormal exit (throw or error).
+
+The value returned is the value of the last form in BODY.
+
+Note: if you are using both `save-excursion' and `save-restriction',
+use `save-excursion' outermost:
+    (save-excursion (save-restriction ...))
+
+usage: (save-restriction &rest BODY)  */)
+  (Lisp_Object body)
+{
+  register Lisp_Object val;
+  ptrdiff_t count = SPECPDL_INDEX ();
+
+  record_unwind_protect (save_restriction_restore, save_restriction_save ());
+  val = Fprogn (body);
+  return unbind_to (count, val);
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* i18n (internationalization).  */
 
@@ -2807,6 +2884,7 @@ otherwise MSGID-PLURAL.  */)
   return EQ (n, make_fixnum (1)) ? msgid : msgid_plural;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("message", Fmessage, Smessage, 1, MANY, 0,
        doc: /* Display a message at the bottom of the screen.
 The message also goes into the `*Messages*' buffer, if `message-log-max'
@@ -2843,7 +2921,9 @@ usage: (message FORMAT-STRING &rest ARGS)  */)
       return val;
     }
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("message-box", Fmessage_box, Smessage_box, 1, MANY, 0,
        doc: /* Display a message, in a dialog box if possible.
 If a dialog box is not available, use the echo area.
@@ -2873,7 +2953,9 @@ usage: (message-box FORMAT-STRING &rest ARGS)  */)
       return val;
     }
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("message-or-box", Fmessage_or_box, Smessage_or_box, 1, MANY, 0,
        doc: /* Display a message in a dialog box or in the echo area.
 If this command was invoked with the mouse, use a dialog box if
@@ -2894,14 +2976,16 @@ usage: (message-or-box FORMAT-STRING &rest ARGS)  */)
     return Fmessage_box (nargs, args);
   return Fmessage (nargs, args);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("current-message", Fcurrent_message, Scurrent_message, 0, 0, 0,
        doc: /* Return the string currently displayed in the echo area, or nil if none.  */)
   (void)
 {
   return current_message ();
 }
-
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("propertize", Fpropertize, Spropertize, 1, MANY, 0,
        doc: /* Return a copy of STRING with text properties added.
@@ -2950,6 +3034,7 @@ str2num (char *str, char **str_end)
   return n;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("format", Fformat, Sformat, 1, MANY, 0,
        doc: /* Format a string out of a format-string and arguments.
 The first argument is a format control string.
@@ -3025,7 +3110,9 @@ usage: (format STRING &rest OBJECTS)  */)
 {
   return styled_format (nargs, args, false);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("format-message", Fformat_message, Sformat_message, 1, MANY, 0,
        doc: /* Format a string out of a format-string and arguments.
 The first argument is a format control string.
@@ -3041,6 +3128,7 @@ usage: (format-message STRING &rest OBJECTS)  */)
 {
   return styled_format (nargs, args, true);
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Implement ‘format-message’ if MESSAGE is true, ‘format’ otherwise.  */
 
@@ -4482,6 +4570,14 @@ it to be non-nil.  */);
   defsubr (&Sbuffer_string);
   defsubr (&Sget_pos_property);
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Spoint_marker);
+  defsubr (&Smark_marker);
+  defsubr (&Spoint);
+  defsubr (&Sregion_beginning);
+  defsubr (&Sregion_end);
+#endif /* IGNORE_RUST_PORT */
+
   /* Symbol for the text property used to mark fields.  */
   DEFSYM (Qfield, "field");
 
@@ -4531,14 +4627,39 @@ it to be non-nil.  */);
   defsubr (&Suser_login_name);
   defsubr (&Sgroup_name);
   defsubr (&Suser_real_login_name);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Suser_uid);
+  defsubr (&Suser_real_uid);
+  defsubr (&Sgroup_gid);
+  defsubr (&Sgroup_real_gid);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Suser_full_name);
   defsubr (&Semacs_pid);
   defsubr (&Ssystem_name);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Smessage);
+  defsubr (&Smessage_box);
+  defsubr (&Smessage_or_box);
+  defsubr (&Scurrent_message);
+  defsubr (&Sformat);
+  defsubr (&Sformat_message);
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sinsert_buffer_substring);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Scompare_buffer_substrings);
   defsubr (&Sreplace_buffer_contents);
   defsubr (&Ssubst_char_in_region);
   defsubr (&Stranslate_region_internal);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sdelete_region);
+  defsubr (&Sdelete_and_extract_region);
+  defsubr (&Swiden);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Snarrow_to_region);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Ssave_restriction);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Stranspose_regions);
 }

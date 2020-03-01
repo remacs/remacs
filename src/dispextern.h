@@ -27,6 +27,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifdef HAVE_X_WINDOWS
 
 #include <X11/Xlib.h>
+#ifdef USE_X_TOOLKIT
+#include <X11/Intrinsic.h>
+#endif /* USE_X_TOOLKIT */
 
 #ifdef HAVE_XRENDER
 # include <X11/extensions/Xrender.h>
@@ -74,6 +77,10 @@ typedef struct
 #define GCBackground 0x02
 
 #endif /* HAVE_X_WINDOWS */
+
+#ifdef MSDOS
+#include "msdos.h"
+#endif
 
 INLINE_HEADER_BEGIN
 
@@ -1916,8 +1923,6 @@ GLYPH_CODE_P (Lisp_Object gc)
 
 extern bool face_change;
 
-void set_face_change(bool value);
-
 /* For reordering of bidirectional text.  */
 
 /* UAX#9's max_depth value.  */
@@ -3617,6 +3622,7 @@ extern Lisp_Object marginal_area_string (struct window *, enum window_part,
 extern void redraw_frame (struct frame *);
 extern bool update_frame (struct frame *, bool, bool);
 extern void update_frame_with_menu (struct frame *, int, int);
+extern void bitch_at_user (void);
 extern void adjust_frame_glyphs (struct frame *);
 void free_glyphs (struct frame *);
 void free_window_matrices (struct window *);

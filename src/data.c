@@ -24,6 +24,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 
 #include <byteswap.h>
+#include <count-one-bits.h>
+#include <count-trailing-zeros.h>
 #include <intprops.h>
 
 #include "lisp.h"
@@ -35,10 +37,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "process.h"
 #include "frame.h"
 #include "keymap.h"
+
 #include "remacs-lib.h"
 
-extern bool KBOARD_OBJFWDP (union Lisp_Fwd *a);
-extern bool OBJFWDP (union Lisp_Fwd *a);
+void swap_in_symval_forwarding (struct Lisp_Symbol *,
+                                struct Lisp_Buffer_Local_Value *);
 
 static bool
 BOOLFWDP (lispfwd a)
@@ -97,6 +100,12 @@ set_blv_found (struct Lisp_Buffer_Local_Value *blv, int found)
 {
   eassert (found == !EQ (blv->defcell, blv->valcell));
   blv->found = found;
+}
+
+static Lisp_Object
+blv_value (struct Lisp_Buffer_Local_Value *blv)
+{
+  return XCDR (blv->valcell);
 }
 
 static void
@@ -717,23 +726,43 @@ Return SYMBOL.  */)
   return symbol;
 }
 
-  xsignal2 (Qwrong_type_argument, predicate, value);
-}
-
-void
-pure_write_error (Lisp_Object obj)
+#ifdef IGNORE_RUST_PORT
+DEFUN ("symbol-function", Fsymbol_function, Ssymbol_function, 1, 1, 0,
+       doc: /* Return SYMBOL's function definition, or nil if that is void.  */)
+  (Lisp_Object symbol)
 {
-  xsignal2 (Qerror, build_string ("Attempt to modify read-only object"), obj);
+  CHECK_SYMBOL (symbol);
+  return XSYMBOL (symbol)->u.s.function;
 }
+#endif /* IGNORE_RUST_PORT */
 
-void
-args_out_of_range (Lisp_Object a1, Lisp_Object a2)
+#ifdef IGNORE_RUST_PORT
+DEFUN ("symbol-plist", Fsymbol_plist, Ssymbol_plist, 1, 1, 0,
+       doc: /* Return SYMBOL's property list.  */)
+  (Lisp_Object symbol)
 {
-  xsignal2 (Qargs_out_of_range, a1, a2);
+  CHECK_SYMBOL (symbol);
+  return XSYMBOL (symbol)->u.s.plist;
 }
+#endif /* IGNORE_RUST_PORT */
 
-void
-args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
+#ifdef IGNORE_RUST_PORT
+DEFUN ("symbol-name", Fsymbol_name, Ssymbol_name, 1, 1, 0,
+       doc: /* Return SYMBOL's name, a string.  */)
+  (register Lisp_Object symbol)
+{
+  register Lisp_Object name;
+
+  CHECK_SYMBOL (symbol);
+  name = SYMBOL_NAME (symbol);
+  return name;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("fset", Ffset, Sfset, 2, 2, 0,
+       doc: /* Set SYMBOL's function definition to DEFINITION, and return DEFINITION.  */)
+  (register Lisp_Object symbol, Lisp_Object definition)
 {
   register Lisp_Object function;
   CHECK_SYMBOL (symbol);
@@ -757,6 +786,7 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
 
   return definition;
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("defalias", Fdefalias, Sdefalias, 2, 3, 0,
        doc: /* Set SYMBOL's function definition to DEFINITION.
@@ -798,23 +828,33 @@ The return value is undefined.  */)
       Ffset (symbol, definition);
   }
 
-/* Data type predicates.  */
-
-#ifdef HAVE_MODULES
-DEFUN ("user-ptrp", Fuser_ptrp, Suser_ptrp, 1, 1, 0,
-       doc: /* Return t if OBJECT is a module user pointer.  */)
-     (Lisp_Object object)
-{
-  if (USER_PTRP (object))
-    return Qt;
-  return Qnil;
+  if (!NILP (docstring))
+    Fput (symbol, Qfunction_documentation, docstring);
+  /* We used to return `definition', but now that `defun' and `defmacro' expand
+     to a call to `defalias', we return `symbol' for backward compatibility
+     (bug#11686).  */
+  return symbol;
 }
-#endif
 
-DEFUN ("module-function-p", Fmodule_function_p, Smodule_function_p, 1, 1, NULL,
-       doc: /* Return t if OBJECT is a function loaded from a dynamic module.  */
-       attributes: const)
-  (Lisp_Object object)
+#ifdef IGNORE_RUST_PORT
+DEFUN ("setplist", Fsetplist, Ssetplist, 2, 2, 0,
+       doc: /* Set SYMBOL's property list to NEWPLIST, and return NEWPLIST.  */)
+  (register Lisp_Object symbol, Lisp_Object newplist)
+{
+  CHECK_SYMBOL (symbol);
+  set_symbol_plist (symbol, newplist);
+  return newplist;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("subr-arity", Fsubr_arity, Ssubr_arity, 1, 1, 0,
+       doc: /* Return minimum and maximum number of args allowed for SUBR.
+SUBR must be a built-in function.
+The returned value is a pair (MIN . MAX).  MIN is the minimum number
+of args.  MAX is the maximum number or the symbol `many', for a
+function with `&rest' args, or `unevalled' for a special form.  */)
+  (Lisp_Object subr)
 {
   short minargs, maxargs;
   CHECK_SUBR (subr);
@@ -825,9 +865,20 @@ DEFUN ("module-function-p", Fmodule_function_p, Smodule_function_p, 1, 1, NULL,
 		: maxargs == UNEVALLED ? Qunevalled
 		:                        make_fixnum (maxargs));
 }
+#endif /* IGNORE_RUST_PORT */
 
-
-/* Extract and set components of symbols.  */
+#ifdef IGNORE_RUST_PORT
+DEFUN ("subr-name", Fsubr_name, Ssubr_name, 1, 1, 0,
+       doc: /* Return name of subroutine SUBR.
+SUBR must be a built-in function.  */)
+  (Lisp_Object subr)
+{
+  const char *name;
+  CHECK_SUBR (subr);
+  name = XSUBR (subr)->symbol_name;
+  return build_string (name);
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("interactive-form", Finteractive_form, Sinteractive_form, 1, 1, 0,
        doc: /* Return the interactive form of CMD or nil if none.
@@ -978,7 +1029,7 @@ do_symval_forwarding (lispfwd valcontents)
 /* Used to signal a user-friendly error when symbol WRONG is
    not a member of CHOICE, which should be a list of symbols.  */
 
-extern void
+-_Noreturn extern void
 wrong_choice (Lisp_Object choice, Lisp_Object wrong)
 {
   ptrdiff_t i = 0, len = list_length (choice);
@@ -1011,7 +1062,7 @@ wrong_choice (Lisp_Object choice, Lisp_Object wrong)
 /* Used to signal a user-friendly error if WRONG is not a number or
    integer/floating-point number outsize of inclusive MIN..MAX range.  */
 
-_Noreturn extern void
+-_Noreturn extern void
 wrong_range (Lisp_Object min, Lisp_Object max, Lisp_Object wrong)
 {
   AUTO_STRING (value_should_be_from, "Value should be from ");
@@ -1581,30 +1632,37 @@ default_value (Lisp_Object symbol)
       }
     default: emacs_abort ();
     }
-
-  if (EQ (operation, Qset_default))
-    operation = Qset;
-
-  for (Lisp_Object watchers = Fget (symbol, Qwatchers);
-       CONSP (watchers);
-       watchers = XCDR (watchers))
-    {
-      Lisp_Object watcher = XCAR (watchers);
-      /* Call subr directly to avoid gc.  */
-      if (SUBRP (watcher))
-        {
-          Lisp_Object args[] = { symbol, newval, operation, where };
-          funcall_subr (XSUBR (watcher), ARRAYELTS (args), args);
-        }
-      else
-        CALLN (Ffuncall, watcher, symbol, newval, operation, where);
-    }
-
-  unbind_to (count, Qnil);
 }
 
-
-/* Access or set a buffer-local symbol's default value.  */
+#ifdef IGNORE_RUST_PORT
+DEFUN ("default-boundp", Fdefault_boundp, Sdefault_boundp, 1, 1, 0,
+       doc: /* Return t if SYMBOL has a non-void default value.
+This is the value that is seen in buffers that do not have their own values
+for this variable.  */)
+  (Lisp_Object symbol)
+{
+  register Lisp_Object value;
+
+  value = default_value (symbol);
+  return (EQ (value, Qunbound) ? Qnil : Qt);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("default-value", Fdefault_value, Sdefault_value, 1, 1, 0,
+       doc: /* Return SYMBOL's default value.
+This is the value that is seen in buffers that do not have their own values
+for this variable.  The default value is meaningful for variables with
+local bindings in certain buffers.  */)
+  (Lisp_Object symbol)
+{
+  Lisp_Object value = default_value (symbol);
+  if (!EQ (value, Qunbound))
+    return value;
+
+  xsignal1 (Qvoid_variable, symbol);
+}
+#endif /* IGNORE_RUST_PORT */
 
 void
 set_default_internal (Lisp_Object symbol, Lisp_Object value,
@@ -2316,7 +2374,7 @@ bool-vector.  IDX starts at 0.  */)
 }
 
 /* Arithmetic functions */
-
+#ifdef IGNORE_RUST_PORT
 Lisp_Object
 arithcompare (Lisp_Object num1, Lisp_Object num2,
 	      enum Arith_Comparison comparison)
@@ -2437,70 +2495,85 @@ arithcompare (Lisp_Object num1, Lisp_Object num2,
     case ARITH_GRTR_OR_EQUAL:
       test = gt | eq;
       break;
-    default: emacs_abort ();
+
+    default:
+      eassume (false);
     }
 
-  if (sym->u.s.trapped_write == SYMBOL_TRAPPED_WRITE)
-    notify_variable_watchers (variable, Qnil, Qmakunbound, Fcurrent_buffer ());
-
-  /* Get rid of this buffer's alist element, if any.  */
-  XSETSYMBOL (variable, sym);	/* Propagate variable indirection.  */
-  tem = Fassq (variable, BVAR (current_buffer, local_var_alist));
-  if (!NILP (tem))
-    bset_local_var_alist
-      (current_buffer,
-       Fdelq (tem, BVAR (current_buffer, local_var_alist)));
-
-  /* If the symbol is set up with the current buffer's binding
-     loaded, recompute its value.  We have to do it now, or else
-     forwarded objects won't work right.  */
-  {
-    Lisp_Object buf; XSETBUFFER (buf, current_buffer);
-    if (EQ (buf, blv->where))
-      {
-	set_blv_where (blv, Qnil);
-	blv->found = 0;
-	find_symbol_value (variable);
-      }
-  }
-
-  return variable;
+  return test ? Qt : Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
-
-
-void
-aset_multibyte_string(register Lisp_Object array, EMACS_INT idxval, int c)
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object
+arithcompare_driver (ptrdiff_t nargs, Lisp_Object *args,
+                     enum Arith_Comparison comparison)
 {
-  ptrdiff_t idxval_byte, nbytes;
-  int prev_bytes, new_bytes;
-  unsigned char workbuf[MAX_MULTIBYTE_LENGTH], *p0 = workbuf, *p1;
-
-  nbytes = SBYTES (array);
-  idxval_byte = string_char_to_byte (array, idxval);
-  p1 = SDATA (array) + idxval_byte;
-  prev_bytes = BYTES_BY_CHAR_HEAD (*p1);
-  new_bytes = CHAR_STRING (c, p0);
-  if (prev_bytes != new_bytes)
-    {
-      /* We must relocate the string data.  */
-      ptrdiff_t nchars = SCHARS (array);
-      USE_SAFE_ALLOCA;
-      unsigned char *str = SAFE_ALLOCA (nbytes);
-
-      memcpy (str, SDATA (array), nbytes);
-      allocate_string_data (XSTRING (array), nchars,
-                            nbytes + new_bytes - prev_bytes);
-      memcpy (SDATA (array), str, idxval_byte);
-      p1 = SDATA (array) + idxval_byte;
-      memcpy (p1 + new_bytes, str + idxval_byte + prev_bytes,
-              nbytes - (idxval_byte + prev_bytes));
-      SAFE_FREE ();
-      clear_string_char_byte_cache ();
-    }
-  while (new_bytes--)
-    *p1++ = *p0++;
+  for (ptrdiff_t i = 1; i < nargs; i++)
+    if (NILP (arithcompare (args[i - 1], args[i], comparison)))
+      return Qnil;
+  return Qt;
 }
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("=", Feqlsign, Seqlsign, 1, MANY, 0,
+       doc: /* Return t if args, all numbers or markers, are equal.
+usage: (= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arithcompare_driver (nargs, args, ARITH_EQUAL);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("<", Flss, Slss, 1, MANY, 0,
+       doc: /* Return t if each arg (a number or marker), is less than the next arg.
+usage: (< NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arithcompare_driver (nargs, args, ARITH_LESS);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN (">", Fgtr, Sgtr, 1, MANY, 0,
+       doc: /* Return t if each arg (a number or marker) is greater than the next arg.
+usage: (> NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arithcompare_driver (nargs, args, ARITH_GRTR);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("<=", Fleq, Sleq, 1, MANY, 0,
+       doc: /* Return t if each arg (a number or marker) is less than or equal to the next.
+usage: (<= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arithcompare_driver (nargs, args, ARITH_LESS_OR_EQUAL);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN (">=", Fgeq, Sgeq, 1, MANY, 0,
+       doc: /* Return t if each arg (a number or marker) is greater than or equal to the next.
+usage: (>= NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
+  (ptrdiff_t nargs, Lisp_Object *args)
+{
+  return arithcompare_driver (nargs, args, ARITH_GRTR_OR_EQUAL);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("/=", Fneq, Sneq, 2, 2, 0,
+       doc: /* Return t if first arg is not equal to second arg.  Both must be numbers or markers.  */)
+  (register Lisp_Object num1, Lisp_Object num2)
+{
+  return arithcompare (num1, num2, ARITH_NOTEQUAL);
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* Convert the cons-of-integers, integer, or float value C to an
    unsigned value with maximum value MAX, where MAX is one less than a
@@ -2677,6 +2750,7 @@ If the base used is not 10, STRING is always parsed as an integer.  */)
   return NILP (val) ? make_fixnum (0) : val;
 }
 
+#ifdef IGNORE_RUST_PORT
 enum arithop
   {
     Aadd,
@@ -2687,12 +2761,16 @@ enum arithop
     Alogior,
     Alogxor
   };
+#endif /* IGNORE_RUST_PORT */
+#ifdef IGNORE_RUST_PORT
 static bool
 floating_point_op (enum arithop code)
 {
   return code <= Adiv;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 /* Return the result of applying the floating-point operation CODE to
    the NARGS arguments starting at ARGS.  If ARGNUM is positive,
    ARGNUM of the arguments were already consumed, yielding ACCUM.
@@ -2733,7 +2811,9 @@ floatop_arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
       next = XFLOATINT (val);
     }
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 /* Like floatop_arith_driver, except CODE might not be a floating-point
    operation, and NEXT is a Lisp float rather than a C double.  */
 
@@ -2746,6 +2826,7 @@ float_arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
   return floatop_arith_driver (code, nargs, args, argnum, accum,
 			       XFLOAT_DATA (next));
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Return the result of applying the arithmetic operation CODE to the
    NARGS arguments starting at ARGS.  If ARGNUM is positive, ARGNUM of
@@ -2800,6 +2881,7 @@ bignum_arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
     }
 }
 
+#ifdef IGNORE_RUST_PORT
 /* Return the result of applying the arithmetic operation CODE to the
    NARGS arguments starting at ARGS, with the first argument being the
    number VAL.  2 <= NARGS.  Check that the remaining arguments are
@@ -2861,8 +2943,9 @@ arith_driver (enum arithop code, ptrdiff_t nargs, Lisp_Object *args,
 	  ? float_arith_driver (code, nargs, args, argnum, accum, val)
 	  : bignum_arith_driver (code, nargs, args, argnum, accum, val));
 }
+#endif /* IGNORE_RUST_PORT */
 
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("+", Fplus, Splus, 0, MANY, 0,
        doc: /* Return sum of any number of arguments, which are numbers or markers.
 usage: (+ &rest NUMBERS-OR-MARKERS)  */)
@@ -2874,7 +2957,9 @@ usage: (+ &rest NUMBERS-OR-MARKERS)  */)
   CHECK_NUMBER_COERCE_MARKER (a);
   return nargs == 1 ? a : arith_driver (Aadd, nargs, args, a);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("-", Fminus, Sminus, 0, MANY, 0,
        doc: /* Negate number or subtract numbers or markers and return the result.
 With one arg, negates it.  With more than one arg,
@@ -2897,7 +2982,9 @@ usage: (- &optional NUMBER-OR-MARKER &rest MORE-NUMBERS-OR-MARKERS)  */)
     }
   return arith_driver (Asub, nargs, args, a);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("*", Ftimes, Stimes, 0, MANY, 0,
        doc: /* Return product of any number of arguments, which are numbers or markers.
 usage: (* &rest NUMBERS-OR-MARKERS)  */)
@@ -2909,7 +2996,9 @@ usage: (* &rest NUMBERS-OR-MARKERS)  */)
   CHECK_NUMBER_COERCE_MARKER (a);
   return nargs == 1 ? a : arith_driver (Amult, nargs, args, a);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("/", Fquo, Squo, 1, MANY, 0,
        doc: /* Divide number by divisors and return the result.
 With two or more arguments, return first argument divided by the rest.
@@ -2944,7 +3033,9 @@ usage: (/ NUMBER &rest DIVISORS)  */)
       return floatop_arith_driver (Adiv, nargs, args, 0, 0, XFLOATINT (a));
   return arith_driver (Adiv, nargs, args, a);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 /* Return NUM % DEN (or NUM mod DEN, if MODULO).  NUM and DEN must be
    integers.  */
 static Lisp_Object
@@ -2997,7 +3088,9 @@ integer_remainder (Lisp_Object num, Lisp_Object den, bool modulo)
 
   return make_integer_mpz ();
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("%", Frem, Srem, 2, 2, 0,
        doc: /* Return remainder of X divided by Y.
 Both must be integers or markers.  */)
@@ -3007,7 +3100,9 @@ Both must be integers or markers.  */)
   CHECK_INTEGER_COERCE_MARKER (y);
   return integer_remainder (x, y, false);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("mod", Fmod, Smod, 2, 2, 0,
        doc: /* Return X modulo Y.
 The result falls between zero (inclusive) and Y (exclusive).
@@ -3020,7 +3115,9 @@ Both X and Y must be numbers or markers.  */)
     return fmod_float (x, y);
   return integer_remainder (x, y, true);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 static Lisp_Object
 minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
 	       enum Arith_Comparison comparison)
@@ -3038,7 +3135,9 @@ minmax_driver (ptrdiff_t nargs, Lisp_Object *args,
     }
   return accum;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("max", Fmax, Smax, 1, MANY, 0,
        doc: /* Return largest of all the arguments (which must be numbers or markers).
 The value is always a number; markers are converted to numbers.
@@ -3047,7 +3146,9 @@ usage: (max NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 {
   return minmax_driver (nargs, args, ARITH_GRTR);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("min", Fmin, Smin, 1, MANY, 0,
        doc: /* Return smallest of all the arguments (which must be numbers or markers).
 The value is always a number; markers are converted to numbers.
@@ -3056,7 +3157,9 @@ usage: (min NUMBER-OR-MARKER &rest NUMBERS-OR-MARKERS)  */)
 {
   return minmax_driver (nargs, args, ARITH_LESS);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("logand", Flogand, Slogand, 0, MANY, 0,
        doc: /* Return bitwise-and of all the arguments.
 Arguments may be integers, or markers converted to integers.
@@ -3069,7 +3172,9 @@ usage: (logand &rest INTS-OR-MARKERS)  */)
   CHECK_INTEGER_COERCE_MARKER (a);
   return nargs == 1 ? a : arith_driver (Alogand, nargs, args, a);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("logior", Flogior, Slogior, 0, MANY, 0,
        doc: /* Return bitwise-or of all the arguments.
 Arguments may be integers, or markers converted to integers.
@@ -3082,7 +3187,9 @@ usage: (logior &rest INTS-OR-MARKERS)  */)
   CHECK_INTEGER_COERCE_MARKER (a);
   return nargs == 1 ? a : arith_driver (Alogior, nargs, args, a);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("logxor", Flogxor, Slogxor, 0, MANY, 0,
        doc: /* Return bitwise-exclusive-or of all the arguments.
 Arguments may be integers, or markers converted to integers.
@@ -3095,7 +3202,9 @@ usage: (logxor &rest INTS-OR-MARKERS)  */)
   CHECK_INTEGER_COERCE_MARKER (a);
   return nargs == 1 ? a : arith_driver (Alogxor, nargs, args, a);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("logcount", Flogcount, Slogcount, 1, 1, 0,
        doc: /* Return population count of VALUE.
 This is the number of one bits in the two's complement representation
@@ -3124,6 +3233,7 @@ representation.  */)
 		      ? count_one_bits_l (v)
 		      : count_one_bits_ll (v));
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("ash", Fash, Sash, 2, 2, 0,
        doc: /* Return VALUE with its bits shifted left by COUNT.
@@ -3174,6 +3284,7 @@ In this case, the sign bit is duplicated.  */)
   return make_integer_mpz ();
 }
 
+#ifdef IGNORE_RUST_PORT
 /* Return X ** Y as an integer.  X and Y must be integers, and Y must
    be nonnegative.  */
 
@@ -3207,7 +3318,9 @@ expt_integer (Lisp_Object x, Lisp_Object y)
   emacs_mpz_pow_ui (mpz[0], *bignum_integer (&mpz[0], x), exp);
   return make_integer_mpz ();
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("1+", Fadd1, Sadd1, 1, 1, 0,
        doc: /* Return NUMBER plus one.  NUMBER may be a number or a marker.
 Markers are converted to integers.  */)
@@ -3222,7 +3335,9 @@ Markers are converted to integers.  */)
   mpz_add_ui (mpz[0], *xbignum_val (number), 1);
   return make_integer_mpz ();
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("1-", Fsub1, Ssub1, 1, 1, 0,
        doc: /* Return NUMBER minus one.  NUMBER may be a number or a marker.
 Markers are converted to integers.  */)
@@ -3237,7 +3352,9 @@ Markers are converted to integers.  */)
   mpz_sub_ui (mpz[0], *xbignum_val (number), 1);
   return make_integer_mpz ();
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
        doc: /* Return the bitwise complement of NUMBER.  NUMBER must be an integer.  */)
   (register Lisp_Object number)
@@ -3248,7 +3365,9 @@ DEFUN ("lognot", Flognot, Slognot, 1, 1, 0,
   mpz_com (mpz[0], *xbignum_val (number));
   return make_integer_mpz ();
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("byteorder", Fbyteorder, Sbyteorder, 0, 0, 0,
        doc: /* Return the byteorder for the machine.
 Returns 66 (ASCII uppercase B) for big endian machines or 108 (ASCII
@@ -3261,7 +3380,9 @@ lowercase l) for small endian machines.  */
 
   return make_fixnum (order);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 /* Because we round up the bool vector allocate size to word_size
    units, we can safely read past the "end" of the vector in the
    operations below.  These extra bits are always zero.  */
@@ -3271,6 +3392,52 @@ bool_vector_spare_mask (EMACS_INT nr_bits)
 {
   return (((bits_word) 1) << (nr_bits % BITS_PER_BITS_WORD)) - 1;
 }
+#endif /* IGNORE_RUST_PORT */
+
+/* Info about unsigned long long, falling back on unsigned long
+   if unsigned long long is not available.  */
+
+#if HAVE_UNSIGNED_LONG_LONG_INT && defined ULLONG_WIDTH
+enum { ULL_WIDTH = ULLONG_WIDTH };
+# define ULL_MAX ULLONG_MAX
+#else
+enum { ULL_WIDTH = ULONG_WIDTH };
+# define ULL_MAX ULONG_MAX
+# define count_one_bits_ll count_one_bits_l
+# define count_trailing_zeros_ll count_trailing_zeros_l
+#endif
+
+/* Shift VAL right by the width of an unsigned long long.
+   ULL_WIDTH must be less than BITS_PER_BITS_WORD.  */
+
+static bits_word
+shift_right_ull (bits_word w)
+{
+  /* Pacify bogus GCC warning about shift count exceeding type width.  */
+  int shift = ULL_WIDTH - BITS_PER_BITS_WORD < 0 ? ULL_WIDTH : 0;
+  return w >> shift;
+}
+
+#ifdef IGNORE_RUST_PORT
+/* Return the number of 1 bits in W.  */
+
+static int
+count_one_bits_word (bits_word w)
+{
+  if (BITS_WORD_MAX <= UINT_MAX)
+    return count_one_bits (w);
+  else if (BITS_WORD_MAX <= ULONG_MAX)
+    return count_one_bits_l (w);
+  else
+    {
+      int i = 0, count = 0;
+      while (count += count_one_bits_ll (w),
+	     (i += ULL_WIDTH) < BITS_PER_BITS_WORD)
+	w = shift_right_ull (w);
+      return count;
+    }
+}
+#endif /* IGNORE_RUST_PORT */
 
 enum bool_vector_op { bool_vector_exclusive_or,
                       bool_vector_union,
@@ -3278,9 +3445,7 @@ enum bool_vector_op { bool_vector_exclusive_or,
                       bool_vector_set_difference,
                       bool_vector_subsetp };
 
-Lisp_Object bool_vector_binop_driver (Lisp_Object, Lisp_Object, Lisp_Object, enum bool_vector_op);
-
-Lisp_Object
+static Lisp_Object
 bool_vector_binop_driver (Lisp_Object a,
                           Lisp_Object b,
                           Lisp_Object dest,
@@ -3380,6 +3545,57 @@ bool_vector_binop_driver (Lisp_Object a,
   return dest;
 }
 
+/* PRECONDITION must be true.  Return VALUE.  This odd construction
+   works around a bogus GCC diagnostic "shift count >= width of type".  */
+
+static int
+pre_value (bool precondition, int value)
+{
+  eassume (precondition);
+  return precondition ? value : 0;
+}
+
+#ifdef IGNORE_RUST_PORT
+/* Compute the number of trailing zero bits in val.  If val is zero,
+   return the number of bits in val.  */
+static int
+count_trailing_zero_bits (bits_word val)
+{
+  if (BITS_WORD_MAX == UINT_MAX)
+    return count_trailing_zeros (val);
+  if (BITS_WORD_MAX == ULONG_MAX)
+    return count_trailing_zeros_l (val);
+  if (BITS_WORD_MAX == ULL_MAX)
+    return count_trailing_zeros_ll (val);
+
+  /* The rest of this code is for the unlikely platform where bits_word differs
+     in width from unsigned int, unsigned long, and unsigned long long.  */
+  val |= ~ BITS_WORD_MAX;
+  if (BITS_WORD_MAX <= UINT_MAX)
+    return count_trailing_zeros (val);
+  if (BITS_WORD_MAX <= ULONG_MAX)
+    return count_trailing_zeros_l (val);
+  else
+    {
+      int count;
+      for (count = 0;
+	   count < BITS_PER_BITS_WORD - ULL_WIDTH;
+	   count += ULL_WIDTH)
+	{
+	  if (val & ULL_MAX)
+	    return count + count_trailing_zeros_ll (val);
+	  val = shift_right_ull (val);
+	}
+
+      if (BITS_PER_BITS_WORD % ULL_WIDTH != 0
+	  && BITS_WORD_MAX == (bits_word) -1)
+	val |= (bits_word) 1 << pre_value (ULONG_MAX < BITS_WORD_MAX,
+					   BITS_PER_BITS_WORD % ULL_WIDTH);
+      return count + count_trailing_zeros_ll (val);
+    }
+}
+#endif /* IGNORE_RUST_PORT */
+
 static bits_word
 bits_word_to_host_endian (bits_word val)
 {
@@ -3405,6 +3621,69 @@ bits_word_to_host_endian (bits_word val)
   }
 #endif
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("bool-vector-exclusive-or", Fbool_vector_exclusive_or,
+       Sbool_vector_exclusive_or, 2, 3, 0,
+       doc: /* Return A ^ B, bitwise exclusive or.
+If optional third argument C is given, store result into C.
+A, B, and C must be bool vectors of the same length.
+Return the destination vector if it changed or nil otherwise.  */)
+  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
+{
+  return bool_vector_binop_driver (a, b, c, bool_vector_exclusive_or);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("bool-vector-union", Fbool_vector_union,
+       Sbool_vector_union, 2, 3, 0,
+       doc: /* Return A | B, bitwise or.
+If optional third argument C is given, store result into C.
+A, B, and C must be bool vectors of the same length.
+Return the destination vector if it changed or nil otherwise.  */)
+  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
+{
+  return bool_vector_binop_driver (a, b, c, bool_vector_union);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("bool-vector-intersection", Fbool_vector_intersection,
+       Sbool_vector_intersection, 2, 3, 0,
+       doc: /* Return A & B, bitwise and.
+If optional third argument C is given, store result into C.
+A, B, and C must be bool vectors of the same length.
+Return the destination vector if it changed or nil otherwise.  */)
+  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
+{
+  return bool_vector_binop_driver (a, b, c, bool_vector_intersection);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("bool-vector-set-difference", Fbool_vector_set_difference,
+       Sbool_vector_set_difference, 2, 3, 0,
+       doc: /* Return A &~ B, set difference.
+If optional third argument C is given, store result into C.
+A, B, and C must be bool vectors of the same length.
+Return the destination vector if it changed or nil otherwise.  */)
+  (Lisp_Object a, Lisp_Object b, Lisp_Object c)
+{
+  return bool_vector_binop_driver (a, b, c, bool_vector_set_difference);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("bool-vector-subsetp", Fbool_vector_subsetp,
+       Sbool_vector_subsetp, 2, 2, 0,
+       doc: /* Return t if every t value in A is also t in B, nil otherwise.
+A and B must be bool vectors of the same length.  */)
+  (Lisp_Object a, Lisp_Object b)
+{
+  return bool_vector_binop_driver (a, b, b, bool_vector_subsetp);
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("bool-vector-not", Fbool_vector_not,
        Sbool_vector_not, 1, 2, 0,
@@ -3467,7 +3746,7 @@ value from A's length.  */)
   adata = bool_vector_data (a);
 
   for (i = 0; i < nwords; i++)
-    count += rust_count_one_bits (adata[i]);
+    count += count_one_bits_word (adata[i]);
 
   return make_fixnum (count);
 }
@@ -3548,13 +3827,12 @@ A is a bool vector, B is t or nil, and I is an index into A.  */)
   return make_fixnum (count);
 }
 
-void rust_init_syms(void);
-
 
 void
 syms_of_data (void)
 {
   Lisp_Object error_tail, arith_tail;
+
   rust_init_syms();
 
   DEFSYM (Qquote, "quote");
@@ -3728,7 +4006,40 @@ syms_of_data (void)
   DEFSYM (Qinteractive_form, "interactive-form");
   DEFSYM (Qdefalias_fset_function, "defalias-fset-function");
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sindirect_variable);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sinteractive_form);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Seq);
+  defsubr (&Snull);
+  defsubr (&Stype_of);
+  defsubr (&Slistp);
+  defsubr (&Snlistp);
+  defsubr (&Sconsp);
+  defsubr (&Satom);
+  defsubr (&Sintegerp);
+  defsubr (&Sinteger_or_marker_p);
+  defsubr (&Snumberp);
+  defsubr (&Snumber_or_marker_p);
+  defsubr (&Sfloatp);
+  defsubr (&Snatnump);
+  defsubr (&Ssymbolp);
+  defsubr (&Skeywordp);
+  defsubr (&Sstringp);
+  defsubr (&Smultibyte_string_p);
+  defsubr (&Svectorp);
+  defsubr (&Srecordp);
+  defsubr (&Schar_table_p);
+  defsubr (&Svector_or_char_table_p);
+  defsubr (&Sbool_vector_p);
+  defsubr (&Sarrayp);
+  defsubr (&Ssequencep);
+  defsubr (&Sbufferp);
+  defsubr (&Smarkerp);
+  defsubr (&Ssubrp);
+  defsubr (&Sbyte_code_function_p);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Smodule_function_p);
   defsubr (&Schar_or_string_p);
   defsubr (&Sthreadp);
@@ -3785,11 +4096,28 @@ syms_of_data (void)
   defsubr (&Slogxor);
   defsubr (&Slogcount);
   defsubr (&Sash);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sadd1);
+  defsubr (&Ssub1);
+  defsubr (&Slognot);
+  defsubr (&Sbyteorder);
+  defsubr (&Ssubr_arity);
+  defsubr (&Ssubr_name);
+#endif /* IGNORE_RUST_PORT */
 #ifdef HAVE_MODULES
   defsubr (&Suser_ptrp);
 #endif
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbool_vector_exclusive_or);
+  defsubr (&Sbool_vector_union);
+  defsubr (&Sbool_vector_intersection);
+  defsubr (&Sbool_vector_set_difference);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sbool_vector_not);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbool_vector_subsetp);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sbool_vector_count_consecutive);
   defsubr (&Sbool_vector_count_population);
 
@@ -3812,4 +4140,9 @@ This variable cannot be set; trying to do so will signal an error.  */);
   DEFSYM (Qunlet, "unlet");
   DEFSYM (Qset, "set");
   DEFSYM (Qset_default, "set-default");
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sadd_variable_watcher);
+  defsubr (&Sremove_variable_watcher);
+  defsubr (&Sget_variable_watchers);
+#endif /* IGNORE_RUST_PORT */
 }

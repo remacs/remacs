@@ -708,8 +708,7 @@ extern void decode_coding_object (struct coding_system *,
                                   ptrdiff_t, ptrdiff_t, Lisp_Object);
 extern void encode_coding_object (struct coding_system *,
                                   Lisp_Object, ptrdiff_t, ptrdiff_t,
-				  ptrdiff_t, ptrdiff_t, Lisp_Object);
-
+                                  ptrdiff_t, ptrdiff_t, Lisp_Object);
 /* Defined in this file.  */
 INLINE int surrogates_to_codepoint (int, int);
 

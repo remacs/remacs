@@ -1787,6 +1787,27 @@ for the composition.  See `compose-region' for more details.  */)
   return Qnil;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("compose-string-internal", Fcompose_string_internal,
+       Scompose_string_internal, 3, 5, 0,
+       doc: /* Internal use only.
+
+Compose text between indices START and END of STRING, where
+START and END are treated as in `substring'.  Optional 4th
+and 5th arguments are COMPONENTS and MODIFICATION-FUNC
+for the composition.  See `compose-string' for more details.  */)
+  (Lisp_Object string, Lisp_Object start, Lisp_Object end,
+   Lisp_Object components, Lisp_Object modification_func)
+{
+  ptrdiff_t from, to;
+
+  CHECK_STRING (string);
+  validate_subarray (string, start, end, SCHARS (string), &from, &to);
+  compose_text (from, to, components, modification_func, string);
+  return string;
+}
+#endif /* IGNORE_RUST_PORT */
+
 DEFUN ("find-composition-internal", Ffind_composition_internal,
        Sfind_composition_internal, 4, 4, 0,
        doc: /* Internal use only.
@@ -1981,6 +2002,9 @@ See also the documentation of `auto-composition-mode'.  */);
   Vcomposition_function_table = Fmake_char_table (Qnil, Qnil);
 
   defsubr (&Scompose_region_internal);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scompose_string_internal);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sfind_composition_internal);
   defsubr (&Scomposition_get_gstring);
   defsubr (&Sclear_composition_cache);

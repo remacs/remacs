@@ -33,15 +33,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #define KEYMAPP(m) (!NILP (get_keymap (m, false, false)))
 extern Lisp_Object current_global_map;
-extern void set_where_is_cache(Lisp_Object);
-extern Lisp_Object get_where_is_cache(void);
-extern void set_where_is_cache_keymaps(Lisp_Object);
-extern Lisp_Object get_where_is_cache_keymaps(void);
 extern char *push_key_description (EMACS_INT, char *);
 extern Lisp_Object access_keymap (Lisp_Object, Lisp_Object, bool, bool, bool);
 extern Lisp_Object get_keymap (Lisp_Object, bool, bool);
-extern bool keymap_memberp(Lisp_Object, Lisp_Object);
-extern Lisp_Object keymap_parent (Lisp_Object, bool);
 extern void describe_map_tree (Lisp_Object, bool, Lisp_Object, Lisp_Object,
 			       const char *, bool, bool, bool, bool);
 extern ptrdiff_t current_minor_maps (Lisp_Object **, Lisp_Object **);
@@ -57,22 +51,5 @@ extern void map_keymap (Lisp_Object, map_keymap_function_t, Lisp_Object,
 extern void map_keymap_canonical (Lisp_Object map,
 				  map_keymap_function_t fun,
 				  Lisp_Object args, void *data);
-extern void
-map_keymap_call (Lisp_Object key, Lisp_Object val, Lisp_Object fun, void *dummy);
-extern Lisp_Object
-map_keymap_internal (Lisp_Object map,
-		     map_keymap_function_t fun,
-		     Lisp_Object args,
-		     void *data);
-extern void describe_vector (Lisp_Object, Lisp_Object, Lisp_Object,
-                             void (*) (Lisp_Object, Lisp_Object), bool,
-                             Lisp_Object, Lisp_Object, bool, bool);
 
-extern Lisp_Object
-copy_keymap_item (Lisp_Object elt);
-extern void apropos_accum (Lisp_Object symbol, Lisp_Object string);
-
-/* Apropos - finding all symbols whose names match a regexp.		*/
-extern Lisp_Object apropos_predicate;
-extern Lisp_Object apropos_accumulate;
 #endif

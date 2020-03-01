@@ -24,7 +24,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #ifdef USE_GTK
 
 #include <gtk/gtk.h>
-#include "lwlib-widget.h"
+#include "../lwlib/lwlib-widget.h"
 #include "xterm.h"
 
 /* Minimum and maximum values used for GTK scroll bars  */

@@ -99,6 +99,10 @@ extern void free (void *ptr);
 
 /* Allocate SIZE bytes allocated to ALIGNMENT bytes.  */
 extern void *aligned_alloc (size_t, size_t);
+#ifdef MSDOS
+extern void *memalign (size_t, size_t);
+extern int posix_memalign (void **, size_t, size_t);
+#endif
 
 /* The allocator divides the heap into blocks of fixed size; large
    requests receive one or more whole blocks, and small requests

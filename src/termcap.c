@@ -30,6 +30,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include "lisp.h"
 #include "tparam.h"
+#ifdef MSDOS
+#include "msdos.h"
+#endif
 
 /* BUFSIZE is the initial size allocated for the buffer
    for reading the termcap file.
@@ -321,7 +324,11 @@ static bool name_match (char *, char *);
 static bool
 valid_filename_p (char *fn)
 {
+#ifdef MSDOS
+  return *fn == '/' || fn[1] == ':';
+#else
   return *fn == '/';
+#endif
 }
 
 /* Find the termcap entry data for terminal type NAME
@@ -374,6 +381,12 @@ tgetent (char *bp, const char *name)
   termcap_name = getenv ("TERMCAP");
   if (termcap_name && *termcap_name == '\0')
     termcap_name = NULL;
+#if defined (MSDOS) && !defined (TEST)
+  if (termcap_name && (*termcap_name == '\\'
+		       || *termcap_name == '/'
+		       || termcap_name[1] == ':'))
+    dostounix_filename (termcap_name);
+#endif
 
   filep = termcap_name && valid_filename_p (termcap_name);
 

@@ -178,7 +178,9 @@ static ptrdiff_t find_start_begv;
 static modiff_count find_start_modiff;
 
 
-Lisp_Object scan_lists (EMACS_INT, EMACS_INT, EMACS_INT, bool);
+static Lisp_Object skip_chars (bool, Lisp_Object, Lisp_Object, bool);
+static Lisp_Object skip_syntaxes (bool, Lisp_Object, Lisp_Object);
+static Lisp_Object scan_lists (EMACS_INT, EMACS_INT, EMACS_INT, bool);
 static void scan_sexps_forward (struct lisp_parse_state *,
                                 ptrdiff_t, ptrdiff_t, ptrdiff_t, EMACS_INT,
                                 bool, int);
@@ -186,6 +188,13 @@ static void internalize_parse_state (Lisp_Object, struct lisp_parse_state *);
 static bool in_classes (int, Lisp_Object);
 static void parse_sexp_propertize (ptrdiff_t charpos);
 
+/* This setter is used only in this file, so it can be private.  */
+static void
+bset_syntax_table (struct buffer *b, Lisp_Object val)
+{
+  b->syntax_table_ = val;
+}
+
 /* Whether the syntax of the character C has the prefix flag set.  */
 bool
 syntax_prefix_flag_p (int c)
@@ -967,6 +976,94 @@ back_comment (ptrdiff_t from, ptrdiff_t from_byte, ptrdiff_t stop,
 
   return from != comment_end;
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("syntax-table-p", Fsyntax_table_p, Ssyntax_table_p, 1, 1, 0,
+       doc: /* Return t if OBJECT is a syntax table.
+Currently, any char-table counts as a syntax table.  */)
+  (Lisp_Object object)
+{
+  if (CHAR_TABLE_P (object)
+      && EQ (XCHAR_TABLE (object)->purpose, Qsyntax_table))
+    return Qt;
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+static void
+check_syntax_table (Lisp_Object obj)
+{
+  CHECK_TYPE (CHAR_TABLE_P (obj) && EQ (XCHAR_TABLE (obj)->purpose, Qsyntax_table),
+	      Qsyntax_table_p, obj);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("syntax-table", Fsyntax_table, Ssyntax_table, 0, 0, 0,
+       doc: /* Return the current syntax table.
+This is the one specified by the current buffer.  */)
+  (void)
+{
+  return BVAR (current_buffer, syntax_table);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("standard-syntax-table", Fstandard_syntax_table,
+   Sstandard_syntax_table, 0, 0, 0,
+       doc: /* Return the standard syntax table.
+This is the one used for new buffers.  */)
+  (void)
+{
+  return Vstandard_syntax_table;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("copy-syntax-table", Fcopy_syntax_table, Scopy_syntax_table, 0, 1, 0,
+       doc: /* Construct a new syntax table and return it.
+It is a copy of the TABLE, which defaults to the standard syntax table.  */)
+  (Lisp_Object table)
+{
+  Lisp_Object copy;
+
+  if (!NILP (table))
+    check_syntax_table (table);
+  else
+    table = Vstandard_syntax_table;
+
+  copy = Fcopy_sequence (table);
+
+  /* Only the standard syntax table should have a default element.
+     Other syntax tables should inherit from parents instead.  */
+  set_char_table_defalt (copy, Qnil);
+
+  /* Copied syntax tables should all have parents.
+     If we copied one with no parent, such as the standard syntax table,
+     use the standard syntax table as the copy's parent.  */
+  if (NILP (XCHAR_TABLE (copy)->parent))
+    Fset_char_table_parent (copy, Vstandard_syntax_table);
+  return copy;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("set-syntax-table", Fset_syntax_table, Sset_syntax_table, 1, 1, 0,
+       doc: /* Select a new syntax table for the current buffer.
+One argument, a syntax table.  */)
+  (Lisp_Object table)
+{
+  int idx;
+  check_syntax_table (table);
+  bset_syntax_table (current_buffer, table);
+  /* Indicate that this buffer now has a specified syntax table.  */
+  idx = PER_BUFFER_VAR_IDX (syntax_table);
+  SET_PER_BUFFER_VALUE_P (current_buffer, idx, 1);
+  return table;
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Convert a letter which signifies a syntax code
  into the code it signifies.
  This is used by modify-syntax-entry, and other things.  */
@@ -3615,6 +3712,9 @@ init_syntax_once (void)
 void
 syms_of_syntax (void)
 {
+#ifdef IGNORE_RUST_PORT
+  DEFSYM (Qsyntax_table_p, "syntax-table-p");
+#endif /* IGNORE_RUST_PORT */
   DEFSYM (Qsyntax_ppss, "syntax-ppss");
   DEFVAR_LISP ("comment-use-syntax-ppss",
 	       Vcomment_use_syntax_ppss,
@@ -3687,13 +3787,35 @@ In both cases, LIMIT bounds the search. */);
   DEFSYM (Qcomment_end_can_be_escaped, "comment-end-can-be-escaped");
   Fmake_variable_buffer_local (Qcomment_end_can_be_escaped);
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Ssyntax_table_p);
+  defsubr (&Ssyntax_table);
+  defsubr (&Sstandard_syntax_table);
+  defsubr (&Scopy_syntax_table);
+  defsubr (&Sset_syntax_table);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Schar_syntax);
   defsubr (&Smatching_paren);
   defsubr (&Sstring_to_syntax);
   defsubr (&Smodify_syntax_entry);
   defsubr (&Sinternal_describe_syntax_value);
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sforward_word);
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sskip_chars_forward);
+  defsubr (&Sskip_chars_backward);
+  defsubr (&Sskip_syntax_forward);
+  defsubr (&Sskip_syntax_backward);
+#endif /* IGNORE_RUST_PORT */
+
   defsubr (&Sforward_comment);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sscan_lists);
+  defsubr (&Sscan_sexps);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sbackward_prefix_chars);
   defsubr (&Sparse_partial_sexp);
 }

@@ -585,6 +585,18 @@ form, use the `describe-text-properties' command.  */)
   return i->plist;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("get-text-property", Fget_text_property, Sget_text_property, 2, 3, 0,
+       doc: /* Return the value of POSITION's property PROP, in OBJECT.
+OBJECT should be a buffer or a string; if omitted or nil, it defaults
+to the current buffer.
+If POSITION is at the end of OBJECT, the value is nil.  */)
+  (Lisp_Object position, Lisp_Object prop, Lisp_Object object)
+{
+  return textget (Ftext_properties_at (position, object), prop);
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Return the value of char's property PROP, in OBJECT at POSITION.
    OBJECT is optional and defaults to the current buffer.
    If OVERLAY is non-0, then in the case that the returned property is from
@@ -654,6 +666,22 @@ get_char_property_and_overlay (Lisp_Object position, register Lisp_Object prop, 
      simpler case.  */
   return Fget_text_property (position, prop, object);
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("get-char-property", Fget_char_property, Sget_char_property, 2, 3, 0,
+       doc: /* Return the value of POSITION's property PROP, in OBJECT.
+Both overlay properties and text properties are checked.
+OBJECT is optional and defaults to the current buffer.
+If POSITION is at the end of OBJECT, the value is nil.
+If OBJECT is a buffer, then overlay properties are considered as well as
+text properties.
+If OBJECT is a window, then that window's buffer is used, but window-specific
+overlays are considered only if they are associated with OBJECT.  */)
+  (Lisp_Object position, Lisp_Object prop, Lisp_Object object)
+{
+  return get_char_property_and_overlay (position, prop, object, 0);
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("get-char-property-and-overlay", Fget_char_property_and_overlay,
        Sget_char_property_and_overlay, 2, 3, 0,
@@ -1288,6 +1316,21 @@ markers).  If OBJECT is a string, START and END are 0-based indices into it.  */
   return Qnil;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("set-text-properties", Fset_text_properties,
+       Sset_text_properties, 3, 4, 0,
+       doc: /* Completely replace properties of text from START to END.
+The third argument PROPERTIES is the new property list.
+If the optional fourth argument OBJECT is a buffer (or nil, which means
+the current buffer), START and END are buffer positions (integers or
+markers).  If OBJECT is a string, START and END are 0-based indices into it.
+If PROPERTIES is nil, the effect is to remove all properties from
+the designated part of OBJECT.  */)
+  (Lisp_Object start, Lisp_Object end, Lisp_Object properties, Lisp_Object object)
+{
+  return set_text_properties (start, end, properties, object, Qt);
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("add-face-text-property", Fadd_face_text_property,
        Sadd_face_text_property, 3, 5, 0,
@@ -2389,6 +2432,10 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
   DEFSYM (Qpoint_entered, "point-entered");
 
   defsubr (&Stext_properties_at);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sget_text_property);
+  defsubr (&Sget_char_property);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sget_char_property_and_overlay);
   defsubr (&Snext_char_property_change);
   defsubr (&Sprevious_char_property_change);
@@ -2400,6 +2447,9 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
   defsubr (&Sprevious_single_property_change);
   defsubr (&Sadd_text_properties);
   defsubr (&Sput_text_property);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sset_text_properties);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sadd_face_text_property);
   defsubr (&Sremove_text_properties);
   defsubr (&Sremove_list_of_text_properties);

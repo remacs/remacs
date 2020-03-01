@@ -231,11 +231,16 @@ struct frame
   /* Number of elements in `menu_bar_vector' that have meaningful data.  */
   int menu_bar_items_used;
 
-#if defined (HAVE_NTGUI)
+#if defined (USE_X_TOOLKIT) || defined (HAVE_NTGUI)
   /* A buffer to hold the frame's name.  Since this is used by the
      window system toolkit, we can't use the Lisp string's pointer
      (`name', above) because it might get relocated.  */
   char *namebuf;
+#endif
+
+#ifdef USE_X_TOOLKIT
+  /* Used to pass geometry parameters to toolkit functions.  */
+  char *shell_position;
 #endif
 
   /* Glyph pool and matrix.  */
@@ -639,20 +644,10 @@ struct frame
 
 /* Most code should use these functions to set Lisp fields in struct frame.  */
 
-INLINE Lisp_Object
-fget_buffer_list (struct frame *f)
-{
-  return f->buffer_list;
-}
 INLINE void
 fset_buffer_list (struct frame *f, Lisp_Object val)
 {
   f->buffer_list = val;
-}
-INLINE Lisp_Object
-fget_buried_buffer_list (struct frame *f)
-{
-  return f->buried_buffer_list;
 }
 INLINE void
 fset_buried_buffer_list (struct frame *f, Lisp_Object val)
@@ -696,6 +691,13 @@ fset_menu_bar_vector (struct frame *f, Lisp_Object val)
 {
   f->menu_bar_vector = val;
 }
+#if defined (HAVE_X_WINDOWS) && ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
+INLINE void
+fset_menu_bar_window (struct frame *f, Lisp_Object val)
+{
+  f->menu_bar_window = val;
+}
+#endif
 INLINE void
 fset_name (struct frame *f, Lisp_Object val)
 {
@@ -827,6 +829,11 @@ default_pixels_per_inch_y (void)
 #define FRAME_W32_P(f) false
 #else
 #define FRAME_W32_P(f) ((f)->output_method == output_w32)
+#endif
+#ifndef MSDOS
+#define FRAME_MSDOS_P(f) false
+#else
+#define FRAME_MSDOS_P(f) ((f)->output_method == output_msdos_raw)
 #endif
 #ifndef HAVE_NS
 #define FRAME_NS_P(f) false
@@ -1339,7 +1346,7 @@ INLINE bool
 window_system_available (struct frame *f)
 {
 #ifdef HAVE_WINDOW_SYSTEM
-  return f ? FRAME_WINDOW_P (f) : display_available ();
+  return f ? FRAME_WINDOW_P (f) || FRAME_MSDOS_P (f) : display_available ();
 #else
   return false;
 #endif
@@ -1598,7 +1605,7 @@ FRAME_BOTTOM_DIVIDER_WIDTH (struct frame *f)
 #ifdef HAVE_WINDOW_SYSTEM
 
 /* The class of this X application.  */
-#define EMACS_CLASS "Remacs"
+#define EMACS_CLASS "Emacs"
 
 extern void gui_set_frame_parameters (struct frame *, Lisp_Object);
 extern void gui_set_fullscreen (struct frame *, Lisp_Object, Lisp_Object);
@@ -1640,11 +1647,6 @@ extern void frame_set_mouse_pixel_position (struct frame *f, int pix_x, int pix_
 extern void free_frame_menubar (struct frame *);
 extern bool frame_ancestor_p (struct frame *af, struct frame *df);
 extern enum internal_border_part frame_internal_border_part (struct frame *f, int x, int y);
-
-int fget_internal_border_width(const struct frame *);
-Lisp_Object fget_minibuffer_window(const struct frame *);
-Lisp_Object fget_root_window(const struct frame *);
-struct terminal * fget_terminal(const struct frame *);
 
 #if defined HAVE_X_WINDOWS
 extern void x_wm_set_icon_position (struct frame *, int, int);
@@ -1701,8 +1703,6 @@ extern Lisp_Object make_monitor_attribute_list (struct MonitorInfo *monitors,
 
 #endif /* HAVE_WINDOW_SYSTEM */
 
-extern Lisp_Object
-candidate_frame (Lisp_Object candidate, Lisp_Object frame, Lisp_Object minibuf);
 
 INLINE_HEADER_END
 
@@ -1712,8 +1712,5 @@ INLINE_HEADER_END
 #if ! USE_HORIZONTAL_SCROLL_BARS && GNUC_PREREQ (4, 6, 0)
 # pragma GCC diagnostic ignored "-Wsuggest-attribute=const"
 #endif
-
-extern bool other_frames (struct frame *f, bool invisible, bool force);
-extern void check_minibuf_window (Lisp_Object frame, int select);
 
 #endif /* not EMACS_FRAME_H */

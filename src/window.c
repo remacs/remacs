@@ -56,6 +56,9 @@ static bool foreach_window_1 (struct window *,
 static bool window_resize_check (struct window *, bool);
 static void window_resize_apply (struct window *, bool);
 static void select_window_1 (Lisp_Object, bool);
+#ifdef IGNORE_RUST_PORT
+static void run_window_configuration_change_hook (struct frame *);
+#endif /* IGNORE_RUST_PORT */
 
 static struct window *set_window_fringes (struct window *, Lisp_Object,
 					  Lisp_Object, Lisp_Object,
@@ -128,6 +131,14 @@ wset_dedicated (struct window *w, Lisp_Object val)
 {
   w->dedicated = val;
 }
+
+#ifdef IGNORE_RUST_PORT
+static void
+wset_display_table (struct window *w, Lisp_Object val)
+{
+  w->display_table = val;
+}
+#endif /* IGNORE_RUST_PORT */
 
 static void
 wset_new_normal (struct window *w, Lisp_Object val)
@@ -208,56 +219,18 @@ wset_combination (struct window *w, bool horflag, Lisp_Object val)
     w->horizontal = horflag;
 }
 
-struct glyph_matrix*
-wget_current_matrix(const struct window *w)
+void
+wset_update_mode_line (struct window *w)
 {
   /* If this window is the selected window on its frame, set the
      global variable update_mode_lines, so that gui_consider_frame_title
      will consider this frame's title for redisplay.  */
   Lisp_Object fselected_window = XFRAME (WINDOW_FRAME (w))->selected_window;
 
-int
-wget_mode_line_height(const struct window *w)
-{
-  return w->mode_line_height;
-}
-
-Lisp_Object
-wget_parent(struct window *w)
-{
-  return w->parent;
-}
-
-int
-wget_pixel_height(struct window *w)
-{
-  return w->pixel_height;
-}
-
-bool
-wget_pseudo_window_p(struct window *w)
-{
-  return WINDOW_PSEUDO_P(w);
-}
-
-/* True if W is a menu bar window.  */
-bool
-window_menu_bar_p(struct window *W)
-{
-/* No menu bar windows if X toolkit is in use.  */
-  return false;
-}
-
-/* True if W is a tool bar window.  */
-bool
-window_tool_bar_p(struct window *W)
-{
-#if defined (HAVE_WINDOW_SYSTEM) && ! defined (USE_GTK) && ! defined (HAVE_NS)
-  return (WINDOWP (WINDOW_XFRAME (W)->tool_bar_window)
-          && (W) == XWINDOW (WINDOW_XFRAME (W)->tool_bar_window));
-#else
-  return false;
-#endif
+  if (WINDOWP (fselected_window) && XWINDOW (fselected_window) == w)
+    update_mode_lines = 42;
+  else
+    w->update_mode_line = true;
 }
 
 /* True if leaf window W doesn't reflect the actual state
@@ -280,6 +253,21 @@ decode_live_window (register Lisp_Object window)
   CHECK_LIVE_WINDOW (window);
   return XWINDOW (window);
 }
+
+#ifdef IGNORE_RUST_PORT
+struct window *
+decode_any_window (register Lisp_Object window)
+{
+  struct window *w;
+
+  if (NILP (window))
+    return XWINDOW (selected_window);
+
+  CHECK_WINDOW (window);
+  w = XWINDOW (window);
+  return w;
+}
+#endif /* IGNORE_RUST_PORT */
 
 static struct window *
 decode_valid_window (register Lisp_Object window)
@@ -620,6 +608,35 @@ select_window_1 (Lisp_Object window, bool inhibit_point_swap)
   set_point_from_marker (XWINDOW (window)->pointm);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("select-window", Fselect_window, Sselect_window, 1, 2, 0,
+       doc: /* Select WINDOW which must be a live window.
+Also make WINDOW's frame the selected frame and WINDOW that frame's
+selected window.  In addition, make WINDOW's buffer current and set its
+buffer's value of `point' to the value of WINDOW's `window-point'.
+Return WINDOW.
+
+Optional second arg NORECORD non-nil means do not put this buffer at the
+front of the buffer list and do not make this window the most recently
+selected one.  Also, do not mark WINDOW for redisplay unless NORECORD
+equals the special symbol `mark-for-redisplay'.
+
+Run `buffer-list-update-hook' unless NORECORD is non-nil.  Note that
+applications and internal routines often select a window temporarily for
+various purposes; mostly, to simplify coding.  As a rule, such
+selections should be not recorded and therefore will not pollute
+`buffer-list-update-hook'.  Selections that "really count" are those
+causing a visible change in the next redisplay of WINDOW's frame and
+should be always recorded.  So if you think of running a function each
+time a window gets selected put it on `buffer-list-update-hook'.
+
+Also note that the main editor command loop sets the current buffer to
+the buffer of the selected window before each command.  */)
+  (Lisp_Object window, Lisp_Object norecord)
+{
+  return select_window (window, norecord, false);
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("window-buffer", Fwindow_buffer, Swindow_buffer, 0, 1, 0,
        doc: /* Return the buffer displayed in window WINDOW.
@@ -2250,64 +2267,77 @@ NEXT-BUFFERS should be a list of buffers.  */)
   return next_buffers;
 }
 
-  if (NILP (line))
-    {
-      i = w->cursor.vpos;
-      if (i < 0 || i >= w->current_matrix->nrows
-	  || (row = MATRIX_ROW (w->current_matrix, i), !row->enabled_p))
-	return Qnil;
-      max_y = window_text_bottom_y (w);
-      goto found_row;
-    }
-
-  if (EQ (line, Qheader_line))
-    {
-      if (!window_wants_header_line (w))
-	return Qnil;
-      row = MATRIX_HEADER_LINE_ROW (w->current_matrix);
-      return row->enabled_p ? list4i (row->height, 0, 0, 0) : Qnil;
-    }
-
-  if (EQ (line, Qmode_line))
-    {
-      row = MATRIX_MODE_LINE_ROW (w->current_matrix);
-      return (row->enabled_p ?
-	      list4i (row->height,
-		      0, /* not accurate */
-		      (WINDOW_HEADER_LINE_HEIGHT (w)
-		       + window_text_bottom_y (w)),
-		      0)
-	      : Qnil);
-    }
-
-  CHECK_NUMBER (line);
-  n = XINT (line);
-
-  row = MATRIX_FIRST_TEXT_ROW (w->current_matrix);
-  end_row = MATRIX_BOTTOM_TEXT_ROW (w->current_matrix, w);
-  max_y = window_text_bottom_y (w);
-  i = 0;
-
-  while ((n < 0 || i < n)
-	 && row <= end_row && row->enabled_p
-	 && row->y + row->height < max_y)
-    row++, i++;
-
-  if (row > end_row || !row->enabled_p)
-    return Qnil;
-
-  if (++n < 0)
-    {
-      if (-n > i)
-	return Qnil;
-      row += n;
-      i += n;
-    }
-
- found_row:
-  crop = max (0, (row->y + row->height) - max_y);
-  return list4i (row->height + min (0, row->y) - crop, i, row->y, crop);
+#ifdef IGNORE_RUST_PORT
+DEFUN ("window-parameters", Fwindow_parameters, Swindow_parameters,
+       0, 1, 0,
+       doc: /* Return the parameters of WINDOW and their values.
+WINDOW must be a valid window and defaults to the selected one.  The
+return value is a list of elements of the form (PARAMETER . VALUE).  */)
+  (Lisp_Object window)
+{
+  return Fcopy_alist (decode_valid_window (window)->window_parameters);
 }
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+Lisp_Object
+window_parameter (struct window *w, Lisp_Object parameter)
+{
+  Lisp_Object result = Fassq (parameter, w->window_parameters);
+
+  return CDR_SAFE (result);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("window-parameter", Fwindow_parameter, Swindow_parameter,
+       2, 2, 0,
+       doc:  /* Return WINDOW's value for PARAMETER.
+WINDOW can be any window and defaults to the selected one.  */)
+  (Lisp_Object window, Lisp_Object parameter)
+{
+  struct window *w = decode_any_window (window);
+
+  return window_parameter (w, parameter);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("set-window-parameter", Fset_window_parameter,
+       Sset_window_parameter, 3, 3, 0,
+       doc: /* Set WINDOW's value of PARAMETER to VALUE.
+WINDOW can be any window and defaults to the selected one.
+Return VALUE.  */)
+  (Lisp_Object window, Lisp_Object parameter, Lisp_Object value)
+{
+  register struct window *w = decode_any_window (window);
+  Lisp_Object old_alist_elt;
+
+  old_alist_elt = Fassq (parameter, w->window_parameters);
+  if (NILP (old_alist_elt))
+    wset_window_parameters
+      (w, Fcons (Fcons (parameter, value), w->window_parameters));
+  else
+    Fsetcdr (old_alist_elt, value);
+  return value;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("window-display-table", Fwindow_display_table, Swindow_display_table,
+       0, 1, 0,
+       doc: /* Return the display-table that WINDOW is using.
+WINDOW must be a live window and defaults to the selected one.  */)
+  (Lisp_Object window)
+{
+  return decode_live_window (window)->display_table;
+}
+#endif /* IGNORE_RUST_PORT */
+
+/* Get the display table for use on window W.  This is either W's
+   display table or W's buffer's display table.  Ignore the specified
+   tables if they are not valid; if no valid table is specified,
+   return 0.  */
 
 struct Lisp_Char_Table *
 window_display_table (struct window *w)
@@ -2329,6 +2359,17 @@ window_display_table (struct window *w)
   return dp;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("set-window-display-table", Fset_window_display_table, Sset_window_display_table, 2, 2, 0,
+       doc: /* Set WINDOW's display-table to TABLE.
+WINDOW must be a live window and defaults to the selected one.  */)
+  (register Lisp_Object window, Lisp_Object table)
+{
+  wset_display_table (decode_live_window (window), table);
+  return table;
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Record info on buffer window W is displaying
    when it is about to cease to display that buffer.  */
 static void
@@ -2858,6 +2899,67 @@ window_list_1 (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames)
   return list;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("window-list", Fwindow_list, Swindow_list, 0, 3, 0,
+       doc: /* Return a list of windows on FRAME, starting with WINDOW.
+FRAME nil or omitted means use the selected frame.
+WINDOW nil or omitted means use the window selected within FRAME.
+MINIBUF t means include the minibuffer window, even if it isn't active.
+MINIBUF nil or omitted means include the minibuffer window only
+if it's active.
+MINIBUF neither nil nor t means never include the minibuffer window.  */)
+  (Lisp_Object frame, Lisp_Object minibuf, Lisp_Object window)
+{
+  if (NILP (window))
+    window = FRAMEP (frame) ? XFRAME (frame)->selected_window : selected_window;
+  CHECK_WINDOW (window);
+  if (NILP (frame))
+    frame = selected_frame;
+
+  if (!EQ (frame, XWINDOW (window)->frame))
+    error ("Window is on a different frame");
+
+  return window_list_1 (window, minibuf, frame);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("window-list-1", Fwindow_list_1, Swindow_list_1, 0, 3, 0,
+       doc: /* Return a list of all live windows.
+WINDOW specifies the first window to list and defaults to the selected
+window.
+
+Optional argument MINIBUF nil or omitted means consider the minibuffer
+window only if the minibuffer is active.  MINIBUF t means consider the
+minibuffer window even if the minibuffer is not active.  Any other value
+means do not consider the minibuffer window even if the minibuffer is
+active.
+
+Optional argument ALL-FRAMES nil or omitted means consider all windows
+on WINDOW's frame, plus the minibuffer window if specified by the
+MINIBUF argument.  If the minibuffer counts, consider all windows on all
+frames that share that minibuffer too.  The following non-nil values of
+ALL-FRAMES have special meanings:
+
+- t means consider all windows on all existing frames.
+
+- `visible' means consider all windows on all visible frames.
+
+- 0 (the number zero) means consider all windows on all visible and
+  iconified frames.
+
+- A frame means consider all windows on that frame only.
+
+Anything else means consider all windows on WINDOW's frame and no
+others.
+
+If WINDOW is not on the list of windows returned, some other window will
+be listed first but no error is signaled.  */)
+  (Lisp_Object window, Lisp_Object minibuf, Lisp_Object all_frames)
+{
+  return window_list_1 (window, minibuf, all_frames);
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* Look at all windows, performing an operation specified by TYPE
    with argument OBJ.
@@ -6675,6 +6777,7 @@ from the top of the window.  */)
 
 
 
+#ifdef IGNORE_RUST_PORT
 /***********************************************************************
 			 Window Configuration
  ***********************************************************************/
@@ -6728,9 +6831,35 @@ struct saved_window
   Lisp_Object scroll_bars_persistent, dedicated;
   Lisp_Object combination_limit, window_parameters;
 };
+#endif /* IGNORE_RUST_PORT */
 
 #define SAVED_WINDOW_N(swv,n) \
   ((struct saved_window *) (XVECTOR ((swv)->contents[(n)])))
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("window-configuration-p", Fwindow_configuration_p, Swindow_configuration_p, 1, 1, 0,
+       doc: /* Return t if OBJECT is a window-configuration object.  */)
+  (Lisp_Object object)
+{
+  return WINDOW_CONFIGURATIONP (object) ? Qt : Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("window-configuration-frame", Fwindow_configuration_frame, Swindow_configuration_frame, 1, 1, 0,
+       doc: /* Return the frame that CONFIG, a window-configuration object, is about.  */)
+  (Lisp_Object config)
+{
+  register struct save_window_data *data;
+  struct Lisp_Vector *saved_windows;
+
+  CHECK_WINDOW_CONFIGURATION (config);
+
+  data = (struct save_window_data *) XVECTOR (config);
+  saved_windows = XVECTOR (data->saved_windows);
+  return XWINDOW (SAVED_WINDOW_N (saved_windows, 0)->window)->frame;
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("set-window-configuration", Fset_window_configuration,
        Sset_window_configuration, 1, 1, 0,
@@ -8039,8 +8168,6 @@ init_window (void)
   Vwindow_list = Qnil;
 }
 
-extern void rust_syms_of_window(void);
-
 void
 syms_of_window (void)
 {
@@ -8375,17 +8502,46 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_left_column);
   defsubr (&Swindow_top_line);
   defsubr (&Sset_window_new_pixel);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sset_window_new_total);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sset_window_new_normal);
   defsubr (&Swindow_resize_apply);
   defsubr (&Swindow_resize_apply_total);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Swindow_body_height);
+  defsubr (&Swindow_body_width);
+  defsubr (&Swindow_hscroll);
+  defsubr (&Sset_window_hscroll);
+  defsubr (&Swindow_redisplay_end_trigger);
+  defsubr (&Sset_window_redisplay_end_trigger);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Swindow_mode_line_height);
   defsubr (&Swindow_header_line_height);
   defsubr (&Swindow_tab_line_height);
   defsubr (&Swindow_right_divider_width);
   defsubr (&Swindow_bottom_divider_width);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Swindow_scroll_bar_width);
+  defsubr (&Swindow_scroll_bar_height);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Swindow_point);
+  defsubr (&Swindow_old_point);
+  defsubr (&Swindow_start);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Swindow_end);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sset_window_point);
+  defsubr (&Sset_window_start);
+  defsubr (&Swindow_dedicated_p);
+  defsubr (&Swindow_lines_pixel_dimensions);
+  defsubr (&Sset_window_dedicated_p);
+  defsubr (&Swindow_display_table);
+  defsubr (&Sset_window_display_table);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Snext_window);
   defsubr (&Sprevious_window);
   defsubr (&Sget_buffer_window);
@@ -8393,9 +8549,21 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sdelete_window_internal);
   defsubr (&Sresize_mini_window_internal);
   defsubr (&Sset_window_buffer);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Srun_window_configuration_change_hook);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Srun_window_scroll_functions);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sselect_window);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sforce_window_update);
   defsubr (&Ssplit_window_internal);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sscroll_up);
+  defsubr (&Sscroll_down);
+  defsubr (&Sscroll_left);
+  defsubr (&Sscroll_right);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sother_window_for_scrolling);
   defsubr (&Sscroll_other_window);
   defsubr (&Sscroll_other_window_down);
@@ -8404,13 +8572,34 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_text_width);
   defsubr (&Swindow_text_height);
   defsubr (&Smove_to_window_line);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Swindow_configuration_p);
+  defsubr (&Swindow_configuration_frame);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sset_window_configuration);
   defsubr (&Scurrent_window_configuration);
   defsubr (&Sset_window_margins);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Swindow_margins);
+  defsubr (&Sset_window_fringes);
+  defsubr (&Swindow_fringes);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sset_window_scroll_bars);
   defsubr (&Swindow_scroll_bars);
   defsubr (&Swindow_vscroll);
   defsubr (&Sset_window_vscroll);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scompare_window_configurations);
+  defsubr (&Swindow_list);
+  defsubr (&Swindow_list_1);
+  defsubr (&Swindow_prev_buffers);
+  defsubr (&Sset_window_prev_buffers);
+  defsubr (&Swindow_next_buffers);
+  defsubr (&Sset_window_next_buffers);
+  defsubr (&Swindow_parameters);
+  defsubr (&Swindow_parameter);
+  defsubr (&Sset_window_parameter);
+#endif /* IGNORE_RUST_PORT */
 }
 
 void

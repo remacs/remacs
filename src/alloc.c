@@ -5349,6 +5349,23 @@ purecopy_hash_table (struct Lisp_Hash_Table *table)
   return pure;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("purecopy", Fpurecopy, Spurecopy, 1, 1, 0,
+       doc: /* Make a copy of object OBJ in pure storage.
+Recursively copies contents of vectors and cons cells.
+Does not copy symbols.  Copies strings without text properties.  */)
+  (register Lisp_Object obj)
+{
+  if (NILP (Vpurify_flag))
+    return obj;
+  else if (MARKERP (obj) || OVERLAYP (obj) || SYMBOLP (obj))
+    /* Can't purify those.  */
+    return obj;
+  else
+    return purecopy (obj);
+}
+#endif
+
 /* Pinned objects are marked before every GC cycle.  */
 static struct pinned_object
 {
@@ -5433,7 +5450,7 @@ purecopy (Lisp_Object obj)
   else
     {
       AUTO_STRING (fmt, "Don't know how to purify: %S");
-      xsignal1 (Qerror, CALLN (Fformat, fmt, obj));
+      Fsignal (Qerror, list1 (CALLN (Fformat, fmt, obj)));
     }
 
   if (HASH_TABLE_P (Vpurify_flag)) /* Hash consing.  */
@@ -7037,10 +7054,10 @@ or memory information can't be obtained, return nil.  */)
 		   (uintmax_t) freeswap / 1024);
   else
     return Qnil;
-#else
+#else /* not HAVE_LINUX_SYSINFO, not WINDOWSNT */
   /* FIXME: add more systems.  */
   return Qnil;
-#endif
+#endif /* HAVE_LINUX_SYSINFO, not WINDOWSNT */
 }
 
 /* Debugging aids.  */
@@ -7395,14 +7412,39 @@ Integers with absolute values less than 2**N do not signal a range error.
 N should be nonnegative.  */);
 
   defsubr (&Scons);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Slist);
+#endif
   defsubr (&Svector);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Srecord);
+  defsubr (&Sbool_vector);
+#endif
   defsubr (&Smake_byte_code);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Smake_list);
+#endif
   defsubr (&Smake_vector);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Smake_record);
+#endif
   defsubr (&Smake_string);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Smake_bool_vector);
+#endif
   defsubr (&Smake_symbol);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Smake_marker);
+#endif
   defsubr (&Smake_finalizer);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Spurecopy);
+#endif
   defsubr (&Sgarbage_collect);
   defsubr (&Smemory_info);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Smemory_use_counts);
+#endif
   defsubr (&Ssuspicious_object);
 
   Lisp_Object watcher;
@@ -7438,6 +7480,7 @@ union
   enum CHARTAB_SIZE_BITS CHARTAB_SIZE_BITS;
   enum char_table_specials char_table_specials;
   enum char_bits char_bits;
+  enum CHECK_LISP_OBJECT_TYPE CHECK_LISP_OBJECT_TYPE;
   enum DEFAULT_HASH_SIZE DEFAULT_HASH_SIZE;
   enum Lisp_Bits Lisp_Bits;
   enum Lisp_Compiled Lisp_Compiled;

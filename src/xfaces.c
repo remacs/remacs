@@ -225,6 +225,15 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "character.h"
 #include "frame.h"
 
+#ifdef USE_MOTIF
+#include <Xm/Xm.h>
+#include <Xm/XmStrDefs.h>
+#endif /* USE_MOTIF */
+
+#ifdef MSDOS
+#include "dosfns.h"
+#endif
+
 #ifdef HAVE_WINDOW_SYSTEM
 #include TERM_HEADER
 #include "fontset.h"
@@ -369,11 +378,6 @@ static struct face *realize_non_ascii_face (struct frame *, Lisp_Object,
 			      Utilities
  ***********************************************************************/
 
-void set_face_change(bool value)
-{
-    face_change = value;
-}
-
 #ifdef HAVE_X_WINDOWS
 
 #ifdef DEBUG_X_COLORS
@@ -467,6 +471,31 @@ x_free_colors (struct frame *f, unsigned long *pixels, int npixels)
 		   pixels, npixels, 0);
     }
 }
+
+
+#ifdef USE_X_TOOLKIT
+
+/* Free colors used on display DPY.  PIXELS is an array of NPIXELS pixel
+   color values.  Interrupt input must be blocked when this function
+   is called.  */
+
+void
+x_free_dpy_colors (Display *dpy, Screen *screen, Colormap cmap,
+		   unsigned long *pixels, int npixels)
+{
+  struct x_display_info *dpyinfo = x_display_info_for_display (dpy);
+
+  /* If display has an immutable color map, freeing colors is not
+     necessary and some servers don't allow it.  So don't do it.  */
+  if (x_mutable_colormap (dpyinfo->visual))
+    {
+#ifdef DEBUG_X_COLORS
+      unregister_colors (pixels, npixels);
+#endif
+      XFreeColors (dpy, cmap, pixels, npixels, 0);
+    }
+}
+#endif /* USE_X_TOOLKIT */
 
 /* Create and return a GC for use on frame F.  GC values and mask
    are given by XGCV and MASK.  */
@@ -660,6 +689,19 @@ clear_face_cache (bool clear_fonts_p)
     }
 #endif /* HAVE_WINDOW_SYSTEM */
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("clear-face-cache", Fclear_face_cache, Sclear_face_cache, 0, 1, 0,
+       doc: /* Clear face caches on all frames.
+Optional THOROUGHLY non-nil means try to free unused fonts, too.  */)
+  (Lisp_Object thoroughly)
+{
+  clear_face_cache (!NILP (thoroughly));
+  face_change = true;
+  windows_or_buffers_changed = 53;
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
 
 
 /***********************************************************************
@@ -915,6 +957,12 @@ tty_color_name (struct frame *f, int idx)
       if (!NILP (coldesc))
 	return XCAR (coldesc);
     }
+#ifdef MSDOS
+  /* We can have an MS-DOS frame under -nw for a short window of
+     opportunity before internal_terminal_init is called.  DTRT.  */
+  if (FRAME_MSDOS_P (f) && !inhibit_window_system)
+    return msdos_stdcolor_name (idx);
+#endif
 
   if (idx == FACE_TTY_DEFAULT_FG_COLOR)
     return build_string (unspecified_fg);
@@ -991,6 +1039,23 @@ If FRAME is nil or omitted, use the selected frame.  */)
   return (face_color_gray_p (decode_any_frame (frame), SSDATA (color))
 	  ? Qt : Qnil);
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("color-supported-p", Fcolor_supported_p,
+       Scolor_supported_p, 1, 3, 0,
+       doc: /* Return non-nil if COLOR can be displayed on FRAME.
+BACKGROUND-P non-nil means COLOR is used as a background.
+Otherwise, this function tells whether it can be used as a foreground.
+If FRAME is nil or omitted, use the selected frame.
+COLOR must be a valid color name.  */)
+  (Lisp_Object color, Lisp_Object frame, Lisp_Object background_p)
+{
+  CHECK_STRING (color);
+  return (face_color_supported_p (decode_any_frame (frame),
+				  SSDATA (color), !NILP (background_p))
+	  ? Qt : Qnil);
+}
+#endif /* IGNORE_RUST_PORT */
 
 static unsigned long
 load_color2 (struct frame *f, struct face *face, Lisp_Object name,
@@ -3636,6 +3701,115 @@ DEFUN ("internal-set-lisp-face-attribute-from-resource",
 			      Menu face
  ***********************************************************************/
 
+#if defined HAVE_X_WINDOWS && defined USE_X_TOOLKIT
+
+/* Make menus on frame F appear as specified by the `menu' face.  */
+
+static void
+x_update_menu_appearance (struct frame *f)
+{
+  struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
+  XrmDatabase rdb;
+
+  if (dpyinfo
+      && (rdb = XrmGetDatabase (FRAME_X_DISPLAY (f)),
+	  rdb != NULL))
+    {
+      char line[512];
+      char *buf = line;
+      ptrdiff_t bufsize = sizeof line;
+      Lisp_Object lface = lface_from_face_name (f, Qmenu, true);
+      struct face *face = FACE_FROM_ID (f, MENU_FACE_ID);
+      const char *myname = SSDATA (Vx_resource_name);
+      bool changed_p = false;
+#ifdef USE_MOTIF
+      const char *popup_path = "popup_menu";
+#else
+      const char *popup_path = "menu.popup";
+#endif
+
+      if (STRINGP (LFACE_FOREGROUND (lface)))
+	{
+	  exprintf (&buf, &bufsize, line, -1, "%s.%s*foreground: %s",
+		    myname, popup_path,
+		    SDATA (LFACE_FOREGROUND (lface)));
+	  XrmPutLineResource (&rdb, line);
+	  exprintf (&buf, &bufsize, line, -1, "%s.pane.menubar*foreground: %s",
+		    myname, SDATA (LFACE_FOREGROUND (lface)));
+	  XrmPutLineResource (&rdb, line);
+	  changed_p = true;
+	}
+
+      if (STRINGP (LFACE_BACKGROUND (lface)))
+	{
+	  exprintf (&buf, &bufsize, line, -1, "%s.%s*background: %s",
+		    myname, popup_path,
+		    SDATA (LFACE_BACKGROUND (lface)));
+	  XrmPutLineResource (&rdb, line);
+
+	  exprintf (&buf, &bufsize, line, -1, "%s.pane.menubar*background: %s",
+		    myname, SDATA (LFACE_BACKGROUND (lface)));
+	  XrmPutLineResource (&rdb, line);
+	  changed_p = true;
+	}
+
+      if (face->font
+	  /* On Solaris 5.8, it's been reported that the `menu' face
+	     can be unspecified here, during startup.  Why this
+	     happens remains unknown.  -- cyd  */
+	  && FONTP (LFACE_FONT (lface))
+	  && (!UNSPECIFIEDP (LFACE_FAMILY (lface))
+	      || !UNSPECIFIEDP (LFACE_FOUNDRY (lface))
+	      || !UNSPECIFIEDP (LFACE_SWIDTH (lface))
+	      || !UNSPECIFIEDP (LFACE_WEIGHT (lface))
+	      || !UNSPECIFIEDP (LFACE_SLANT (lface))
+	      || !UNSPECIFIEDP (LFACE_HEIGHT (lface))))
+	{
+	  Lisp_Object xlfd = Ffont_xlfd_name (LFACE_FONT (lface), Qnil);
+#ifdef USE_MOTIF
+	  const char *suffix = "List";
+	  bool motif = true;
+#else
+#if defined HAVE_X_I18N
+
+	  const char *suffix = "Set";
+#else
+	  const char *suffix = "";
+#endif
+	  bool motif = false;
+#endif
+
+	  if (! NILP (xlfd))
+	    {
+#if defined HAVE_X_I18N
+	      char *fontsetname = xic_create_fontsetname (SSDATA (xlfd), motif);
+#else
+	      char *fontsetname = SSDATA (xlfd);
+#endif
+	      exprintf (&buf, &bufsize, line, -1, "%s.pane.menubar*font%s: %s",
+			myname, suffix, fontsetname);
+	      XrmPutLineResource (&rdb, line);
+
+	      exprintf (&buf, &bufsize, line, -1, "%s.%s*font%s: %s",
+			myname, popup_path, suffix, fontsetname);
+	      XrmPutLineResource (&rdb, line);
+	      changed_p = true;
+	      if (fontsetname != SSDATA (xlfd))
+		xfree (fontsetname);
+	    }
+	}
+
+      if (changed_p && f->output_data.x->menubar_widget)
+	free_frame_menubar (f);
+
+      if (buf != line)
+	xfree (buf);
+    }
+}
+
+#endif /* HAVE_X_WINDOWS && USE_X_TOOLKIT */
+
+
 DEFUN ("face-attribute-relative-p", Fface_attribute_relative_p,
        Sface_attribute_relative_p,
        2, 2, 0,
@@ -3894,7 +4068,9 @@ return the font name used for CHARACTER.  */)
 	      ? fface->font->props[FONT_NAME_INDEX]
 	      : Qnil);
 #else  /* !HAVE_WINDOW_SYSTEM */
-      return build_string (FRAME_W32_P (f) ? "w32term"
+      return build_string (FRAME_MSDOS_P (f)
+			   ? "ms-dos"
+			   : FRAME_W32_P (f) ? "w32term"
 			   :"tty");
 #endif
     }
@@ -3996,6 +4172,16 @@ If FRAME is omitted or nil, use the selected frame.  */)
   return i == LFACE_VECTOR_SIZE ? Qt : Qnil;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("frame-face-alist", Fframe_face_alist, Sframe_face_alist,
+       0, 1, 0,
+       doc: /* Return an alist of frame-local faces defined on FRAME.
+For internal use only.  */)
+  (Lisp_Object frame)
+{
+  return decode_live_frame (frame)->face_alist;
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* Return a hash code for Lisp string STRING with case ignored.  Used
    below in computing a hash value for a Lisp face.  */
@@ -5098,7 +5284,7 @@ face for italic.  */)
     }
 
   /* Dispatch to the appropriate handler.  */
-  if (FRAME_TERMCAP_P (f))
+  if (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
     supports = tty_supports_face_attributes_p (f, attrs, def_face);
 #ifdef HAVE_WINDOW_SYSTEM
   else
@@ -5295,6 +5481,10 @@ realize_basic_faces (struct frame *f)
       if (FRAME_FACE_CACHE (f)->menu_face_changed_p)
 	{
 	  FRAME_FACE_CACHE (f)->menu_face_changed_p = false;
+#ifdef USE_X_TOOLKIT
+	  if (FRAME_WINDOW_P (f))
+	    x_update_menu_appearance (f);
+#endif
 	}
 
       success_p = true;
@@ -5379,7 +5569,7 @@ realize_default_face (struct frame *f)
 	ASET (lface, LFACE_FOREGROUND_INDEX, XCDR (color));
       else if (FRAME_WINDOW_P (f))
 	return false;
-      else if (FRAME_INITIAL_P (f) || FRAME_TERMCAP_P (f))
+      else if (FRAME_INITIAL_P (f) || FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
 	ASET (lface, LFACE_FOREGROUND_INDEX, build_string (unspecified_fg));
       else
 	emacs_abort ();
@@ -5394,7 +5584,7 @@ realize_default_face (struct frame *f)
 	ASET (lface, LFACE_BACKGROUND_INDEX, XCDR (color));
       else if (FRAME_WINDOW_P (f))
 	return false;
-      else if (FRAME_INITIAL_P (f) || FRAME_TERMCAP_P (f))
+      else if (FRAME_INITIAL_P (f) || FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
 	ASET (lface, LFACE_BACKGROUND_INDEX, build_string (unspecified_bg));
       else
 	emacs_abort ();
@@ -5808,6 +5998,10 @@ map_tty_color (struct frame *f, struct face *face,
   unsigned long default_pixel =
     foreground_p ? FACE_TTY_DEFAULT_FG_COLOR : FACE_TTY_DEFAULT_BG_COLOR;
   unsigned long pixel = default_pixel;
+#ifdef MSDOS
+  unsigned long default_other_pixel =
+    foreground_p ? FACE_TTY_DEFAULT_BG_COLOR : FACE_TTY_DEFAULT_FG_COLOR;
+#endif
 
   eassert (idx == LFACE_FOREGROUND_INDEX || idx == LFACE_BACKGROUND_INDEX);
 
@@ -5828,6 +6022,33 @@ map_tty_color (struct frame *f, struct face *face,
   if (pixel == default_pixel && STRINGP (color))
     {
       pixel = load_color (f, face, color, idx);
+
+#ifdef MSDOS
+      /* If the foreground of the default face is the default color,
+	 use the foreground color defined by the frame.  */
+      if (FRAME_MSDOS_P (f))
+	{
+	  if (pixel == default_pixel
+	      || pixel == FACE_TTY_DEFAULT_COLOR)
+	    {
+	      if (foreground_p)
+		pixel = FRAME_FOREGROUND_PIXEL (f);
+	      else
+		pixel = FRAME_BACKGROUND_PIXEL (f);
+	      face->lface[idx] = tty_color_name (f, pixel);
+	      *defaulted = true;
+	    }
+	  else if (pixel == default_other_pixel)
+	    {
+	      if (foreground_p)
+		pixel = FRAME_BACKGROUND_PIXEL (f);
+	      else
+		pixel = FRAME_FOREGROUND_PIXEL (f);
+	      face->lface[idx] = tty_color_name (f, pixel);
+	      *defaulted = true;
+	    }
+	}
+#endif /* MSDOS */
     }
 
   if (foreground_p)
@@ -5851,12 +6072,12 @@ realize_tty_face (struct face_cache *cache,
   struct frame *f = cache->f;
 
   /* Frame must be a termcap frame.  */
-  eassert (FRAME_TERMCAP_P (cache->f));
+  eassert (FRAME_TERMCAP_P (cache->f) || FRAME_MSDOS_P (cache->f));
 
   /* Allocate a new realized face.  */
   face = make_realized_face (attrs);
 #if false
-  face->font_name = "tty";
+  face->font_name = FRAME_MSDOS_P (cache->f) ? "ms-dos" : "tty";
 #endif
 
   /* Map face attributes to TTY appearances.  */
@@ -6603,6 +6824,9 @@ syms_of_xfaces (void)
   defsubr (&Sinternal_set_lisp_face_attribute_from_resource);
 #endif
   defsubr (&Scolor_gray_p);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scolor_supported_p);
+#endif /* IGNORE_RUST_PORT */
 #ifndef HAVE_X_WINDOWS
   defsubr (&Sx_load_color_file);
 #endif
@@ -6615,6 +6839,9 @@ syms_of_xfaces (void)
   defsubr (&Sinternal_copy_lisp_face);
   defsubr (&Sinternal_merge_in_global_face);
   defsubr (&Sface_font);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sframe_face_alist);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sdisplay_supports_face_attributes_p);
   defsubr (&Scolor_distance);
   defsubr (&Sinternal_set_font_selection_order);
@@ -6625,6 +6852,9 @@ syms_of_xfaces (void)
   defsubr (&Sdump_face);
   defsubr (&Sshow_face_resources);
 #endif /* GLYPH_DEBUG */
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sclear_face_cache);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Stty_suppress_bold_inverse_default_colors);
 
 #if defined DEBUG_X_COLORS && defined HAVE_X_WINDOWS

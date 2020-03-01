@@ -95,7 +95,7 @@ static bool scrolling (struct frame *);
 static void set_window_cursor_after_update (struct window *);
 static void adjust_frame_glyphs_for_window_redisplay (struct frame *);
 static void adjust_frame_glyphs_for_frame_redisplay (struct frame *);
-void set_window_update_flags (struct window *w, bool on_p);
+static void set_window_update_flags (struct window *w, bool on_p);
 
 /* True means last display completed.  False means it was preempted.  */
 
@@ -3083,6 +3083,60 @@ window_to_frame_hpos (struct window *w, int hpos)
 
 
 
+/**********************************************************************
+			    Redrawing Frames
+ **********************************************************************/
+
+#ifdef IGNORE_RUST_PORT
+/* Redraw frame F.  */
+
+void
+redraw_frame (struct frame *f)
+{
+  /* Error if F has no glyphs.  */
+  eassert (f->glyphs_initialized_p);
+  update_begin (f);
+  if (FRAME_MSDOS_P (f))
+    FRAME_TERMINAL (f)->set_terminal_modes_hook (FRAME_TERMINAL (f));
+  clear_frame (f);
+  clear_current_matrices (f);
+  update_end (f);
+  fset_redisplay (f);
+  /* Mark all windows as inaccurate, so that every window will have
+     its redisplay done.  */
+  mark_window_display_accurate (FRAME_ROOT_WINDOW (f), 0);
+  set_window_update_flags (XWINDOW (FRAME_ROOT_WINDOW (f)), true);
+  f->garbaged = false;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("redraw-frame", Fredraw_frame, Sredraw_frame, 0, 1, 0,
+       doc: /* Clear frame FRAME and output again what is supposed to appear on it.
+If FRAME is omitted or nil, the selected frame is used.  */)
+  (Lisp_Object frame)
+{
+  redraw_frame (decode_live_frame (frame));
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("redraw-display", Fredraw_display, Sredraw_display, 0, 0, "",
+       doc: /* Clear and redisplay all visible frames.  */)
+  (void)
+{
+  Lisp_Object tail, frame;
+
+  FOR_EACH_FRAME (tail, frame)
+    if (FRAME_VISIBLE_P (XFRAME (frame)))
+      redraw_frame (XFRAME (frame));
+
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+
 /***********************************************************************
 			     Frame Update
  ***********************************************************************/
@@ -3192,7 +3246,7 @@ update_frame (struct frame *f, bool force_p, bool inhibit_hairy_id_p)
       paused_p = update_frame_1 (f, force_p, inhibit_hairy_id_p, 1, false);
       update_end (f);
 
-      if (FRAME_TERMCAP_P (f))
+      if (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
         {
           if (FRAME_TTY (f)->termscript)
 	    fflush (FRAME_TTY (f)->termscript);
@@ -4135,6 +4189,24 @@ set_window_cursor_after_update (struct window *w)
   output_cursor_to (w, vpos, hpos, cy, cx);
 }
 
+#ifdef IGNORE_RUST_PORT
+/* Set WINDOW->must_be_updated_p to ON_P for all windows in
+   the window tree rooted at W.  */
+
+static void
+set_window_update_flags (struct window *w, bool on_p)
+{
+  while (w)
+    {
+      if (WINDOWP (w->contents))
+	set_window_update_flags (XWINDOW (w->contents), on_p);
+      else
+	w->must_be_updated_p = on_p;
+
+      w = NILP (w->next) ? 0 : XWINDOW (w->next);
+    }
+}
+#endif /* IGNORE_RUST_PORT */
 
 
 /***********************************************************************
@@ -5743,8 +5815,21 @@ void
 change_frame_size (struct frame *f, int new_width, int new_height,
 		   bool pretend, bool delay, bool safe, bool pixelwise)
 {
-  change_frame_size_1 (f, new_width, new_height, pretend, delay, safe,
-                       pixelwise);
+  Lisp_Object tail, frame;
+
+  if (FRAME_MSDOS_P (f))
+    {
+      /* On MS-DOS, all frames use the same screen, so a change in
+         size affects all frames.  Termcap now supports multiple
+         ttys. */
+      FOR_EACH_FRAME (tail, frame)
+	if (! FRAME_WINDOW_P (XFRAME (frame)))
+	  change_frame_size_1 (XFRAME (frame), new_width, new_height,
+			       pretend, delay, safe, pixelwise);
+    }
+  else
+    change_frame_size_1 (f, new_width, new_height, pretend, delay, safe,
+			 pixelwise);
 }
 
 /***********************************************************************
@@ -5759,7 +5844,8 @@ FILE = nil means just close any termscript file currently open.  */)
 {
   struct tty_display_info *tty;
 
-  if (! FRAME_TERMCAP_P (SELECTED_FRAME ()))
+  if (! FRAME_TERMCAP_P (SELECTED_FRAME ())
+      && ! FRAME_MSDOS_P (SELECTED_FRAME ()))
     error ("Current frame is not on a tty device");
 
   tty = CURTTY ();
@@ -6307,6 +6393,7 @@ init_display_interactive (void)
 #else
     if (f->output_method == output_termcap)
       create_tty_output (f);
+#endif
     t->display_info.tty->top_frame = selected_frame;
     change_frame_size (XFRAME (selected_frame),
                        FrameCols (t->display_info.tty),
@@ -6365,6 +6452,37 @@ init_display (void)
 
 
 /***********************************************************************
+			   Blinking cursor
+ ***********************************************************************/
+#ifdef IGNORE_RUST_PORT
+DEFUN ("internal-show-cursor", Finternal_show_cursor,
+       Sinternal_show_cursor, 2, 2, 0,
+       doc: /* Set the cursor-visibility flag of WINDOW to SHOW.
+WINDOW nil means use the selected window.  SHOW non-nil means
+show a cursor in WINDOW in the next redisplay.  SHOW nil means
+don't show a cursor.  */)
+  (Lisp_Object window, Lisp_Object show)
+{
+  /* Don't change cursor state while redisplaying.  This could confuse
+     output routines.  */
+  if (!redisplaying_p)
+    decode_any_window (window)->cursor_off_p = NILP (show);
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("internal-show-cursor-p", Finternal_show_cursor_p,
+       Sinternal_show_cursor_p, 0, 1, 0,
+       doc: /* Value is non-nil if next redisplay will display a cursor in WINDOW.
+WINDOW nil or omitted means report on the selected window.  */)
+  (Lisp_Object window)
+{
+  return decode_any_window (window)->cursor_off_p ? Qnil : Qt;
+}
+#endif /* IGNORE_RUST_PORT */
+
+/***********************************************************************
 			    Initialization
  ***********************************************************************/
 
@@ -6373,10 +6491,23 @@ static void syms_of_display_for_pdumper (void);
 void
 syms_of_display (void)
 {
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sredraw_frame);
+  defsubr (&Sredraw_display);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sframe_or_buffer_changed_p);
   defsubr (&Sopen_termscript);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sding);
+  defsubr (&Sredisplay);
+  defsubr (&Ssleep_for);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Ssend_string_to_terminal);
-
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sinternal_show_cursor);
+  defsubr (&Sinternal_show_cursor_p);
+#endif /* IGNORE_RUST_PORT */
+  
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_redisplay_history);
 #endif

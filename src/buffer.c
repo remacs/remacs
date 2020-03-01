@@ -51,10 +51,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "w32heap.h"		/* for mmap_* */
 #endif
 
-/* File and lookahead for get-file-char and get-emacs-mule-file-char
-   to read from.  Used by Fload.  */
-struct infile *infile;
-
 /* First buffer in chain of all buffers (in reverse order of creation).
    Threaded through ->header.next.buffer.  */
 
@@ -109,7 +105,7 @@ char buffer_permanent_local_flags[MAX_PER_BUFFER_VARS];
 
 /* Number of per-buffer variables used.  */
 
-static int last_per_buffer_idx;
+int last_per_buffer_idx;
 
 static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
                                     bool after, Lisp_Object arg1,
@@ -127,8 +123,10 @@ Lisp_Object buffer_fundamental_string(void)
   return QSFundamental;
 }
 
+void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
-extern struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
+struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
+void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
 static void
@@ -380,7 +378,17 @@ bset_zv_marker (struct buffer *b, Lisp_Object val)
   b->zv_marker_ = val;
 }
 
+#ifdef IGNORE_RUST_PORT
+void
+nsberror (Lisp_Object spec)
+{
+  if (STRINGP (spec))
+    error ("No buffer named %s", SDATA (spec));
+  error ("Invalid buffer argument");
+}
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("buffer-live-p", Fbuffer_live_p, Sbuffer_live_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a buffer which has not been killed.
 Value is nil if OBJECT is not a buffer or if it has been killed.  */)
@@ -389,7 +397,9 @@ Value is nil if OBJECT is not a buffer or if it has been killed.  */)
   return ((BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)))
 	  ? Qt : Qnil);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("buffer-list", Fbuffer_list, Sbuffer_list, 0, 1, 0,
        doc: /* Return a list of all live buffers.
 If the optional arg FRAME is a frame, return the buffer list in the
@@ -428,6 +438,7 @@ followed by the rest of the buffers.  */)
   else
     return general;
 }
+#endif
 
 /* Like Fassoc, but use Fstring_equal to compare
    (which ignores text properties), and don't ever quit.  */
@@ -445,6 +456,7 @@ assoc_ignore_text_properties (Lisp_Object key, Lisp_Object list)
   return Qnil;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("get-buffer", Fget_buffer, Sget_buffer, 1, 1, 0,
        doc: /* Return the buffer named BUFFER-OR-NAME.
 BUFFER-OR-NAME must be either a string or a buffer.  If BUFFER-OR-NAME
@@ -458,7 +470,9 @@ BUFFER-OR-NAME is a buffer, return it as given.  */)
 
   return Fcdr (assoc_ignore_text_properties (buffer_or_name, Vbuffer_alist));
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("get-file-buffer", Fget_file_buffer, Sget_file_buffer, 1, 1, 0,
        doc: /* Return the buffer visiting file FILENAME (a string).
 The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.
@@ -489,6 +503,7 @@ See also `find-buffer-visiting'.  */)
     }
   return Qnil;
 }
+#endif
 
 Lisp_Object
 get_truename_buffer (register Lisp_Object filename)
@@ -504,6 +519,7 @@ get_truename_buffer (register Lisp_Object filename)
   return Qnil;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("get-buffer-create", Fget_buffer_create, Sget_buffer_create, 1, 1, 0,
        doc: /* Return the buffer specified by BUFFER-OR-NAME, creating a new one if needed.
 If BUFFER-OR-NAME is a string and a live buffer with that name exists,
@@ -610,7 +626,7 @@ even if it is dead.  The return value is never nil.  */)
 
   return buffer;
 }
-
+#endif
 
 /* Return a list of overlays which is a copy of the overlay list
    LIST, but for buffer B.  */
@@ -707,11 +723,53 @@ clone_per_buffer_values (struct buffer *from, struct buffer *to)
   bset_local_var_alist (to, buffer_lisp_local_variables (from, 1));
 }
 
+#ifdef IGNORE_RUST_PORT
+/* If buffer B has markers to record PT, BEGV and ZV when it is not
+   current, update these markers.  */
 
-void record_buffer_markers (struct buffer *b);
+static void
+record_buffer_markers (struct buffer *b)
+{
+  if (! NILP (BVAR (b, pt_marker)))
+    {
+      Lisp_Object buffer;
 
-void fetch_buffer_markers (struct buffer *b);
+      eassert (!NILP (BVAR (b, begv_marker)));
+      eassert (!NILP (BVAR (b, zv_marker)));
 
+      XSETBUFFER (buffer, b);
+      set_marker_both (BVAR (b, pt_marker), buffer, b->pt, b->pt_byte);
+      set_marker_both (BVAR (b, begv_marker), buffer, b->begv, b->begv_byte);
+      set_marker_both (BVAR (b, zv_marker), buffer, b->zv, b->zv_byte);
+    }
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+/* If buffer B has markers to record PT, BEGV and ZV when it is not
+   current, fetch these values into B->begv etc.  */
+
+static void
+fetch_buffer_markers (struct buffer *b)
+{
+  if (! NILP (BVAR (b, pt_marker)))
+    {
+      Lisp_Object m;
+
+      eassert (!NILP (BVAR (b, begv_marker)));
+      eassert (!NILP (BVAR (b, zv_marker)));
+
+      m = BVAR (b, pt_marker);
+      SET_BUF_PT_BOTH (b, marker_position (m), marker_byte_position (m));
+
+      m = BVAR (b, begv_marker);
+      SET_BUF_BEGV_BOTH (b, marker_position (m), marker_byte_position (m));
+
+      m = BVAR (b, zv_marker);
+      SET_BUF_ZV_BOTH (b, marker_position (m), marker_byte_position (m));
+    }
+}
+#endif
 
 DEFUN ("make-indirect-buffer", Fmake_indirect_buffer, Smake_indirect_buffer,
        2, 3,
@@ -845,6 +903,21 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
 
   return buf;
 }
+
+#ifdef IGNORE_RUST_PORT
+/* Mark OV as no longer associated with B.  */
+
+static void
+drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
+{
+  eassert (b == XBUFFER (Fmarker_buffer (ov->start)));
+  modify_overlay (b, marker_position (ov->start),
+		  marker_position (ov->end));
+  unchain_marker (XMARKER (ov->start));
+  unchain_marker (XMARKER (ov->end));
+
+}
+#endif
 
 /* Delete all overlays of B and reset its overlay lists.  */
 
@@ -1037,6 +1110,7 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
     }
 }
 
+#ifdef IGNORE_RUST_PORT
 /* We split this away from generate-new-buffer, because rename-buffer
    and set-visited-file-name ought to be able to use this to really
    rename the buffer properly.  */
@@ -1090,8 +1164,59 @@ is first appended to NAME, to speed up finding a non-existent buffer.  */)
 	return gentemp;
     }
 }
+#endif
 
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-name", Fbuffer_name, Sbuffer_name, 0, 1, 0,
+       doc: /* Return the name of BUFFER, as a string.
+BUFFER defaults to the current buffer.
+Return nil if BUFFER has been killed.  */)
+  (register Lisp_Object buffer)
+{
+  return BVAR (decode_buffer (buffer), name);
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-file-name", Fbuffer_file_name, Sbuffer_file_name, 0, 1, 0,
+       doc: /* Return name of file BUFFER is visiting, or nil if none.
+No argument or nil as argument means use the current buffer.  */)
+  (register Lisp_Object buffer)
+{
+  return BVAR (decode_buffer (buffer), filename);
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-base-buffer", Fbuffer_base_buffer, Sbuffer_base_buffer,
+       0, 1, 0,
+       doc: /* Return the base buffer of indirect buffer BUFFER.
+If BUFFER is not indirect, return nil.
+BUFFER defaults to the current buffer.  */)
+  (register Lisp_Object buffer)
+{
+  struct buffer *base = decode_buffer (buffer)->base_buffer;
+  return base ? (XSETBUFFER (buffer, base), buffer) : Qnil;
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-local-value", Fbuffer_local_value,
+       Sbuffer_local_value, 2, 2, 0,
+       doc: /* Return the value of VARIABLE in BUFFER.
+If VARIABLE does not have a buffer-local binding in BUFFER, the value
+is the default binding of the variable.  */)
+  (register Lisp_Object variable, register Lisp_Object buffer)
+{
+  register Lisp_Object result = buffer_local_value (variable, buffer);
+
+  if (EQ (result, Qunbound))
+    xsignal1 (Qvoid_variable, variable);
+
+  return result;
+}
+#endif
 
 /* Like Fbuffer_local_value, but return Qunbound if the variable is
    locally unbound.  */
@@ -1223,6 +1348,7 @@ No argument or nil as argument means use current buffer as BUFFER.  */)
   return result;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("buffer-modified-p", Fbuffer_modified_p, Sbuffer_modified_p,
        0, 1, 0,
        doc: /* Return t if BUFFER was modified since its file was last read or saved.
@@ -1232,7 +1358,9 @@ No argument or nil as argument means use current buffer as BUFFER.  */)
   struct buffer *buf = decode_buffer (buffer);
   return BUF_SAVE_MODIFF (buf) < BUF_MODIFF (buf) ? Qt : Qnil;
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("force-mode-line-update", Fforce_mode_line_update,
        Sforce_mode_line_update, 0, 1, 0,
        doc: /* Force redisplay of the current buffer's mode line and header line.
@@ -1254,6 +1382,7 @@ menu bar menus and the frame title.  */)
     }
   return all;
 }
+#endif
 
 DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, Sset_buffer_modified_p,
        1, 1, 0,
@@ -1337,6 +1466,7 @@ state of the current buffer.  Use with care.  */)
   return flag;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("buffer-modified-tick", Fbuffer_modified_tick, Sbuffer_modified_tick,
        0, 1, 0,
        doc: /* Return BUFFER's tick counter, incremented for each change in text.
@@ -1347,7 +1477,9 @@ use current buffer as BUFFER.  */)
 {
   return modiff_to_integer (BUF_MODIFF (decode_buffer (buffer)));
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("buffer-chars-modified-tick", Fbuffer_chars_modified_tick,
        Sbuffer_chars_modified_tick, 0, 1, 0,
        doc: /* Return BUFFER's character-change tick counter.
@@ -1362,7 +1494,9 @@ buffer as BUFFER.  */)
 {
   return modiff_to_integer (BUF_CHARS_MODIFF (decode_buffer (buffer)));
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("rename-buffer", Frename_buffer, Srename_buffer, 1, 2,
        "(list (read-string \"Rename buffer (to new name): \" \
 	      nil 'buffer-name-history (buffer-name (current-buffer))) \
@@ -1418,6 +1552,7 @@ This does not change the name of the visited file (if any).  */)
   /* Refetch since that last call may have done GC.  */
   return BVAR (current_buffer, name);
 }
+#endif
 
 /* True if B can be used as 'other-than-BUFFER' buffer.  */
 
@@ -1518,6 +1653,31 @@ other_buffer_safely (Lisp_Object buffer)
   return buf;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-enable-undo", Fbuffer_enable_undo, Sbuffer_enable_undo,
+       0, 1, "",
+       doc: /* Start keeping undo information for buffer BUFFER.
+No argument or nil as argument means do this for the current buffer.  */)
+  (register Lisp_Object buffer)
+{
+  Lisp_Object real_buffer;
+
+  if (NILP (buffer))
+    XSETBUFFER (real_buffer, current_buffer);
+  else
+    {
+      real_buffer = Fget_buffer (buffer);
+      if (NILP (real_buffer))
+	nsberror (buffer);
+    }
+
+  if (EQ (BVAR (XBUFFER (real_buffer), undo_list), Qt))
+    bset_undo_list (XBUFFER (real_buffer), Qnil);
+
+  return Qnil;
+}
+#endif
+
 /* Truncate undo list and shrink the gap of BUFFER.  */
 
 void
@@ -1959,6 +2119,17 @@ the current buffer's major mode.  */)
   return unbind_to (count, Qnil);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("current-buffer", Fcurrent_buffer, Scurrent_buffer, 0, 0, 0,
+       doc: /* Return the current buffer as a Lisp object.  */)
+  (void)
+{
+  register Lisp_Object buf;
+  XSETBUFFER (buf, current_buffer);
+  return buf;
+}
+#endif
+
 /* Set the current buffer to B, and do not set windows_or_buffers_changed.
    This is used by redisplay.  */
 
@@ -2054,6 +2225,28 @@ set_buffer_temp (struct buffer *b)
   fetch_buffer_markers (b);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("set-buffer", Fset_buffer, Sset_buffer, 1, 1, 0,
+       doc: /* Make buffer BUFFER-OR-NAME current for editing operations.
+BUFFER-OR-NAME may be a buffer or the name of an existing buffer.
+See also `with-current-buffer' when you want to make a buffer current
+temporarily.  This function does not display the buffer, so its effect
+ends when the current command terminates.  Use `switch-to-buffer' or
+`pop-to-buffer' to switch buffers permanently.
+The return value is the buffer made current.  */)
+  (register Lisp_Object buffer_or_name)
+{
+  register Lisp_Object buffer;
+  buffer = Fget_buffer (buffer_or_name);
+  if (NILP (buffer))
+    nsberror (buffer_or_name);
+  if (!BUFFER_LIVE_P (XBUFFER (buffer)))
+    error ("Selecting deleted buffer");
+  set_buffer_internal (XBUFFER (buffer));
+  return buffer;
+}
+#endif
+
 void
 restore_buffer (Lisp_Object buffer_or_name)
 {
@@ -2069,6 +2262,7 @@ set_buffer_if_live (Lisp_Object buffer)
     set_buffer_internal (XBUFFER (buffer));
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("barf-if-buffer-read-only", Fbarf_if_buffer_read_only,
 				   Sbarf_if_buffer_read_only, 0, 1, 0,
        doc: /* Signal a `buffer-read-only' error if the current buffer is read-only.
@@ -2087,7 +2281,9 @@ If the text under POSITION (which defaults to point) has the
     xsignal1 (Qbuffer_read_only, Fcurrent_buffer ());
   return Qnil;
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("erase-buffer", Ferase_buffer, Serase_buffer, 0, 0, "*",
        doc: /* Delete the entire contents of the current buffer.
 Any narrowing restriction in effect (see `narrow-to-region') is removed,
@@ -2105,6 +2301,7 @@ so the buffer is truly empty after this.  */)
   XSETFASTINT (BVAR (current_buffer, save_length), 0);
   return Qnil;
 }
+#endif
 
 void
 validate_region (register Lisp_Object *b, register Lisp_Object *e)
@@ -3696,6 +3893,15 @@ fix_overlays_before (struct buffer *bp, ptrdiff_t prev, ptrdiff_t pos)
 	break;
     }
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlayp", Foverlayp, Soverlayp, 1, 1, 0,
+       doc: /* Return t if OBJECT is an overlay.  */)
+  (Lisp_Object object)
+{
+  return (OVERLAYP (object) ? Qt : Qnil);
+}
+#endif
 
 DEFUN ("make-overlay", Fmake_overlay, Smake_overlay, 2, 5, 0,
        doc: /* Create a new overlay with range BEG to END in BUFFER and return it.
@@ -3815,6 +4021,7 @@ unchain_both (struct buffer *b, Lisp_Object overlay)
   eassert (XOVERLAY (overlay)->next == NULL);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("move-overlay", Fmove_overlay, Smove_overlay, 3, 4, 0,
        doc: /* Set the endpoints of OVERLAY to BEG and END in BUFFER.
 If BUFFER is omitted, leave OVERLAY in the same buffer it inhabits now.
@@ -3938,7 +4145,9 @@ buffer.  */)
 
   return unbind_to (count, overlay);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("delete-overlay", Fdelete_overlay, Sdelete_overlay, 1, 1, 0,
        doc: /* Delete the overlay OVERLAY from its buffer.  */)
   (Lisp_Object overlay)
@@ -3970,7 +4179,9 @@ DEFUN ("delete-overlay", Fdelete_overlay, Sdelete_overlay, 1, 1, 0,
 
   return unbind_to (count, Qnil);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("delete-all-overlays", Fdelete_all_overlays, Sdelete_all_overlays, 0, 1, 0,
        doc: /* Delete all overlays of BUFFER.
 BUFFER omitted or nil means delete all overlays of the current
@@ -3980,9 +4191,56 @@ buffer.  */)
   delete_all_overlays (decode_buffer (buffer));
   return Qnil;
 }
+#endif
 
 /* Overlay dissection functions.  */
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-start", Foverlay_start, Soverlay_start, 1, 1, 0,
+       doc: /* Return the position at which OVERLAY starts.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return (Fmarker_position (OVERLAY_START (overlay)));
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-end", Foverlay_end, Soverlay_end, 1, 1, 0,
+       doc: /* Return the position at which OVERLAY ends.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return (Fmarker_position (OVERLAY_END (overlay)));
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-buffer", Foverlay_buffer, Soverlay_buffer, 1, 1, 0,
+       doc: /* Return the buffer OVERLAY belongs to.
+Return nil if OVERLAY has been deleted.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return Fmarker_buffer (OVERLAY_START (overlay));
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-properties", Foverlay_properties, Soverlay_properties, 1, 1, 0,
+       doc: /* Return a list of the properties on OVERLAY.
+This is a copy of OVERLAY's plist; modifying its conses has no effect on
+OVERLAY.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return Fcopy_sequence (XOVERLAY (overlay)->plist);
+}
+#endif
 
 DEFUN ("overlays-at", Foverlays_at, Soverlays_at, 1, 2, 0,
        doc: /* Return a list of the overlays that contain the character at POS.
@@ -4135,7 +4393,7 @@ the value is (point-min).  */)
 }
 
 /* These functions are for debugging overlays.  */
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("overlay-lists", Foverlay_lists, Soverlay_lists, 0, 0, 0,
        doc: /* Return a pair of lists giving all the overlays of the current buffer.
 The car has all the overlays before the overlay center;
@@ -4156,7 +4414,9 @@ However, the overlays you get are the real objects that the buffer uses.  */)
 
   return Fcons (Fnreverse (before), Fnreverse (after));
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("overlay-recenter", Foverlay_recenter, Soverlay_recenter, 1, 1, 0,
        doc: /* Recenter the overlays of the current buffer around position POS.
 That makes overlay lookup faster for positions near POS (but perhaps slower
@@ -4170,7 +4430,18 @@ for positions far away from POS).  */)
   recenter_overlay_lists (current_buffer, p);
   return Qnil;
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-get", Foverlay_get, Soverlay_get, 2, 2, 0,
+       doc: /* Get the property of overlay OVERLAY with property name PROP.  */)
+  (Lisp_Object overlay, Lisp_Object prop)
+{
+  CHECK_OVERLAY (overlay);
+  return lookup_char_property (XOVERLAY (overlay)->plist, prop, 0);
+}
+#endif
+
 DEFUN ("overlay-put", Foverlay_put, Soverlay_put, 3, 3, 0,
        doc: /* Set one property of overlay OVERLAY: give property PROP value VALUE.
 VALUE will be returned.*/)
@@ -5265,6 +5536,12 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
     emacs_abort ();
 }
 
+extern void
+set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
+{
+  *(Lisp_Object *)(offset + (char *) b) = value;
+}
+
 extern void rust_syms_of_buffer(void);
 
 /* Initialize the buffer routines.  */
@@ -5288,6 +5565,9 @@ syms_of_buffer (void)
   DEFSYM (Qmodification_hooks, "modification-hooks");
   DEFSYM (Qinsert_in_front_hooks, "insert-in-front-hooks");
   DEFSYM (Qinsert_behind_hooks, "insert-behind-hooks");
+#ifdef IGNORE_RUST_PORT
+  DEFSYM (Qget_file_buffer, "get-file-buffer");
+#endif
   DEFSYM (Qpriority, "priority");
   DEFSYM (Qbefore_string, "before-string");
   DEFSYM (Qafter_string, "after-string");
@@ -6097,22 +6377,71 @@ since either may lead to infinite recursion.  */);
   Vbuffer_list_update_hook = Qnil;
   DEFSYM (Qbuffer_list_update_hook, "buffer-list-update-hook");
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbuffer_live_p);
+  defsubr (&Sbuffer_list);
+  defsubr (&Sget_buffer);
+  defsubr (&Sget_file_buffer);
+  defsubr (&Sget_buffer_create);
+#endif
   defsubr (&Smake_indirect_buffer);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sgenerate_new_buffer_name);
+  defsubr (&Sbuffer_name);
+  defsubr (&Sbuffer_file_name);
+  defsubr (&Sbuffer_base_buffer);
+  defsubr (&Sbuffer_local_value);
+#endif
   defsubr (&Sbuffer_local_variables);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbuffer_modified_p);
+  defsubr (&Sforce_mode_line_update);
+#endif
   defsubr (&Sset_buffer_modified_p);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbuffer_modified_tick);
+  defsubr (&Sbuffer_chars_modified_tick);
+  defsubr (&Srename_buffer);
+#endif
   defsubr (&Sother_buffer);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbuffer_enable_undo);
+#endif
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scurrent_buffer);
+  defsubr (&Sset_buffer);
+  defsubr (&Sbarf_if_buffer_read_only);
+  defsubr (&Serase_buffer);
+#endif
   defsubr (&Sbuffer_swap_text);
   defsubr (&Sset_buffer_multibyte);
   defsubr (&Skill_all_local_variables);
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Soverlayp);
+#endif
   defsubr (&Smake_overlay);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sdelete_overlay);
+  defsubr (&Sdelete_all_overlays);
+  defsubr (&Smove_overlay);
+  defsubr (&Soverlay_start);
+  defsubr (&Soverlay_end);
+  defsubr (&Soverlay_buffer);
+  defsubr (&Soverlay_properties);
+#endif
   defsubr (&Soverlays_at);
   defsubr (&Soverlays_in);
   defsubr (&Snext_overlay_change);
   defsubr (&Sprevious_overlay_change);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Soverlay_recenter);
+  defsubr (&Soverlay_lists);
+  defsubr (&Soverlay_get);
+#endif
   defsubr (&Soverlay_put);
   defsubr (&Srestore_buffer_modified_p);
 
@@ -6124,10 +6453,4 @@ keys_of_buffer (void)
 {
   initial_define_key (control_x_map, 'b', "switch-to-buffer");
   initial_define_key (control_x_map, 'k', "kill-buffer");
-}
-
-extern void
-set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
-{
-  *(Lisp_Object *)(offset + (char *) b) = value;
 }

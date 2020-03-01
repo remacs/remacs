@@ -35,6 +35,7 @@ static Lisp_Object point_marker;
 /* String for the prompt text used in Fcall_interactively.  */
 static Lisp_Object callint_message;
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("interactive", Finteractive, Sinteractive, 0, UNEVALLED, 0,
        doc: /* Specify a way of parsing arguments for interactive use of a function.
 For example, write
@@ -111,6 +112,7 @@ usage: (interactive &optional ARG-DESCRIPTOR)  */
 {
   return Qnil;
 }
+#endif
 
 /* Quotify EXP: if EXP is constant, return it.
    If EXP is not constant, return (quote EXP).  */
@@ -236,6 +238,25 @@ read_file_name (Lisp_Object default_filename, Lisp_Object mustmatch,
 		callint_message, Qnil, default_filename,
 		mustmatch, initial, predicate);
 }
+
+#ifdef IGNORE_RUST_PORT
+/* BEWARE: Calling this directly from C would defeat the purpose!  */
+DEFUN ("funcall-interactively", Ffuncall_interactively, Sfuncall_interactively,
+       1, MANY, 0, doc: /* Like `funcall' but marks the call as interactive.
+I.e. arrange that within the called function `called-interactively-p' will
+return non-nil.
+usage: (funcall-interactively FUNCTION &rest ARGUMENTS)  */)
+     (ptrdiff_t nargs, Lisp_Object *args)
+{
+  ptrdiff_t speccount = SPECPDL_INDEX ();
+  temporarily_switch_to_single_kboard (NULL);
+
+  /* Nothing special to do here, all the work is inside
+     `called-interactively-p'.  Which will look for us as a marker in the
+     backtrace.  */
+  return unbind_to (speccount, Ffuncall (nargs, args));
+}
+#endif
 
 DEFUN ("call-interactively", Fcall_interactively, Scall_interactively, 1, 3, 0,
        doc: /* Call FUNCTION, providing args according to its interactive calling specs.
@@ -767,6 +788,7 @@ invoke it (via an `interactive' spec that contains, for instance, an
   return SAFE_FREE_UNBIND_TO (speccount, val);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("prefix-numeric-value", Fprefix_numeric_value, Sprefix_numeric_value,
        1, 1, 0,
        doc: /* Return numeric meaning of raw prefix argument RAW.
@@ -789,6 +811,7 @@ Its numeric meaning is what you would get from `(interactive "p")'.  */)
 
   return val;
 }
+#endif
 
 void
 syms_of_callint (void)
@@ -872,5 +895,12 @@ Its purpose is to give temporary modes such as Isearch mode
 a way to turn themselves off when a mouse command switches windows.  */);
   Vmouse_leave_buffer_hook = Qnil;
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sinteractive);
+#endif
   defsubr (&Scall_interactively);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sfuncall_interactively);
+  defsubr (&Sprefix_numeric_value);
+#endif
 }

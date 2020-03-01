@@ -60,6 +60,9 @@ static const int chartab_bits[4] =
 typedef Lisp_Object (*uniprop_decoder_t) (Lisp_Object, Lisp_Object);
 typedef Lisp_Object (*uniprop_encoder_t) (Lisp_Object, Lisp_Object);
 
+#ifdef IGNORE_RUST_PORT
+static Lisp_Object uniprop_table_uncompress (Lisp_Object, int);
+#endif
 static uniprop_decoder_t uniprop_get_decoder (Lisp_Object);
 
 /* 1 iff TABLE is a uniprop table.  */
@@ -216,7 +219,6 @@ sub_char_table_ref (Lisp_Object table, int c, bool is_uniprop)
     val = uniprop_table_uncompress (table, idx);
   if (SUB_CHAR_TABLE_P (val))
     val = sub_char_table_ref (val, c, is_uniprop);
-
   return val;
 }
 
@@ -244,7 +246,6 @@ char_table_ref (Lisp_Object table, int c)
       if (NILP (val) && CHAR_TABLE_P (tbl->parent))
 	val = char_table_ref (tbl->parent, c);
     }
-
   return val;
 }
 
@@ -514,6 +515,61 @@ char_table_set_range (Lisp_Object table, int from, int to, Lisp_Object val)
 }
 
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("char-table-subtype", Fchar_table_subtype, Schar_table_subtype,
+       1, 1, 0,
+       doc: /*
+Return the subtype of char-table CHAR-TABLE.  The value is a symbol.  */)
+  (Lisp_Object char_table)
+{
+  CHECK_CHAR_TABLE (char_table);
+
+  return XCHAR_TABLE (char_table)->purpose;
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("char-table-parent", Fchar_table_parent, Schar_table_parent,
+       1, 1, 0,
+       doc: /* Return the parent char-table of CHAR-TABLE.
+The value is either nil or another char-table.
+If CHAR-TABLE holds nil for a given character,
+then the actual applicable value is inherited from the parent char-table
+\(or from its parents, if necessary).  */)
+  (Lisp_Object char_table)
+{
+  CHECK_CHAR_TABLE (char_table);
+
+  return XCHAR_TABLE (char_table)->parent;
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("set-char-table-parent", Fset_char_table_parent, Sset_char_table_parent,
+       2, 2, 0,
+       doc: /* Set the parent char-table of CHAR-TABLE to PARENT.
+Return PARENT.  PARENT must be either nil or another char-table.  */)
+  (Lisp_Object char_table, Lisp_Object parent)
+{
+  Lisp_Object temp;
+
+  CHECK_CHAR_TABLE (char_table);
+
+  if (!NILP (parent))
+    {
+      CHECK_CHAR_TABLE (parent);
+
+      for (temp = parent; !NILP (temp); temp = XCHAR_TABLE (temp)->parent)
+	if (EQ (temp, char_table))
+	  error ("Attempt to make a chartable be its own parent");
+    }
+
+  set_char_table_parent (char_table, parent);
+
+  return parent;
+}
+#endif
+
 DEFUN ("char-table-extra-slot", Fchar_table_extra_slot, Schar_table_extra_slot,
        2, 2, 0,
        doc: /* Return the value of CHAR-TABLE's extra-slot number N.  */)
@@ -1321,6 +1377,11 @@ syms_of_chartab (void)
   DEFSYM (Qchar_code_property_table, "char-code-property-table");
 
   defsubr (&Smake_char_table);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Schar_table_parent);
+  defsubr (&Schar_table_subtype);
+  defsubr (&Sset_char_table_parent);
+#endif
   defsubr (&Schar_table_extra_slot);
   defsubr (&Sset_char_table_extra_slot);
   defsubr (&Schar_table_range);

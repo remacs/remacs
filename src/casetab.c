@@ -23,15 +23,20 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "lisp.h"
 #include "buffer.h"
 
+#ifdef IGNORE_RUST_PORT
 Lisp_Object Vascii_downcase_table;
 static Lisp_Object Vascii_upcase_table;
 Lisp_Object Vascii_canon_table;
 static Lisp_Object Vascii_eqv_table;
+#endif
 
+#ifdef IGNORE_RUST_PORT
 static void set_canon (Lisp_Object case_table, Lisp_Object range, Lisp_Object elt);
 static void set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt);
 static void shuffle (Lisp_Object table, Lisp_Object c, Lisp_Object elt);
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("case-table-p", Fcase_table_p, Scase_table_p, 1, 1, 0,
        doc: /* Return t if OBJECT is a case table.
 See `set-case-table' for more information on these data structures.  */)
@@ -54,21 +59,27 @@ See `set-case-table' for more information on these data structures.  */)
 		  && (NILP (eqv) || CHAR_TABLE_P (eqv))))
 	  ? Qt : Qnil);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 static Lisp_Object
 check_case_table (Lisp_Object obj)
 {
   CHECK_TYPE (!NILP (Fcase_table_p (obj)), Qcase_table_p, obj);
   return (obj);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("current-case-table", Fcurrent_case_table, Scurrent_case_table, 0, 0, 0,
        doc: /* Return the case table of the current buffer.  */)
   (void)
 {
   return BVAR (current_buffer, downcase_table);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("standard-case-table", Fstandard_case_table, Sstandard_case_table, 0, 0, 0,
        doc: /* Return the standard case table.
 This is the one used for new buffers.  */)
@@ -76,9 +87,11 @@ This is the one used for new buffers.  */)
 {
   return Vascii_downcase_table;
 }
+#endif
 
 static Lisp_Object set_case_table (Lisp_Object, bool);
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("set-case-table", Fset_case_table, Sset_case_table, 1, 1, 0,
        doc: /* Select a new case table for the current buffer.
 A case table is a char-table which maps characters
@@ -100,7 +113,9 @@ EQUIVALENCES is a map that cyclically permutes each equivalence class
 {
   return set_case_table (table, 0);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("set-standard-case-table", Fset_standard_case_table,
        Sset_standard_case_table, 1, 1, 0,
        doc: /* Select a new standard case table for new buffers.
@@ -109,7 +124,9 @@ See `set-case-table' for more info on case tables.  */)
 {
   return set_case_table (table, 1);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 static Lisp_Object
 set_case_table (Lisp_Object table, bool standard)
 {
@@ -165,7 +182,9 @@ set_case_table (Lisp_Object table, bool standard)
 
   return table;
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 /* The following functions are called in map_char_table.  */
 
 /* Set CANON char-table element for characters in RANGE to a
@@ -182,7 +201,9 @@ set_canon (Lisp_Object case_table, Lisp_Object range, Lisp_Object elt)
   if (FIXNATP (elt))
     Fset_char_table_range (canon, range, Faref (case_table, Faref (up, elt)));
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 /* Set elements of char-table TABLE for C to C itself.  C may be a
    cons specifying a character range.  In that case, set characters in
    that range to themselves.  This is done only when ELT is a
@@ -208,7 +229,9 @@ set_identity (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
 	CHAR_TABLE_SET (table, from, make_fixnum (from));
     }
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 /* Permute the elements of TABLE (which is initially an identity
    mapping) so that it has one cycle for each equivalence class
    induced by the translation table on which map_char_table is
@@ -238,7 +261,9 @@ shuffle (Lisp_Object table, Lisp_Object c, Lisp_Object elt)
 	}
     }
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 void
 init_casetab_once (void)
 {
@@ -284,7 +309,9 @@ init_casetab_once (void)
   /* Fill in what isn't filled in.  */
   set_case_table (down, 1);
 }
+#endif
 
+#ifdef IGNORE_RUST_PORT
 void
 syms_of_casetab (void)
 {
@@ -301,3 +328,4 @@ syms_of_casetab (void)
   defsubr (&Sset_case_table);
   defsubr (&Sset_standard_case_table);
 }
+#endif

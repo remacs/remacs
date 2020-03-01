@@ -82,9 +82,48 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <unistd.h>
 
+#ifdef USE_GTK
 #include "gtkutil.h"
 #ifdef HAVE_GTK3
 #include <X11/Xproto.h>
+#endif
+#endif
+
+#if defined (USE_LUCID) || defined (USE_MOTIF)
+#include "../lwlib/xlwmenu.h"
+#endif
+
+#ifdef USE_X_TOOLKIT
+
+/* Include toolkit specific headers for the scroll bar widget.  */
+
+#ifdef USE_TOOLKIT_SCROLL_BARS
+#if defined USE_MOTIF
+#include <Xm/Xm.h>		/* For LESSTIF_VERSION */
+#include <Xm/ScrollBar.h>
+#else /* !USE_MOTIF i.e. use Xaw */
+
+#ifdef HAVE_XAW3D
+#include <X11/Xaw3d/Simple.h>
+#include <X11/Xaw3d/Scrollbar.h>
+#include <X11/Xaw3d/ThreeD.h>
+#else /* !HAVE_XAW3D */
+#include <X11/Xaw/Simple.h>
+#include <X11/Xaw/Scrollbar.h>
+#endif /* !HAVE_XAW3D */
+#ifndef XtNpickTop
+#define XtNpickTop "pickTop"
+#endif /* !XtNpickTop */
+#endif /* !USE_MOTIF */
+#endif /* USE_TOOLKIT_SCROLL_BARS */
+
+#endif /* USE_X_TOOLKIT */
+
+#ifdef USE_X_TOOLKIT
+#include "widget.h"
+#ifndef XtNinitialState
+#define XtNinitialState "initialState"
+#endif
 #endif
 
 #include "bitmaps/gray.xbm"
@@ -110,6 +149,17 @@ static bool any_help_event_p;
 
 struct x_display_info *x_display_list;
 
+#ifdef USE_X_TOOLKIT
+
+/* The application context for Xt use.  */
+XtAppContext Xt_app_con;
+static String Xt_default_resources[] = {0};
+
+/* Non-zero means user is interacting with a toolkit scroll bar.  */
+static bool toolkit_scroll_bar_interaction;
+
+#endif /* USE_X_TOOLKIT */
+
 /* Non-zero timeout value means ignore next mouse click if it arrives
    before that timeout elapses (i.e. as part of the same sequence of
    events resulting from clicking on a frame to select it).  */
@@ -120,8 +170,10 @@ static Time ignore_next_mouse_click_timeout;
 
 static int x_noop_count;
 
+#ifdef USE_GTK
 /* The name of the Emacs icon file.  */
 static Lisp_Object xg_default_icon_file;
+#endif
 
 /* Some functions take this as char *, not const char *.  */
 static char emacs_class[] = EMACS_CLASS;
@@ -174,6 +226,9 @@ static void x_sync_with_move (struct frame *, int, int, bool);
 static int handle_one_xevent (struct x_display_info *,
 			      const XEvent *, int *,
 			      struct input_event *);
+#if ! (defined USE_X_TOOLKIT || defined USE_MOTIF) && defined USE_GTK
+static int x_dispatch_event (XEvent *, Display *);
+#endif
 static void x_wm_set_window_state (struct frame *, int);
 static void x_wm_set_icon_pixmap (struct frame *, ptrdiff_t);
 static void x_initialize (void);
@@ -1236,6 +1291,7 @@ x_clear_under_internal_border (struct frame *f)
       int border = FRAME_INTERNAL_BORDER_WIDTH (f);
       int width = FRAME_PIXEL_WIDTH (f);
       int height = FRAME_PIXEL_HEIGHT (f);
+#ifdef USE_GTK
       int margin = 0;
 #else
       int margin = FRAME_TOP_MARGIN_HEIGHT (f);
@@ -4064,7 +4120,11 @@ x_show_hourglass (struct frame *f)
   if (dpy)
     {
       struct x_output *x = FRAME_X_OUTPUT (f);
+#ifdef USE_X_TOOLKIT
+      if (x->widget)
+#else
       if (FRAME_OUTER_WINDOW (f))
+#endif
        {
          x->hourglass_p = true;
 
@@ -4072,7 +4132,11 @@ x_show_hourglass (struct frame *f)
            {
 	     unsigned long mask = CWCursor;
 	     XSetWindowAttributes attrs;
+#ifdef USE_GTK
              Window parent = FRAME_X_WINDOW (f);
+#else
+             Window parent = FRAME_OUTER_WINDOW (f);
+#endif
 	     attrs.cursor = x->hourglass_cursor;
 
              x->hourglass_window = XCreateWindow
@@ -4112,6 +4176,7 @@ XTflash (struct frame *f)
   block_input ();
 
   {
+#ifdef USE_GTK
     /* Use Gdk routines to draw.  This way, we won't draw over scroll bars
        when the scroll bars and the edit widget share the same X window.  */
     GdkWindow *window = gtk_widget_get_window (FRAME_GTK_WIDGET (f));
@@ -4142,6 +4207,22 @@ XTflash (struct frame *f)
 #define XFillRectangle(d, win, gc, x, y, w, h) \
     gdk_draw_rectangle (window, gc, true, x, y, w, h)
 #endif /* ! HAVE_GTK3 */
+#else /* ! USE_GTK */
+    GC gc;
+
+    /* Create a GC that will use the GXxor function to flip foreground
+       pixels into background pixels.  */
+    {
+      XGCValues values;
+
+      values.function = GXxor;
+      values.foreground = (FRAME_FOREGROUND_PIXEL (f)
+			   ^ FRAME_BACKGROUND_PIXEL (f));
+
+      gc = XCreateGC (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
+		      GCFunction | GCForeground, &values);
+    }
+#endif
     {
       /* Get the height not including a menu bar widget.  */
       int height = FRAME_PIXEL_HEIGHT (f);
@@ -4218,6 +4299,7 @@ XTflash (struct frame *f)
 			flash_left, FRAME_INTERNAL_BORDER_WIDTH (f),
 			width, height - 2 * FRAME_INTERNAL_BORDER_WIDTH (f));
 
+#ifdef USE_GTK
 #ifdef HAVE_GTK3
 #if GTK_CHECK_VERSION (3, 22, 0)
       gdk_window_end_draw_frame (window, context);
@@ -4229,6 +4311,9 @@ XTflash (struct frame *f)
       g_object_unref (G_OBJECT (gc));
 #endif
 #undef XFillRectangle
+#else
+      XFreeGC (FRAME_X_DISPLAY (f), gc);
+#endif
       x_flush (f);
     }
   }
@@ -4516,6 +4601,16 @@ x_window_to_frame (struct x_display_info *dpyinfo, int wdesc)
 	continue;
       if (f->output_data.x->hourglass_window == wdesc)
 	return f;
+#ifdef USE_X_TOOLKIT
+      if ((f->output_data.x->edit_widget
+	   && XtWindow (f->output_data.x->edit_widget) == wdesc)
+	  /* A tooltip frame?  */
+	  || (!f->output_data.x->edit_widget
+	      && FRAME_X_WINDOW (f) == wdesc)
+          || f->output_data.x->icon_desc == wdesc)
+        return f;
+#else /* not USE_X_TOOLKIT */
+#ifdef USE_GTK
       if (f->output_data.x->edit_widget)
       {
         GtkWidget *gwdesc = xg_win_to_widget (dpyinfo->display, wdesc);
@@ -4523,12 +4618,16 @@ x_window_to_frame (struct x_display_info *dpyinfo, int wdesc)
         if (gwdesc != 0 && gwdesc == x->edit_widget)
           return f;
       }
+#endif /* USE_GTK */
       if (FRAME_X_WINDOW (f) == wdesc
           || f->output_data.x->icon_desc == wdesc)
         return f;
+#endif /* not USE_X_TOOLKIT */
     }
   return 0;
 }
+
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
 
 /* Like x_window_to_frame but also compares the window with the widget's
    windows.  */
@@ -4556,10 +4655,20 @@ x_any_window_to_frame (struct x_display_info *dpyinfo, int wdesc)
 	    found = f;
 	  else if (x->widget)
 	    {
+#ifdef USE_GTK
               GtkWidget *gwdesc = xg_win_to_widget (dpyinfo->display, wdesc);
               if (gwdesc != 0
                   && gtk_widget_get_toplevel (gwdesc) == x->widget)
                 found = f;
+#else
+	      if (wdesc == XtWindow (x->widget)
+		  || wdesc == XtWindow (x->column_widget)
+		  || wdesc == XtWindow (x->edit_widget))
+		found = f;
+	      /* Match if the window is this frame's menubar.  */
+	      else if (lw_window_is_in_menubar (wdesc, x->menubar_widget))
+		found = f;
+#endif
 	    }
 	  else if (FRAME_X_WINDOW (f) == wdesc)
 	    /* A tooltip frame.  */
@@ -4590,8 +4699,15 @@ x_menubar_window_to_frame (struct x_display_info *dpyinfo,
       if (!FRAME_X_P (f) || FRAME_DISPLAY_INFO (f) != dpyinfo)
 	continue;
       x = f->output_data.x;
+#ifdef USE_GTK
       if (x->menubar_widget && xg_event_is_for_menubar (f, event))
         return f;
+#else
+      /* Match if the window is this frame's menubar.  */
+      if (x->menubar_widget
+	  && lw_window_is_in_menubar (wdesc, x->menubar_widget))
+	return f;
+#endif
     }
   return 0;
 }
@@ -4619,9 +4735,14 @@ x_top_window_to_frame (struct x_display_info *dpyinfo, int wdesc)
       if (x->widget)
 	{
 	  /* This frame matches if the window is its topmost widget.  */
+#ifdef USE_GTK
           GtkWidget *gwdesc = xg_win_to_widget (dpyinfo->display, wdesc);
           if (gwdesc == x->widget)
             return f;
+#else
+	  if (wdesc == XtWindow (x->widget))
+	    return f;
+#endif
 	}
       else if (FRAME_X_WINDOW (f) == wdesc)
 	/* Tooltip frame.  */
@@ -4629,6 +4750,13 @@ x_top_window_to_frame (struct x_display_info *dpyinfo, int wdesc)
     }
   return 0;
 }
+
+#else /* !USE_X_TOOLKIT && !USE_GTK */
+
+#define x_any_window_to_frame(d, i) x_window_to_frame (d, i)
+#define x_top_window_to_frame(d, i) x_window_to_frame (d, i)
+
+#endif /* USE_X_TOOLKIT || USE_GTK */
 
 /* The focus may have changed.  Figure out if it is a real focus change,
    by checking both FocusIn/Out and Enter/LeaveNotify events.
@@ -4679,6 +4807,16 @@ x_detect_focus_change (struct x_display_info *dpyinfo, struct frame *frame,
     }
 }
 
+
+#if !defined USE_X_TOOLKIT && !defined USE_GTK
+/* Handle an event saying the mouse has moved out of an Emacs frame.  */
+
+void
+x_mouse_leave (struct x_display_info *dpyinfo)
+{
+  x_new_focus_frame (dpyinfo, dpyinfo->x_focus_event_frame);
+}
+#endif
 
 /* The focus has changed, or we have redirected a frame's focus to
    another frame (this happens when a frame uses a surrogate
@@ -5089,7 +5227,9 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 	 containing the pointer.  */
       {
 	Window win, child;
+#ifdef USE_GTK
 	Window first_win = 0;
+#endif
 	int win_x, win_y;
 	int parent_x = 0, parent_y = 0;
 
@@ -5129,14 +5269,17 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 				       &child);
 		if (child == None || child == win)
 		  {
+#ifdef USE_GTK
 		    /* On GTK we have not inspected WIN yet.  If it has
 		       a frame and that frame has a parent, use it.  */
 		    struct frame *f = x_window_to_frame (dpyinfo, win);
 
 		    if (f && FRAME_PARENT_FRAME (f))
 		      first_win = win;
+#endif
 		    break;
 		  }
+#ifdef USE_GTK
 		/* We don't wan't to know the innermost window.  We
 		   want the edit window.  For non-Gtk+ the innermost
 		   window is the edit window.  For Gtk+ it might not
@@ -5145,13 +5288,16 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 		  /* But don't hurry.  We might find a child frame
 		     beneath.  */
 		  first_win = win;
+#endif
 		win = child;
 		parent_x = win_x;
 		parent_y = win_y;
 	      }
 
+#ifdef USE_GTK
 	    if (first_win)
 	      win = first_win;
+#endif
 
 	    /* Now we know that:
 	       win is the innermost window containing the pointer
@@ -5164,9 +5310,23 @@ XTmouse_position (struct frame **fp, int insist, Lisp_Object *bar_window,
 	       parent_{x,y} are invalid, but that's okay, because we'll
 	       never use them in that case.)  */
 
+#ifdef USE_GTK
 	    /* We don't wan't to know the innermost window.  We
 	       want the edit window.  */
 	    f1 = x_window_to_frame (dpyinfo, win);
+#else
+	    /* Is win one of our frames?  */
+	    f1 = x_any_window_to_frame (dpyinfo, win);
+#endif
+
+#ifdef USE_X_TOOLKIT
+	    /* If we end up with the menu bar window, say it's not
+	       on the frame.  */
+	    if (f1 != NULL
+		&& f1->output_data.x->menubar_widget
+		&& win == XtWindow (f1->output_data.x->menubar_widget))
+	      f1 = NULL;
+#endif /* USE_X_TOOLKIT */
 	  }
 
 	if ((!f1 || FRAME_TOOLTIP_P (f1))
@@ -5260,7 +5420,9 @@ x_window_to_scroll_bar (Display *display, Window window_id, int type)
 {
   Lisp_Object tail, frame;
 
+#if defined (USE_GTK) && defined (USE_TOOLKIT_SCROLL_BARS)
   window_id = (Window) xg_get_scroll_id_for_window (display, window_id);
+#endif /* USE_GTK  && USE_TOOLKIT_SCROLL_BARS */
 
   FOR_EACH_FRAME (tail, frame)
     {
@@ -5291,11 +5453,35 @@ x_window_to_scroll_bar (Display *display, Window window_id, int type)
 }
 
 
+#if defined USE_LUCID
+
+/* Return the Lucid menu bar WINDOW is part of.  Return null
+   if WINDOW is not part of a menu bar.  */
+
+static Widget
+x_window_to_menu_bar (Window window)
+{
+  Lisp_Object tail, frame;
+
+  FOR_EACH_FRAME (tail, frame)
+    if (FRAME_X_P (XFRAME (frame)))
+      {
+	Widget menu_bar = XFRAME (frame)->output_data.x->menubar_widget;
+
+	if (menu_bar && xlwmenu_window_p (menu_bar, window))
+	  return menu_bar;
+      }
+  return NULL;
+}
+
+#endif /* USE_LUCID */
+
 
 /************************************************************************
 			 Toolkit scroll bars
  ************************************************************************/
 
+#ifdef USE_TOOLKIT_SCROLL_BARS
 
 static void x_send_scroll_bar_event (Lisp_Object, enum scroll_bar_part,
                                      int, int, bool);
@@ -5308,6 +5494,112 @@ static Lisp_Object window_being_scrolled;
 /* Whether this is an Xaw with arrow-scrollbars.  This should imply
    that movements of 1/20 of the screen size are mapped to up/down.  */
 
+#ifndef USE_GTK
+/* Id of action hook installed for scroll bars.  */
+
+static XtActionHookId action_hook_id;
+static XtActionHookId horizontal_action_hook_id;
+
+static Boolean xaw3d_arrow_scroll;
+
+/* Whether the drag scrolling maintains the mouse at the top of the
+   thumb.  If not, resizing the thumb needs to be done more carefully
+   to avoid jerkiness.  */
+
+static Boolean xaw3d_pick_top;
+
+/* Action hook installed via XtAppAddActionHook when toolkit scroll
+   bars are used..  The hook is responsible for detecting when
+   the user ends an interaction with the scroll bar, and generates
+   a `end-scroll' SCROLL_BAR_CLICK_EVENT' event if so.  */
+
+static void
+xt_action_hook (Widget widget, XtPointer client_data, String action_name,
+		XEvent *event, String *params, Cardinal *num_params)
+{
+  bool scroll_bar_p;
+  const char *end_action;
+
+#ifdef USE_MOTIF
+  scroll_bar_p = XmIsScrollBar (widget);
+  end_action = "Release";
+#else /* !USE_MOTIF i.e. use Xaw */
+  scroll_bar_p = XtIsSubclass (widget, scrollbarWidgetClass);
+  end_action = "EndScroll";
+#endif /* USE_MOTIF */
+
+  if (scroll_bar_p
+      && strcmp (action_name, end_action) == 0
+      && WINDOWP (window_being_scrolled))
+    {
+      struct window *w;
+      struct scroll_bar *bar;
+
+      x_send_scroll_bar_event (window_being_scrolled,
+			       scroll_bar_end_scroll, 0, 0, false);
+      w = XWINDOW (window_being_scrolled);
+      bar = XSCROLL_BAR (w->vertical_scroll_bar);
+
+      if (bar->dragging != -1)
+	{
+	  bar->dragging = -1;
+	  /* The thumb size is incorrect while dragging: fix it.  */
+	  set_vertical_scroll_bar (w);
+	}
+      window_being_scrolled = Qnil;
+#if defined (USE_LUCID)
+      bar->last_seen_part = scroll_bar_nowhere;
+#endif
+      /* Xt timeouts no longer needed.  */
+      toolkit_scroll_bar_interaction = false;
+    }
+}
+
+
+static void
+xt_horizontal_action_hook (Widget widget, XtPointer client_data, String action_name,
+			   XEvent *event, String *params, Cardinal *num_params)
+{
+  bool scroll_bar_p;
+  const char *end_action;
+
+#ifdef USE_MOTIF
+  scroll_bar_p = XmIsScrollBar (widget);
+  end_action = "Release";
+#else /* !USE_MOTIF i.e. use Xaw */
+  scroll_bar_p = XtIsSubclass (widget, scrollbarWidgetClass);
+  end_action = "EndScroll";
+#endif /* USE_MOTIF */
+
+  if (scroll_bar_p
+      && strcmp (action_name, end_action) == 0
+      && WINDOWP (window_being_scrolled))
+    {
+      struct window *w;
+      struct scroll_bar *bar;
+
+      x_send_scroll_bar_event (window_being_scrolled,
+			       scroll_bar_end_scroll, 0, 0, true);
+      w = XWINDOW (window_being_scrolled);
+      if (!NILP (w->horizontal_scroll_bar))
+	{
+	  bar = XSCROLL_BAR (w->horizontal_scroll_bar);
+	  if (bar->dragging != -1)
+	    {
+	      bar->dragging = -1;
+	      /* The thumb size is incorrect while dragging: fix it.  */
+	      set_horizontal_scroll_bar (w);
+	    }
+	  window_being_scrolled = Qnil;
+#if defined (USE_LUCID)
+	  bar->last_seen_part = scroll_bar_nowhere;
+#endif
+	  /* Xt timeouts no longer needed.  */
+	  toolkit_scroll_bar_interaction = false;
+	}
+    }
+}
+#endif /* not USE_GTK */
 
 /* Send a client message with message type Xatom_Scrollbar for a
    scroll action to the frame of WINDOW.  PART is a value identifying
@@ -5348,6 +5640,12 @@ x_send_scroll_bar_event (Lisp_Object window, enum scroll_bar_part part,
   ev->data.l[3] = portion;
   ev->data.l[4] = whole;
 
+  /* Make Xt timeouts work while the scroll bar is active.  */
+#ifdef USE_X_TOOLKIT
+  toolkit_scroll_bar_interaction = true;
+  x_activate_timeout_atimer ();
+#endif
+
   /* Setting the event mask to zero means that the message will
      be sent to the client that created the window, and if that
      window no longer exists, no event will be sent.  */
@@ -5378,7 +5676,12 @@ x_scroll_bar_to_input_event (const XEvent *event,
   ievent->kind = SCROLL_BAR_CLICK_EVENT;
   ievent->frame_or_window = window;
   ievent->arg = Qnil;
+#ifdef USE_GTK
   ievent->timestamp = CurrentTime;
+#else
+  ievent->timestamp =
+    XtLastTimestampProcessed (FRAME_X_DISPLAY (XFRAME (w->frame)));
+#endif
   ievent->code = 0;
   ievent->part = ev->data.l[2];
   ievent->x = make_fixnum (ev->data.l[3]);
@@ -5408,7 +5711,12 @@ x_horizontal_scroll_bar_to_input_event (const XEvent *event,
   ievent->kind = HORIZONTAL_SCROLL_BAR_CLICK_EVENT;
   ievent->frame_or_window = window;
   ievent->arg = Qnil;
+#ifdef USE_GTK
   ievent->timestamp = CurrentTime;
+#else
+  ievent->timestamp =
+    XtLastTimestampProcessed (FRAME_X_DISPLAY (XFRAME (w->frame)));
+#endif
   ievent->code = 0;
   ievent->part = ev->data.l[2];
   ievent->x = make_fixnum (ev->data.l[3]);
@@ -5416,6 +5724,97 @@ x_horizontal_scroll_bar_to_input_event (const XEvent *event,
   ievent->modifiers = 0;
 }
 
+
+#ifdef USE_MOTIF
+
+/* Minimum and maximum values used for Motif scroll bars.  */
+
+#define XM_SB_MAX 10000000
+
+/* Scroll bar callback for Motif scroll bars.  WIDGET is the scroll
+   bar widget.  CLIENT_DATA is a pointer to the scroll_bar structure.
+   CALL_DATA is a pointer to a XmScrollBarCallbackStruct.  */
+
+static void
+xm_scroll_callback (Widget widget, XtPointer client_data, XtPointer call_data)
+{
+  struct scroll_bar *bar = client_data;
+  XmScrollBarCallbackStruct *cs = call_data;
+  enum scroll_bar_part part = scroll_bar_nowhere;
+  bool horizontal = bar->horizontal;
+  int whole = 0, portion = 0;
+
+  switch (cs->reason)
+    {
+    case XmCR_DECREMENT:
+      bar->dragging = -1;
+      part = horizontal ? scroll_bar_left_arrow : scroll_bar_up_arrow;
+      break;
+
+    case XmCR_INCREMENT:
+      bar->dragging = -1;
+      part = horizontal ? scroll_bar_right_arrow : scroll_bar_down_arrow;
+      break;
+
+    case XmCR_PAGE_DECREMENT:
+      bar->dragging = -1;
+      part = horizontal ? scroll_bar_before_handle : scroll_bar_above_handle;
+      break;
+
+    case XmCR_PAGE_INCREMENT:
+      bar->dragging = -1;
+      part = horizontal ? scroll_bar_after_handle : scroll_bar_below_handle;
+      break;
+
+    case XmCR_TO_TOP:
+      bar->dragging = -1;
+      part = horizontal ? scroll_bar_to_leftmost : scroll_bar_to_top;
+      break;
+
+    case XmCR_TO_BOTTOM:
+      bar->dragging = -1;
+      part = horizontal ? scroll_bar_to_rightmost : scroll_bar_to_bottom;
+      break;
+
+    case XmCR_DRAG:
+      {
+	int slider_size;
+
+	block_input ();
+	XtVaGetValues (widget, XmNsliderSize, &slider_size, NULL);
+	unblock_input ();
+
+	if (horizontal)
+	  {
+	    portion = bar->whole * ((float)cs->value / XM_SB_MAX);
+	    whole = bar->whole * ((float)(XM_SB_MAX - slider_size) / XM_SB_MAX);
+	    portion = min (portion, whole);
+	    part = scroll_bar_horizontal_handle;
+	  }
+	else
+	  {
+	    whole = XM_SB_MAX - slider_size;
+	    portion = min (cs->value, whole);
+	    part = scroll_bar_handle;
+	  }
+
+	bar->dragging = cs->value;
+      }
+      break;
+
+    case XmCR_VALUE_CHANGED:
+      break;
+    };
+
+  if (part != scroll_bar_nowhere)
+    {
+      window_being_scrolled = bar->window;
+      x_send_scroll_bar_event (bar->window, part, portion, whole,
+			       bar->horizontal);
+    }
+}
+
+#elif defined USE_GTK
 
 /* Scroll bar callback for GTK scroll bars.  WIDGET is the scroll
    bar widget.  DATA is a pointer to the scroll_bar structure. */
@@ -5513,12 +5912,147 @@ xg_end_scroll_callback (GtkWidget *widget,
 }
 
 
+#else /* not USE_GTK and not USE_MOTIF */
+
+/* Xaw scroll bar callback.  Invoked when the thumb is dragged.
+   WIDGET is the scroll bar widget.  CLIENT_DATA is a pointer to the
+   scroll bar struct.  CALL_DATA is a pointer to a float saying where
+   the thumb is.  */
+
+static void
+xaw_jump_callback (Widget widget, XtPointer client_data, XtPointer call_data)
+{
+  struct scroll_bar *bar = client_data;
+  float *top_addr = call_data;
+  float top = *top_addr;
+  float shown;
+  int whole, portion, height, width;
+  enum scroll_bar_part part;
+  bool horizontal = bar->horizontal;
+
+  if (horizontal)
+    {
+      /* Get the size of the thumb, a value between 0 and 1.  */
+      block_input ();
+      XtVaGetValues (widget, XtNshown, &shown, XtNwidth, &width, NULL);
+      unblock_input ();
+
+      if (shown < 1)
+	{
+	  whole = bar->whole - (shown * bar->whole);
+	  portion = min (top * bar->whole, whole);
+	}
+      else
+	{
+	  whole = bar->whole;
+	  portion = 0;
+	}
+
+      part = scroll_bar_horizontal_handle;
+    }
+  else
+    {
+      /* Get the size of the thumb, a value between 0 and 1.  */
+      block_input ();
+      XtVaGetValues (widget, XtNshown, &shown, XtNheight, &height, NULL);
+      unblock_input ();
+
+      whole = 10000000;
+      portion = shown < 1 ? top * whole : 0;
+
+      if (shown < 1 && (eabs (top + shown - 1) < 1.0f / height))
+	/* Some derivatives of Xaw refuse to shrink the thumb when you reach
+	   the bottom, so we force the scrolling whenever we see that we're
+	   too close to the bottom (in x_set_toolkit_scroll_bar_thumb
+	   we try to ensure that we always stay two pixels away from the
+	   bottom).  */
+	part = scroll_bar_down_arrow;
+      else
+	part = scroll_bar_handle;
+    }
+
+  window_being_scrolled = bar->window;
+  bar->dragging = portion;
+  bar->last_seen_part = part;
+  x_send_scroll_bar_event (bar->window, part, portion, whole, bar->horizontal);
+}
+
+
+/* Xaw scroll bar callback.  Invoked for incremental scrolling.,
+   i.e. line or page up or down.  WIDGET is the Xaw scroll bar
+   widget.  CLIENT_DATA is a pointer to the scroll_bar structure for
+   the scroll bar.  CALL_DATA is an integer specifying the action that
+   has taken place.  Its magnitude is in the range 0..height of the
+   scroll bar.  Negative values mean scroll towards buffer start.
+   Values < height of scroll bar mean line-wise movement.  */
+
+static void
+xaw_scroll_callback (Widget widget, XtPointer client_data, XtPointer call_data)
+{
+  struct scroll_bar *bar = client_data;
+  /* The position really is stored cast to a pointer.  */
+  int position = (intptr_t) call_data;
+  Dimension height, width;
+  enum scroll_bar_part part;
+
+  if (bar->horizontal)
+    {
+      /* Get the width of the scroll bar.  */
+      block_input ();
+      XtVaGetValues (widget, XtNwidth, &width, NULL);
+      unblock_input ();
+
+      if (eabs (position) >= width)
+	part = (position < 0) ? scroll_bar_before_handle : scroll_bar_after_handle;
+
+      /* If Xaw3d was compiled with ARROW_SCROLLBAR,
+	 it maps line-movement to call_data = max(5, height/20).  */
+      else if (xaw3d_arrow_scroll && eabs (position) <= max (5, width / 20))
+	part = (position < 0) ? scroll_bar_left_arrow : scroll_bar_right_arrow;
+      else
+	part = scroll_bar_move_ratio;
+
+      window_being_scrolled = bar->window;
+      bar->dragging = -1;
+      bar->last_seen_part = part;
+      x_send_scroll_bar_event (bar->window, part, position, width,
+			       bar->horizontal);
+    }
+  else
+    {
+
+      /* Get the height of the scroll bar.  */
+      block_input ();
+      XtVaGetValues (widget, XtNheight, &height, NULL);
+      unblock_input ();
+
+      if (eabs (position) >= height)
+	part = (position < 0) ? scroll_bar_above_handle : scroll_bar_below_handle;
+
+      /* If Xaw3d was compiled with ARROW_SCROLLBAR,
+	 it maps line-movement to call_data = max(5, height/20).  */
+      else if (xaw3d_arrow_scroll && eabs (position) <= max (5, height / 20))
+	part = (position < 0) ? scroll_bar_up_arrow : scroll_bar_down_arrow;
+      else
+	part = scroll_bar_move_ratio;
+
+      window_being_scrolled = bar->window;
+      bar->dragging = -1;
+      bar->last_seen_part = part;
+      x_send_scroll_bar_event (bar->window, part, position, height,
+			       bar->horizontal);
+    }
+}
+
+#endif /* not USE_GTK and not USE_MOTIF */
+
 #define SCROLL_BAR_NAME "verticalScrollBar"
 #define SCROLL_BAR_HORIZONTAL_NAME "horizontalScrollBar"
 
 /* Create the widget for scroll bar BAR on frame F.  Record the widget
    and X window of the scroll bar in BAR.  */
 
+#ifdef USE_GTK
 static void
 x_create_toolkit_scroll_bar (struct frame *f, struct scroll_bar *bar)
 {
@@ -5953,6 +6487,7 @@ x_create_horizontal_toolkit_scroll_bar (struct frame *f, struct scroll_bar *bar)
 /* Set the thumb size and position of scroll bar BAR.  We are currently
    displaying PORTION out of a whole WHOLE, and our position POSITION.  */
 
+#ifdef USE_GTK
 static void
 x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int position, int whole)
 {
@@ -5965,6 +6500,204 @@ x_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar, int portion, 
   xg_set_toolkit_horizontal_scroll_bar_thumb (bar, portion, position, whole);
 }
 
+#else /* not USE_GTK */
+static void
+x_set_toolkit_scroll_bar_thumb (struct scroll_bar *bar, int portion, int position,
+				int whole)
+{
+  struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
+  Widget widget = SCROLL_BAR_X_WIDGET (FRAME_X_DISPLAY (f), bar);
+  float top, shown;
+
+  block_input ();
+
+#ifdef USE_MOTIF
+
+  if (scroll_bar_adjust_thumb_portion_p)
+    {
+      /* We use an estimate of 30 chars per line rather than the real
+         `portion' value.  This has the disadvantage that the thumb size
+         is not very representative, but it makes our life a lot easier.
+         Otherwise, we have to constantly adjust the thumb size, which
+         we can't always do quickly enough: while dragging, the size of
+         the thumb might prevent the user from dragging the thumb all the
+         way to the end.  but Motif and some versions of Xaw3d don't allow
+         updating the thumb size while dragging.  Also, even if we can update
+         its size, the update will often happen too late.
+         If you don't believe it, check out revision 1.650 of xterm.c to see
+         what hoops we were going through and the still poor behavior we got.  */
+      portion = WINDOW_TOTAL_LINES (XWINDOW (bar->window)) * 30;
+      /* When the thumb is at the bottom, position == whole.
+         So we need to increase `whole' to make space for the thumb.  */
+      whole += portion;
+    }
+
+  if (whole <= 0)
+    top = 0, shown = 1;
+  else
+    {
+      top = (float) position / whole;
+      shown = (float) portion / whole;
+    }
+
+  if (bar->dragging == -1)
+    {
+      int size, value;
+
+      /* Slider size.  Must be in the range [1 .. MAX - MIN] where MAX
+         is the scroll bar's maximum and MIN is the scroll bar's minimum
+	 value.  */
+      size = clip_to_bounds (1, shown * XM_SB_MAX, XM_SB_MAX);
+
+      /* Position.  Must be in the range [MIN .. MAX - SLIDER_SIZE].  */
+      value = top * XM_SB_MAX;
+      value = min (value, XM_SB_MAX - size);
+
+      XmScrollBarSetValues (widget, value, size, 0, 0, False);
+    }
+#else /* !USE_MOTIF i.e. use Xaw */
+
+  if (whole == 0)
+    top = 0, shown = 1;
+  else
+    {
+      top = (float) position / whole;
+      shown = (float) portion / whole;
+    }
+
+  {
+    float old_top, old_shown;
+    Dimension height;
+    XtVaGetValues (widget,
+		   XtNtopOfThumb, &old_top,
+		   XtNshown, &old_shown,
+		   XtNheight, &height,
+		   NULL);
+
+    /* Massage the top+shown values.  */
+    if (bar->dragging == -1 || bar->last_seen_part == scroll_bar_down_arrow)
+      top = max (0, min (1, top));
+    else
+      top = old_top;
+#if ! defined (HAVE_XAW3D)
+    /* With Xaw, 'top' values too closer to 1.0 may
+       cause the thumb to disappear.  Fix that.  */
+    top = min (top, 0.99f);
+#endif
+    /* Keep two pixels available for moving the thumb down.  */
+    shown = max (0, min (1 - top - (2.0f / height), shown));
+#if ! defined (HAVE_XAW3D)
+    /* Likewise with too small 'shown'.  */
+    shown = max (shown, 0.01f);
+#endif
+
+    /* If the call to XawScrollbarSetThumb below doesn't seem to
+       work, check that 'NARROWPROTO' is defined in src/config.h.
+       If this is not so, most likely you need to fix configure.  */
+    if (top != old_top || shown != old_shown)
+      {
+	if (bar->dragging == -1)
+	  XawScrollbarSetThumb (widget, top, shown);
+	else
+	  {
+	    /* Try to make the scrolling a tad smoother.  */
+	    if (!xaw3d_pick_top)
+	      shown = min (shown, old_shown);
+
+	    XawScrollbarSetThumb (widget, top, shown);
+	  }
+      }
+  }
+#endif /* !USE_MOTIF */
+
+  unblock_input ();
+}
+
+static void
+x_set_toolkit_horizontal_scroll_bar_thumb (struct scroll_bar *bar, int portion, int position,
+				int whole)
+{
+  struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
+  Widget widget = SCROLL_BAR_X_WIDGET (FRAME_X_DISPLAY (f), bar);
+  float top, shown;
+
+  block_input ();
+
+#ifdef USE_MOTIF
+  bar->whole = whole;
+  shown = (float) portion / whole;
+  top = (float) position / (whole - portion);
+  {
+    int size = clip_to_bounds (1, shown * XM_SB_MAX, XM_SB_MAX);
+    int value = clip_to_bounds (0, top * (XM_SB_MAX - size), XM_SB_MAX - size);
+
+    XmScrollBarSetValues (widget, value, size, 0, 0, False);
+  }
+#else /* !USE_MOTIF i.e. use Xaw */
+  bar->whole = whole;
+  if (whole == 0)
+    top = 0, shown = 1;
+  else
+    {
+      top = (float) position / whole;
+      shown = (float) portion / whole;
+    }
+
+  {
+    float old_top, old_shown;
+    Dimension height;
+    XtVaGetValues (widget,
+		   XtNtopOfThumb, &old_top,
+		   XtNshown, &old_shown,
+		   XtNheight, &height,
+		   NULL);
+
+#if false
+    /* Massage the top+shown values.  */
+    if (bar->dragging == -1 || bar->last_seen_part == scroll_bar_down_arrow)
+      top = max (0, min (1, top));
+    else
+      top = old_top;
+#if ! defined (HAVE_XAW3D)
+    /* With Xaw, 'top' values too closer to 1.0 may
+       cause the thumb to disappear.  Fix that.  */
+    top = min (top, 0.99f);
+#endif
+    /* Keep two pixels available for moving the thumb down.  */
+    shown = max (0, min (1 - top - (2.0f / height), shown));
+#if ! defined (HAVE_XAW3D)
+    /* Likewise with too small 'shown'.  */
+    shown = max (shown, 0.01f);
+#endif
+#endif
+
+    /* If the call to XawScrollbarSetThumb below doesn't seem to
+       work, check that 'NARROWPROTO' is defined in src/config.h.
+       If this is not so, most likely you need to fix configure.  */
+    XawScrollbarSetThumb (widget, top, shown);
+#if false
+    if (top != old_top || shown != old_shown)
+      {
+	if (bar->dragging == -1)
+	  XawScrollbarSetThumb (widget, top, shown);
+	else
+	  {
+	    /* Try to make the scrolling a tad smoother.  */
+	    if (!xaw3d_pick_top)
+	      shown = min (shown, old_shown);
+
+	    XawScrollbarSetThumb (widget, top, shown);
+	  }
+      }
+#endif
+  }
+#endif /* !USE_MOTIF */
+
+  unblock_input ();
+}
+#endif /* not USE_GTK */
+
+#endif /* USE_TOOLKIT_SCROLL_BARS */
 
 
 
@@ -5988,10 +6721,47 @@ x_scroll_bar_create (struct window *w, int top, int left,
 
   block_input ();
 
+#ifdef USE_TOOLKIT_SCROLL_BARS
   if (horizontal)
     x_create_horizontal_toolkit_scroll_bar (f, bar);
   else
     x_create_toolkit_scroll_bar (f, bar);
+#else /* not USE_TOOLKIT_SCROLL_BARS */
+  {
+    XSetWindowAttributes a;
+    unsigned long mask;
+    Window window;
+
+    a.background_pixel = f->output_data.x->scroll_bar_background_pixel;
+    if (a.background_pixel == -1)
+      a.background_pixel = FRAME_BACKGROUND_PIXEL (f);
+
+    a.event_mask = (ButtonPressMask | ButtonReleaseMask
+		    | ButtonMotionMask | PointerMotionHintMask
+		    | ExposureMask);
+    a.cursor = FRAME_DISPLAY_INFO (f)->vertical_scroll_bar_cursor;
+
+    mask = (CWBackPixel | CWEventMask | CWCursor);
+
+    /* Clear the area of W that will serve as a scroll bar.  This is
+       for the case that a window has been split horizontally.  In
+       this case, no clear_frame is generated to reduce flickering.  */
+    if (width > 0 && window_box_height (w) > 0)
+      x_clear_area (f, left, top, width, window_box_height (w));
+
+    window = XCreateWindow (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f),
+			    /* Position and size of scroll bar.  */
+			    left, top, width, height,
+			    /* Border width, depth, class, and visual.  */
+			    0,
+			    CopyFromParent,
+			    CopyFromParent,
+			    CopyFromParent,
+			     /* Attributes.  */
+			    mask, &a);
+    bar->x_window = window;
+  }
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
 
   XSETWINDOW (bar->window, w);
   bar->top = top;
@@ -6002,6 +6772,9 @@ x_scroll_bar_create (struct window *w, int top, int left,
   bar->end = 0;
   bar->dragging = -1;
   bar->horizontal = horizontal;
+#if defined (USE_TOOLKIT_SCROLL_BARS) && defined (USE_LUCID)
+  bar->last_seen_part = scroll_bar_nowhere;
+#endif
 
   /* Add bar to its frame's list of scroll bars.  */
   bar->next = FRAME_SCROLL_BARS (f);
@@ -6012,19 +6785,139 @@ x_scroll_bar_create (struct window *w, int top, int left,
     XSETVECTOR (XSCROLL_BAR (bar->next)->prev, bar);
 
   /* Map the window/widget.  */
+#ifdef USE_TOOLKIT_SCROLL_BARS
   {
+#ifdef USE_GTK
     if (horizontal)
       xg_update_horizontal_scrollbar_pos (f, bar->x_window, top,
 					  left, width, max (height, 1));
     else
       xg_update_scrollbar_pos (f, bar->x_window, top,
 			       left, width, max (height, 1));
+#else /* not USE_GTK */
+    Widget scroll_bar = SCROLL_BAR_X_WIDGET (FRAME_X_DISPLAY (f), bar);
+    XtConfigureWidget (scroll_bar, left, top, width, max (height, 1), 0);
+    XtMapWidget (scroll_bar);
+    /* Don't obscure any child frames.  */
+    XLowerWindow (FRAME_X_DISPLAY (f), bar->x_window);
+#endif /* not USE_GTK */
     }
+#else /* not USE_TOOLKIT_SCROLL_BARS */
+  XMapWindow (FRAME_X_DISPLAY (f), bar->x_window);
+  /* Don't obscure any child frames.  */
+  XLowerWindow (FRAME_X_DISPLAY (f), bar->x_window);
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
 
   unblock_input ();
   return bar;
 }
 
+
+#ifndef USE_TOOLKIT_SCROLL_BARS
+
+/* Draw BAR's handle in the proper position.
+
+   If the handle is already drawn from START to END, don't bother
+   redrawing it, unless REBUILD; in that case, always
+   redraw it.  (REBUILD is handy for drawing the handle after expose
+   events.)
+
+   Normally, we want to constrain the start and end of the handle to
+   fit inside its rectangle, but if the user is dragging the scroll
+   bar handle, we want to let them drag it down all the way, so that
+   the bar's top is as far down as it goes; otherwise, there's no way
+   to move to the very end of the buffer.  */
+
+static void
+x_scroll_bar_set_handle (struct scroll_bar *bar, int start, int end,
+			 bool rebuild)
+{
+  bool dragging = bar->dragging != -1;
+  Window w = bar->x_window;
+  struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
+  GC gc = f->output_data.x->normal_gc;
+
+  /* If the display is already accurate, do nothing.  */
+  if (! rebuild
+      && start == bar->start
+      && end == bar->end)
+    return;
+
+  block_input ();
+
+  {
+    int inside_width = VERTICAL_SCROLL_BAR_INSIDE_WIDTH (f, bar->width);
+    int inside_height = VERTICAL_SCROLL_BAR_INSIDE_HEIGHT (f, bar->height);
+    int top_range = VERTICAL_SCROLL_BAR_TOP_RANGE (f, bar->height);
+
+    /* Make sure the values are reasonable, and try to preserve
+       the distance between start and end.  */
+    {
+      int length = end - start;
+
+      if (start < 0)
+	start = 0;
+      else if (start > top_range)
+	start = top_range;
+      end = start + length;
+
+      if (end < start)
+	end = start;
+      else if (end > top_range && ! dragging)
+	end = top_range;
+    }
+
+    /* Store the adjusted setting in the scroll bar.  */
+    bar->start = start;
+    bar->end = end;
+
+    /* Clip the end position, just for display.  */
+    if (end > top_range)
+      end = top_range;
+
+    /* Draw bottom positions VERTICAL_SCROLL_BAR_MIN_HANDLE pixels
+       below top positions, to make sure the handle is always at least
+       that many pixels tall.  */
+    end += VERTICAL_SCROLL_BAR_MIN_HANDLE;
+
+    /* Draw the empty space above the handle.  Note that we can't clear
+       zero-height areas; that means "clear to end of window."  */
+    if ((inside_width > 0) && (start > 0))
+      x_clear_area1 (FRAME_X_DISPLAY (f), w,
+		    VERTICAL_SCROLL_BAR_LEFT_BORDER,
+		    VERTICAL_SCROLL_BAR_TOP_BORDER,
+		    inside_width, start, False);
+
+    /* Change to proper foreground color if one is specified.  */
+    if (f->output_data.x->scroll_bar_foreground_pixel != -1)
+      XSetForeground (FRAME_X_DISPLAY (f), gc,
+		      f->output_data.x->scroll_bar_foreground_pixel);
+
+    /* Draw the handle itself.  */
+    XFillRectangle (FRAME_X_DISPLAY (f), w, gc,
+		    /* x, y, width, height */
+		    VERTICAL_SCROLL_BAR_LEFT_BORDER,
+		    VERTICAL_SCROLL_BAR_TOP_BORDER + start,
+		    inside_width, end - start);
+
+    /* Restore the foreground color of the GC if we changed it above.  */
+    if (f->output_data.x->scroll_bar_foreground_pixel != -1)
+      XSetForeground (FRAME_X_DISPLAY (f), gc,
+		      FRAME_FOREGROUND_PIXEL (f));
+
+    /* Draw the empty space below the handle.  Note that we can't
+       clear zero-height areas; that means "clear to end of window." */
+    if ((inside_width > 0) && (end < inside_height))
+      x_clear_area1 (FRAME_X_DISPLAY (f), w,
+		    VERTICAL_SCROLL_BAR_LEFT_BORDER,
+		    VERTICAL_SCROLL_BAR_TOP_BORDER + end,
+		    inside_width, inside_height - end, False);
+  }
+
+  unblock_input ();
+}
+
+#endif /* !USE_TOOLKIT_SCROLL_BARS */
 
 /* Destroy scroll bar BAR, and set its Emacs window's scroll bar to
    nil.  */
@@ -6035,7 +6928,15 @@ x_scroll_bar_remove (struct scroll_bar *bar)
   struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
   block_input ();
 
+#ifdef USE_TOOLKIT_SCROLL_BARS
+#ifdef USE_GTK
   xg_remove_scroll_bar (f, bar->x_window);
+#else /* not USE_GTK */
+  XtDestroyWidget (SCROLL_BAR_X_WIDGET (FRAME_X_DISPLAY (f), bar));
+#endif /* not USE_GTK */
+#else
+  XDestroyWindow (FRAME_X_DISPLAY (f), bar->x_window);
+#endif
 
   /* Dissociate this scroll bar from its window.  */
   if (bar->horizontal)
@@ -6098,6 +6999,8 @@ XTset_vertical_scroll_bar (struct window *w, int portion, int whole, int positio
       if (height != bar->height)
 	mask |= CWHeight;
 
+#ifdef USE_TOOLKIT_SCROLL_BARS
+
       /* Move/size the scroll bar widget.  */
       if (mask)
 	{
@@ -6105,9 +7008,30 @@ XTset_vertical_scroll_bar (struct window *w, int portion, int whole, int positio
 	     for them on the frame, we have to clear "under" them.  */
 	  if (width > 0 && height > 0)
 	    x_clear_area (f, left, top, width, height);
+#ifdef USE_GTK
           xg_update_scrollbar_pos (f, bar->x_window, top,
 				   left, width, max (height, 1));
+#else /* not USE_GTK */
+          XtConfigureWidget (SCROLL_BAR_X_WIDGET (FRAME_X_DISPLAY (f), bar),
+                             left, top, width, max (height, 1), 0);
+#endif /* not USE_GTK */
 	}
+#else /* not USE_TOOLKIT_SCROLL_BARS */
+
+      /* Move/size the scroll bar window.  */
+      if (mask)
+	{
+	  XWindowChanges wc;
+
+	  wc.x = left;
+	  wc.y = top;
+	  wc.width = width;
+	  wc.height = height;
+	  XConfigureWindow (FRAME_X_DISPLAY (f), bar->x_window,
+			    mask, &wc);
+	}
+
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
 
       /* Remember new settings.  */
       bar->left = left;
@@ -6118,7 +7042,25 @@ XTset_vertical_scroll_bar (struct window *w, int portion, int whole, int positio
       unblock_input ();
     }
 
+#ifdef USE_TOOLKIT_SCROLL_BARS
   x_set_toolkit_scroll_bar_thumb (bar, portion, position, whole);
+#else /* not USE_TOOLKIT_SCROLL_BARS */
+  /* Set the scroll bar's current state, unless we're currently being
+     dragged.  */
+  if (bar->dragging == -1)
+    {
+      int top_range = VERTICAL_SCROLL_BAR_TOP_RANGE (f, height);
+
+      if (whole == 0)
+	x_scroll_bar_set_handle (bar, 0, top_range, false);
+      else
+	{
+	  int start = ((double) position * top_range) / whole;
+	  int end = ((double) (position + portion) * top_range) / whole;
+	  x_scroll_bar_set_handle (bar, start, end, false);
+	}
+    }
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
 
   XSETVECTOR (barobj, bar);
   wset_vertical_scroll_bar (w, barobj);
@@ -6175,6 +7117,7 @@ XTset_horizontal_scroll_bar (struct window *w, int portion, int whole, int posit
       if (height != bar->height)
 	mask |= CWHeight;
 
+#ifdef USE_TOOLKIT_SCROLL_BARS
       /* Move/size the scroll bar widget.  */
       if (mask)
 	{
@@ -6184,9 +7127,41 @@ XTset_horizontal_scroll_bar (struct window *w, int portion, int whole, int posit
 	    x_clear_area (f,
 			  WINDOW_LEFT_EDGE_X (w), top,
 			  pixel_width - WINDOW_RIGHT_DIVIDER_WIDTH (w), height);
+#ifdef USE_GTK
           xg_update_horizontal_scrollbar_pos (f, bar->x_window, top, left,
 					      width, height);
+#else /* not USE_GTK */
+          XtConfigureWidget (SCROLL_BAR_X_WIDGET (FRAME_X_DISPLAY (f), bar),
+                             left, top, width, height, 0);
+#endif /* not USE_GTK */
 	}
+#else /* not USE_TOOLKIT_SCROLL_BARS */
+
+      /* Clear areas not covered by the scroll bar because it's not as
+	 wide as the area reserved for it.  This makes sure a
+	 previous mode line display is cleared after C-x 2 C-x 1, for
+	 example.  */
+      {
+	int area_height = WINDOW_CONFIG_SCROLL_BAR_HEIGHT (w);
+	int rest = area_height - height;
+	if (rest > 0 && width > 0)
+	  x_clear_area (f, left, top, width, rest);
+      }
+
+      /* Move/size the scroll bar window.  */
+      if (mask)
+	{
+	  XWindowChanges wc;
+
+	  wc.x = left;
+	  wc.y = top;
+	  wc.width = width;
+	  wc.height = height;
+	  XConfigureWindow (FRAME_X_DISPLAY (f), bar->x_window,
+			    mask, &wc);
+	}
+
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
 
       /* Remember new settings.  */
       bar->left = left;
@@ -6197,7 +7172,26 @@ XTset_horizontal_scroll_bar (struct window *w, int portion, int whole, int posit
       unblock_input ();
     }
 
+#ifdef USE_TOOLKIT_SCROLL_BARS
   x_set_toolkit_horizontal_scroll_bar_thumb (bar, portion, position, whole);
+#else /* not USE_TOOLKIT_SCROLL_BARS */
+  /* Set the scroll bar's current state, unless we're currently being
+     dragged.  */
+  if (bar->dragging == -1)
+    {
+      int left_range = HORIZONTAL_SCROLL_BAR_LEFT_RANGE (f, width);
+
+      if (whole == 0)
+	x_scroll_bar_set_handle (bar, 0, left_range, false);
+      else
+	{
+	  int start = ((double) position * left_range) / whole;
+	  int end = ((double) (position + portion) * left_range) / whole;
+	  x_scroll_bar_set_handle (bar, start, end, false);
+	}
+    }
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
+
   XSETVECTOR (barobj, bar);
   wset_horizontal_scroll_bar (w, barobj);
 }
@@ -6351,6 +7345,44 @@ XTjudge_scroll_bars (struct frame *f)
 }
 
 
+#ifndef USE_TOOLKIT_SCROLL_BARS
+/* Handle an Expose or GraphicsExpose event on a scroll bar.  This
+   is a no-op when using toolkit scroll bars.
+
+   This may be called from a signal handler, so we have to ignore GC
+   mark bits.  */
+
+static void
+x_scroll_bar_expose (struct scroll_bar *bar, const XEvent *event)
+{
+  Window w = bar->x_window;
+  struct frame *f = XFRAME (WINDOW_FRAME (XWINDOW (bar->window)));
+  GC gc = f->output_data.x->normal_gc;
+
+  block_input ();
+
+  x_scroll_bar_set_handle (bar, bar->start, bar->end, true);
+
+  /* Switch to scroll bar foreground color.  */
+  if (f->output_data.x->scroll_bar_foreground_pixel != -1)
+    XSetForeground (FRAME_X_DISPLAY (f), gc,
+ 		    f->output_data.x->scroll_bar_foreground_pixel);
+
+  /* Draw a one-pixel border just inside the edges of the scroll bar.  */
+  XDrawRectangle (FRAME_X_DISPLAY (f), w, gc,
+		  /* x, y, width, height */
+		  0, 0, bar->width - 1, bar->height - 1);
+
+  /* Restore the foreground color of the GC if we changed it above.  */
+  if (f->output_data.x->scroll_bar_foreground_pixel != -1)
+    XSetForeground (FRAME_X_DISPLAY (f), gc,
+		    FRAME_FOREGROUND_PIXEL (f));
+
+   unblock_input ();
+
+}
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
+
 /* Handle a mouse click on the scroll bar BAR.  If *EMACS_EVENT's kind
    is set to something other than NO_EVENT, it is enqueued.
 
@@ -6396,6 +7428,18 @@ x_scroll_bar_handle_click (struct scroll_bar *bar,
       else
 	emacs_event->part = scroll_bar_after_handle;
 
+#ifndef USE_TOOLKIT_SCROLL_BARS
+      /* If the user has released the handle, set it to its final position.  */
+      if (event->type == ButtonRelease && bar->dragging != -1)
+	{
+	  int new_start = - bar->dragging;
+	  int new_end = new_start + bar->end - bar->start;
+
+	  x_scroll_bar_set_handle (bar, new_start, new_end, false);
+	  bar->dragging = -1;
+	}
+#endif
+
       XSETINT (emacs_event->x, left_range);
       XSETINT (emacs_event->y, x);
     }
@@ -6415,10 +7459,57 @@ x_scroll_bar_handle_click (struct scroll_bar *bar,
       else
 	emacs_event->part = scroll_bar_below_handle;
 
+#ifndef USE_TOOLKIT_SCROLL_BARS
+      /* If the user has released the handle, set it to its final position.  */
+      if (event->type == ButtonRelease && bar->dragging != -1)
+	{
+	  int new_start = y - bar->dragging;
+	  int new_end = new_start + bar->end - bar->start;
+
+	  x_scroll_bar_set_handle (bar, new_start, new_end, false);
+	  bar->dragging = -1;
+	}
+#endif
+
       XSETINT (emacs_event->x, y);
       XSETINT (emacs_event->y, top_range);
     }
 }
+
+#ifndef USE_TOOLKIT_SCROLL_BARS
+
+/* Handle some mouse motion while someone is dragging the scroll bar.
+
+   This may be called from a signal handler, so we have to ignore GC
+   mark bits.  */
+
+static void
+x_scroll_bar_note_movement (struct scroll_bar *bar,
+			    const XMotionEvent *event)
+{
+  struct frame *f = XFRAME (XWINDOW (bar->window)->frame);
+  struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
+
+  dpyinfo->last_mouse_movement_time = event->time;
+  dpyinfo->last_mouse_scroll_bar = bar;
+  f->mouse_moved = true;
+
+  /* If we're dragging the bar, display it.  */
+  if (bar->dragging != -1)
+    {
+      /* Where should the handle be now?  */
+      int new_start = event->y - bar->dragging;
+
+      if (new_start != bar->start)
+	{
+	  int new_end = new_start + bar->end - bar->start;
+
+	  x_scroll_bar_set_handle (bar, new_start, new_end, false);
+	}
+    }
+}
+
+#endif /* !USE_TOOLKIT_SCROLL_BARS */
 
 /* Return information to the user about the current position of the mouse
    on the scroll bar.  */
@@ -6566,6 +7657,19 @@ x_horizontal_scroll_bar_report_motion (struct frame **fp, Lisp_Object *bar_windo
 static void
 x_scroll_bar_clear (struct frame *f)
 {
+#ifndef USE_TOOLKIT_SCROLL_BARS
+  Lisp_Object bar;
+
+  /* We can have scroll bars even if this is 0,
+     if we just turned off scroll bar mode.
+     But in that case we should not clear them.  */
+  if (FRAME_HAS_VERTICAL_SCROLL_BARS (f))
+    for (bar = FRAME_SCROLL_BARS (f); VECTORP (bar);
+	 bar = XSCROLL_BAR (bar)->next)
+      XClearArea (FRAME_X_DISPLAY (f),
+		  XSCROLL_BAR (bar)->x_window,
+		  0, 0, 0, 0, True);
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
 }
 
 #ifdef ENABLE_CHECKING
@@ -6630,6 +7734,7 @@ x_filter_event (struct x_display_info *dpyinfo, XEvent *event)
 }
 #endif
 
+#ifdef USE_GTK
 static int current_count;
 static int current_finish;
 static struct input_event *current_hold_quit;
@@ -6679,6 +7784,7 @@ event_handler_gdk (GdkXEvent *gxev, GdkEvent *ev, gpointer data)
 
   return GDK_FILTER_CONTINUE;
 }
+#endif /* USE_GTK */
 
 
 static void xembed_send_message (struct frame *f, Time,
@@ -6956,6 +8062,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	    goto done;
           }
 
+#ifdef USE_TOOLKIT_SCROLL_BARS
         /* Scroll bar callbacks send a ClientMessage from which
            we construct an input_event.  */
         if (event->xclient.message_type == dpyinfo->Xatom_Scrollbar)
@@ -6970,6 +8077,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	    *finish = X_EVENT_GOTO_OUT;
             goto done;
           }
+#endif /* USE_TOOLKIT_SCROLL_BARS */
 
 	/* XEmbed messages from the embedder (if any).  */
         if (event->xclient.message_type == dpyinfo->Xatom_XEMBED)
@@ -6994,11 +8102,19 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 
     case SelectionNotify:
       x_display_set_last_user_time (dpyinfo, event->xselection.time);
+#ifdef USE_X_TOOLKIT
+      if (! x_window_to_frame (dpyinfo, event->xselection.requestor))
+        goto OTHER;
+#endif /* not USE_X_TOOLKIT */
       x_handle_selection_notify (&event->xselection);
       break;
 
     case SelectionClear:	/* Someone has grabbed ownership.  */
       x_display_set_last_user_time (dpyinfo, event->xselectionclear.time);
+#ifdef USE_X_TOOLKIT
+      if (! x_window_to_frame (dpyinfo, event->xselectionclear.window))
+        goto OTHER;
+#endif /* USE_X_TOOLKIT */
       {
         const XSelectionClearEvent *eventp = &event->xselectionclear;
 
@@ -7011,6 +8127,10 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 
     case SelectionRequest:	/* Someone wants our selection.  */
       x_display_set_last_user_time (dpyinfo, event->xselectionrequest.time);
+#ifdef USE_X_TOOLKIT
+      if (!x_window_to_frame (dpyinfo, event->xselectionrequest.owner))
+        goto OTHER;
+#endif /* USE_X_TOOLKIT */
       {
 	const XSelectionRequestEvent *eventp = &event->xselectionrequest;
 
@@ -7099,6 +8219,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
             }
           else if (FRAME_GARBAGED_P (f))
             {
+#ifdef USE_GTK
               /* Go around the back buffer and manually clear the
                  window the first time we show it.  This way, we avoid
                  showing users the sanity-defying horror of whatever
@@ -7112,19 +8233,24 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                 event->xexpose.width, event->xexpose.height,
                 0);
 	      x_clear_under_internal_border (f);
+#endif
             }
 
 
           if (!FRAME_GARBAGED_P (f))
             {
+#ifdef USE_GTK
               /* This seems to be needed for GTK 2.6 and later, see
                  https://debbugs.gnu.org/cgi/bugreport.cgi?bug=15398.  */
               x_clear_area (f,
                             event->xexpose.x, event->xexpose.y,
                             event->xexpose.width, event->xexpose.height);
+#endif
               expose_frame (f, event->xexpose.x, event->xexpose.y,
 			    event->xexpose.width, event->xexpose.height);
+#ifdef USE_GTK
 	      x_clear_under_internal_border (f);
+#endif
             }
 
           if (!FRAME_GARBAGED_P (f))
@@ -7132,8 +8258,34 @@ handle_one_xevent (struct x_display_info *dpyinfo,
         }
       else
         {
+#ifndef USE_TOOLKIT_SCROLL_BARS
+          struct scroll_bar *bar;
+#endif
+#if defined USE_LUCID
+          /* Submenus of the Lucid menu bar aren't widgets
+             themselves, so there's no way to dispatch events
+             to them.  Recognize this case separately.  */
+          {
+            Widget widget = x_window_to_menu_bar (event->xexpose.window);
+            if (widget)
+              xlwmenu_redisplay (widget);
+          }
+#endif /* USE_LUCID */
+
+#ifdef USE_TOOLKIT_SCROLL_BARS
           /* Dispatch event to the widget.  */
           goto OTHER;
+#else /* not USE_TOOLKIT_SCROLL_BARS */
+          bar = x_window_to_scroll_bar (event->xexpose.display,
+                                        event->xexpose.window, 2);
+
+          if (bar)
+            x_scroll_bar_expose (bar, event);
+#ifdef USE_X_TOOLKIT
+          else
+            goto OTHER;
+#endif /* USE_X_TOOLKIT */
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
         }
       break;
 
@@ -7147,9 +8299,15 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                         event->xgraphicsexpose.y,
                         event->xgraphicsexpose.width,
                         event->xgraphicsexpose.height);
+#ifdef USE_GTK
 	  x_clear_under_internal_border (f);
+#endif
 	  show_back_buffer (f);
         }
+#ifdef USE_X_TOOLKIT
+      else
+        goto OTHER;
+#endif /* USE_X_TOOLKIT */
       break;
 
     case NoExpose:		/* This occurs when an XCopyArea's
@@ -7204,6 +8362,12 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	    {
 
 	      x_check_fullscreen (f);
+#ifndef USE_GTK
+	      /* For systems that cannot synthesize `skip_taskbar' for
+		 unmapped windows do the following.  */
+	      if (FRAME_SKIP_TASKBAR (f))
+		x_set_skip_taskbar (f, Qt, Qnil);
+#endif /* Not USE_GTK */
 	    }
 
 	  if (!iconified)
@@ -7237,9 +8401,11 @@ handle_one_xevent (struct x_display_info *dpyinfo,
       x_display_set_last_user_time (dpyinfo, event->xkey.time);
       ignore_next_mouse_click_timeout = 0;
 
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
       /* Dispatch KeyPress events when in menu.  */
       if (popup_activated ())
         goto OTHER;
+#endif
 
       f = any;
 
@@ -7256,6 +8422,21 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           clear_mouse_face (hlinfo);
           hlinfo->mouse_face_hidden = true;
         }
+
+#if defined USE_MOTIF && defined USE_TOOLKIT_SCROLL_BARS
+      if (f == 0)
+        {
+          /* Scroll bars consume key events, but we want
+             the keys to go to the scroll bar's frame.  */
+          Widget widget = XtWindowToWidget (dpyinfo->display,
+                                            event->xkey.window);
+          if (widget && XmIsScrollBar (widget))
+            {
+              widget = XtParent (widget);
+              f = x_any_window_to_frame (dpyinfo, XtWindow (widget));
+            }
+        }
+#endif /* USE_MOTIF and USE_TOOLKIT_SCROLL_BARS */
 
       if (f != 0)
         {
@@ -7280,11 +8461,13 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	  /* Event will be modified.  */
 	  XKeyEvent xkey = event->xkey;
 
+#ifdef USE_GTK
           /* Don't pass keys to GTK.  A Tab will shift focus to the
              tool bar in GTK 2.4.  Keys will still go to menus and
              dialogs because in that case popup_activated is nonzero
              (see above).  */
           *finish = X_EVENT_DROP;
+#endif
 
           xkey.state |= x_emacs_to_x_modifiers (FRAME_DISPLAY_INFO (f),
 						extra_keyboard_modifiers);
@@ -7608,6 +8791,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           if (any_help_event_p)
 	    do_help = -1;
         }
+#ifdef USE_GTK
       /* See comment in EnterNotify above */
       else if (dpyinfo->last_mouse_glyph_frame)
         x_note_mouse_movement (dpyinfo->last_mouse_glyph_frame, &event->xmotion);
@@ -7635,6 +8819,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #ifdef USE_GTK
         if (f && xg_event_is_for_scrollbar (f, event))
           f = 0;
+#endif
         if (f)
           {
 	    /* Maybe generate a SELECT_WINDOW_EVENT for
@@ -7682,6 +8867,14 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           }
         else
           {
+#ifndef USE_TOOLKIT_SCROLL_BARS
+            struct scroll_bar *bar
+              = x_window_to_scroll_bar (event->xmotion.display,
+                                        event->xmotion.window, 2);
+
+            if (bar)
+              x_scroll_bar_note_movement (bar, &event->xmotion);
+#endif /* USE_TOOLKIT_SCROLL_BARS */
 
             /* If we move outside the frame, then we're
                certainly no longer on any text in the frame.  */
@@ -7746,6 +8939,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 					  configureEvent.xconfigure.width,
 					  configureEvent.xconfigure.height);
 #endif
+#ifdef USE_GTK
       if (!f
           && (f = any)
           && configureEvent.xconfigure.window == FRAME_X_WINDOW (f))
@@ -7762,17 +8956,63 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 #endif
           f = 0;
         }
+#endif
       if (f)
         {
+#ifdef USE_GTK
 	  /* For GTK+ don't call x_net_wm_state for the scroll bar
 	     window.  (Bug#24963, Bug#25887) */
 	  if (configureEvent.xconfigure.window == FRAME_X_WINDOW (f))
+#endif
 	    x_net_wm_state (f, configureEvent.xconfigure.window);
 
+#ifdef USE_X_TOOLKIT
+          /* Tip frames are pure X window, set size for them.  */
+          if (FRAME_TOOLTIP_P (f))
+            {
+              if (FRAME_PIXEL_HEIGHT (f) != configureEvent.xconfigure.height
+                  || FRAME_PIXEL_WIDTH (f) != configureEvent.xconfigure.width)
+                {
+                  SET_FRAME_GARBAGED (f);
+                }
+              FRAME_PIXEL_HEIGHT (f) = configureEvent.xconfigure.height;
+              FRAME_PIXEL_WIDTH (f) = configureEvent.xconfigure.width;
+            }
+#endif
+
+#ifndef USE_X_TOOLKIT
+#ifndef USE_GTK
+          int width =
+	    FRAME_PIXEL_TO_TEXT_WIDTH (f, configureEvent.xconfigure.width);
+          int height =
+	    FRAME_PIXEL_TO_TEXT_HEIGHT (f, configureEvent.xconfigure.height);
+
+          /* In the toolkit version, change_frame_size
+             is called by the code that handles resizing
+             of the EmacsFrame widget.  */
+
+          /* Even if the number of character rows and columns has
+             not changed, the font size may have changed, so we need
+             to check the pixel dimensions as well.  */
+          if (width != FRAME_TEXT_WIDTH (f)
+              || height != FRAME_TEXT_HEIGHT (f)
+              || configureEvent.xconfigure.width != FRAME_PIXEL_WIDTH (f)
+              || configureEvent.xconfigure.height != FRAME_PIXEL_HEIGHT (f))
+            {
+              change_frame_size (f, width, height, false, true, false, true);
+              x_clear_under_internal_border (f);
+              SET_FRAME_GARBAGED (f);
+              cancel_mouse_face (f);
+            }
+#endif /* not USE_GTK */
+#endif
+
+#ifdef USE_GTK
           /* GTK creates windows but doesn't map them.
              Only get real positions when mapped.  */
           if (FRAME_GTK_OUTER_WIDGET (f)
               && gtk_widget_get_mapped (FRAME_GTK_OUTER_WIDGET (f)))
+#endif
 	    {
 	      int old_left = f->left_pos;
 	      int old_top = f->top_pos;
@@ -7847,8 +9087,10 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	      }
 	  }
 
+#ifdef USE_GTK
         if (f && xg_event_is_for_scrollbar (f, event))
           f = 0;
+#endif
         if (f)
           {
             /* Is this in the tab-bar?  */
@@ -7890,6 +9132,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
             if (!tab_bar_p && !tool_bar_p)
 #if defined (USE_X_TOOLKIT) || defined (USE_GTK)
               if (! popup_activated ())
+#endif
                 {
                   if (ignore_next_mouse_click_timeout)
                     {
@@ -7915,6 +9158,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
               = x_window_to_scroll_bar (event->xbutton.display,
                                         event->xbutton.window, 2);
 
+#ifdef USE_TOOLKIT_SCROLL_BARS
             /* Make the "Ctrl-Mouse-2 splits window" work for toolkit
                scroll bars.  */
             if (bar && event->xbutton.state & ControlMask)
@@ -7922,6 +9166,10 @@ handle_one_xevent (struct x_display_info *dpyinfo,
                 x_scroll_bar_handle_click (bar, event, &inev.ie);
                 *finish = X_EVENT_DROP;
               }
+#else /* not USE_TOOLKIT_SCROLL_BARS */
+            if (bar)
+              x_scroll_bar_handle_click (bar, event, &inev.ie);
+#endif /* not USE_TOOLKIT_SCROLL_BARS */
           }
 
         if (event->type == ButtonPress)
@@ -7944,6 +9192,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 	if (f != 0)
 	  f->mouse_moved = false;
 
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
         f = x_menubar_window_to_frame (dpyinfo, event);
         /* For a down-event in the menu bar,
            don't pass it to Xt right now.
@@ -7951,8 +9200,10 @@ handle_one_xevent (struct x_display_info *dpyinfo,
            and we will pass it to Xt from kbd_buffer_get_event.
            That way, we can run some Lisp code first.  */
         if (! popup_activated ()
+#ifdef USE_GTK
             /* Gtk+ menus only react to the first three buttons. */
             && event->xbutton.button < 3
+#endif
             && f && event->type == ButtonPress
             /* Verify the event is really within the menu bar
                and not just sent to it due to grabbing.  */
@@ -7971,6 +9222,7 @@ handle_one_xevent (struct x_display_info *dpyinfo,
           }
         else
           goto OTHER;
+#endif /* USE_X_TOOLKIT || USE_GTK */
       }
       break;
 
@@ -8002,6 +9254,12 @@ handle_one_xevent (struct x_display_info *dpyinfo,
 
     default:
     OTHER:
+#ifdef USE_X_TOOLKIT
+      block_input ();
+    if (*finish != X_EVENT_DROP)
+      XtDispatchEvent ((XEvent *) event);
+    unblock_input ();
+#endif /* USE_X_TOOLKIT */
     break;
     }
 
@@ -8089,6 +9347,28 @@ XTread_socket (struct terminal *terminal, struct input_event *hold_quit)
       x_io_error_quitter (dpyinfo->display);
     }
 
+#ifndef USE_GTK
+  while (XPending (dpyinfo->display))
+    {
+      int finish;
+      XEvent event;
+
+      XNextEvent (dpyinfo->display, &event);
+
+#ifdef HAVE_X_I18N
+      /* Filter events for the current X input method.  */
+      if (x_filter_event (dpyinfo, &event))
+        continue;
+#endif
+      event_found = true;
+
+      count += handle_one_xevent (dpyinfo, &event, &finish, hold_quit);
+
+      if (finish == X_EVENT_GOTO_OUT)
+	break;
+    }
+
+#else /* USE_GTK */
 
   /* For GTK we must use the GTK event loop.  But XEvents gets passed
      to our filter function above, and then to the big event switch.
@@ -8112,6 +9392,7 @@ XTread_socket (struct terminal *terminal, struct input_event *hold_quit)
       if (current_finish == X_EVENT_GOTO_OUT)
         break;
     }
+#endif /* USE_GTK */
 
   /* On some systems, an X bug causes Emacs to get no more events
      when the window is destroyed.  Detect that.  (1994.)  */
@@ -8443,6 +9724,7 @@ x_bitmap_icon (struct frame *f, Lisp_Object file)
 
   if (STRINGP (file))
     {
+#ifdef USE_GTK
       /* Use gtk_window_set_icon_from_file () if available,
 	 It's not restricted to bitmaps */
       if (xg_set_icon (f, file))
@@ -8458,6 +9740,7 @@ x_bitmap_icon (struct frame *f, Lisp_Object file)
 	{
 	  ptrdiff_t rc = -1;
 
+#ifdef USE_GTK
 
           if (xg_set_icon (f, xg_default_icon_file)
               || xg_set_icon_from_xpm_data (f, gnu_xpm_bits))
@@ -8466,6 +9749,13 @@ x_bitmap_icon (struct frame *f, Lisp_Object file)
               return false;
             }
 
+#elif defined (HAVE_XPM) && defined (HAVE_X_WINDOWS)
+
+	  rc = x_create_bitmap_from_xpm_data (f, gnu_xpm_bits);
+	  if (rc != -1)
+	    FRAME_DISPLAY_INFO (f)->icon_bitmap_id = rc;
+
+#endif
 
 	  /* If all else fails, use the (black and white) xbm image. */
 	  if (rc == -1)
@@ -8764,6 +10054,7 @@ x_connection_closed (Display *dpy, const char *error_message, bool ioerror)
       /* We can not call XtCloseDisplay here because it calls XSync.
          XSync inside the error handler apparently hangs Emacs.  On
          current Xt versions, this isn't needed either.  */
+#ifdef USE_GTK
       /* A long-standing GTK bug prevents proper disconnect handling
 	 <https://gitlab.gnome.org/GNOME/gtk/issues/221>.  Once,
 	 the resulting Glib error message loop filled a user's disk.
@@ -8775,6 +10066,7 @@ This is a GTK bug: https://gitlab.gnome.org/GNOME/gtk/issues/221\n\
 For details, see etc/PROBLEMS.\n",
 	       error_msg);
       emacs_abort ();
+#endif /* USE_GTK */
 
       /* Indicate that this display is dead.  */
       dpyinfo->display = 0;
@@ -8817,7 +10109,7 @@ static void x_error_quitter (Display *, XErrorEvent *);
 static int
 x_error_handler (Display *display, XErrorEvent *event)
 {
-#if defined HAVE_GTK3
+#if defined USE_GTK && defined HAVE_GTK3
   if ((event->error_code == BadMatch || event->error_code == BadWindow)
       && event->request_code == X_SetInputFocus)
     {
@@ -8885,9 +10177,11 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
 {
   struct font *font = XFONT_OBJECT (font_object);
   int unit, font_ascent, font_descent;
+#ifndef USE_X_TOOLKIT
   int old_menu_bar_height = FRAME_MENU_BAR_HEIGHT (f);
   int old_tab_bar_height = FRAME_TAB_BAR_HEIGHT (f);
   Lisp_Object fullscreen;
+#endif
 
   if (fontset < 0)
     fontset = fontset_from_font (font_object);
@@ -8903,6 +10197,7 @@ x_new_font (struct frame *f, Lisp_Object font_object, int fontset)
   get_font_ascent_descent (font, &font_ascent, &font_descent);
   FRAME_LINE_HEIGHT (f) = font_ascent + font_descent;
 
+#ifndef USE_X_TOOLKIT
   FRAME_MENU_BAR_HEIGHT (f) = FRAME_MENU_BAR_LINES (f) * FRAME_LINE_HEIGHT (f);
   FRAME_TAB_BAR_HEIGHT (f) = FRAME_TAB_BAR_LINES (f) * FRAME_LINE_HEIGHT (f);
 #endif
@@ -9207,6 +10502,22 @@ x_calc_absolute_position (struct frame *f)
     {
       int height = FRAME_PIXEL_HEIGHT (f);
 
+#if defined USE_X_TOOLKIT && defined USE_MOTIF
+      /* Something is fishy here.  When using Motif, starting Emacs with
+	 `-g -0-0', the frame appears too low by a few pixels.
+
+	 This seems to be so because initially, while Emacs is starting,
+	 the column widget's height and the frame's pixel height are
+	 different.  The column widget's height is the right one.  In
+	 later invocations, when Emacs is up, the frame's pixel height
+	 is right, though.
+
+	 It's not obvious where the initial small difference comes from.
+	 2000-12-01, gerd.  */
+
+      XtVaGetValues (f->output_data.x->column_widget, XtNheight, &height, NULL);
+#endif
+
       if (f->output_data.x->has_been_visible && !p)
 	{
 	  Lisp_Object frame;
@@ -9265,6 +10576,7 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
   block_input ();
   x_wm_set_size_hint (f, 0, false);
 
+#ifdef USE_GTK
   if (x_gtk_use_window_move)
     {
       /* When a position change was requested and the outer GTK widget
@@ -9277,6 +10589,7 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
       unblock_input ();
       return;
     }
+#endif /* USE_GTK */
 
   modified_left = f->left_pos;
   modified_top = f->top_pos;
@@ -9290,9 +10603,14 @@ x_set_offset (struct frame *f, register int xoff, register int yoff, int change_
       modified_top += FRAME_X_OUTPUT (f)->move_offset_top;
     }
 
+#ifdef USE_GTK
   /* Make sure we adjust for possible scaling.  */
   gtk_window_move (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)),
 		   modified_left / scale, modified_top / scale);
+#else
+  XMoveWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+	       modified_left, modified_top);
+#endif
 
   x_sync_with_move (f, f->left_pos, f->top_pos,
                     FRAME_DISPLAY_INFO (f)->wm_type == X_WMTYPE_UNKNOWN);
@@ -9454,7 +10772,16 @@ x_set_skip_taskbar (struct frame *f, Lisp_Object new_value, Lisp_Object old_valu
 {
   if (!EQ (new_value, old_value))
     {
+#ifdef USE_GTK
       xg_set_skip_taskbar (f, new_value);
+#else
+      Lisp_Object frame;
+      struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
+
+      XSETFRAME (frame, f);
+      set_wm_state (frame, !NILP (new_value),
+		    dpyinfo->Xatom_net_wm_state_skip_taskbar, None);
+#endif /* USE_GTK */
       FRAME_SKIP_TASKBAR (f) = !NILP (new_value);
     }
 }
@@ -10142,6 +11469,11 @@ x_set_window_size (struct frame *f, bool change_gravity,
          The size will be adjusted again if the frame gets a
          ConfigureNotify event as a result of x_set_window_size.  */
       int pixelh = FRAME_PIXEL_HEIGHT (f);
+#ifdef USE_X_TOOLKIT
+      /* The menu bar is not part of text lines.  The tool bar
+         is however.  */
+      pixelh -= FRAME_MENUBAR_HEIGHT (f);
+#endif
       text_width = FRAME_PIXEL_TO_TEXT_WIDTH (f, FRAME_PIXEL_WIDTH (f));
       text_height = FRAME_PIXEL_TO_TEXT_HEIGHT (f, pixelh);
 
@@ -10156,10 +11488,15 @@ x_set_window_size (struct frame *f, bool change_gravity,
       height = height * FRAME_LINE_HEIGHT (f);
     }
 
+#ifdef USE_GTK
   if (FRAME_GTK_WIDGET (f))
     xg_frame_set_char_size (f, width, height);
   else
     x_set_window_size_1 (f, change_gravity, width, height);
+#else /* not USE_GTK */
+  x_set_window_size_1 (f, change_gravity, width, height);
+  x_clear_under_internal_border (f);
+#endif /* not USE_GTK */
 
   /* If cursor was outside the new size, mark it as off.  */
   mark_window_cursors_off (XWINDOW (f->root_window));
@@ -10309,6 +11646,26 @@ x_focus_frame (struct frame *f, bool noactivate)
 
 /* XEmbed implementation.  */
 
+#if defined USE_X_TOOLKIT || ! defined USE_GTK
+
+/* XEmbed implementation.  */
+
+#define XEMBED_VERSION 0
+
+static void
+xembed_set_info (struct frame *f, enum xembed_info flags)
+{
+  unsigned long data[2];
+  struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
+
+  data[0] = XEMBED_VERSION;
+  data[1] = flags;
+
+  XChangeProperty (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
+                   dpyinfo->Xatom_XEMBED_INFO, dpyinfo->Xatom_XEMBED_INFO,
+		   32, PropModeReplace, (unsigned char *) data, 2);
+}
+#endif /* defined USE_X_TOOLKIT || ! defined USE_GTK */
 
 static void
 xembed_send_message (struct frame *f, Time t, enum xembed_message msg,
@@ -10349,9 +11706,13 @@ x_make_frame_visible (struct frame *f)
       if (!FRAME_VISIBLE_P (f))
 	{
 	  block_input ();
+#ifdef USE_GTK
 	  gtk_widget_show_all (FRAME_GTK_OUTER_WIDGET (f));
 	  XMoveWindow (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f),
 		       f->left_pos, f->top_pos);
+#else
+	  XMapRaised (FRAME_X_DISPLAY (f), FRAME_OUTER_WINDOW (f));
+#endif
 	  unblock_input ();
 
 	  SET_FRAME_VISIBLE (f, true);
@@ -10379,8 +11740,25 @@ x_make_frame_visible (struct frame *f)
 
       if (! EQ (Vx_no_window_manager, Qt))
 	x_wm_set_window_state (f, NormalState);
+#ifdef USE_X_TOOLKIT
+      if (FRAME_X_EMBEDDED_P (f))
+	xembed_set_info (f, XEMBED_MAPPED);
+      else
+	{
+	  /* This was XtPopup, but that did nothing for an iconified frame.  */
+	  XtMapWidget (f->output_data.x->widget);
+	}
+#else /* not USE_X_TOOLKIT */
+#ifdef USE_GTK
       gtk_widget_show_all (FRAME_GTK_OUTER_WIDGET (f));
       gtk_window_deiconify (GTK_WINDOW (FRAME_GTK_OUTER_WIDGET (f)));
+#else
+      if (FRAME_X_EMBEDDED_P (f))
+	xembed_set_info (f, XEMBED_MAPPED);
+      else
+	XMapRaised (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f));
+#endif /* not USE_GTK */
+#endif /* not USE_X_TOOLKIT */
     }
 
   XFlush (FRAME_X_DISPLAY (f));
@@ -10492,9 +11870,15 @@ x_make_frame_invisible (struct frame *f)
      by hand again (they have already done that once for this window.)  */
   x_wm_set_size_hint (f, 0, true);
 
+#ifdef USE_GTK
   if (FRAME_GTK_OUTER_WIDGET (f))
     gtk_widget_hide (FRAME_GTK_OUTER_WIDGET (f));
   else
+#else
+  if (FRAME_X_EMBEDDED_P (f))
+    xembed_set_info (f, 0);
+  else
+#endif
 
     if (! XWithdrawWindow (FRAME_X_DISPLAY (f), window,
 			   DefaultScreen (FRAME_X_DISPLAY (f))))
@@ -10530,6 +11914,10 @@ x_make_frame_visible_invisible (struct frame *f, bool visible)
 void
 x_iconify_frame (struct frame *f)
 {
+#ifdef USE_X_TOOLKIT
+  int result;
+#endif
+
   /* Don't keep the highlight on an invisible frame.  */
   if (FRAME_DISPLAY_INFO (f)->highlight_frame == f)
     FRAME_DISPLAY_INFO (f)->highlight_frame = 0;
@@ -10541,6 +11929,7 @@ x_iconify_frame (struct frame *f)
 
   gui_set_bitmap_icon (f);
 
+#if defined (USE_GTK)
   if (FRAME_GTK_OUTER_WIDGET (f))
     {
       if (! FRAME_VISIBLE_P (f))
@@ -10552,6 +11941,40 @@ x_iconify_frame (struct frame *f)
       unblock_input ();
       return;
     }
+#endif
+
+#ifdef USE_X_TOOLKIT
+
+  if (! FRAME_VISIBLE_P (f))
+    {
+      if (! EQ (Vx_no_window_manager, Qt))
+	x_wm_set_window_state (f, IconicState);
+      /* This was XtPopup, but that did nothing for an iconified frame.  */
+      XtMapWidget (f->output_data.x->widget);
+      /* The server won't give us any event to indicate
+	 that an invisible frame was changed to an icon,
+	 so we have to record it here.  */
+      SET_FRAME_VISIBLE (f, 0);
+      SET_FRAME_ICONIFIED (f, true);
+      unblock_input ();
+      return;
+    }
+
+  result = XIconifyWindow (FRAME_X_DISPLAY (f),
+			   XtWindow (f->output_data.x->widget),
+			   DefaultScreen (FRAME_X_DISPLAY (f)));
+  unblock_input ();
+
+  if (!result)
+    error ("Can't notify window manager of iconification");
+
+  SET_FRAME_ICONIFIED (f, true);
+  SET_FRAME_VISIBLE (f, 0);
+
+  block_input ();
+  XFlush (FRAME_X_DISPLAY (f));
+  unblock_input ();
+#else /* not USE_X_TOOLKIT */
 
   /* Make sure the X server knows where the window should be positioned,
      in case the user deiconifies with the window manager.  */
@@ -10600,6 +12023,7 @@ x_iconify_frame (struct frame *f)
 
   XFlush (FRAME_X_DISPLAY (f));
   unblock_input ();
+#endif /* not USE_X_TOOLKIT */
 }
 
 
@@ -10610,6 +12034,10 @@ x_free_frame_resources (struct frame *f)
 {
   struct x_display_info *dpyinfo = FRAME_DISPLAY_INFO (f);
   Mouse_HLInfo *hlinfo = &dpyinfo->mouse_highlight;
+#ifdef USE_X_TOOLKIT
+  Lisp_Object bar;
+  struct scroll_bar *b;
+#endif
 
   block_input ();
 
@@ -10630,6 +12058,18 @@ x_free_frame_resources (struct frame *f)
 
       if (f->output_data.x->icon_desc)
 	XDestroyWindow (FRAME_X_DISPLAY (f), f->output_data.x->icon_desc);
+
+#ifdef USE_X_TOOLKIT
+      /* Explicitly destroy the scroll bars of the frame.  Without
+	 this, we get "BadDrawable" errors from the toolkit later on,
+	 presumably from expose events generated for the disappearing
+	 toolkit scroll bars.  */
+      for (bar = FRAME_SCROLL_BARS (f); !NILP (bar); bar = b->next)
+	{
+	  b = XSCROLL_BAR (bar);
+	  x_scroll_bar_remove (b);
+	}
+#endif
 
 #ifdef HAVE_X_I18N
       if (FRAME_XIC (f))
@@ -10658,10 +12098,12 @@ x_free_frame_resources (struct frame *f)
 
 #ifdef USE_GTK
       xg_free_frame_widgets (f);
+#endif /* USE_GTK */
 
       tear_down_x_back_buffer (f);
       if (FRAME_X_WINDOW (f))
           XDestroyWindow (FRAME_X_DISPLAY (f), FRAME_X_WINDOW (f));
+#endif /* !USE_X_TOOLKIT */
 
       unload_color (f, FRAME_FOREGROUND_PIXEL (f));
       unload_color (f, FRAME_BACKGROUND_PIXEL (f));
@@ -10674,6 +12116,13 @@ x_free_frame_resources (struct frame *f)
 	unload_color (f, f->output_data.x->scroll_bar_background_pixel);
       if (f->output_data.x->scroll_bar_foreground_pixel != -1)
 	unload_color (f, f->output_data.x->scroll_bar_foreground_pixel);
+#if defined (USE_LUCID) && defined (USE_TOOLKIT_SCROLL_BARS)
+      /* Scrollbar shadow colors.  */
+      if (f->output_data.x->scroll_bar_top_shadow_pixel != -1)
+	unload_color (f, f->output_data.x->scroll_bar_top_shadow_pixel);
+      if (f->output_data.x->scroll_bar_bottom_shadow_pixel != -1)
+	unload_color (f, f->output_data.x->scroll_bar_bottom_shadow_pixel);
+#endif /* USE_LUCID && USE_TOOLKIT_SCROLL_BARS */
       if (f->output_data.x->white_relief.pixel != -1)
 	unload_color (f, f->output_data.x->white_relief.pixel);
       if (f->output_data.x->black_relief.pixel != -1)
@@ -10770,23 +12219,138 @@ x_destroy_window (struct frame *f)
    flag (this is useful when FLAGS is 0).
    The GTK version is in gtkutils.c.  */
 
+#ifndef USE_GTK
+void
+x_wm_set_size_hint (struct frame *f, long flags, bool user_position)
+{
+  XSizeHints size_hints;
+  Window window = FRAME_OUTER_WINDOW (f);
+
+  if (!window)
+    return;
+
+#ifdef USE_X_TOOLKIT
+  if (f->output_data.x->widget)
+    {
+      widget_update_wm_size_hints (f->output_data.x->widget);
+      return;
+    }
+#endif
+
+  /* Setting PMaxSize caused various problems.  */
+  size_hints.flags = PResizeInc | PMinSize /* | PMaxSize */;
+
+  size_hints.x = f->left_pos;
+  size_hints.y = f->top_pos;
+
+  size_hints.width = FRAME_PIXEL_WIDTH (f);
+  size_hints.height = FRAME_PIXEL_HEIGHT (f);
+
+  size_hints.width_inc = frame_resize_pixelwise ? 1 : FRAME_COLUMN_WIDTH (f);
+  size_hints.height_inc = frame_resize_pixelwise ? 1 : FRAME_LINE_HEIGHT (f);
+
+  size_hints.max_width = x_display_pixel_width (FRAME_DISPLAY_INFO (f))
+    - FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, 0);
+  size_hints.max_height = x_display_pixel_height (FRAME_DISPLAY_INFO (f))
+    - FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, 0);
+
+  /* Calculate the base and minimum sizes.  */
+  {
+    int base_width, base_height;
+
+    base_width = FRAME_TEXT_COLS_TO_PIXEL_WIDTH (f, 0);
+    base_height = FRAME_TEXT_LINES_TO_PIXEL_HEIGHT (f, 0);
+
+    /* The window manager uses the base width hints to calculate the
+       current number of rows and columns in the frame while
+       resizing; min_width and min_height aren't useful for this
+       purpose, since they might not give the dimensions for a
+       zero-row, zero-column frame.  */
+
+    size_hints.flags |= PBaseSize;
+    size_hints.base_width = base_width;
+    size_hints.base_height = base_height + FRAME_MENUBAR_HEIGHT (f);
+    size_hints.min_width  = base_width;
+    size_hints.min_height = base_height;
+  }
+
+  /* If we don't need the old flags, we don't need the old hint at all.  */
+  if (flags)
+    {
+      size_hints.flags |= flags;
+      goto no_read;
+    }
+
+  {
+    XSizeHints hints;		/* Sometimes I hate X Windows... */
+    long supplied_return;
+    int value;
+
+    value = XGetWMNormalHints (FRAME_X_DISPLAY (f), window, &hints,
+			       &supplied_return);
+
+    if (flags)
+      size_hints.flags |= flags;
+    else
+      {
+	if (value == 0)
+	  hints.flags = 0;
+	if (hints.flags & PSize)
+	  size_hints.flags |= PSize;
+	if (hints.flags & PPosition)
+	  size_hints.flags |= PPosition;
+	if (hints.flags & USPosition)
+	  size_hints.flags |= USPosition;
+	if (hints.flags & USSize)
+	  size_hints.flags |= USSize;
+      }
+  }
+
+ no_read:
+
+#ifdef PWinGravity
+  size_hints.win_gravity = f->win_gravity;
+  size_hints.flags |= PWinGravity;
+
+  if (user_position)
+    {
+      size_hints.flags &= ~ PPosition;
+      size_hints.flags |= USPosition;
+    }
+#endif /* PWinGravity */
+
+  XSetWMNormalHints (FRAME_X_DISPLAY (f), window, &size_hints);
+}
+#endif /* not USE_GTK */
+
 /* Used for IconicState or NormalState */
 
 static void
 x_wm_set_window_state (struct frame *f, int state)
 {
+#ifdef USE_X_TOOLKIT
+  Arg al[1];
+
+  XtSetArg (al[0], XtNinitialState, state);
+  XtSetValues (f->output_data.x->widget, al, 1);
+#else /* not USE_X_TOOLKIT */
   Window window = FRAME_X_WINDOW (f);
 
   f->output_data.x->wm_hints.flags |= StateHint;
   f->output_data.x->wm_hints.initial_state = state;
 
   XSetWMHints (FRAME_X_DISPLAY (f), window, &f->output_data.x->wm_hints);
+#endif /* not USE_X_TOOLKIT */
 }
 
 static void
 x_wm_set_icon_pixmap (struct frame *f, ptrdiff_t pixmap_id)
 {
   Pixmap icon_pixmap, icon_mask;
+
+#if !defined USE_X_TOOLKIT && !defined USE_GTK
+  Window window = FRAME_OUTER_WINDOW (f);
+#endif
 
   if (pixmap_id > 0)
     {
@@ -10803,10 +12367,28 @@ x_wm_set_icon_pixmap (struct frame *f, ptrdiff_t pixmap_id)
     }
 
 
+#ifdef USE_GTK
   {
     xg_set_frame_icon (f, icon_pixmap, icon_mask);
     return;
   }
+
+#elif defined (USE_X_TOOLKIT) /* same as in x_wm_set_window_state.  */
+
+  {
+    Arg al[1];
+    XtSetArg (al[0], XtNiconPixmap, icon_pixmap);
+    XtSetValues (f->output_data.x->widget, al, 1);
+    XtSetArg (al[0], XtNiconMask, icon_mask);
+    XtSetValues (f->output_data.x->widget, al, 1);
+  }
+
+#else /* not USE_X_TOOLKIT && not USE_GTK */
+
+  f->output_data.x->wm_hints.flags |= (IconPixmapHint | IconMaskHint);
+  XSetWMHints (FRAME_X_DISPLAY (f), window, &f->output_data.x->wm_hints);
+
+#endif /* not USE_X_TOOLKIT && not USE_GTK */
 }
 
 void
@@ -10864,6 +12446,31 @@ x_free_pixmap (struct frame *f, Emacs_Pixmap pixmap)
 /***********************************************************************
 			    Initialization
  ***********************************************************************/
+
+#ifdef USE_X_TOOLKIT
+static XrmOptionDescRec emacs_options[] = {
+  {(char *) "-geometry", (char *) ".geometry", XrmoptionSepArg, NULL},
+  {(char *) "-iconic", (char *) ".iconic", XrmoptionNoArg, (XtPointer) "yes"},
+
+  {(char *) "-internal-border-width",
+   (char *) "*EmacsScreen.internalBorderWidth", XrmoptionSepArg, NULL},
+  {(char *) "-ib", (char *) "*EmacsScreen.internalBorderWidth",
+   XrmoptionSepArg, NULL},
+  {(char *) "-T", (char *) "*EmacsShell.title", XrmoptionSepArg, NULL},
+  {(char *) "-wn", (char *) "*EmacsShell.title", XrmoptionSepArg, NULL},
+  {(char *) "-title", (char *) "*EmacsShell.title", XrmoptionSepArg, NULL},
+  {(char *) "-iconname", (char *) "*EmacsShell.iconName",
+   XrmoptionSepArg, NULL},
+  {(char *) "-in", (char *) "*EmacsShell.iconName", XrmoptionSepArg, NULL},
+  {(char *) "-mc", (char *) "*pointerColor", XrmoptionSepArg, NULL},
+  {(char *) "-cr", (char *) "*cursorColor", XrmoptionSepArg, NULL}
+};
+
+/* Whether atimer for Xt timeouts is activated or not.  */
+
+static bool x_timeout_atimer_activated_flag;
+
+#endif /* USE_X_TOOLKIT */
 
 static int x_initialized;
 
@@ -10957,6 +12564,7 @@ x_display_ok (const char *display)
   return true;
 }
 
+#ifdef USE_GTK
 static void
 my_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
 		const gchar *msg, gpointer user_data)
@@ -10964,6 +12572,7 @@ my_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
   if (!strstr (msg, "g_set_prgname"))
       fprintf (stderr, "%s-WARNING **: %s\n", log_domain, msg);
 }
+#endif
 
 /* Create invisible cursor on X display referred by DPYINFO.  */
 
@@ -11085,6 +12694,7 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   if (! x_display_ok (SSDATA (display_name)))
     error ("Display %s can't be opened", SSDATA (display_name));
 
+#ifdef USE_GTK
   {
 #define NUM_ARGV 10
     int argc;
@@ -11162,6 +12772,50 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
         XSetIOErrorHandler (x_io_error_quitter);
       }
   }
+#else /* not USE_GTK */
+#ifdef USE_X_TOOLKIT
+  /* weiner@footloose.sps.mot.com reports that this causes
+     errors with X11R5:
+	   X protocol error: BadAtom (invalid Atom parameter)
+	   on protocol request 18skiloaf.
+     So let's not use it until R6.  */
+#ifdef HAVE_X11XTR6
+  XtSetLanguageProc (NULL, NULL, NULL);
+#endif
+
+  {
+    int argc = 0;
+    char *argv[3];
+
+    argv[0] = (char *) "";
+    argc = 1;
+    if (xrm_option)
+      {
+	argv[argc++] = (char *) "-xrm";
+	argv[argc++] = xrm_option;
+      }
+    turn_on_atimers (false);
+    unrequest_sigio ();  /* See comment in x_display_ok.  */
+    dpy = XtOpenDisplay (Xt_app_con, SSDATA (display_name),
+			 resource_name, EMACS_CLASS,
+			 emacs_options, XtNumber (emacs_options),
+			 &argc, argv);
+    request_sigio ();
+    turn_on_atimers (true);
+
+#ifdef HAVE_X11XTR6
+    /* I think this is to compensate for XtSetLanguageProc.  */
+    fixup_locale ();
+#endif
+  }
+
+#else /* not USE_X_TOOLKIT */
+  XSetLocaleModifiers ("");
+  unrequest_sigio ();  /* See comment in x_display_ok.  */
+  dpy = XOpenDisplay (SSDATA (display_name));
+  request_sigio ();
+#endif /* not USE_X_TOOLKIT */
+#endif /* not USE_GTK*/
 
   /* Detect failure.  */
   if (dpy == 0)
@@ -11174,7 +12828,15 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   xcb_conn = XGetXCBConnection (dpy);
   if (xcb_conn == 0)
     {
+#ifdef USE_GTK
       xg_display_close (dpy);
+#else
+#ifdef USE_X_TOOLKIT
+      XtCloseDisplay (dpy);
+#else
+      XCloseDisplay (dpy);
+#endif
+#endif /* ! USE_GTK */
 
       unblock_input ();
       return 0;
@@ -11265,8 +12927,10 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   x_find_modifier_meanings (dpyinfo);
 
   /* Get the scroll bar cursor.  */
+#ifdef USE_GTK
   /* We must create a GTK cursor, it is required for GTK widgets.  */
   dpyinfo->xg_cursor = xg_create_default_cursor (dpyinfo->display);
+#endif /* USE_GTK */
 
   dpyinfo->vertical_scroll_bar_cursor
     = XCreateFontCursor (dpyinfo->display, XC_sb_v_double_arrow);
@@ -11504,6 +13168,29 @@ x_term_init (Lisp_Object display_name, char *xrm_option, char *resource_name)
   if (interrupt_input)
     init_sigio (dpyinfo->connection);
 
+#ifdef USE_LUCID
+  {
+    XrmValue d, fr, to;
+    Font font;
+
+    dpy = dpyinfo->display;
+    d.addr = (XPointer)&dpy;
+    d.size = sizeof (Display *);
+    fr.addr = (char *) XtDefaultFont;
+    fr.size = sizeof (XtDefaultFont);
+    to.size = sizeof (Font *);
+    to.addr = (XPointer)&font;
+    x_catch_errors (dpy);
+    if (!XtCallConverter (dpy, XtCvtStringToFont, &d, 1, &fr, &to, NULL))
+      emacs_abort ();
+    if (x_had_errors_p (dpy) || !XQueryFont (dpy, font))
+      XrmPutLineResource (&xrdb, "Emacs.dialog.*.font: 9x15");
+    /* Do not free XFontStruct returned by the above call to XQueryFont.
+       This leads to X protocol errors at XtCloseDisplay (Bug#18403).  */
+    x_uncatch_errors ();
+  }
+#endif
+
   /* See if we should run in synchronous mode.  This is useful
      for debugging X code.  */
   {
@@ -11604,6 +13291,52 @@ x_delete_display (struct x_display_info *dpyinfo)
   xfree (dpyinfo);
 }
 
+#ifdef USE_X_TOOLKIT
+
+/* Atimer callback function for TIMER.  Called every 0.1s to process
+   Xt timeouts, if needed.  We must avoid calling XtAppPending as
+   much as possible because that function does an implicit XFlush
+   that slows us down.  */
+
+static void
+x_process_timeouts (struct atimer *timer)
+{
+  block_input ();
+  x_timeout_atimer_activated_flag = false;
+  if (toolkit_scroll_bar_interaction || popup_activated ())
+    {
+      while (XtAppPending (Xt_app_con) & XtIMTimer)
+	XtAppProcessEvent (Xt_app_con, XtIMTimer);
+      /* Reactivate the atimer for next time.  */
+      x_activate_timeout_atimer ();
+    }
+  unblock_input ();
+}
+
+/* Install an asynchronous timer that processes Xt timeout events
+   every 0.1s as long as either `toolkit_scroll_bar_interaction' or
+   `popup_activated_flag' (in xmenu.c) is set.  Make sure to call this
+   function whenever these variables are set.  This is necessary
+   because some widget sets use timeouts internally, for example the
+   LessTif menu bar, or the Xaw3d scroll bar.  When Xt timeouts aren't
+   processed, these widgets don't behave normally.  */
+
+void
+x_activate_timeout_atimer (void)
+{
+  block_input ();
+  if (!x_timeout_atimer_activated_flag)
+    {
+      struct timespec interval = make_timespec (0, 100 * 1000 * 1000);
+      start_atimer (ATIMER_RELATIVE, interval, x_process_timeouts, 0);
+      x_timeout_atimer_activated_flag = true;
+    }
+  unblock_input ();
+}
+
+#endif /* USE_X_TOOLKIT */
+
+
 /* Set up use of X before we make the first connection.  */
 
 extern frame_parm_handler x_frame_parm_handlers[];
@@ -11696,7 +13429,15 @@ x_delete_terminal (struct terminal *terminal)
       XrmDestroyDatabase (dpyinfo->rdb);
 #endif
 
+#ifdef USE_GTK
       xg_display_close (dpyinfo->display);
+#else
+#ifdef USE_X_TOOLKIT
+      XtCloseDisplay (dpyinfo->display);
+#else
+      XCloseDisplay (dpyinfo->display);
+#endif
+#endif /* ! USE_GTK */
       /* Do not close the connection here because it's already closed
 	 by X(t)CloseDisplay (Bug#18403).  */
       dpyinfo->display = NULL;
@@ -11796,7 +13537,9 @@ x_initialize (void)
   any_help_event_p = false;
   ignore_next_mouse_click_timeout = 0;
 
+#ifdef USE_GTK
   current_count = -1;
+#endif
 
   /* Try to use interrupt input; if we can't, then start polling.  */
   Fset_input_interrupt_mode (Qt);
@@ -11808,6 +13551,28 @@ x_initialize (void)
 	   stderr);
 #endif
 
+#ifdef USE_X_TOOLKIT
+  XtToolkitInitialize ();
+
+  Xt_app_con = XtCreateApplicationContext ();
+
+  /* Register a converter from strings to pixels, which uses
+     Emacs' color allocation infrastructure.  */
+  XtAppSetTypeConverter (Xt_app_con,
+			 XtRString, XtRPixel, cvt_string_to_pixel,
+			 cvt_string_to_pixel_args,
+			 XtNumber (cvt_string_to_pixel_args),
+			 XtCacheByDisplay, cvt_pixel_dtor);
+
+  XtAppSetFallbackResources (Xt_app_con, Xt_default_resources);
+#endif
+
+#ifdef USE_TOOLKIT_SCROLL_BARS
+#ifndef USE_GTK
+  xaw3d_arrow_scroll = False;
+  xaw3d_pick_top = True;
+#endif
+#endif
 
 #ifdef USE_CAIRO
   gui_init_fringe (&x_redisplay_interface);
@@ -11819,6 +13584,7 @@ x_initialize (void)
   XSetIOErrorHandler (x_io_error_quitter);
 }
 
+#ifdef USE_GTK
 void
 init_xterm (void)
 {
@@ -11826,6 +13592,7 @@ init_xterm (void)
      Gtk doesn't use Xinput or Xinput2 extensions.  */
   xputenv ("GDK_CORE_DEVICE_EVENTS=1");
 }
+#endif
 
 void
 syms_of_xterm (void)
@@ -11836,10 +13603,12 @@ syms_of_xterm (void)
   DEFSYM (Qvendor_specific_keysyms, "vendor-specific-keysyms");
   DEFSYM (Qlatin_1, "latin-1");
 
+#ifdef USE_GTK
   xg_default_icon_file = build_pure_c_string ("icons/hicolor/scalable/apps/emacs.svg");
   staticpro (&xg_default_icon_file);
 
   DEFSYM (Qx_gtk_map_stock, "x-gtk-map-stock");
+#endif
 
   DEFVAR_BOOL ("x-use-underline-position-properties",
 	       x_use_underline_position_properties,
@@ -11879,7 +13648,19 @@ A value of nil means Emacs doesn't use toolkit scroll bars.
 With the X Window system, the value is a symbol describing the
 X toolkit.  Possible values are: gtk, motif, xaw, or xaw3d.
 With MS Windows or Nextstep, the value is t.  */);
+#ifdef USE_TOOLKIT_SCROLL_BARS
+#ifdef USE_MOTIF
+  Vx_toolkit_scroll_bars = intern_c_string ("motif");
+#elif defined HAVE_XAW3D
+  Vx_toolkit_scroll_bars = intern_c_string ("xaw3d");
+#elif USE_GTK
   Vx_toolkit_scroll_bars = intern_c_string ("gtk");
+#else
+  Vx_toolkit_scroll_bars = intern_c_string ("xaw");
+#endif
+#else
+  Vx_toolkit_scroll_bars = Qnil;
+#endif
 
   DEFSYM (Qmodifier_value, "modifier-value");
   DEFSYM (Qctrl, "ctrl");

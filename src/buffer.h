@@ -23,7 +23,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <sys/types.h>
 #include <time.h>
-#include <stdio.h>
 
 #include "character.h"
 #include "lisp.h"
@@ -314,7 +313,7 @@ struct buffer
   /* Length of file when last read or saved.
      -1 means auto saving turned off because buffer shrank a lot.
      -2 means don't turn off auto saving if buffer shrinks.
-     (That value is used with buffer-swap-text.)
+       (That value is used with buffer-swap-text.)
      This is not in the  struct buffer_text
      because it's not used in indirect buffers at all.  */
   Lisp_Object save_length_;
@@ -694,14 +693,6 @@ struct buffer
      struct buffer_text because local variables have to be right in
      the struct buffer. So we copy it around in set_buffer_internal.  */
   Lisp_Object undo_list_;
-
-  /* Record one cached position found recently by
-     buf_charpos_to_bytepos or buf_bytepos_to_charpos.  */
-  ptrdiff_t cached_charpos;
-  ptrdiff_t cached_bytepos;
-
-  bool is_cached;
-  EMACS_INT cached_modiff;
 };
 
 INLINE bool
@@ -1159,12 +1150,8 @@ extern Lisp_Object interval_insert_behind_hooks;
 extern Lisp_Object interval_insert_in_front_hooks;
 
 
-extern void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
-extern struct Lisp_Overlay *
-unchain_overlay (struct Lisp_Overlay *list, struct Lisp_Overlay *overlay);
 extern void delete_all_overlays (struct buffer *);
 extern void reset_buffer (struct buffer *);
-extern void reset_buffer_local_variables (struct buffer *, bool);
 extern void compact_buffer (struct buffer *);
 extern void evaporate_overlays (ptrdiff_t);
 extern ptrdiff_t overlays_at (EMACS_INT, bool, Lisp_Object **,
@@ -1182,7 +1169,6 @@ extern void fix_overlays_before (struct buffer *, ptrdiff_t, ptrdiff_t);
 extern void mmap_set_vars (bool);
 extern void restore_buffer (Lisp_Object);
 extern void set_buffer_if_live (Lisp_Object);
-extern void alloc_buffer_text(struct buffer *, ptrdiff_t);
 
 /* Return B as a struct buffer pointer, defaulting to the current buffer.  */
 
@@ -1239,8 +1225,6 @@ record_unwind_current_buffer (void)
   } while (false)
 
 extern Lisp_Object Vbuffer_alist;
-
-extern Lisp_Object buffer_fundamental_string(void);
 
 /* FOR_EACH_LIVE_BUFFER (LIST_VAR, BUF_VAR) followed by a statement is
    a `for' loop which iterates over the buffers from Vbuffer_alist.  */
@@ -1511,8 +1495,14 @@ per_buffer_value (struct buffer *b, int offset)
   return *(Lisp_Object *)(offset + (char *) b);
 }
 
-extern void
-set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value);
+#ifdef IGNORE_RUST_PORT
+INLINE void
+set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
+{
+  *(Lisp_Object *)(offset + (char *) b) = value;
+}
+#endif /* IGNORE_RUST_PORT */
+extern void set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value);
 
 /* Downcase a character C, or make no change if that cannot be done.  */
 INLINE int
@@ -1545,28 +1535,6 @@ lowercasep (int c)
 {
   return !uppercasep (c) && upcase (c) != c;
 }
-
-struct infile
-{
-  /* The input stream.  */
-  FILE *stream;
-
-  /* Lookahead byte count.  */
-  signed char lookahead;
-
-  /* Lookahead bytes, in reverse order.  Keep these here because it is
-     not portable to ungetc more than one byte at a time.  */
-  unsigned char buf[MAX_MULTIBYTE_LENGTH - 1];
-};
-
-/* Defined in buffer.c.  */
-extern struct infile* infile;
-
-/* Defined in lread.c.  */
-extern void readevalloop (Lisp_Object, struct infile *, Lisp_Object, bool,
-                          Lisp_Object, Lisp_Object,
-                          Lisp_Object, Lisp_Object);
-extern int readbyte_from_stdio(void);
 
 INLINE_HEADER_END
 

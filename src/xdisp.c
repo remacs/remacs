@@ -11848,7 +11848,7 @@ clear_garbaged_frames (void)
 		     selected frame, and might leave the selected
 		     frame with corrupted display, if it happens not
 		     to be marked garbaged.  */
-		  && !(f != sf && FRAME_TERMCAP_P (f)))
+		  && !(f != sf && (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))))
 		redraw_frame (f);
 	      else
 		clear_current_matrices (f);
@@ -14531,7 +14531,7 @@ hscroll_window_tree (Lisp_Object window)
 	    {
 	      /* On TTY frames, don't count the left truncation glyph.  */
 	      struct frame *f = XFRAME (WINDOW_FRAME (w));
-	      x_offset -= FRAME_TERMCAP_P (f);
+	      x_offset -= (FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f));
 	    }
 
 	  text_area_width = window_box_width (w, TEXT_AREA);
@@ -15188,7 +15188,7 @@ redisplay_internal (void)
   if (!fr->glyphs_initialized_p)
     return;
 
-#if defined (USE_GTK) || defined (HAVE_NS)
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS)
   if (popup_activated ())
     {
       return;
@@ -15228,7 +15228,7 @@ redisplay_internal (void)
   if (face_change)
     windows_or_buffers_changed = 47;
 
-  if (FRAME_TERMCAP_P (sf)
+  if ((FRAME_TERMCAP_P (sf) || FRAME_MSDOS_P (sf))
       && FRAME_TTY (sf)->previous_frame != sf)
     {
       /* Since frames on a single ASCII terminal share the same
@@ -15613,7 +15613,7 @@ redisplay_internal (void)
 
 	  /* We don't have to do anything for unselected terminal
 	     frames.  */
-	  if (FRAME_TERMCAP_P (f)
+	  if ((FRAME_TERMCAP_P (f) || FRAME_MSDOS_P (f))
 	      && !EQ (FRAME_TTY (f)->top_frame, frame))
 	    continue;
 
@@ -24672,7 +24672,7 @@ display_menu_bar (struct window *w)
   if (FRAME_W32_P (f))
     return;
 #endif
-#if defined (USE_GTK)
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
   if (FRAME_X_P (f))
     return;
 #endif
@@ -24682,7 +24682,7 @@ display_menu_bar (struct window *w)
     return;
 #endif /* HAVE_NS */
 
-#if defined (USE_GTK)
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK)
   eassert (!FRAME_WINDOW_P (f));
   init_iterator (&it, w, -1, -1, f->desired_matrix->rows, MENU_FACE_ID);
   it.first_visible_x = 0;
@@ -24700,7 +24700,7 @@ display_menu_bar (struct window *w)
       it.last_visible_x = FRAME_PIXEL_WIDTH (f);
     }
   else
-#endif /* not USE_GTK */
+#endif /* not USE_X_TOOLKIT and not USE_GTK */
     {
       /* This is a TTY frame, i.e. character hpos/vpos are used as
 	 pixel x/y.  */
@@ -26425,7 +26425,9 @@ decode_mode_spec (struct window *w, register int c, int field_width,
       obj = Fget_buffer_process (Fcurrent_buffer ());
       if (NILP (obj))
 	return "no process";
+#ifndef MSDOS
       obj = Fsymbol_name (Fprocess_status (obj));
+#endif
       break;
 
     case '@':
@@ -26468,6 +26470,7 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 				     p, eol_flag);
 
 #if false /* This proves to be annoying; I think we can do without. -- rms.  */
+#ifdef subprocesses
 	obj = Fget_buffer_process (Fcurrent_buffer ());
 	if (PROCESSP (obj))
 	  {
@@ -26476,6 +26479,7 @@ decode_mode_spec (struct window *w, register int c, int field_width,
 	    p = decode_mode_spec_coding
 	      (XPROCESS (obj)->encode_coding_system, p, eol_flag);
 	  }
+#endif /* subprocesses */
 #endif /* false */
 	*p = 0;
 	return decode_mode_spec_buf;
@@ -31423,7 +31427,8 @@ gui_clear_cursor (struct window *w)
 
 #endif /* HAVE_WINDOW_SYSTEM */
 
-/* Implementation of draw_row_with_mouse_face for GUI sessions and GPM.  */
+/* Implementation of draw_row_with_mouse_face for GUI sessions, GPM,
+   and MSDOS.  */
 static void
 draw_row_with_mouse_face (struct window *w, int start_x, struct glyph_row *row,
 			  int start_hpos, int end_hpos,
@@ -31436,7 +31441,7 @@ draw_row_with_mouse_face (struct window *w, int start_x, struct glyph_row *row,
       return;
     }
 #endif
-#if defined (HAVE_GPM) || defined (WINDOWSNT)
+#if defined (HAVE_GPM) || defined (MSDOS) || defined (WINDOWSNT)
   tty_draw_row_with_mouse_face (w, row, start_hpos, end_hpos, draw);
 #endif
 }
@@ -32879,7 +32884,7 @@ note_mouse_highlight (struct frame *f, int x, int y)
   struct buffer *b;
 
   /* When a menu is active, don't highlight because this looks odd.  */
-#if defined (USE_GTK) || defined (HAVE_NS)
+#if defined (USE_X_TOOLKIT) || defined (USE_GTK) || defined (HAVE_NS) || defined (MSDOS)
   if (popup_activated ())
     return;
 #endif
@@ -34042,11 +34047,13 @@ expose_frame (struct frame *f, int x, int y, int w, int h)
 #endif
 
 #ifdef HAVE_X_WINDOWS
-#if ! defined (USE_GTK)
+#ifndef MSDOS
+#if ! defined (USE_X_TOOLKIT) && ! defined (USE_GTK)
   if (WINDOWP (f->menu_bar_window))
     mouse_face_overwritten_p
       |= expose_window (XWINDOW (f->menu_bar_window), &r);
-#endif /* not USE_GTK */
+#endif /* not USE_X_TOOLKIT and not USE_GTK */
+#endif
 #endif
 
   /* Some window managers support a focus-follows-mouse style with
@@ -34168,12 +34175,18 @@ be let-bound around code that needs to disable messages temporarily. */);
   message_dolog_marker3 = Fmake_marker ();
   staticpro (&message_dolog_marker3);
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sset_buffer_redisplay);
+#endif /* IGNORE_RUST_PORT */
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_frame_glyph_matrix);
   defsubr (&Sdump_glyph_matrix);
   defsubr (&Sdump_glyph_row);
   defsubr (&Sdump_tab_bar_row);
   defsubr (&Sdump_tool_bar_row);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Strace_redisplay);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Strace_to_stderr);
 #endif
 #ifdef HAVE_WINDOW_SYSTEM
@@ -34183,6 +34196,9 @@ be let-bound around code that needs to disable messages temporarily. */);
 #endif
   defsubr (&Sline_pixel_height);
   defsubr (&Sformat_mode_line);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sinvisible_p);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Scurrent_bidi_paragraph_direction);
   defsubr (&Swindow_text_pixel_size);
   defsubr (&Smove_point_visually);

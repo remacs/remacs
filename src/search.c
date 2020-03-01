@@ -341,6 +341,31 @@ looking_at_1 (Lisp_Object string, bool posix)
 
   return unbind_to (count, val);
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("looking-at", Flooking_at, Slooking_at, 1, 1, 0,
+       doc: /* Return t if text after point matches regular expression REGEXP.
+This function modifies the match data that `match-beginning',
+`match-end' and `match-data' access; save and restore the match
+data if you want to preserve them.  */)
+  (Lisp_Object regexp)
+{
+  return looking_at_1 (regexp, 0);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("posix-looking-at", Fposix_looking_at, Sposix_looking_at, 1, 1, 0,
+       doc: /* Return t if text after point matches regular expression REGEXP.
+Find the longest match, in accord with Posix regular expression rules.
+This function modifies the match data that `match-beginning',
+`match-end' and `match-data' access; save and restore the match
+data if you want to preserve them.  */)
+  (Lisp_Object regexp)
+{
+  return looking_at_1 (regexp, 1);
+}
+#endif /* IGNORE_RUST_PORT */
 
 Lisp_Object
 string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
@@ -411,6 +436,38 @@ string_match_1 (Lisp_Object regexp, Lisp_Object string, Lisp_Object start,
 
   return make_fixnum (string_byte_to_char (string, val));
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("string-match", Fstring_match, Sstring_match, 2, 3, 0,
+       doc: /* Return index of start of first match for REGEXP in STRING, or nil.
+Matching ignores case if `case-fold-search' is non-nil.
+If third arg START is non-nil, start search at that index in STRING.
+For index of first char beyond the match, do (match-end 0).
+`match-end' and `match-beginning' also give indices of substrings
+matched by parenthesis constructs in the pattern.
+
+You can use the function `match-string' to extract the substrings
+matched by the parenthesis constructions in REGEXP. */)
+  (Lisp_Object regexp, Lisp_Object string, Lisp_Object start)
+{
+  return string_match_1 (regexp, string, start, 0);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("posix-string-match", Fposix_string_match, Sposix_string_match, 2, 3, 0,
+       doc: /* Return index of start of first match for REGEXP in STRING, or nil.
+Find the longest match, in accord with Posix regular expression rules.
+Case is ignored if `case-fold-search' is non-nil in the current buffer.
+If third arg START is non-nil, start search at that index in STRING.
+For index of first char beyond the match, do (match-end 0).
+`match-end' and `match-beginning' also give indices of substrings
+matched by parenthesis constructs in the pattern.  */)
+  (Lisp_Object regexp, Lisp_Object string, Lisp_Object start)
+{
+  return string_match_1 (regexp, string, start, 1);
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* Match REGEXP against STRING using translation table TABLE,
    searching all of STRING, and return the index of the match,
@@ -2228,6 +2285,7 @@ and `replace-match'.  */)
   return search_command (regexp, bound, noerror, count, 1, 1, 0);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("posix-search-backward", Fposix_search_backward, Sposix_search_backward, 1, 4,
        "sPosix search backward: ",
        doc: /* Search backward from point for match for regular expression REGEXP.
@@ -2255,7 +2313,38 @@ and `replace-match'.  */)
 {
   return search_command (regexp, bound, noerror, count, -1, 1, 1);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("posix-search-forward", Fposix_search_forward, Sposix_search_forward, 1, 4,
+       "sPosix search: ",
+       doc: /* Search forward from point for regular expression REGEXP.
+Find the longest match in accord with Posix regular expression rules.
+Set point to the end of the occurrence found, and return point.
+An optional second argument bounds the search; it is a buffer position.
+  The match found must not end after that position.  A value of nil
+  means search to the end of the accessible portion of the buffer.
+Optional third argument, if t, means if fail just return nil (no error).
+  If not nil and not t, move to limit of search and return nil.
+Optional fourth argument COUNT, if a positive number, means to search
+  for COUNT successive occurrences.  If COUNT is negative, search
+  backward, instead of forward, for -COUNT occurrences.  A value of
+  nil means the same as 1.
+With COUNT positive, the match found is the COUNTth one (or first,
+  if COUNT is 1 or nil) in the buffer located entirely after the
+  origin of the search; correspondingly with COUNT negative.
+
+Search case-sensitivity is determined by the value of the variable
+`case-fold-search', which see.
+
+See also the functions `match-beginning', `match-end', `match-string',
+and `replace-match'.  */)
+  (Lisp_Object regexp, Lisp_Object bound, Lisp_Object noerror, Lisp_Object count)
+{
+  return search_command (regexp, bound, noerror, count, 1, 1, 1);
+}
+#endif /* IGNORE_RUST_PORT */
+
 DEFUN ("replace-match", Freplace_match, Sreplace_match, 1, 5, 0,
        doc: /* Replace text matched by last search with NEWTEXT.
 Leave point at the end of the replacement text.
@@ -2699,6 +2788,38 @@ match_limit (Lisp_Object num, bool beginningp)
   return (make_fixnum ((beginningp) ? search_regs.start[n]
 		                    : search_regs.end[n]));
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("match-beginning", Fmatch_beginning, Smatch_beginning, 1, 1, 0,
+       doc: /* Return position of start of text matched by last search.
+SUBEXP, a number, specifies which parenthesized expression in the last
+  regexp.
+Value is nil if SUBEXPth pair didn't match, or there were less than
+  SUBEXP pairs.
+Zero means the entire text matched by the whole regexp or whole string.
+
+Return value is undefined if the last search failed.  */)
+  (Lisp_Object subexp)
+{
+  return match_limit (subexp, 1);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("match-end", Fmatch_end, Smatch_end, 1, 1, 0,
+       doc: /* Return position of end of text matched by last search.
+SUBEXP, a number, specifies which parenthesized expression in the last
+  regexp.
+Value is nil if SUBEXPth pair didn't match, or there were less than
+  SUBEXP pairs.
+Zero means the entire text matched by the whole regexp or whole string.
+
+Return value is undefined if the last search failed.  */)
+  (Lisp_Object subexp)
+{
+  return match_limit (subexp, 0);
+}
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("match-data", Fmatch_data, Smatch_data, 0, 3, 0,
        doc: /* Return a list describing what the last search matched.
@@ -3280,7 +3401,23 @@ do not set the match data.  The proper way to use this variable
 is to bind it with `let' around a small expression.  */);
   Vinhibit_changing_match_data = Qnil;
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Slooking_at);
+  defsubr (&Sposix_looking_at);
+  defsubr (&Sstring_match);
+  defsubr (&Sposix_string_match);
+  defsubr (&Ssearch_forward);
+  defsubr (&Ssearch_backward);
+  defsubr (&Sre_search_forward);
+  defsubr (&Sre_search_backward);
+  defsubr (&Sposix_search_forward);
+  defsubr (&Sposix_search_backward);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sreplace_match);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Smatch_beginning);
+  defsubr (&Smatch_end);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Smatch_data);
   defsubr (&Sset_match_data);
   defsubr (&Sregexp_quote);
