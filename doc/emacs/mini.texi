@@ -813,8 +813,8 @@ varieties.
 
 @cindex y or n prompt
   For the first type of yes-or-no query, the prompt ends with
-@samp{(y or n)}.  Such a query does not actually use the minibuffer;
-the prompt appears in the echo area, and you answer by typing either
+@samp{(y or n)}.  Such a query does actually use the minibuffer;
+the prompt appears in the minibuffer, and you answer by typing either
 @samp{y} or @samp{n}, which immediately delivers the response.  For
 example, if you type @kbd{C-x C-w} (@kbd{write-file}) to save a
 buffer, and enter the name of an existing file, Emacs issues a prompt
@@ -825,9 +825,9 @@ File ‘foo.el’ exists; overwrite? (y or n)
 @end smallexample
 
 @noindent
-Because this query does not actually use the minibuffer, the usual
-minibuffer editing commands cannot be used.  However, you can perform
-some window scrolling operations while the query is active: @kbd{C-l}
+This query does actually use the minibuffer, so the usual
+minibuffer editing commands can be used.  You can perform
+window scrolling operations while the query is active: @kbd{C-l}
 recenters the selected window; @kbd{C-v} (or @key{PageDown}, or
 @key{next}) scrolls forward; @kbd{M-v} (or @key{PageUp}, or
 @key{prior}) scrolls backward; @kbd{C-M-v} scrolls forward in the next
