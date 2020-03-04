@@ -284,6 +284,13 @@ require user confirmation."
           (t
            (icomplete-force-complete-and-exit)))))
 
+(defun icomplete-fido-exit ()
+  "Exit minibuffer properly honoring the REQUIRE-MATCH argument."
+  (interactive)
+  (if minibuffer--require-match
+      (minibuffer-complete-and-exit)
+    (exit-minibuffer)))
+
 (defun icomplete-fido-backward-updir ()
   "Delete char before or go up directory, like `ido-mode'."
   (interactive)
@@ -299,7 +306,7 @@ require user confirmation."
     (define-key map (kbd "RET") 'icomplete-fido-ret)
     (define-key map (kbd "C-m") 'icomplete-fido-ret)
     (define-key map (kbd "DEL") 'icomplete-fido-backward-updir)
-    (define-key map (kbd "M-j") 'exit-minibuffer)
+    (define-key map (kbd "M-j") 'icomplete-fido-exit)
     (define-key map (kbd "C-s") 'icomplete-forward-completions)
     (define-key map (kbd "C-r") 'icomplete-backward-completions)
     (define-key map (kbd "<right>") 'icomplete-forward-completions)
