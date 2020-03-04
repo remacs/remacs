@@ -541,7 +541,7 @@ See `icomplete-mode' and `minibuffer-setup-hook'."
                           (icomplete--completion-table)
                           (icomplete--completion-predicate)
                           (if (window-minibuffer-p)
-                              (not minibuffer-completion-confirm)))))
+                              (eq minibuffer--require-match t)))))
                  (buffer-undo-list t)
                  deactivate-mark)
             ;; Do nothing if while-no-input was aborted.
