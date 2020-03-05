@@ -360,7 +360,7 @@ character X becomes (?X . ?X).  Return the intervals in a list."
                       (push (cons start end) intervals))
                      (t
                       (error "Invalid rx `any' range: %s"
-                             (substring str i 3))))
+                             (substring str i (+ i 3)))))
                (setq i (+ i 3))))
             (t
              ;; Single character.
