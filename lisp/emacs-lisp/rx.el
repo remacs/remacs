@@ -134,7 +134,7 @@ Each entry is:
                 (if (cdr def)
                     (error "Not an `rx' symbol definition: %s" form)
                   (car def)))))
-        ((consp form)
+        ((and (consp form) (symbolp (car form)))
          (let* ((op (car form))
                 (def (rx--lookup-def op)))
            (and def
