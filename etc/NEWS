@@ -768,8 +768,9 @@ an offset to absolute line numbers.
 
 ** table
 
-*** 'table-generate-source' and friends now support outputting wiki and
-mediawiki format tables.
++++
+*** 'table-generate-source' now supports wiki and mediawiki
+This command can now output wiki and mediawiki format tables.
 
 ---
 ** telnet-mode
