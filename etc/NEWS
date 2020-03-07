@@ -750,6 +750,7 @@ been removed.
 ** The 'list-processes' command now includes port numbers in the
 network connection information (in addition to the host name).
 
+---
 ** The 'cl' package is now officially deprecated in favor of 'cl-lib'.
 
 ---
