@@ -351,10 +351,13 @@ The default value is 30000, as the previously hard-coded threshold.
 answers, but also function keys like 'F1', character events such as
 'C-M-h', and control characters like 'C-h'.
 
-** Lexical binding is now used when evaluating interactive Elisp forms.
-More specifically, 'lexical-binding' is now used for 'M-:', '--eval',
-as well as in 'lisp-interaction-mode' and 'ielm-mode', used in the
-"*scratch*" and "*ielm*" buffers.
++++
+** Lexical binding is now used by default when evaluating interactive Elisp.
+More specifically, 'lexical-binding' is now used by default for 'M-:'
+and '--eval' (including in evaluations invoked from 'emacsclient' via
+its '--eval' command-line option), as well as in
+'lisp-interaction-mode' and 'ielm-mode', used in the "*scratch*" and
+"*ielm*" buffers.
 
 ---
 ** The new user option 'tooltip-resize-echo-area' avoids truncating
