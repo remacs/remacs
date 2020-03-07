@@ -759,20 +759,21 @@ network connection information (in addition to the host name).
 *** When called interactively with a prefix arg 'C-u', 'desktop-read'
 now prompts the user for the directory containing the desktop file.
 
-+++
 ** display-line-numbers-mode
 
++++
 *** New faces 'line-number-major-tick' and 'line-number-minor-tick',
 and user options 'display-line-numbers-major-tick' and
 'display-line-numbers-minor-tick' can be used to highlight the line
 numbers of lines multiple of certain numbers.
 
++++
 *** New variable 'display-line-numbers-offset', when non-zero, adds
 an offset to absolute line numbers.
 
-+++
 ** winner
 
++++
 *** A new user option, 'winner-boring-buffers-regexp', has been added.
 
 ** table
@@ -781,9 +782,9 @@ an offset to absolute line numbers.
 *** 'table-generate-source' now supports wiki and mediawiki
 This command can now output wiki and mediawiki format tables.
 
----
 ** telnet-mode
 
+---
 *** Reverting a buffer in 'telnet-mode' will restart a closed connection.
 
 ** goto-addr
@@ -792,9 +793,9 @@ This command can now output wiki and mediawiki format tables.
 be ignored has been added via the 'goto-address-uri-schemes-ignored'
 variable.
 
-+++
 ** tex-mode
 
++++
 *** 'latex-noindent-commands' controls indentation of certain commands.
 You can use this new user option to control indentation of arguments of
 \emph, \footnote, and similar commands.
@@ -1819,7 +1820,6 @@ keyboard macros.
 'isearch-yank-symbol-or-char'.  'isearch-del-char' is now bound to
 'C-M-d'.
 
-+++
 'M-s h l' invokes 'highlight-lines-matching-regexp' using the search
 string to highlight lines matching the search string.  This is similar
 to the existing binding 'M-s h r' ('highlight-regexp') that highlights
@@ -2650,6 +2650,7 @@ overrides all system and Emacs-provided defaults.  To get the old
 method back, set 'mailcap-prefer-mailcap-viewers' to nil.
 
 ** MH-E
+
 +++
 *** The hook 'mh-show-mode-hook' is now called before the message is inserted.
 Functions that want to affect the message text (for example, to change
