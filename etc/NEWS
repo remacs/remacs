@@ -3108,6 +3108,7 @@ with POSIX.1-2017.
 'decoded-time-weekday', 'decoded-time-dst' and 'decoded-time-zone'
 accessors can be used.
 
++++
 *** The new functions 'date-days-in-month' (which will say how many
 days there are in a month in a specific year), 'date-ordinal-to-time'
 (that computes the date of an ordinal day), 'decoded-time-add' (for
@@ -3167,6 +3168,7 @@ throughput of reading from sub-processes that produces vast
 ** The new user option 'quit-window-hook' is now run first when
 executing the 'quit-window' command.
 
++++
 ** The user options 'help-enable-completion-auto-load',
 'help-enable-auto-load' and 'vhdl-project-auto-load', as well as the
 function 'vhdl-auto-load-project' have been renamed to have "autoload"
