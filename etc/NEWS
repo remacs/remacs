@@ -960,6 +960,7 @@ functions 'windmove-coord-add', 'windmove-constrain-to-range',
 'windmove-constrain-loc-for-movement', 'windmove-wrap-loc-for-movement',
 'windmove-reference-loc' and 'windmove-other-window-loc'.
 
+---
 ** Octave mode
 The mode is automatically enabled in files that start with the
 'function' keyword.
