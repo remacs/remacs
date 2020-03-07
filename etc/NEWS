@@ -1123,9 +1123,11 @@ for a revision.
 *** 'C-u C-x v D' ('vc-root-version-diff') prompts for two revisions
 and compares their entire trees.
 
+---
 *** New user option 'vc-hg-revert-switches'.
 It specifies switches to pass to Hg's 'revert' command.
 
+---
 *** 'C-x v M D' ('vc-diff-mergebase') and 'C-x v M L' ('vc-log-mergebase')
 print diffs and logs between the merge base (common ancestor) of two
 given revisions.
