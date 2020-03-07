@@ -789,6 +789,7 @@ This command can now output wiki and mediawiki format tables.
 
 ** goto-addr
 
+---
 *** A way to more conveniently specify what URI address schemes should
 be ignored has been added via the 'goto-address-uri-schemes-ignored'
 variable.
