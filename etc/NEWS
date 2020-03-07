@@ -746,6 +746,7 @@ non-nil.
 what they're named, and the 'battery-linux-sysfs-regexp' variable has
 been removed.
 
+---
 ** The 'list-processes' command now includes port numbers in the
 network connection information (in addition to the host name).
 
