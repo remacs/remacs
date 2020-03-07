@@ -560,6 +560,7 @@ mode, they are described in the manual "(emacs) Display".
 ** New user option 'xref-file-name-display' controls the display of
 file names in xref buffers.
 
+---
 ** New user option 'byte-count-to-string-function'.
 It is used for displaying file sizes and disk space in some cases.
 
