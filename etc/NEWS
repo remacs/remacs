@@ -888,6 +888,7 @@ at the end of the active minibuffer.
 *** Some commands that previously used 'read-char-choice' now read
 a character using the minibuffer by 'read-char-from-minibuffer'.
 
+---
 ** map.el
 
 *** Now also understands plists.
@@ -899,6 +900,7 @@ a character using the minibuffer by 'read-char-from-minibuffer'.
 +++
 *** The 'type' arg can be a list '(hash-table :key1 VAL1 :key2 VAL2 ...)'.
 
+---
 ** seq.el
 New convenience functions 'seq-first' and 'seq-rest' give easy access
 to respectively the first and all but the first elements of sequences.
