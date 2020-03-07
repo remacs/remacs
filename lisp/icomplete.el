@@ -284,10 +284,14 @@ require user confirmation."
           (t
            (icomplete-force-complete-and-exit)))))
 
-(defun icomplete-fido-exit ()
-  "Exit minibuffer properly honoring the REQUIRE-MATCH argument."
-  (interactive)
-  (if minibuffer--require-match
+(defun icomplete-fido-exit (force)
+  "Attempt to exit minibuffer immediately with current input.
+Unless FORCE is non-nil (interactively with a prefix argument),
+honour a non-nil REQUIRE-MATCH argument to `completing-read' by
+trying to complete as much as possible and disallowing the exit
+if that doesn't produce a completion match."
+  (interactive "P")
+  (if (and (not force) minibuffer--require-match)
       (minibuffer-complete-and-exit)
     (exit-minibuffer)))
 
