@@ -347,6 +347,7 @@ The default value is 30000, as the previously hard-coded threshold.
 +++
 ** The function 'read-passwd' uses "*" as default character to hide passwords.
 
++++
 ** The function 'read-answer' now accepts not only single character
 answers, but also function keys like 'F1', character events such as
 'C-M-h', and control characters like 'C-h'.
