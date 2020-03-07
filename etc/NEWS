@@ -857,6 +857,7 @@ to allow controlling how the conversion to text is done.
 
 ** Ido
 
+---
 *** New user option 'ido-big-directories' to mark directories whose
 names match certain regular expressions as big.  Ido won't attempt to
 list the contents of such directories when completing file names.
