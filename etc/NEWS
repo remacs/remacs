@@ -1497,9 +1497,9 @@ strings and report all the spelling mistakes.
 +++
 *** New minor mode Fido mode.
 This mode is based on Icomplete, and its name stands for "Fake Ido".
-The point of this mode is to be an 'ido-mode' workalike, but provide
-most of the functionality present in Icomplete that is not in
-'ido-mode', while being much more compatible with all of Emacs's
+The point of this mode is to be an 'ido-mode' workalike, providing
+most of the functionality present in 'ido-mode' that is not in
+Icomplete, which is much more compatible with all of Emacs's
 completion facilities.
 
 ** Ecomplete
