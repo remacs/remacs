@@ -845,10 +845,13 @@ its functions.
 
 ** doc-view.el
 
+---
 *** New commands 'doc-view-presentation' and 'doc-view-fit-window-to-page'.
 
+---
 *** Added support for password-protected PDF files.
 
+---
 *** A new user option 'doc-view-pdftotext-program-args' has been added
 to allow controlling how the conversion to text is done.
 
