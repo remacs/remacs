@@ -2209,8 +2209,9 @@ are formatted as MIME digests.
 *** 'message-forward-included-headers' has changed its default to
 exclude most headers when forwarding.
 
+---
 *** 'mml-secure-openpgp-sign-with-sender' sets also "gpg --sender".
-When 'mml-secure-openpgp-sign-with-sender' is non-nil message sender's
+When 'mml-secure-openpgp-sign-with-sender' is non-nil, message sender's
 email address (in addition to its old behavior) will also be used to
 set gpg's "--sender email@domain" option.
 
