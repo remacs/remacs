@@ -803,10 +803,11 @@ You can use this new user option to control indentation of arguments of
 
 ** byte compiler
 
++++
 *** 'byte-compile-dynamic' is now obsolete.
 This is because on the one hand it suffers from misbehavior in corner
-cases that have plagued it for years, and on the other experiments indicated
-that it doesn't bring any measurable benefit.
+cases that have plagued it for years, and on the other hand experience
+indicates that it doesn't bring any measurable benefit.
 
 ---
 *** The 'g' keystroke in "*Compile-Log*" buffers has been bound to a
