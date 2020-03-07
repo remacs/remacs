@@ -1985,6 +1985,7 @@ This is useful for games where lower scores are better, like time-based games.
 *** Completing file names in the minibuffer via 'C-TAB' now uses the
 styles as configured by the user option 'completion-styles'.
 
++++
 ** New macros 'thunk-let' and 'thunk-let*'.
 These macros are analogue to 'let' and 'let*', but create bindings that
 are evaluated lazily.
