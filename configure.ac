@@ -23,7 +23,8 @@ dnl  along with Remacs.  If not, see <https://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.65)
 dnl Note this is parsed by (at least) make-dist and lisp/cedet/ede/emacs.el.
-AC_INIT(Remacs, 27.0.60, , , )
+
+AC_INIT(Remacs, 27.0.90, , , )
 
 dnl Set emacs_config_options to the options of 'configure', quoted for the shell,
 dnl and then quoted again for a C string.  Separate options with spaces.
