@@ -269,6 +269,26 @@ pub fn base64_decode_string(string: LispStringRef) -> LispObject {
 /// third argument NO-LINE-BREAK means do not break long lines into shorter lines.
 #[lisp_fn(min = "2", intspec = "r")]
 pub fn base64_encode_region(beg: LispObject, end: LispObject, no_line_break: bool) -> EmacsInt {
+    base64_encode_region_1(beg, end, no_line_break, true, false)
+}
+
+/// Base64url-encode the region between BEG and END.
+/// Return the length of the encoded text.
+/// Optional second argument NO-PAD means do not add padding char =.
+///
+/// This produces the URL variant of base 64 encoding defined in RFC 4648.
+#[lisp_fn(min = "2", intspec = "r")]
+pub fn base64url_encode_region(beg: LispObject, end: LispObject, no_pad: bool) -> EmacsInt {
+    base64_encode_region_1(beg, end, false, no_pad, true);
+}
+
+fn base64_encode_region_1(
+    beg: LispObject,
+    end: LispObject,
+    no_line_break: bool,
+    pad: bool,
+    base64url: bool,
+) -> EmacsInt {
     let (beg, end) = validate_region_rust(beg, end);
     let current_buffer = ThreadState::current_buffer_unchecked();
     let old_pos = current_buffer.pt;

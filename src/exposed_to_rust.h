@@ -81,17 +81,18 @@ struct save_window_data
     Lisp_Object saved_windows;
 
     /* All fields above are traced by the GC.
-       From `frame-cols' down, the fields are ignored by the GC.  */
+       After saved_windows, the fields are ignored by the GC.  */
+
     /* We should be able to do without the following two.  */
     int frame_cols, frame_lines;
-    /* These two should get eventually replaced by their pixel
+    /* These three should get eventually replaced by their pixel
        counterparts.  */
-    int frame_menu_bar_lines, frame_tool_bar_lines;
+    int frame_menu_bar_lines, frame_tab_bar_lines, frame_tool_bar_lines;
     int frame_text_width, frame_text_height;
     /* These are currently unused.  We need them as soon as we convert
        to pixels.  */
-    int frame_menu_bar_height, frame_tool_bar_height;
-  };
+    int frame_menu_bar_height, frame_tab_bar_height, frame_tool_bar_height;
+  } GCALIGNED_STRUCT;
 
 /* This is saved as a Lisp_Vector.  */
 struct saved_window
@@ -100,7 +101,6 @@ struct saved_window
 
   Lisp_Object window, buffer, start, pointm, old_pointm;
   Lisp_Object pixel_left, pixel_top, pixel_height, pixel_width;
-  Lisp_Object pixel_height_before_size_change, pixel_width_before_size_change;
   Lisp_Object left_col, top_line, total_cols, total_lines;
   Lisp_Object normal_cols, normal_lines;
   Lisp_Object hscroll, min_hscroll, hscroll_whole, suspend_auto_hscroll;
@@ -108,10 +108,14 @@ struct saved_window
   Lisp_Object start_at_line_beg;
   Lisp_Object display_table;
   Lisp_Object left_margin_cols, right_margin_cols;
-  Lisp_Object left_fringe_width, right_fringe_width, fringes_outside_margins;
-  Lisp_Object scroll_bar_width, vertical_scroll_bar_type, dedicated;
+  Lisp_Object left_fringe_width, right_fringe_width;
+  Lisp_Object fringes_outside_margins, fringes_persistent;
+  Lisp_Object scroll_bar_width, vertical_scroll_bar_type;
   Lisp_Object scroll_bar_height, horizontal_scroll_bar_type;
+  Lisp_Object scroll_bars_persistent, dedicated;
   Lisp_Object combination_limit, window_parameters;
 };
+
+void wset_display_table (struct window *w, Lisp_Object val);
 
 #endif /* EXPOSED_TO_RUST_H */

@@ -9478,6 +9478,7 @@ not fully specified.)  */)
   return code_convert_region (start, end, coding_system, destination, 1, 0);
 }
 
+#ifdef IGNORE_RUST_PORT
 Lisp_Object
 code_convert_string (Lisp_Object string, Lisp_Object coding_system,
 		     Lisp_Object dst_object, bool encodep, bool nocopy,
@@ -9528,7 +9529,7 @@ code_convert_string (Lisp_Object string, Lisp_Object coding_system,
 	  ? make_fixnum (coding.produced_char)
 	  : coding.dst_object);
 }
-
+#endif /* IGNORE_RUST_PORT */
 
 /* Encode or decode STRING according to CODING_SYSTEM.
    Do not set Vlast_coding_system_used.
@@ -10334,6 +10335,7 @@ decode_file_name (Lisp_Object fname)
 #endif
 }
 
+#ifdef IGNORE_RUST_PORT
 Lisp_Object
 encode_file_name (Lisp_Object fname)
 {
@@ -10360,6 +10362,7 @@ encode_file_name (Lisp_Object fname)
     return fname;
 #endif
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("decode-coding-string", Fdecode_coding_string, Sdecode_coding_string,
        2, 4, 0,

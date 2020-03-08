@@ -131,6 +131,8 @@ University of California, as described above. */
 #include <getopt.h>
 #include <regex.h>
 
+#include "remacs-lib.h"
+
 /* Define CTAGS to make the program "ctags" compatible with the usual one.
  Leave it undefined to make the program "etags", which makes emacs-style
  tag tables and tags typedefs, #defines and struct/union/enum by default. */

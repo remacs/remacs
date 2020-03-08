@@ -484,6 +484,7 @@ usage: (progn BODY...)  */)
 }
 #endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 /* Evaluate BODY sequentially, discarding its value.  */
 
 void
@@ -491,7 +492,9 @@ prog_ignore (Lisp_Object body)
 {
   Fprogn (body);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("prog1", Fprog1, Sprog1, 1, UNEVALLED, 0,
        doc: /* Eval FIRST and BODY sequentially; return value from FIRST.
 The value of FIRST is saved during the evaluation of the remaining args,
@@ -503,7 +506,9 @@ usage: (prog1 FIRST BODY...)  */)
   prog_ignore (XCDR (args));
   return val;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("setq", Fsetq, Ssetq, 0, UNEVALLED, 0,
        doc: /* Set each SYM to the value of its VAL.
 The symbols SYM are variables; they are literal (not evaluated).
@@ -541,6 +546,7 @@ usage: (setq [SYM VAL]...)  */)
 
   return val;
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("quote", Fquote, Squote, 1, UNEVALLED, 0,
        doc: /* Return the argument, without evaluating it.  `(quote x)' yields `x'.
@@ -560,6 +566,7 @@ usage: (quote ARG)  */)
   return XCAR (args);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("function", Ffunction, Sfunction, 1, UNEVALLED, 0,
        doc: /* Like `quote', but preferred for objects which are functions.
 In byte compilation, `function' causes its argument to be handled by
@@ -596,7 +603,7 @@ usage: (function ARG)  */)
     /* Simply quote the argument.  */
     return quoted;
 }
-
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("defvaralias", Fdefvaralias, Sdefvaralias, 2, 3, 0,
        doc: /* Make NEW-ALIAS a variable alias for symbol BASE-VARIABLE.
@@ -674,6 +681,7 @@ The return value is BASE-VARIABLE.  */)
   return base_variable;
 }
 
+#ifdef IGNORE_RUST_PORT
 static union specbinding *
 default_toplevel_binding (Lisp_Object symbol)
 {
@@ -706,6 +714,7 @@ default_toplevel_binding (Lisp_Object symbol)
     }
   return binding;
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("default-toplevel-value", Fdefault_toplevel_value, Sdefault_toplevel_value, 1, 1, 0,
        doc: /* Return SYMBOL's toplevel default value.
@@ -831,6 +840,7 @@ usage: (defvar SYMBOL &optional INITVALUE DOCSTRING)  */)
 }
 #endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("defconst", Fdefconst, Sdefconst, 2, UNEVALLED, 0,
        doc: /* Define SYMBOL as a constant variable.
 This declares that neither programs nor users should ever change the
@@ -868,7 +878,9 @@ usage: (defconst SYMBOL INITVALUE [DOCSTRING])  */)
   Fput (sym, Qrisky_local_variable, Qt); /* FIXME: Why?  */
   return sym;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 /* Make SYMBOL lexically scoped.  */
 DEFUN ("internal-make-var-non-special", Fmake_var_non_special,
        Smake_var_non_special, 1, 1, 0,
@@ -879,8 +891,9 @@ DEFUN ("internal-make-var-non-special", Fmake_var_non_special,
   XSYMBOL (symbol)->u.s.declared_special = false;
   return Qnil;
 }
-
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("let*", FletX, SletX, 1, UNEVALLED, 0,
        doc: /* Bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
@@ -939,7 +952,9 @@ usage: (let* VARLIST BODY...)  */)
   val = Fprogn (XCDR (args));
   return unbind_to (count, val);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("let", Flet, Slet, 1, UNEVALLED, 0,
        doc: /* Bind variables according to VARLIST then eval BODY.
 The value of the last form in BODY is returned.
@@ -1007,7 +1022,9 @@ usage: (let VARLIST BODY...)  */)
   elt = Fprogn (XCDR (args));
   return SAFE_FREE_UNBIND_TO (count, elt);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("while", Fwhile, Swhile, 1, UNEVALLED, 0,
        doc: /* If TEST yields non-nil, eval BODY... and repeat.
 The order of execution is thus TEST, BODY, TEST, BODY and so on
@@ -1030,7 +1047,9 @@ usage: (while TEST BODY...)  */)
 
   return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("macroexpand", Fmacroexpand, Smacroexpand, 1, 2, 0,
        doc: /* Return result of expanding macros at top level of FORM.
 If FORM is not a macro call, it is returned unchanged.
@@ -1098,7 +1117,9 @@ definitions to shadow the loaded ones for use in file byte-compilation.  */)
     }
   return form;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("catch", Fcatch, Scatch, 1, UNEVALLED, 0,
        doc: /* Eval BODY allowing nonlocal exits using `throw'.
 TAG is evalled to get the tag to use; it must not be nil.
@@ -1113,6 +1134,7 @@ usage: (catch TAG BODY...)  */)
   Lisp_Object tag = eval_sub (XCAR (args));
   return internal_catch (tag, Fprogn, XCDR (args));
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Assert that E is true, but do not evaluate E.  Use this instead of
    eassert (E) when E contains variables that might be clobbered by a
@@ -1235,6 +1257,7 @@ usage: (unwind-protect BODYFORM UNWINDFORMS...)  */)
 }
 #endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("condition-case", Fcondition_case, Scondition_case, 2, UNEVALLED, 0,
        doc: /* Regain control when an error is signaled.
 Executes BODYFORM and returns its value if no error happens.
@@ -1271,6 +1294,7 @@ usage: (condition-case VAR BODYFORM &rest HANDLERS)  */)
 
   return internal_lisp_condition_case (var, bodyform, handlers);
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Like Fcondition_case, but the args are separate
    rather than passed in a list.  Used by Fbyte_code.  */
@@ -1569,6 +1593,7 @@ maybe_quit (void)
     process_pending_signals ();
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("signal", Fsignal, Ssignal, 2, 2, 0,
        doc: /* Signal an error.  Args are ERROR-SYMBOL and associated DATA.
 This function does not return.
@@ -1592,6 +1617,7 @@ See also the function `condition-case'.  */
   signal_or_quit (error_symbol, data, false);
   eassume (false);
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Quit, in response to a keyboard quit request.  */
 Lisp_Object
@@ -1922,6 +1948,7 @@ error (const char *m, ...)
   verror (m, ap);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("commandp", Fcommandp, Scommandp, 1, 2, 0,
        doc: /* Non-nil if FUNCTION makes provisions for interactive calling.
 This means it contains a description for how to read arguments to give it.
@@ -1989,7 +2016,9 @@ then strings and vectors are not accepted.  */)
   else
     return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("autoload", Fautoload, Sautoload, 2, 5, 0,
        doc: /* Define FUNCTION to autoload from FILE.
 FUNCTION is a symbol; FILE is a file name string to pass to `load'.
@@ -2023,7 +2052,9 @@ this does nothing and returns nil.  */)
 		    list5 (Qautoload, file, docstring, interactive, type),
 		    Qnil);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 void
 un_autoload (Lisp_Object oldqueue)
 {
@@ -2045,7 +2076,9 @@ un_autoload (Lisp_Object oldqueue)
       queue = XCDR (queue);
     }
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 /* Load an autoloaded function.
    FUNNAME is the symbol which is the function's name.
    FUNDEF is the autoload definition (a list).  */
@@ -2111,8 +2144,9 @@ it defines a macro.  */)
 	return fun;
     }
 }
-
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("eval", Feval, Seval, 1, 2, 0,
        doc: /* Evaluate FORM and return its value.
 If LEXICAL is t, evaluate using lexical scoping.
@@ -2125,6 +2159,7 @@ alist mapping symbols to their value.  */)
 	    CONSP (lexical) || NILP (lexical) ? lexical : list1 (Qt));
   return unbind_to (count, eval_sub (form));
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Grow the specpdl stack by one entry.
    The caller should have already initialized the entry.
@@ -2752,6 +2787,7 @@ call8 (Lisp_Object fn, Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3,
   return CALLN (Ffuncall, fn, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("functionp", Ffunctionp, Sfunctionp, 1, 1, 0,
        doc: /* Return t if OBJECT is a function.  */)
      (Lisp_Object object)
@@ -2760,7 +2796,9 @@ DEFUN ("functionp", Ffunctionp, Sfunctionp, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 bool
 FUNCTIONP (Lisp_Object object)
 {
@@ -2791,7 +2829,9 @@ FUNCTIONP (Lisp_Object object)
   else
     return false;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("funcall", Ffuncall, Sfuncall, 1, MANY, 0,
        doc: /* Call first argument as a function, passing remaining arguments to it.
 Return the value that function returns.
@@ -2862,6 +2902,7 @@ usage: (funcall FUNCTION &rest ARGUMENTS)  */)
   specpdl_ptr--;
   return val;
 }
+#endif /* IGNORE_RUST_PORT */
 
 
 /* Apply a C subroutine SUBR to the NUMARGS evaluated arguments in ARG_VECTOR
@@ -3394,6 +3435,7 @@ specbind (Lisp_Object symbol, Lisp_Object value)
 
 /* Push unwind-protect entries of various types.  */
 
+#ifdef IGNORE_RUST_PORT
 void
 record_unwind_protect (void (*function) (Lisp_Object), Lisp_Object arg)
 {
@@ -3403,6 +3445,7 @@ record_unwind_protect (void (*function) (Lisp_Object), Lisp_Object arg)
   specpdl_ptr->unwind.eval_depth = lisp_eval_depth;
   grow_specpdl ();
 }
+#endif /* IGNORE_RUST_PORT */
 
 void
 record_unwind_protect_array (Lisp_Object *array, ptrdiff_t nelts)
@@ -3413,6 +3456,7 @@ record_unwind_protect_array (Lisp_Object *array, ptrdiff_t nelts)
   grow_specpdl ();
 }
 
+#ifdef IGNORE_RUST_PORT
 void
 record_unwind_protect_ptr (void (*function) (void *), void *arg)
 {
@@ -3421,7 +3465,9 @@ record_unwind_protect_ptr (void (*function) (void *), void *arg)
   specpdl_ptr->unwind_ptr.arg = arg;
   grow_specpdl ();
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 void
 record_unwind_protect_int (void (*function) (int), int arg)
 {
@@ -3430,6 +3476,7 @@ record_unwind_protect_int (void (*function) (int), int arg)
   specpdl_ptr->unwind_int.arg = arg;
   grow_specpdl ();
 }
+#endif /* IGNORE_RUST_PORT */
 
 void
 record_unwind_protect_intmax (void (*function) (intmax_t), intmax_t arg)
@@ -4252,11 +4299,13 @@ alist of active lexical bindings.  */);
   defsubr (&Sif);
   defsubr (&Scond);
   defsubr (&Sprogn);
-#endif /* IGNORE_RUST_PORT */
   defsubr (&Sprog1);
   defsubr (&Ssetq);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Squote);
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sfunction);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sdefault_toplevel_value);
   defsubr (&Sset_default_toplevel_value);
 #ifdef IGNORE_RUST_PORT
@@ -4264,13 +4313,17 @@ alist of active lexical bindings.  */);
 #endif /* IGNORE_RUST_PORT */
   defsubr (&Sdefvaralias);
   DEFSYM (Qdefvaralias, "defvaralias");
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sdefconst);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sinternal__define_uninitialized_variable);
+#ifdef IGNORE_RUST_PORT
   defsubr (&Smake_var_non_special);
   defsubr (&Slet);
   defsubr (&SletX);
   defsubr (&Swhile);
   defsubr (&Smacroexpand);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Scatch);
   defsubr (&Sthrow);
 #ifdef IGNORE_RUST_PORT
@@ -4278,8 +4331,10 @@ alist of active lexical bindings.  */);
   defsubr (&Scondition_case);
   defsubr (&Ssignal);
   defsubr (&Scommandp);
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sautoload);
   defsubr (&Sautoload_do_load);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Seval);
 #endif /* IGNORE_RUST_PORT */
   defsubr (&Sapply);

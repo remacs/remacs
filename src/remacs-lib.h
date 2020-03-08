@@ -4,6 +4,8 @@
 #ifndef _REMACS_LIB_H
 #define _REMACS_LIB_H
 
+#include "window.h"
+
 // This function is a rust implementation of mkostemp.
 // It should match the API of that function, and make
 // the same guarantees
@@ -11,5 +13,7 @@ int rust_make_temp(char *template, int flags);
 
 int rust_count_trailing_zero_bits(size_t val);
 int rust_count_one_bits(size_t val);
+
+void set_window_update_flags (struct window *w, bool on_p);
 
 #endif

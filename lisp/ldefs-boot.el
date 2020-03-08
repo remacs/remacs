@@ -1189,10 +1189,10 @@ Variables which are calculated:
   The following commands are available (an asterisk indicates it may
 take a numeric prefix argument):
 
-    *  	\\<array-mode-map>\\[array-forward-column]	  Move forward one column.
-    *  	\\[array-backward-column]	  Move backward one column.
-    *  	\\[array-next-row]	  Move down one row.
-    *  	\\[array-previous-row]	  Move up one row.
+    *   \\<array-mode-map>\\[array-forward-column]	  Move forward one column.
+    *   \\[array-backward-column]	  Move backward one column.
+    *   \\[array-next-row]	  Move down one row.
+    *   \\[array-previous-row]	  Move up one row.
 
     *   \\[array-copy-forward]	  Copy the current field into the column to the right.
     *   \\[array-copy-backward]	  Copy the current field into the column to the left.
@@ -1207,11 +1207,11 @@ take a numeric prefix argument):
         \\[array-fill-rectangle]   Copy the field at mark into every cell with row and column
                   between that of point and mark.
 
-	\\[array-what-position]	  Display the current array row and column.
-	\\[array-goto-cell]	  Go to a particular array cell.
+        \\[array-what-position]	  Display the current array row and column.
+        \\[array-goto-cell]	  Go to a particular array cell.
 
-	\\[array-make-template]	  Make a template for a new array.
-	\\[array-reconfigure-rows]	  Reconfigure the array.
+        \\[array-make-template]	  Make a template for a new array.
+        \\[array-reconfigure-rows]	  Reconfigure the array.
         \\[array-expand-rows]   Expand the array (remove row numbers and
                   newlines inside rows)
 
@@ -1254,72 +1254,72 @@ Drawing with the mouse:
 
  mouse-2
  shift mouse-2	Pops up a menu where you can select what to draw with
-		mouse-1, and where you can do some settings (described
-		below).
+                mouse-1, and where you can do some settings (described
+                below).
 
  mouse-1
  shift mouse-1	Draws lines, rectangles or poly-lines, erases, cuts, copies
-		or pastes:
+                or pastes:
 
-		Operation	Not shifted		  Shifted
-		--------------------------------------------------------------
+                Operation	Not shifted		  Shifted
+                --------------------------------------------------------------
                 Pen             fill-char at point        line from last point
                                                           to new point
-		--------------------------------------------------------------
-		Line		Line in any direction	  Straight line
-		--------------------------------------------------------------
-		Rectangle	Rectangle		  Square
-		--------------------------------------------------------------
-		Poly-line	Poly-line in any dir	  Straight poly-lines
-		--------------------------------------------------------------
-		Ellipses	Ellipses		  Circles
-		--------------------------------------------------------------
-		Text		Text (see thru)		  Text (overwrite)
-		--------------------------------------------------------------
-		Spray-can	Spray-can		  Set size for spray
-		--------------------------------------------------------------
-		Erase		Erase character		  Erase rectangle
-		--------------------------------------------------------------
-		Vaporize	Erase single line	  Erase connected
-							  lines
-		--------------------------------------------------------------
-		Cut		Cut rectangle		  Cut square
-		--------------------------------------------------------------
-		Copy		Copy rectangle		  Copy square
-		--------------------------------------------------------------
-		Paste		Paste			  Paste
-		--------------------------------------------------------------
-		Flood-fill	Flood-fill		  Flood-fill
-		--------------------------------------------------------------
+                --------------------------------------------------------------
+                Line		Line in any direction	  Straight line
+                --------------------------------------------------------------
+                Rectangle	Rectangle		  Square
+                --------------------------------------------------------------
+                Poly-line	Poly-line in any dir	  Straight poly-lines
+                --------------------------------------------------------------
+                Ellipses	Ellipses		  Circles
+                --------------------------------------------------------------
+                Text		Text (see thru)		  Text (overwrite)
+                --------------------------------------------------------------
+                Spray-can	Spray-can		  Set size for spray
+                --------------------------------------------------------------
+                Erase		Erase character		  Erase rectangle
+                --------------------------------------------------------------
+                Vaporize	Erase single line	  Erase connected
+                                                          lines
+                --------------------------------------------------------------
+                Cut		Cut rectangle		  Cut square
+                --------------------------------------------------------------
+                Copy		Copy rectangle		  Copy square
+                --------------------------------------------------------------
+                Paste		Paste			  Paste
+                --------------------------------------------------------------
+                Flood-fill	Flood-fill		  Flood-fill
+                --------------------------------------------------------------
 
-		* Straight lines can only go horizontally, vertically
-		  or diagonally.
+                * Straight lines can only go horizontally, vertically
+                  or diagonally.
 
-		* Poly-lines are drawn while holding mouse-1 down.  When you
-		  release the button, the point is set.  If you want a segment
-		  to be straight, hold down shift before pressing the
-		  mouse-1 button.  Click mouse-2 or mouse-3 to stop drawing
-		  poly-lines.
+                * Poly-lines are drawn while holding mouse-1 down.  When you
+                  release the button, the point is set.  If you want a segment
+                  to be straight, hold down shift before pressing the
+                  mouse-1 button.  Click mouse-2 or mouse-3 to stop drawing
+                  poly-lines.
 
-		* See thru for text means that text already in the buffer
-		  will be visible through blanks in the text rendered, while
-		  overwrite means the opposite.
+                * See thru for text means that text already in the buffer
+                  will be visible through blanks in the text rendered, while
+                  overwrite means the opposite.
 
-		* Vaporizing connected lines only vaporizes lines whose
-		  _endpoints_ are connected.  See also the variable
-		  `artist-vaporize-fuzziness'.
+                * Vaporizing connected lines only vaporizes lines whose
+                  _endpoints_ are connected.  See also the variable
+                  `artist-vaporize-fuzziness'.
 
-		* Cut copies, then clears the rectangle/square.
+                * Cut copies, then clears the rectangle/square.
 
-		* When drawing lines or poly-lines, you can set arrows.
-		  See below under \"Arrows\" for more info.
+                * When drawing lines or poly-lines, you can set arrows.
+                  See below under \"Arrows\" for more info.
 
-		* The mode line shows the currently selected drawing operation.
-		  In addition, if it has an asterisk (*) at the end, you
-		  are currently drawing something.
+                * The mode line shows the currently selected drawing operation.
+                  In addition, if it has an asterisk (*) at the end, you
+                  are currently drawing something.
 
-		* Be patient when flood-filling -- large areas take quite
-		  some time to fill.
+                * Be patient when flood-filling -- large areas take quite
+                  some time to fill.
 
 
  mouse-3	Erases character under pointer
@@ -1337,7 +1337,7 @@ Settings
  Rubber-banding	Toggles rubber-banding
 
  Trimming	Toggles trimming of line-endings (that is: when the shape
-		is drawn, extraneous white-space at end of lines is removed)
+                is drawn, extraneous white-space at end of lines is removed)
 
  Borders        Toggles the drawing of line borders around filled shapes
 
@@ -1345,11 +1345,11 @@ Settings
 Drawing with keys
 
  \\[artist-key-set-point]		Does one of the following:
-		For lines/rectangles/squares: sets the first/second endpoint
-		For poly-lines: sets a point (use C-u \\[artist-key-set-point] to set last point)
-		When erase characters: toggles erasing
-		When cutting/copying: Sets first/last endpoint of rect/square
-		When pasting: Pastes
+                For lines/rectangles/squares: sets the first/second endpoint
+                For poly-lines: sets a point (use C-u \\[artist-key-set-point] to set last point)
+                When erase characters: toggles erasing
+                When cutting/copying: Sets first/last endpoint of rect/square
+                When pasting: Pastes
 
  \\[artist-select-operation]	Selects what to draw
 
@@ -1366,10 +1366,10 @@ Drawing with keys
 Arrows
 
  \\[artist-toggle-first-arrow]		Sets/unsets an arrow at the beginning
-		of the line/poly-line
+                of the line/poly-line
 
  \\[artist-toggle-second-arrow]		Sets/unsets an arrow at the end
-		of the line/poly-line
+                of the line/poly-line
 
 
 Selecting operation
@@ -2143,18 +2143,18 @@ Details:
 
 There are three possible outcomes for each ray you send into the box:
 
-	Detour: the ray is deflected and emerges somewhere other than
-		where you sent it in.  On the playfield, detours are
-		denoted by matching pairs of numbers -- one where the
-		ray went in, and the other where it came out.
+        Detour: the ray is deflected and emerges somewhere other than
+                where you sent it in.  On the playfield, detours are
+                denoted by matching pairs of numbers -- one where the
+                ray went in, and the other where it came out.
 
-	Reflection: the ray is reflected and emerges in the same place
-		it was sent in.  On the playfield, reflections are
-		denoted by the letter `R'.
+        Reflection: the ray is reflected and emerges in the same place
+                it was sent in.  On the playfield, reflections are
+                denoted by the letter `R'.
 
-	Hit:	the ray strikes a ball directly and is absorbed.  It does
-		not emerge from the box.  On the playfield, hits are
-		denoted by the letter `H'.
+        Hit:	the ray strikes a ball directly and is absorbed.  It does
+                not emerge from the box.  On the playfield, hits are
+                denoted by the letter `H'.
 
 The rules for how balls deflect rays are simple and are best shown by
 example.
@@ -4060,9 +4060,9 @@ Optional arg VECTOR is a compiled CCL code of the CCL program.
 Set NAME the compiled code of CCL-PROGRAM.
 
 CCL-PROGRAM has this form:
-	(BUFFER_MAGNIFICATION
-	 CCL_MAIN_CODE
-	 [ CCL_EOF_CODE ])
+        (BUFFER_MAGNIFICATION
+         CCL_MAIN_CODE
+         [ CCL_EOF_CODE ])
 
 BUFFER_MAGNIFICATION is an integer value specifying the approximate
 output buffer magnification size compared with the bytes of input data
@@ -4087,13 +4087,13 @@ CCL_EOF_CODE := CCL_BLOCK
 CCL_BLOCK := STATEMENT | (STATEMENT [STATEMENT ...])
 
 STATEMENT :=
-	SET | IF | BRANCH | LOOP | REPEAT | BREAK | READ | WRITE | CALL
-	| TRANSLATE | MAP | LOOKUP | END
+        SET | IF | BRANCH | LOOP | REPEAT | BREAK | READ | WRITE | CALL
+        | TRANSLATE | MAP | LOOKUP | END
 
 SET :=	(REG = EXPRESSION)
-	| (REG ASSIGNMENT_OPERATOR EXPRESSION)
-	;; The following form is the same as (r0 = integer).
-	| integer
+        | (REG ASSIGNMENT_OPERATOR EXPRESSION)
+        ;; The following form is the same as (r0 = integer).
+        | integer
 
 EXPRESSION := ARG | (EXPRESSION OPERATOR ARG)
 
@@ -4120,65 +4120,65 @@ LOOP := (loop STATEMENT [STATEMENT ...])
 BREAK := (break)
 
 REPEAT :=
-	;; Jump to the head of the most inner loop.
-	(repeat)
-	;; Same as: ((write [REG | integer | string])
-	;;	     (repeat))
-	| (write-repeat [REG | integer | string])
-	;; Same as: ((write REG [ARRAY])
-	;;	     (read REG)
-	;;	     (repeat))
-	| (write-read-repeat REG [ARRAY])
-	;; Same as: ((write integer)
-	;;	     (read REG)
-	;;	     (repeat))
-	| (write-read-repeat REG integer)
+        ;; Jump to the head of the most inner loop.
+        (repeat)
+        ;; Same as: ((write [REG | integer | string])
+        ;;	     (repeat))
+        | (write-repeat [REG | integer | string])
+        ;; Same as: ((write REG [ARRAY])
+        ;;	     (read REG)
+        ;;	     (repeat))
+        | (write-read-repeat REG [ARRAY])
+        ;; Same as: ((write integer)
+        ;;	     (read REG)
+        ;;	     (repeat))
+        | (write-read-repeat REG integer)
 
 READ := ;; Set REG_0 to a byte read from the input text, set REG_1
-	;; to the next byte read, and so on.
-	(read REG_0 [REG_1 ...])
-	;; Same as: ((read REG)
-	;;	     (if (REG OPERATOR ARG) CCL_BLOCK_0 CCL_BLOCK_1))
-	| (read-if (REG OPERATOR ARG) CCL_BLOCK_0 CCL_BLOCK_1)
-	;; Same as: ((read REG)
-	;;	     (branch REG CCL_BLOCK_0 [CCL_BLOCK_1 ...]))
-	| (read-branch REG CCL_BLOCK_0 [CCL_BLOCK_1 ...])
-	;; Read a character from the input text while parsing
-	;; multibyte representation, set REG_0 to the charset ID of
-	;; the character, set REG_1 to the code point of the
-	;; character.  If the dimension of charset is two, set REG_1
-	;; to ((CODE0 << 7) | CODE1), where CODE0 is the first code
-	;; point and CODE1 is the second code point.
-	| (read-multibyte-character REG_0 REG_1)
+        ;; to the next byte read, and so on.
+        (read REG_0 [REG_1 ...])
+        ;; Same as: ((read REG)
+        ;;	     (if (REG OPERATOR ARG) CCL_BLOCK_0 CCL_BLOCK_1))
+        | (read-if (REG OPERATOR ARG) CCL_BLOCK_0 CCL_BLOCK_1)
+        ;; Same as: ((read REG)
+        ;;	     (branch REG CCL_BLOCK_0 [CCL_BLOCK_1 ...]))
+        | (read-branch REG CCL_BLOCK_0 [CCL_BLOCK_1 ...])
+        ;; Read a character from the input text while parsing
+        ;; multibyte representation, set REG_0 to the charset ID of
+        ;; the character, set REG_1 to the code point of the
+        ;; character.  If the dimension of charset is two, set REG_1
+        ;; to ((CODE0 << 7) | CODE1), where CODE0 is the first code
+        ;; point and CODE1 is the second code point.
+        | (read-multibyte-character REG_0 REG_1)
 
 WRITE :=
-	;; Write REG_0, REG_1, ... to the output buffer.  If REG_N is
-	;; a multibyte character, write the corresponding multibyte
-	;; representation.
-	(write REG_0 [REG_1 ...])
-	;; Same as: ((r7 = EXPRESSION)
-	;;	     (write r7))
-	| (write EXPRESSION)
-	;; Write the value of `integer' to the output buffer.  If it
-	;; is a multibyte character, write the corresponding multibyte
-	;; representation.
-	| (write integer)
-	;; Write the byte sequence of `string' as is to the output
-	;; buffer.
-	| (write string)
-	;; Same as: (write string)
-	| string
-	;; Provided that the value of REG is N, write Nth element of
-	;; ARRAY to the output buffer.  If it is a multibyte
-	;; character, write the corresponding multibyte
-	;; representation.
-	| (write REG ARRAY)
-	;; Write a multibyte representation of a character whose
-	;; charset ID is REG_0 and code point is REG_1.  If the
-	;; dimension of the charset is two, REG_1 should be ((CODE0 <<
-	;; 7) | CODE1), where CODE0 is the first code point and CODE1
-	;; is the second code point of the character.
-	| (write-multibyte-character REG_0 REG_1)
+        ;; Write REG_0, REG_1, ... to the output buffer.  If REG_N is
+        ;; a multibyte character, write the corresponding multibyte
+        ;; representation.
+        (write REG_0 [REG_1 ...])
+        ;; Same as: ((r7 = EXPRESSION)
+        ;;	     (write r7))
+        | (write EXPRESSION)
+        ;; Write the value of `integer' to the output buffer.  If it
+        ;; is a multibyte character, write the corresponding multibyte
+        ;; representation.
+        | (write integer)
+        ;; Write the byte sequence of `string' as is to the output
+        ;; buffer.
+        | (write string)
+        ;; Same as: (write string)
+        | string
+        ;; Provided that the value of REG is N, write Nth element of
+        ;; ARRAY to the output buffer.  If it is a multibyte
+        ;; character, write the corresponding multibyte
+        ;; representation.
+        | (write REG ARRAY)
+        ;; Write a multibyte representation of a character whose
+        ;; charset ID is REG_0 and code point is REG_1.  If the
+        ;; dimension of the charset is two, REG_1 should be ((CODE0 <<
+        ;; 7) | CODE1), where CODE0 is the first code point and CODE1
+        ;; is the second code point of the character.
+        | (write-multibyte-character REG_0 REG_1)
 
 ;; Call CCL program whose name is ccl-program-name.
 CALL := (call ccl-program-name)
@@ -4193,108 +4193,108 @@ REG := r0 | r1 | r2 | r3 | r4 | r5 | r6 | r7
 ARG := REG | integer
 
 OPERATOR :=
-	;; Normal arithmetic operators (same meaning as C code).
-	+ | - | * | / | %
+        ;; Normal arithmetic operators (same meaning as C code).
+        + | - | * | / | %
 
-	;; Bitwise operators (same meaning as C code)
-	| & | `|' | ^
+        ;; Bitwise operators (same meaning as C code)
+        | & | `|' | ^
 
-	;; Shifting operators (same meaning as C code)
-	| << | >>
+        ;; Shifting operators (same meaning as C code)
+        | << | >>
 
-	;; (REG = ARG_0 <8 ARG_1) means:
-	;;	(REG = ((ARG_0 << 8) | ARG_1))
-	| <8
+        ;; (REG = ARG_0 <8 ARG_1) means:
+        ;;	(REG = ((ARG_0 << 8) | ARG_1))
+        | <8
 
-	;; (REG = ARG_0 >8 ARG_1) means:
-	;;	((REG = (ARG_0 >> 8))
-	;;	 (r7 = (ARG_0 & 255)))
-	| >8
+        ;; (REG = ARG_0 >8 ARG_1) means:
+        ;;	((REG = (ARG_0 >> 8))
+        ;;	 (r7 = (ARG_0 & 255)))
+        | >8
 
-	;; (REG = ARG_0 // ARG_1) means:
-	;;	((REG = (ARG_0 / ARG_1))
-	;;	 (r7 = (ARG_0 % ARG_1)))
-	| //
+        ;; (REG = ARG_0 // ARG_1) means:
+        ;;	((REG = (ARG_0 / ARG_1))
+        ;;	 (r7 = (ARG_0 % ARG_1)))
+        | //
 
-	;; Normal comparing operators (same meaning as C code)
-	| < | > | == | <= | >= | !=
+        ;; Normal comparing operators (same meaning as C code)
+        | < | > | == | <= | >= | !=
 
-	;; If ARG_0 and ARG_1 are higher and lower byte of Shift-JIS
-	;; code, and CHAR is the corresponding JISX0208 character,
-	;; (REG = ARG_0 de-sjis ARG_1) means:
-	;;	((REG = CODE0)
-	;;	 (r7 = CODE1))
-	;; where CODE0 is the first code point of CHAR, CODE1 is the
-	;; second code point of CHAR.
-	| de-sjis
+        ;; If ARG_0 and ARG_1 are higher and lower byte of Shift-JIS
+        ;; code, and CHAR is the corresponding JISX0208 character,
+        ;; (REG = ARG_0 de-sjis ARG_1) means:
+        ;;	((REG = CODE0)
+        ;;	 (r7 = CODE1))
+        ;; where CODE0 is the first code point of CHAR, CODE1 is the
+        ;; second code point of CHAR.
+        | de-sjis
 
-	;; If ARG_0 and ARG_1 are the first and second code point of
-	;; JISX0208 character CHAR, and SJIS is the corresponding
-	;; Shift-JIS code,
-	;; (REG = ARG_0 en-sjis ARG_1) means:
-	;;	((REG = HIGH)
-	;;	 (r7 = LOW))
-	;; where HIGH is the higher byte of SJIS, LOW is the lower
-	;; byte of SJIS.
-	| en-sjis
+        ;; If ARG_0 and ARG_1 are the first and second code point of
+        ;; JISX0208 character CHAR, and SJIS is the corresponding
+        ;; Shift-JIS code,
+        ;; (REG = ARG_0 en-sjis ARG_1) means:
+        ;;	((REG = HIGH)
+        ;;	 (r7 = LOW))
+        ;; where HIGH is the higher byte of SJIS, LOW is the lower
+        ;; byte of SJIS.
+        | en-sjis
 
 ASSIGNMENT_OPERATOR :=
-	;; Same meaning as C code
-	+= | -= | *= | /= | %= | &= | `|=' | ^= | <<= | >>=
+        ;; Same meaning as C code
+        += | -= | *= | /= | %= | &= | `|=' | ^= | <<= | >>=
 
-	;; (REG <8= ARG) is the same as:
-	;;	((REG <<= 8)
-	;;	 (REG |= ARG))
-	| <8=
+        ;; (REG <8= ARG) is the same as:
+        ;;	((REG <<= 8)
+        ;;	 (REG |= ARG))
+        | <8=
 
-	;; (REG >8= ARG) is the same as:
-	;;	((r7 = (REG & 255))
-	;;	 (REG >>= 8))
+        ;; (REG >8= ARG) is the same as:
+        ;;	((r7 = (REG & 255))
+        ;;	 (REG >>= 8))
 
-	;; (REG //= ARG) is the same as:
-	;;	((r7 = (REG % ARG))
-	;;	 (REG /= ARG))
-	| //=
+        ;; (REG //= ARG) is the same as:
+        ;;	((r7 = (REG % ARG))
+        ;;	 (REG /= ARG))
+        | //=
 
 ARRAY := `[' integer ... `]'
 
 
 TRANSLATE :=
-	;; Decode character SRC, translate it by translate table
-	;; TABLE, and encode it back to DST.  TABLE is specified
-	;; by its id number in REG_0, SRC is specified by its
-	;; charset id number and codepoint in REG_1 and REG_2
-	;; respectively.
-	;; On encoding, the charset of highest priority is selected.
-	;; After the execution, DST is specified by its charset
-	;; id number and codepoint in REG_1 and REG_2 respectively.
-	(translate-character REG_0 REG_1 REG_2)
+        ;; Decode character SRC, translate it by translate table
+        ;; TABLE, and encode it back to DST.  TABLE is specified
+        ;; by its id number in REG_0, SRC is specified by its
+        ;; charset id number and codepoint in REG_1 and REG_2
+        ;; respectively.
+        ;; On encoding, the charset of highest priority is selected.
+        ;; After the execution, DST is specified by its charset
+        ;; id number and codepoint in REG_1 and REG_2 respectively.
+        (translate-character REG_0 REG_1 REG_2)
 
-	;; Same as above except for SYMBOL specifying the name of
-	;; the translate table defined by `define-translation-table'.
-	| (translate-character SYMBOL REG_1 REG_2)
+        ;; Same as above except for SYMBOL specifying the name of
+        ;; the translate table defined by `define-translation-table'.
+        | (translate-character SYMBOL REG_1 REG_2)
 
 LOOKUP :=
-	;; Look up character SRC in hash table TABLE.  TABLE is
-	;; specified by its name in SYMBOL, and SRC is specified by
-	;; its charset id number and codepoint in REG_1 and REG_2
-	;; respectively.
-	;; If its associated value is an integer, set REG_1 to that
-	;; value, and set r7 to 1.  Otherwise, set r7 to 0.
-	(lookup-character SYMBOL REG_1 REG_2)
+        ;; Look up character SRC in hash table TABLE.  TABLE is
+        ;; specified by its name in SYMBOL, and SRC is specified by
+        ;; its charset id number and codepoint in REG_1 and REG_2
+        ;; respectively.
+        ;; If its associated value is an integer, set REG_1 to that
+        ;; value, and set r7 to 1.  Otherwise, set r7 to 0.
+        (lookup-character SYMBOL REG_1 REG_2)
 
-	;; Look up integer value N in hash table TABLE.  TABLE is
-	;; specified by its name in SYMBOL and N is specified in
-	;; REG.
-	;; If its associated value is a character, set REG to that
-	;; value, and set r7 to 1.  Otherwise, set r7 to 0.
-	| (lookup-integer SYMBOL REG(integer))
+        ;; Look up integer value N in hash table TABLE.  TABLE is
+        ;; specified by its name in SYMBOL and N is specified in
+        ;; REG.
+        ;; If its associated value is a character, set REG to that
+        ;; value, and set r7 to 1.  Otherwise, set r7 to 0.
+        | (lookup-integer SYMBOL REG(integer))
 
 MAP :=
-	;; The following statements are for internal use only.
-	(iterate-multiple-map REG REG MAP-IDs)
-	| (map-multiple REG REG (MAP-SET))
-	| (map-single REG REG MAP-ID)
+        ;; The following statements are for internal use only.
+        (iterate-multiple-map REG REG MAP-IDs)
+        | (map-multiple REG REG (MAP-SET))
+        | (map-single REG REG MAP-ID)
 
 MAP-IDs := MAP-ID ...
 MAP-SET := MAP-IDs | (MAP-IDs) MAP-SET
@@ -5307,13 +5307,13 @@ You might also use mode hooks to specify it in certain modes, like this:
 
     (add-hook \\='c-mode-hook
        (lambda ()
-	 (unless (or (file-exists-p \"makefile\")
-		     (file-exists-p \"Makefile\"))
-	   (set (make-local-variable \\='compile-command)
-		(concat \"make -k \"
-			(if buffer-file-name
-			  (shell-quote-argument
-			    (file-name-sans-extension buffer-file-name))))))))
+         (unless (or (file-exists-p \"makefile\")
+                     (file-exists-p \"Makefile\"))
+           (set (make-local-variable \\='compile-command)
+                (concat \"make -k \"
+                        (if buffer-file-name
+                          (shell-quote-argument
+                            (file-name-sans-extension buffer-file-name))))))))
 
 It's often useful to leave a space at the end of the value.")
 
@@ -5620,11 +5620,11 @@ Comments start with `#' and \"assignments\" are with `='.
 For details see `conf-mode'.
 
 # Conf mode font-locks this correctly with \\[conf-desktop-mode]
-	[Desktop Entry]
-	Name=GNU Image Manipulation Program
-	Name[oc]=Editor d'imatge GIMP
-	Exec=gimp-2.8 %U
-	Terminal=false
+        [Desktop Entry]
+        Name=GNU Image Manipulation Program
+        Name[oc]=Editor d'imatge GIMP
+        Exec=gimp-2.8 %U
+        Terminal=false
 
 \(fn)" t nil)
 
@@ -5772,7 +5772,7 @@ see documentation on `cperl-electric-linefeed'.
 
 Use \\[cperl-invert-if-unless] to change a construction of the form
 
-	    if (A) { B }
+            if (A) { B }
 
 into
 
@@ -6678,13 +6678,13 @@ Variables controlling indentation style and extra features:
  dcl-calc-command-indent-function
     Can be set to a function that customizes indentation for command lines.
     Two such functions are included in the package:
-	dcl-calc-command-indent-multiple
-	dcl-calc-command-indent-hang
+        dcl-calc-command-indent-multiple
+        dcl-calc-command-indent-hang
 
  dcl-calc-cont-indent-function
     Can be set to a function that customizes indentation for continued lines.
     One such function is included in the package:
-	dcl-calc-cont-indent-relative    (set by default)
+        dcl-calc-cont-indent-relative    (set by default)
 
  dcl-tab-always-indent
     If t, pressing TAB always indents the current line.
@@ -6888,7 +6888,7 @@ See the `delimit-columns-str-before',
 `delimit-columns-before', `delimit-columns-after',
 `delimit-columns-separator', `delimit-columns-format' and
 `delimit-columns-extra' variables for customization of the
-look. 
+look.
 
 \(fn START END)" t nil)
 
@@ -8156,26 +8156,26 @@ BODY contains code to execute each time the mode is enabled or disabled.
   the minor mode is global):
 
 :group GROUP	Custom group name to use in all generated `defcustom' forms.
-		Defaults to MODE without the possible trailing \"-mode\".
-		Don't use this default group name unless you have written a
-		`defgroup' to define that group properly.
+                Defaults to MODE without the possible trailing \"-mode\".
+                Don't use this default group name unless you have written a
+                `defgroup' to define that group properly.
 :global GLOBAL	If non-nil specifies that the minor mode is not meant to be
-		buffer-local, so don't make the variable MODE buffer-local.
-		By default, the mode is buffer-local.
+                buffer-local, so don't make the variable MODE buffer-local.
+                By default, the mode is buffer-local.
 :init-value VAL	Same as the INIT-VALUE argument.
-		Not used if you also specify :variable.
+                Not used if you also specify :variable.
 :lighter SPEC	Same as the LIGHTER argument.
 :keymap MAP	Same as the KEYMAP argument.
 :require SYM	Same as in `defcustom'.
 :variable PLACE	The location to use instead of the variable MODE to store
-		the state of the mode.	This can be simply a different
-		named variable, or a generalized variable.
-		PLACE can also be of the form (GET . SET), where GET is
-		an expression that returns the current state, and SET is
-		a function that takes one argument, the new state, and
-		sets it.  If you specify a :variable, this function does
-		not define a MODE variable (nor any of the terms used
-		in :variable).
+                the state of the mode.	This can be simply a different
+                named variable, or a generalized variable.
+                PLACE can also be of the form (GET . SET), where GET is
+                an expression that returns the current state, and SET is
+                a function that takes one argument, the new state, and
+                sets it.  If you specify a :variable, this function does
+                not define a MODE variable (nor any of the terms used
+                in :variable).
 
 :after-hook     A single lisp form which is evaluated after the mode hooks
                 have been run.  It should not be quoted.
@@ -8581,16 +8581,16 @@ The EPS file name has the following form:
    <PREFIX><PRODUCTION>.eps
 
 <PREFIX>     is given by variable `ebnf-eps-prefix'.
-	     The default value is \"ebnf--\".
+             The default value is \"ebnf--\".
 
 <PRODUCTION> is the production name.
-	     Some characters in the production file name are replaced to
-	     produce a valid file name.  For example, the production name
-	     \"A/B + C\" is modified to produce \"A_B_+_C\", and the EPS
-	     file name used in this case will be \"ebnf--A_B_+_C.eps\".
+             Some characters in the production file name are replaced to
+             produce a valid file name.  For example, the production name
+             \"A/B + C\" is modified to produce \"A_B_+_C\", and the EPS
+             file name used in this case will be \"ebnf--A_B_+_C.eps\".
 
 WARNING: This function does *NOT* ask any confirmation to override existing
-	 files." t nil)
+         files." t nil)
 
 (autoload 'ebnf-eps-region "ebnf2ps" "\
 Generate a PostScript syntactic chart image of the region in an EPS file.
@@ -8601,16 +8601,16 @@ The EPS file name has the following form:
    <PREFIX><PRODUCTION>.eps
 
 <PREFIX>     is given by variable `ebnf-eps-prefix'.
-	     The default value is \"ebnf--\".
+             The default value is \"ebnf--\".
 
 <PRODUCTION> is the production name.
-	     Some characters in the production file name are replaced to
-	     produce a valid file name.  For example, the production name
-	     \"A/B + C\" is modified to produce \"A_B_+_C\", and the EPS
-	     file name used in this case will be \"ebnf--A_B_+_C.eps\".
+             Some characters in the production file name are replaced to
+             produce a valid file name.  For example, the production name
+             \"A/B + C\" is modified to produce \"A_B_+_C\", and the EPS
+             file name used in this case will be \"ebnf--A_B_+_C.eps\".
 
 WARNING: This function does *NOT* ask any confirmation to override existing
-	 files.
+         files.
 
 \(fn FROM TO)" t nil)
 
@@ -13586,11 +13586,11 @@ FILTER-FUN is invoked with
 where
 
  CURRENT     A cons (PARAM . VALUE), where PARAM is the one being
-	     filtered and VALUE is its current value.
+             filtered and VALUE is its current value.
  FILTERED    The resulting alist (so far).
  PARAMETERS  The complete alist of parameters being filtered,
  SAVING      Non-nil if filtering before saving state, nil if filtering
-	       before restoring it.
+               before restoring it.
  ARGS        Any additional arguments specified in the ACTION.
 
 FILTER-FUN is allowed to modify items in FILTERED, but no other arguments.
@@ -13662,19 +13662,19 @@ FORCE-DISPLAY can be:
   nil      Frames are restored, if possible, in their original displays.
   delete   Frames in other displays are deleted instead of restored.
   PRED     A function called with two arguments, the parameter alist and
-	     the window state (in that order).  It must return t, nil or
-	     `delete', as above but affecting only the frame that will
-	     be created from that parameter alist.
+             the window state (in that order).  It must return t, nil or
+             `delete', as above but affecting only the frame that will
+             be created from that parameter alist.
 
 FORCE-ONSCREEN can be:
   t        Force onscreen only those frames that are fully offscreen.
   nil      Do not force any frame back onscreen.
   all      Force onscreen any frame fully or partially offscreen.
   PRED     A function called with three arguments,
-	   - the live frame just restored,
-	   - a list (LEFT TOP WIDTH HEIGHT), describing the frame,
-	   - a list (LEFT TOP WIDTH HEIGHT), describing the workarea.
-	   It must return non-nil to force the frame onscreen, nil otherwise.
+           - the live frame just restored,
+           - a list (LEFT TOP WIDTH HEIGHT), describing the frame,
+           - a list (LEFT TOP WIDTH HEIGHT), describing the workarea.
+           It must return non-nil to force the frame onscreen, nil otherwise.
 
 CLEANUP-FRAMES allows \"cleaning up\" the frame list after restoring a frameset:
   t        Delete all frames that were not created or restored upon.
@@ -14612,9 +14612,9 @@ nnml:mail.others:
 Calling (gnus-group-split-fancy nil nil \"mail.others\") returns:
 
 \(| (& (any \"\\\\(bar@femail\\\\.com\\\\|.*@femail\\\\.com\\\\)\"
-	   \"mail.bar\")
+           \"mail.bar\")
       (any \"\\\\(foo@nowhere\\\\.gov\\\\|foo@localhost\\\\|foo-redist@home\\\\)\"
-	   - \"bugs-foo\" - \"rambling-foo\" \"mail.foo\"))
+           - \"bugs-foo\" - \"rambling-foo\" \"mail.foo\"))
    \"mail.others\")
 
 \(fn &optional GROUPS NO-CROSSPOST CATCH-ALL)" nil nil)
@@ -17206,16 +17206,16 @@ buffer you want, it can then be selected.  As you type, most keys have
 their normal keybindings, except for the following: \\<ido-buffer-completion-map>
 
 RET	Select the buffer at the front of the list of matches.
-	If the list is empty, possibly prompt to create new buffer.
+        If the list is empty, possibly prompt to create new buffer.
 
 \\[ido-select-text]	Use the current input string verbatim.
 
 \\[ido-next-match]	Put the first element at the end of the list.
 \\[ido-prev-match]	Put the last element at the start of the list.
 \\[ido-complete]	Complete a common suffix to the current string that matches
-	all buffers.  If there is only one match, select that buffer.
-	If there is no common suffix, show a list of all matching buffers
-	in a separate window.
+        all buffers.  If there is only one match, select that buffer.
+        If there is no common suffix, show a list of all matching buffers
+        in a separate window.
 \\[ido-edit-input]	Edit input string.
 \\[ido-fallback-command]	Fallback to non-ido version of current command.
 \\[ido-toggle-regexp]	Toggle regexp searching.
@@ -17282,16 +17282,16 @@ then be selected.  As you type, most keys have their normal keybindings,
 except for the following: \\<ido-file-completion-map>
 
 RET	Select the file at the front of the list of matches.
-	If the list is empty, possibly prompt to create new file.
+        If the list is empty, possibly prompt to create new file.
 
 \\[ido-select-text]	Use the current input string verbatim.
 
 \\[ido-next-match]	Put the first element at the end of the list.
 \\[ido-prev-match]	Put the last element at the start of the list.
 \\[ido-complete]	Complete a common suffix to the current string that matches
-	all files.  If there is only one match, select that file.
-	If there is no common suffix, show a list of all matching files
-	in a separate window.
+        all files.  If there is only one match, select that file.
+        If there is no common suffix, show a list of all matching files
+        in a separate window.
 \\[ido-magic-delete-char]	Open the specified directory in Dired mode.
 \\[ido-edit-input]	Edit input string (including directory).
 \\[ido-prev-work-directory]	Go to previous directory in work directory history.
@@ -18216,15 +18216,15 @@ topics.  Info has commands to follow the references and show you other nodes.
 
 Selecting other nodes:
 \\[Info-mouse-follow-nearest-node]
-	Follow a node reference you click on.
-	  This works with menu items, cross references, and
-	  the \"next\", \"previous\" and \"up\", depending on where you click.
+        Follow a node reference you click on.
+          This works with menu items, cross references, and
+          the \"next\", \"previous\" and \"up\", depending on where you click.
 \\[Info-follow-nearest-node]	Follow a node reference near point, like \\[Info-mouse-follow-nearest-node].
 \\[Info-next]	Move to the \"next\" node of this node.
 \\[Info-prev]	Move to the \"previous\" node of this node.
 \\[Info-up]	Move \"up\" from this node.
 \\[Info-menu]	Pick menu item specified by name (or abbreviation).
-	  Picking a menu item causes another node to be selected.
+          Picking a menu item causes another node to be selected.
 \\[Info-directory]	Go to the Info directory node.
 \\[Info-top-node]	Go to the Top node of this file.
 \\[Info-final-node]	Go to the final node in this file.
@@ -18240,18 +18240,18 @@ Selecting other nodes:
 
 Moving within a node:
 \\[Info-scroll-up]	Normally, scroll forward a full screen.
-	  Once you scroll far enough in a node that its menu appears on the
-	  screen but after point, the next scroll moves into its first
-	  subnode.  When after all menu items (or if there is no menu),
-	  move up to the parent node.
+          Once you scroll far enough in a node that its menu appears on the
+          screen but after point, the next scroll moves into its first
+          subnode.  When after all menu items (or if there is no menu),
+          move up to the parent node.
 \\[Info-scroll-down]	Normally, scroll backward.  If the beginning of the buffer is
-	  already visible, try to go to the previous menu entry, or up
-	  if there is none.
+          already visible, try to go to the previous menu entry, or up
+          if there is none.
 \\[beginning-of-buffer]	Go to beginning of node.
 
 Advanced commands:
 \\[Info-search]	Search through this Info file for specified regexp,
-	  and select the node in which the next occurrence is found.
+          and select the node in which the next occurrence is found.
 \\[Info-search-case-sensitively]	Search through this Info file for specified regexp case-sensitively.
 \\[isearch-forward], \\[isearch-forward-regexp]	Use Isearch to search through multiple Info nodes.
 \\[Info-index]	Search for a topic in this manual's Index and go to index entry.
@@ -18259,9 +18259,9 @@ Advanced commands:
 \\[Info-virtual-index]	Look for a string and display the index node with results.
 \\[info-apropos]	Look for a string in the indices of all manuals.
 \\[Info-goto-node]	Move to node specified by name.
-	  You may include a filename as well, as (FILENAME)NODENAME.
+          You may include a filename as well, as (FILENAME)NODENAME.
 1 .. 9	Pick first ... ninth item in node's menu.
-	  Every third `*' is highlighted to help pick the right number.
+          Every third `*' is highlighted to help pick the right number.
 \\[Info-copy-current-node-name]	Put name of current Info node in the kill ring.
 \\[clone-buffer]	Select a new cloned Info buffer in another window.
 \\[universal-argument] \\[info]	Move to new Info file with completion.
@@ -20133,11 +20133,11 @@ double-quotes.
 (defvar mail-complete-style 'angles "\
 Specifies how \\[mail-complete] formats the full name when it completes.
 If nil, they contain just the return address like:
-	king@grassland.com
+        king@grassland.com
 If `parens', they look like:
-	king@grassland.com (Elvis Parsley)
+        king@grassland.com (Elvis Parsley)
 If `angles', they look like:
-	Elvis Parsley <king@grassland.com>")
+        Elvis Parsley <king@grassland.com>")
 
 (custom-autoload 'mail-complete-style "mailalias" t)
 
@@ -26298,7 +26298,7 @@ Valid values are:
    t		Print colors.
 
    black-white	Print colors on black/white printer.
-		See also `ps-black-white-faces'.
+                See also `ps-black-white-faces'.
 
 Any other value is treated as t.")
 
@@ -26690,18 +26690,18 @@ ANNOTATION is a symbol indicating the annotation type.  Currently
 the following annotation types are supported.
 
   append -- the value non-nil means that the following rules should
-	be appended to the rules of the current Quail package.
+        be appended to the rules of the current Quail package.
 
   face -- the value is a face to use for displaying TRANSLATIONs in
-	candidate list.
+        candidate list.
 
   advice -- the value is a function to call after one of RULES is
-	selected.  The function is called with one argument, the
-	selected TRANSLATION string, after the TRANSLATION is
-	inserted.
+        selected.  The function is called with one argument, the
+        selected TRANSLATION string, after the TRANSLATION is
+        inserted.
 
   no-decode-map --- the value non-nil means that decoding map is not
-	generated for the following translations.
+        generated for the following translations.
 
 \(fn &rest RULES)" nil t)
 
@@ -27916,7 +27916,7 @@ Instead, these commands are available:
 \\[rmail-delete-forward]	Delete this message, move to next nondeleted.
 \\[rmail-delete-backward]	Delete this message, move to previous nondeleted.
 \\[rmail-undelete-previous-message]	Undelete message.  Tries current message, then earlier messages
-	till a deleted message is found.
+        till a deleted message is found.
 \\[rmail-edit-current-message]	Edit the current message.  \\[rmail-cease-edit] to return to Rmail.
 \\[rmail-expunge]	Expunge deleted messages.
 \\[rmail-expunge-and-save]	Expunge and save the file.
@@ -29557,11 +29557,11 @@ Major mode for editing Wisent grammars.
 Specifies how \"From:\" fields look.
 
 If nil, they contain just the return address like:
-	king@grassland.com
+        king@grassland.com
 If `parens', they look like:
-	king@grassland.com (Elvis Parsley)
+        king@grassland.com (Elvis Parsley)
 If `angles', they look like:
-	Elvis Parsley <king@grassland.com>
+        Elvis Parsley <king@grassland.com>
 
 Otherwise, most addresses look like `angles', but they look like
 `parens' if `angles' would need quoting and `parens' would not.")
@@ -29728,9 +29728,9 @@ Like Text Mode but with these additional commands:
 \\[mail-send-and-exit]  mail-send-and-exit (send the message and exit)
 
 Here are commands that move to a header field (and create it if there isn't):
-	 \\[mail-to]  move to To:	\\[mail-subject]  move to Subj:
-	 \\[mail-bcc]  move to Bcc:	\\[mail-cc]  move to Cc:
-	 \\[mail-fcc]  move to Fcc:	\\[mail-reply-to] move to Reply-To:
+         \\[mail-to]  move to To:	\\[mail-subject]  move to Subj:
+         \\[mail-bcc]  move to Bcc:	\\[mail-cc]  move to Cc:
+         \\[mail-fcc]  move to Fcc:	\\[mail-reply-to] move to Reply-To:
          \\[mail-mail-reply-to]  move to Mail-Reply-To:
          \\[mail-mail-followup-to] move to Mail-Followup-To:
 \\[mail-text]  move to message text.
@@ -30475,19 +30475,19 @@ not needed, a prompt-string or an expression for complex read functions.
 If ELEMENT is a string or a character it gets inserted (see also
 `skeleton-transformation-function').  Other possibilities are:
 
-	\\n	go to next line and indent according to mode, unless
+        \\n	go to next line and indent according to mode, unless
                 this is the first/last element of a skeleton and point
                 is at bol/eol
-	_	interesting point, interregion here
-	-	interesting point, no interregion interaction, overrides
-		interesting point set by _
-	>	indent line (or interregion if > _) according to major mode
-	@	add position to `skeleton-positions'
-	&	do next ELEMENT if previous moved point
-	|	do next ELEMENT if previous didn't move point
-	-NUM	delete NUM preceding characters (see `skeleton-untabify')
-	resume:	skipped, continue here if quit is signaled
-	nil	skipped
+        _	interesting point, interregion here
+        -	interesting point, no interregion interaction, overrides
+                interesting point set by _
+        >	indent line (or interregion if > _) according to major mode
+        @	add position to `skeleton-positions'
+        &	do next ELEMENT if previous moved point
+        |	do next ELEMENT if previous didn't move point
+        -NUM	delete NUM preceding characters (see `skeleton-untabify')
+        resume:	skipped, continue here if quit is signaled
+        nil	skipped
 
 After termination, point will be positioned at the last occurrence of -
 or at the first occurrence of _ or at the end of the inserted text.
@@ -30513,11 +30513,11 @@ endless loop.  Modes can define other symbols by locally setting them
 to any valid skeleton element.  The following local variables are
 available:
 
-	str	first time: read a string according to INTERACTOR
-		then: insert previously read string once more
-	help	help-form during interaction with the user or nil
-	input	initial input (string or cons with index) while reading str
-	v1, v2	local variables for memorizing anything you want
+        str	first time: read a string according to INTERACTOR
+                then: insert previously read string once more
+        help	help-form during interaction with the user or nil
+        input	initial input (string or cons with index) while reading str
+        v1, v2	local variables for memorizing anything you want
 
 \(fn SKELETON &optional REGIONS STR)" nil nil)
 
@@ -30859,22 +30859,22 @@ I don't know who invented this game, but it seems to be rather old and
 its origin seems to be northern Africa.  Here's how to play:
 Initially, the board will look similar to this:
 
-	Le Solitaire
-	============
+        Le Solitaire
+        ============
 
-		o   o   o
+                o   o   o
 
-		o   o   o
+                o   o   o
 
-	o   o   o   o   o   o   o
+        o   o   o   o   o   o   o
 
-	o   o   o   .   o   o   o
+        o   o   o   .   o   o   o
 
-	o   o   o   o   o   o   o
+        o   o   o   o   o   o   o
 
-		o   o   o
+                o   o   o
 
-		o   o   o
+                o   o   o
 
 Let's call the o's stones and the .'s holes.  One stone fits into one
 hole.  As you can see, all holes but one are occupied by stones.  The
@@ -30891,19 +30891,19 @@ which therefore is taken away.  The above thus `evaluates' to:  .  .  o
 
 That's all.  Here's the board after two moves:
 
-		o   o   o
+                o   o   o
 
-		.   o   o
+                .   o   o
 
-	o   o   .   o   o   o   o
+        o   o   .   o   o   o   o
 
-	o   .   o   o   o   o   o
+        o   .   o   o   o   o   o
 
-	o   o   o   o   o   o   o
+        o   o   o   o   o   o   o
 
-		o   o   o
+                o   o   o
 
-		o   o   o
+                o   o   o
 
 Pick your favorite shortcuts:
 
@@ -31258,7 +31258,7 @@ must tell Emacs.  Here's how to do that in your init file:
 
 \(add-hook \\='sql-mode-hook
           (lambda ()
-	    (modify-syntax-entry ?\\\\ \".\" sql-mode-syntax-table)))
+            (modify-syntax-entry ?\\\\ \".\" sql-mode-syntax-table)))
 
 \(fn)" t nil)
 
@@ -32796,16 +32796,16 @@ COL-DELIM-REGEXP and ROW-DELIM-REGEXP.
 requires some practice.  Here is a list of items what it can do.
 
 Parse Cell Items      By using column delimiter regular
-		      expression and raw delimiter regular
-		      expression, it parses the specified text
-		      area and extracts cell items from
-		      non-table text and then forms a table out
-		      of them.
+                      expression and raw delimiter regular
+                      expression, it parses the specified text
+                      area and extracts cell items from
+                      non-table text and then forms a table out
+                      of them.
 
 Capture Text Area     When no delimiters are specified it
-		      creates a single cell table.  The text in
-		      the specified region is placed in that
-		      cell.-*-
+                      creates a single cell table.  The text in
+                      the specified region is placed in that
+                      cell.-*-
 
 Now the entire content is captured in a cell which is itself a table
 like this.
@@ -33287,20 +33287,20 @@ Special commands:
 
 Mode variables:
 tex-run-command
-	Command string used by \\[tex-region] or \\[tex-buffer].
+        Command string used by \\[tex-region] or \\[tex-buffer].
 tex-directory
-	Directory in which to create temporary files for TeX jobs
-	run by \\[tex-region] or \\[tex-buffer].
+        Directory in which to create temporary files for TeX jobs
+        run by \\[tex-region] or \\[tex-buffer].
 tex-dvi-print-command
-	Command string used by \\[tex-print] to print a .dvi file.
+        Command string used by \\[tex-print] to print a .dvi file.
 tex-alt-dvi-print-command
-	Alternative command string used by \\[tex-print] (when given a prefix
-	argument) to print a .dvi file.
+        Alternative command string used by \\[tex-print] (when given a prefix
+        argument) to print a .dvi file.
 tex-dvi-view-command
-	Command string used by \\[tex-view] to preview a .dvi file.
+        Command string used by \\[tex-view] to preview a .dvi file.
 tex-show-queue-command
-	Command string used by \\[tex-show-print-queue] to show the print
-	queue that \\[tex-print] put your job on.
+        Command string used by \\[tex-show-print-queue] to show the print
+        queue that \\[tex-print] put your job on.
 
 Entering Plain-tex mode runs the hook `text-mode-hook', then the hook
 `tex-mode-hook', and finally the hook `plain-tex-mode-hook'.  When the
@@ -33330,20 +33330,20 @@ Special commands:
 
 Mode variables:
 latex-run-command
-	Command string used by \\[tex-region] or \\[tex-buffer].
+        Command string used by \\[tex-region] or \\[tex-buffer].
 tex-directory
-	Directory in which to create temporary files for LaTeX jobs
-	run by \\[tex-region] or \\[tex-buffer].
+        Directory in which to create temporary files for LaTeX jobs
+        run by \\[tex-region] or \\[tex-buffer].
 tex-dvi-print-command
-	Command string used by \\[tex-print] to print a .dvi file.
+        Command string used by \\[tex-print] to print a .dvi file.
 tex-alt-dvi-print-command
-	Alternative command string used by \\[tex-print] (when given a prefix
-	argument) to print a .dvi file.
+        Alternative command string used by \\[tex-print] (when given a prefix
+        argument) to print a .dvi file.
 tex-dvi-view-command
-	Command string used by \\[tex-view] to preview a .dvi file.
+        Command string used by \\[tex-view] to preview a .dvi file.
 tex-show-queue-command
-	Command string used by \\[tex-show-print-queue] to show the print
-	queue that \\[tex-print] put your job on.
+        Command string used by \\[tex-show-print-queue] to show the print
+        queue that \\[tex-print] put your job on.
 
 Entering Latex mode runs the hook `text-mode-hook', then
 `tex-mode-hook', and finally `latex-mode-hook'.  When the special
@@ -33373,20 +33373,20 @@ Special commands:
 
 Mode variables:
 slitex-run-command
-	Command string used by \\[tex-region] or \\[tex-buffer].
+        Command string used by \\[tex-region] or \\[tex-buffer].
 tex-directory
-	Directory in which to create temporary files for SliTeX jobs
-	run by \\[tex-region] or \\[tex-buffer].
+        Directory in which to create temporary files for SliTeX jobs
+        run by \\[tex-region] or \\[tex-buffer].
 tex-dvi-print-command
-	Command string used by \\[tex-print] to print a .dvi file.
+        Command string used by \\[tex-print] to print a .dvi file.
 tex-alt-dvi-print-command
-	Alternative command string used by \\[tex-print] (when given a prefix
-	argument) to print a .dvi file.
+        Alternative command string used by \\[tex-print] (when given a prefix
+        argument) to print a .dvi file.
 tex-dvi-view-command
-	Command string used by \\[tex-view] to preview a .dvi file.
+        Command string used by \\[tex-view] to preview a .dvi file.
 tex-show-queue-command
-	Command string used by \\[tex-show-print-queue] to show the print
-	queue that \\[tex-print] put your job on.
+        Command string used by \\[tex-show-print-queue] to show the print
+        queue that \\[tex-print] put your job on.
 
 Entering SliTeX mode runs the hook `text-mode-hook', then the hook
 `tex-mode-hook', then the hook `latex-mode-hook', and finally the hook
@@ -34722,8 +34722,8 @@ This function can be used with a prototype line, to set up things.  You
 write the first line of each column and then split that line.  E.g.:
 
 First column's text    sSs  Second column's text
-		       \\___/\\
-			/    \\
+                       \\___/\\
+                        /    \\
    5 character Separator      You type  M-5 \\[2C-split]  with the point here.
 
 \(See  \\[describe-mode] .)
@@ -36296,7 +36296,7 @@ Name of the format file in a .bzr directory.")
 (defun vc-cvs-registered (f)
   "Return non-nil if file F is registered with CVS."
   (when (file-readable-p (expand-file-name
-			  "CVS/Entries" (file-name-directory f)))
+                          "CVS/Entries" (file-name-directory f)))
       (load "vc-cvs" nil t)
       (vc-cvs-registered f)))
 
@@ -37453,45 +37453,45 @@ Digits	provide prefix arguments.
 >	move to the end of buffer.
 \\[View-scroll-to-buffer-end]	scroll so that buffer end is at last line of window.
 SPC	scroll forward \"page size\" lines.
-	  With prefix scroll forward prefix lines.
+          With prefix scroll forward prefix lines.
 DEL, S-SPC  scroll backward \"page size\" lines.
-	      With prefix scroll backward prefix lines.
+              With prefix scroll backward prefix lines.
 \\[View-scroll-page-forward-set-page-size]	like  \\[View-scroll-page-forward]  but with prefix sets \"page size\" to prefix.
 \\[View-scroll-page-backward-set-page-size]	like  \\[View-scroll-page-backward]  but with prefix sets \"page size\" to prefix.
 \\[View-scroll-half-page-forward]	scroll forward \"half page size\" lines.  With prefix, sets
-	  \"half page size\" to prefix lines and scrolls forward that much.
+          \"half page size\" to prefix lines and scrolls forward that much.
 \\[View-scroll-half-page-backward]	scroll backward \"half page size\" lines.  With prefix, sets
-	  \"half page size\" to prefix lines and scrolls backward that much.
+          \"half page size\" to prefix lines and scrolls backward that much.
 RET, LFD  scroll forward one line.  With prefix scroll forward prefix line(s).
 y	scroll backward one line.  With prefix scroll backward prefix line(s).
 \\[View-revert-buffer-scroll-page-forward]	revert-buffer if necessary and scroll forward.
-	  Use this to view a changing file.
+          Use this to view a changing file.
 \\[what-line]	prints the current line number.
 \\[View-goto-percent]	goes prefix argument (default 100) percent into buffer.
 \\[View-goto-line]	goes to line given by prefix argument (default first line).
 .	set the mark.
 x	exchanges point and mark.
 \\[View-back-to-mark]	return to mark and pops mark ring.
-	  Mark ring is pushed at start of every successful search and when
-	  jump to line occurs.  The mark is set on jump to buffer start or end.
+          Mark ring is pushed at start of every successful search and when
+          jump to line occurs.  The mark is set on jump to buffer start or end.
 \\[point-to-register]	save current position in character register.
 \\='	go to position saved in character register.
 s	do forward incremental search.
 r	do reverse incremental search.
 \\[View-search-regexp-forward]	searches forward for regular expression, starting after current page.
-	  ! and @ have a special meaning at the beginning of the regexp.
-	  ! means search for a line with no match for regexp.  @ means start
-	  search at beginning (end for backward search) of buffer.
+          ! and @ have a special meaning at the beginning of the regexp.
+          ! means search for a line with no match for regexp.  @ means start
+          search at beginning (end for backward search) of buffer.
 \\	searches backward for regular expression, starting before current page.
 \\[View-search-last-regexp-forward]	searches forward for last regular expression.
 p	searches backward for last regular expression.
 \\[View-quit]	quit View mode, restoring this window and buffer to previous state.
-	  \\[View-quit] is the normal way to leave view mode.
+          \\[View-quit] is the normal way to leave view mode.
 \\[View-exit]	exit View mode but stay in current buffer.  Use this if you started
-	  viewing a buffer (file) and find out you want to edit it.
-	  This command restores the previous read-only status of the buffer.
+          viewing a buffer (file) and find out you want to edit it.
+          This command restores the previous read-only status of the buffer.
 \\[View-exit-and-edit]	exit View mode, and make the current buffer editable
-	  even if it was not editable before entry to View mode.
+          even if it was not editable before entry to View mode.
 \\[View-quit-all]	quit View mode, restoring all windows to previous state.
 \\[View-leave]	quit View mode and maybe switch buffers, but don't kill this buffer.
 \\[View-kill-and-leave]	quit View mode, kill current buffer and go back to other buffer.
@@ -37688,10 +37688,10 @@ LEVEL should be either :debug, :warning, :error, or :emergency
 Default is :warning.
 
 :emergency -- a problem that will seriously impair Emacs operation soon
-	      if you do not attend to it promptly.
+              if you do not attend to it promptly.
 :error     -- data or circumstances that are inherently wrong.
 :warning   -- data or circumstances that are not inherently wrong,
-	      but raise suspicion of a possible problem.
+              but raise suspicion of a possible problem.
 :debug     -- info for debugging only.
 
 BUFFER-NAME, if specified, is the name of the buffer for logging
@@ -37721,7 +37721,7 @@ LEVEL should be either :debug, :warning, :error, or :emergency
 \(but see `warning-minimum-level' and `warning-minimum-log-level').
 
 :emergency -- a problem that will seriously impair Emacs operation soon
-	      if you do not attend to it promptly.
+              if you do not attend to it promptly.
 :error     -- invalid data or circumstances.
 :warning   -- suspicious data or circumstances.
 :debug     -- info for debugging only.

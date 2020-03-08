@@ -2207,6 +2207,7 @@ make_uninit_bool_vector (EMACS_INT nbits)
   return val;
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("make-bool-vector", Fmake_bool_vector, Smake_bool_vector, 2, 2, 0,
        doc: /* Return a new bool-vector of length LENGTH, using INIT for each element.
 LENGTH must be a number.  INIT matters only in whether it is t or nil.  */)
@@ -2218,7 +2219,9 @@ LENGTH must be a number.  INIT matters only in whether it is t or nil.  */)
   val = make_uninit_bool_vector (XFIXNAT (length));
   return bool_vector_fill (val, init);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("bool-vector", Fbool_vector, Sbool_vector, 0, MANY, 0,
        doc: /* Return a new bool-vector with specified arguments as elements.
 Allows any number of arguments, including zero.
@@ -2234,6 +2237,7 @@ usage: (bool-vector &rest OBJECTS)  */)
 
   return vector;
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Make a string from NBYTES bytes at CONTENTS, and compute the number
    of characters from the contents.  This string may be unibyte or
@@ -3240,7 +3244,7 @@ allocate_record (EMACS_INT count)
   return p;
 }
 
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("make-record", Fmake_record, Smake_record, 3, 3, 0,
        doc: /* Create a new record.
 TYPE is its type as returned by `type-of'; it should be either a
@@ -3256,8 +3260,9 @@ each initialized to INIT.  */)
     p->contents[i] = init;
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
+#endif /* IGNORE_RUST_PORT */
 
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("record", Frecord, Srecord, 1, MANY, 0,
        doc: /* Create a new record.
 TYPE is its type as returned by `type-of'; it should be either a
@@ -3270,7 +3275,7 @@ usage: (record TYPE &rest SLOTS) */)
   memcpy (p->contents, args, nargs * sizeof *args);
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
-
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("make-vector", Fmake_vector, Smake_vector, 2, 2, 0,
        doc: /* Return a newly created vector of length LENGTH, with each element being INIT.
@@ -3466,6 +3471,7 @@ make_misc_ptr (void *a)
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
 
+#ifdef IGNORE_RUST_PORT
 /* Return a new overlay with specified START, END and PLIST.  */
 
 Lisp_Object
@@ -3480,7 +3486,9 @@ build_overlay (Lisp_Object start, Lisp_Object end, Lisp_Object plist)
   p->next = NULL;
   return overlay;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
        doc: /* Return a newly allocated marker which does not point at any place.  */)
   (void)
@@ -3495,6 +3503,7 @@ DEFUN ("make-marker", Fmake_marker, Smake_marker, 0, 0, 0,
   p->need_adjustment = 0;
   return make_lisp_ptr (p, Lisp_Vectorlike);
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Return a newly allocated marker which points into BUF
    at character position CHARPOS and byte position BYTEPOS.  */
@@ -7061,7 +7070,7 @@ or memory information can't be obtained, return nil.  */)
 }
 
 /* Debugging aids.  */
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("memory-use-counts", Fmemory_use_counts, Smemory_use_counts, 0, 0, 0,
        doc: /* Return a list of counters that measure how much consing there has been.
 Each of these counters increments for a certain kind of object.
@@ -7084,6 +7093,7 @@ Frames, windows, buffers, and subprocesses count as vectors
 		make_int (intervals_consed),
 		make_int (strings_consed));
 }
+#endif /* IGNORE_RUST_PORT */
 
 static bool
 symbol_uses_obj (Lisp_Object symbol, Lisp_Object obj)

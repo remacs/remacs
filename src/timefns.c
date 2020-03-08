@@ -1032,6 +1032,7 @@ lispint_arith (Lisp_Object a, Lisp_Object b, bool subtract)
   return make_integer_mpz ();
 }
 
+#ifdef IGNORE_RUST_PORT
 /* Given Lisp operands A and B, add their values, and return the
    result as a Lisp timestamp that is in (TICKS . HZ) form if either A
    or B are in that form or are floats, (HI LO US PS) form otherwise.
@@ -1165,7 +1166,9 @@ time_arith (Lisp_Object a, Lisp_Object b, bool subtract)
 	  ? Fcons (ticks, hz)
 	  : ticks_hz_list4 (ticks, hz));
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("time-add", Ftime_add, Stime_add, 2, 2, 0,
        doc: /* Return the sum of two time values A and B, as a time value.
 See `format-time-string' for the various forms of a time value.
@@ -1174,7 +1177,9 @@ For example, nil stands for the current time.  */)
 {
   return time_arith (a, b, false);
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("time-subtract", Ftime_subtract, Stime_subtract, 2, 2, 0,
        doc: /* Return the difference between two time values A and B, as a time value.
 You can use `float-time' to convert the difference into elapsed seconds.
@@ -1184,6 +1189,7 @@ For example, nil stands for the current time.  */)
 {
   return time_arith (a, b, true);
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Return negative, 0, positive if a < b, a == b, a > b respectively.
    Return positive if either a or b is a NaN; this is good enough
@@ -1223,6 +1229,7 @@ time_cmp (Lisp_Object a, Lisp_Object b)
   return mpz_cmp (*za, *zb);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("time-less-p", Ftime_less_p, Stime_less_p, 2, 2, 0,
        doc: /* Return non-nil if time value A is less than time value B.
 See `format-time-string' for the various forms of a time value.
@@ -1231,6 +1238,7 @@ For example, nil stands for the current time.  */)
 {
   return time_cmp (a, b) < 0 ? Qt : Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("time-equal-p", Ftime_equal_p, Stime_equal_p, 2, 2, 0,
        doc: /* Return non-nil if A and B are equal time values.
@@ -1985,9 +1993,11 @@ syms_of_timefns (void)
 
   defsubr (&Scurrent_time);
   defsubr (&Stime_convert);
+#ifdef IGNORE_RUST_PORT
   defsubr (&Stime_add);
   defsubr (&Stime_subtract);
   defsubr (&Stime_less_p);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Stime_equal_p);
   defsubr (&Sformat_time_string);
   defsubr (&Sfloat_time);

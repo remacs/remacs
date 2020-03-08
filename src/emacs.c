@@ -2898,9 +2898,11 @@ syms_of_emacs (void)
 
   defsubr (&Skill_emacs);
 
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sinvocation_name);
   defsubr (&Sinvocation_directory);
   defsubr (&Sdaemonp);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sdaemon_initialized);
 
   DEFVAR_LISP ("command-line-args", Vcommand_line_args,

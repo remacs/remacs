@@ -42,6 +42,8 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #endif
 #include "pdumper.h"
 
+#include "exposed_to_rust.h"
+
 static ptrdiff_t count_windows (struct window *);
 static ptrdiff_t get_leaf_windows (struct window *, struct window **,
 				   ptrdiff_t);

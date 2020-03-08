@@ -92,8 +92,8 @@ Optional argument DATE is the release date, default today."
   "Set Emacs version to VERSION in relevant files under ROOT.
 Root must be the root of an Emacs source tree."
   (interactive (list
-		        (read-directory-name "Emacs root directory: " source-directory)
-		        (read-string "Version number: " emacs-version)))
+               (read-directory-name "Emacs root directory: " source-directory)
+               (read-string "Version number: " emacs-version)))
   (unless (file-exists-p (expand-file-name "src/emacs.c" root))
     (user-error "%s doesn't seem to be the root of an Emacs source tree" root))
   (message "Setting version numbers...")
@@ -101,15 +101,15 @@ Root must be the root of an Emacs source tree."
   ;; `README', but since `set-version-in-file' only replaces the first
   ;; occurrence, it won't be replaced.
   (set-version-in-file root "README" version
-		               (rx (and "version" (1+ space)
-				                (submatch (1+ (in "0-9."))))))
+                      (rx (and "version" (1+ space)
+                               (submatch (1+ (in "0-9."))))))
   (set-version-in-file root "configure.ac" version
-		               (rx (and "AC_INIT" (1+ (not (in ?,)))
+                      (rx (and "AC_INIT" (1+ (not (in ?,)))
                                 ?, (0+ space)
                                 (submatch (1+ (in "0-9."))))))
   (set-version-in-file root "nt/README.W32" version
-		               (rx (and "version" (1+ space)
-				                (submatch (1+ (in "0-9."))))))
+                      (rx (and "version" (1+ space)
+                               (submatch (1+ (in "0-9."))))))
   ;; Major version only.
   (when (string-match "\\([0-9]\\{2,\\}\\)" version)
     (let ((newmajor (match-string 1 version)))

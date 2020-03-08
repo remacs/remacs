@@ -29,7 +29,9 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "frame.h"
 
+#ifdef IGNORE_RUST_PORT
 static int internal_self_insert (int, EMACS_INT);
+#endif /* IGNORE_RUST_PORT */
 
 #ifdef IGNORE_RUST_PORT
 DEFUN ("forward-point", Fforward_point, Sforward_point, 1, 1, 0,

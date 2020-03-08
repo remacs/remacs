@@ -207,18 +207,6 @@ pub fn prog1(args: LispCons) -> LispObject {
     val
 }
 
-/// Eval FORM1, FORM2 and BODY sequentially; return value from FORM2.
-/// The value of FORM2 is saved during the evaluation of the
-/// remaining args, whose values are discarded.
-/// usage: (prog2 FORM1 FORM2 BODY...)
-#[lisp_fn(min = "2", unevalled = "true")]
-pub fn prog2(args: LispCons) -> LispObject {
-    let (form1, tail) = args.into();
-
-    unsafe { eval_sub(form1) };
-    prog1(tail.into())
-}
-
 /// Set each SYM to the value of its VAL.
 /// The symbols SYM are variables; they are literal (not evaluated).
 /// The values VAL are expressions; they are evaluated.
@@ -261,7 +249,6 @@ pub fn setq(args: LispObject) -> LispObject {
 
     val
 }
-def_lisp_sym!(Qsetq, "setq");
 
 /// Like `quote', but preferred for objects which are functions.
 /// In byte compilation, `function' causes its argument to be compiled.
@@ -308,7 +295,6 @@ pub fn function(args: LispCons) -> LispObject {
     // Simply quote the argument.
     quoted
 }
-def_lisp_sym!(Qfunction, "function");
 
 /// Make SYMBOL lexically scoped.
 /// Internal function
@@ -712,8 +698,6 @@ pub fn commandp(function: LispObject, for_call_interactively: bool) -> bool {
     false
 }
 
-def_lisp_sym!(Qcommandp, "commandp");
-
 /// Define FUNCTION to autoload from FILE.
 /// FUNCTION is a symbol; FILE is a file name string to pass to `load'.
 /// Third arg DOCSTRING is documentation for the function.
@@ -753,8 +737,6 @@ pub fn autoload(
         Qnil,
     )
 }
-
-def_lisp_sym!(Qautoload, "autoload");
 
 /// Return t if OBJECT is a function.
 #[lisp_fn(name = "functionp", c_name = "functionp")]
@@ -1438,5 +1420,10 @@ pub fn defvar(args: LispCons) -> LispObject {
 
     sym_obj
 }
+
+def_lisp_sym!(Qautoload, "autoload");
+def_lisp_sym!(Qcommandp, "commandp");
+def_lisp_sym!(Qfunction, "function");
+def_lisp_sym!(Qsetq, "setq");
 
 include!(concat!(env!("OUT_DIR"), "/eval_exports.rs"));

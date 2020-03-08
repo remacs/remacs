@@ -1109,21 +1109,21 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	     (c-forward-type))
 	 ;; The following doesn't work properly (yet, 2018-09-22).
 	 ;; (c-put-font-lock-face id-start id-end
-	 ;; 		       (if is-function
-	 ;; 			   'font-lock-function-name-face
-	 ;; 			 'font-lock-variable-name-face))
+	 ;;		       (if is-function
+	 ;;			   'font-lock-function-name-face
+	 ;;			 'font-lock-variable-name-face))
 	 (when (and c-last-identifier-range
-	 	    (not (get-text-property (car c-last-identifier-range)
-	 				    'face)))
+		    (not (get-text-property (car c-last-identifier-range)
+					    'face)))
 	   ;; We use `c-last-identifier-range' rather than `id-start' and
 	   ;; `id-end', since the latter two can be erroneous.  E.g. in
 	   ;; "~Foo", `id-start' is at the tilde.  This is a bug in
 	   ;; `c-forward-declarator'.
 	   (c-put-font-lock-face (car c-last-identifier-range)
-	 			 (cdr c-last-identifier-range)
-	 			 (if is-function
-	 			     'font-lock-function-name-face
-	 			   'font-lock-variable-name-face))))
+				 (cdr c-last-identifier-range)
+				 (if is-function
+				     'font-lock-function-name-face
+				   'font-lock-variable-name-face))))
        (and template-class
 	    (eq init-char ?=)		; C++ "<class X = Y>"?
 	    (progn
@@ -1772,13 +1772,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			  '(font-lock-comment-face font-lock-comment-delimiter-face
 						   font-lock-string-face)))
 	       (or (and (eobp)
-	  		(eq (c-get-char-property (1- (point)) 'face)
-	  		    'font-lock-warning-face))
-	  	   (not (eq (c-get-char-property (point) 'face) 'font-lock-comment-face))
+			(eq (c-get-char-property (1- (point)) 'face)
+			    'font-lock-warning-face))
+		   (not (eq (c-get-char-property (point) 'face) 'font-lock-comment-face))
 		   ;; (eq (c-get-char-property (point) 'face) 'font-lock-string-face)
-	  	   (and (equal (c-get-char-property (match-end 2) 'syntax-table) '(1))
-	  		(equal (c-get-char-property (match-beginning 1) 'syntax-table)
-	  		       '(1)))))
+		   (and (equal (c-get-char-property (match-end 2) 'syntax-table) '(1))
+			(equal (c-get-char-property (match-beginning 1) 'syntax-table)
+			       '(1)))))
 	    (let ((paren-prop (c-get-char-property (1- (point)) 'syntax-table)))
 	      (if paren-prop
 		  (progn

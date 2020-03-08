@@ -3304,7 +3304,7 @@ static signed char const base64_char_to_value[2][UCHAR_MAX] =
    The octets are divided into 6 bit chunks, which are then encoded into
    base64 characters.  */
 
-
+#ifdef IGNORE_RUST_PORT
 static ptrdiff_t base64_encode_1 (const char *, char *, ptrdiff_t, bool, bool,
 				  bool, bool);
 static ptrdiff_t base64_decode_1 (const char *, char *, ptrdiff_t, bool,
@@ -3315,8 +3315,9 @@ static Lisp_Object base64_encode_region_1 (Lisp_Object, Lisp_Object, bool,
 
 static Lisp_Object base64_encode_string_1 (Lisp_Object, bool,
 					   bool, bool);
+#endif /* IGNORE_RUST_PORT */
 
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("base64-encode-region", Fbase64_encode_region, Sbase64_encode_region,
        2, 3, "r",
        doc: /* Base64-encode the region between BEG and END.
@@ -3333,7 +3334,7 @@ into shorter lines.  */)
 {
   return base64_encode_region_1 (beg, end, NILP (no_line_break), true, false);
 }
-
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("base64url-encode-region", Fbase64url_encode_region, Sbase64url_encode_region,
        2, 3, "r",
@@ -3404,6 +3405,7 @@ base64_encode_region_1 (Lisp_Object beg, Lisp_Object end, bool line_break,
   return make_fixnum (encoded_length);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("base64-encode-string", Fbase64_encode_string, Sbase64_encode_string,
        1, 2, 0,
        doc: /* Base64-encode STRING and return the result.
@@ -3414,6 +3416,7 @@ into shorter lines.  */)
 
   return base64_encode_string_1 (string, NILP (no_line_break), true, false);
 }
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("base64url-encode-string", Fbase64url_encode_string,
        Sbase64url_encode_string, 1, 2, 0,
@@ -3427,6 +3430,7 @@ This produces the URL variant of base 64 encoding defined in RFC 4648.  */)
   return base64_encode_string_1 (string, false, NILP(no_pad), true);
 }
 
+#ifdef IGNORE_RUST_PORT
 static Lisp_Object
 base64_encode_string_1 (Lisp_Object string, bool line_break,
 			bool pad, bool base64url)
@@ -3466,7 +3470,9 @@ base64_encode_string_1 (Lisp_Object string, bool line_break,
 
   return encoded_string;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 static ptrdiff_t
 base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 		 bool line_break, bool pad, bool base64url,
@@ -3568,7 +3574,7 @@ base64_encode_1 (const char *from, char *to, ptrdiff_t length,
 
   return e - to;
 }
-
+#endif /* IGNORE_RUST_PORT */
 
 DEFUN ("base64-decode-region", Fbase64_decode_region, Sbase64_decode_region,
        2, 3, "r",
@@ -3641,6 +3647,7 @@ of the base 64 encoding, as defined in RFC 4648.  */)
   return make_fixnum (inserted_chars);
 }
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("base64-decode-string", Fbase64_decode_string, Sbase64_decode_string,
        1, 2, 0,
        doc: /* Base64-decode STRING and return the result as a string.
@@ -3676,7 +3683,9 @@ the base 64 encoding, as defined in RFC 4648.  */)
 
   return decoded_string;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 /* Base64-decode the data at FROM of LENGTH bytes into TO.  If
    MULTIBYTE, the decoded result should be in multibyte
    form.  Store the number of produced characters in *NCHARS_RETURN.  */
@@ -3811,7 +3820,7 @@ base64_decode_1 (const char *from, char *to, ptrdiff_t length,
       nchars++;
     }
 }
-
+#endif /* IGNORE_RUST_PORT */
 
 
 /***********************************************************************
@@ -5705,8 +5714,10 @@ this variable.  */);
   defsubr (&Swidget_apply);
   defsubr (&Sbase64_encode_region);
   defsubr (&Sbase64_decode_region);
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sbase64_encode_string);
   defsubr (&Sbase64_decode_string);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sbase64url_encode_region);
   defsubr (&Sbase64url_encode_string);
   defsubr (&Smd5);

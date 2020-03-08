@@ -67,12 +67,52 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #define IS_SLASH(c)  ((c) == '/')
 #endif /* not DOS_NT */
 
+/* The types of globals.  These are sorted roughly in decreasing alignment
+   order to avoid allocation gaps, except that symbols and functions
+   are last.  */
+enum global_type
+{
+  INVALID,
+  LISP_OBJECT,
+  EMACS_INTEGER,
+  BOOLEAN,
+  SYMBOL,
+  FUNCTION
+};
+
+/* A single global.  */
+struct global
+{
+  enum global_type type;
+  char *name;
+  int flags;
+  union
+  {
+    int value;
+    char const *svalue;
+  } v;
+};
+
+/* Bit values for FLAGS field from the above.  Applied for DEFUNs only.  */
+enum { DEFUN_noreturn = 1, DEFUN_const = 2, DEFUN_noinline = 4 };
+
+/* All the variable names we saw while scanning C sources in `-g'
+   mode.  */
+static ptrdiff_t num_globals;
+static ptrdiff_t num_globals_allocated;
+static struct global *globals;
+
 static void scan_file (char *filename);
 static void scan_lisp_file (const char *filename, const char *mode);
 static void scan_c_file (char *filename, const char *mode);
 static void scan_c_stream (FILE *infile);
 static void start_globals (void);
 static void write_globals (void);
+
+struct global *
+add_global (enum global_type type, char const *name, int value, char const *svalue);
+
+typedef struct global * (*add_global_fn) (enum global_type, char const *, int, char const *);
 
 /* Implemented in remacs_lib. */
 void scan_rust_file (char *filename, int generate_globals, add_global_fn add_global);
@@ -565,41 +605,6 @@ write_c_args (char *func, char *buf, int minargs, int maxargs)
   putchar (')');
 }
 
-/* The types of globals.  These are sorted roughly in decreasing alignment
-   order to avoid allocation gaps, except that symbols and functions
-   are last.  */
-enum global_type
-{
-  INVALID,
-  LISP_OBJECT,
-  EMACS_INTEGER,
-  BOOLEAN,
-  SYMBOL,
-  FUNCTION
-};
-
-/* A single global.  */
-struct global
-{
-  enum global_type type;
-  char *name;
-  int flags;
-  union
-  {
-    int value;
-    char const *svalue;
-  } v;
-};
-
-/* Bit values for FLAGS field from the above.  Applied for DEFUNs only.  */
-enum { DEFUN_noreturn = 1, DEFUN_const = 2, DEFUN_noinline = 4 };
-
-/* All the variable names we saw while scanning C sources in `-g'
-   mode.  */
-static ptrdiff_t num_globals;
-static ptrdiff_t num_globals_allocated;
-static struct global *globals;
-
 struct global *
 add_global (enum global_type type, char const *name, int value,
 	    char const *svalue)

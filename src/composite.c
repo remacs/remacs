@@ -611,7 +611,7 @@ make_composition_value_copy (Lisp_Object list)
     }
 }
 
-
+#ifdef IGNORE_RUST_PORT
 /* Make text in the region between START and END a composition that
    has COMPONENTS and MODIFICATION-FUNC.
 
@@ -629,6 +629,7 @@ compose_text (ptrdiff_t start, ptrdiff_t end, Lisp_Object components,
   Fput_text_property  (make_fixnum (start), make_fixnum (end),
 		       Qcomposition, prop, string);
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Lisp glyph-string handlers.  */
 

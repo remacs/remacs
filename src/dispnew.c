@@ -95,7 +95,9 @@ static bool scrolling (struct frame *);
 static void set_window_cursor_after_update (struct window *);
 static void adjust_frame_glyphs_for_window_redisplay (struct frame *);
 static void adjust_frame_glyphs_for_frame_redisplay (struct frame *);
+#ifdef IGNORE_RUST_PORT
 static void set_window_update_flags (struct window *w, bool on_p);
+#endif /* IGNORE_RUST_PORT */
 
 /* True means last display completed.  False means it was preempted.  */
 
@@ -5951,7 +5953,7 @@ bitch_at_user (void)
 /***********************************************************************
 			  Sleeping, Waiting
  ***********************************************************************/
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("sleep-for", Fsleep_for, Ssleep_for, 1, 2, 0,
        doc: /* Pause, without updating display, for SECONDS seconds.
 SECONDS may be a floating-point value, meaning that you can wait for a
@@ -5985,7 +5987,7 @@ additional wait period, in milliseconds; this is for backwards compatibility.
 
   return Qnil;
 }
-
+#endif /* IGNORE_RUST_PORT */
 
 /* This is just like wait_reading_process_output, except that
    it does redisplay.
@@ -6060,7 +6062,7 @@ sit_for (Lisp_Object timeout, bool reading, int display_option)
   return detect_input_pending () ? Qnil : Qt;
 }
 
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("redisplay", Fredisplay, Sredisplay, 0, 1, 0,
        doc: /* Perform redisplay.
 Optional arg FORCE, if non-nil, prevents redisplay from being
@@ -6086,7 +6088,7 @@ immediately by pending input.  */)
   redisplay_preserve_echo_area (2);
   return unbind_to (count, Qt);
 }
-
+#endif /* IGNORE_RUST_PORT */
 
 
 /***********************************************************************
@@ -6507,7 +6509,7 @@ syms_of_display (void)
   defsubr (&Sinternal_show_cursor);
   defsubr (&Sinternal_show_cursor_p);
 #endif /* IGNORE_RUST_PORT */
-  
+
 #ifdef GLYPH_DEBUG
   defsubr (&Sdump_redisplay_history);
 #endif

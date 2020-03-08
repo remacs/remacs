@@ -44,7 +44,7 @@ ns_check_file = @ns_appdir@/@ns_check_file@
 
 .PHONY: all
 
-all: ${ns_appdir} ${ns_appbindir}/Emacs ${ns_appbindir}/Emacs.pdmp
+all: ${ns_appdir} ${ns_appbindir}/Remacs ${ns_appbindir}/Remacs.pdmp
 
 ${ns_check_file} ${ns_appdir}: ${srcdir}/${ns_appsrc} ${ns_appsrc}
 	rm -rf ${ns_appdir}
@@ -63,9 +63,9 @@ ${ns_appbindir}/Remacs: ${ns_appdir} ${ns_check_file} ../src/remacs${EXEEXT}
 	${MKDIR_P} ${ns_appbindir}
 	cp -f ../src/remacs${EXEEXT} $@
 
-${ns_appbindir}/Emacs.pdmp: ${ns_appdir} ${ns_check_file} ../src/emacs${EXEEXT}.pdmp
+${ns_appbindir}/Remacs.pdmp: ${ns_appdir} ${ns_check_file} ../src/remacs${EXEEXT}.pdmp
 	${MKDIR_P} ${ns_appbindir}
-	cp -f ../src/emacs${EXEEXT}.pdmp $@
+	cp -f ../src/remacs${EXEEXT}.pdmp $@
 
 .PHONY: FORCE
 
@@ -73,7 +73,7 @@ ${ns_appbindir}/Emacs.pdmp: ${ns_appdir} ${ns_check_file} ../src/emacs${EXEEXT}.
 	${MAKE} -C ../src $(notdir $@)
 
 # create a fake installation pointing back to the source tree
-# to run GUI Emacs in-place
+# to run GUI Remacs in-place
 .PHONY: links
 
 links: ../src/remacs${EXEEXT}
@@ -84,8 +84,8 @@ links: ../src/remacs${EXEEXT}
 	ln -s $(top_srcdir_abs)/lisp ${ns_appdir}/Contents/Resources
 	ln -s $(top_srcdir_abs)/info ${ns_appdir}/Contents/Resources
 	${MKDIR_P} ${ns_appbindir}
-	ln -s $(abs_top_builddir)/src/emacs${EXEEXT} ${ns_appbindir}/Emacs
-	ln -s $(abs_top_builddir)/src/emacs${EXEEXT}.pdmp ${ns_appbindir}/Emacs.pdmp
+	ln -s $(abs_top_builddir)/src/remacs${EXEEXT} ${ns_appbindir}/Remacs
+	ln -s $(abs_top_builddir)/src/remacs${EXEEXT}.pdmp ${ns_appbindir}/Remacs.pdmp
 	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/bin
 	ln -s $(abs_top_builddir)/lib-src ${ns_appbindir}/libexec
 	${MKDIR_P} ${ns_appdir}/Contents/Resources/etc
@@ -101,10 +101,6 @@ clean:
 
 distclean: clean
 	rm -f Makefile
-	rm -f GNUstep/Emacs.base/Resources/Info-gnustep.plist \
-	  GNUstep/Emacs.base/Resources/Emacs.desktop \
-	  Cocoa/Emacs.base/Contents/Info.plist \
-	  Cocoa/Emacs.base/Contents/Resources/English.lproj/InfoPlist.strings
 	rm -f GNUstep/Remacs.base/Resources/Info-gnustep.plist \
 	  GNUstep/Remacs.base/Resources/Remacs.desktop \
 	  Cocoa/Remacs.base/Contents/Info.plist \

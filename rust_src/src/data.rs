@@ -828,8 +828,8 @@ pub fn fset(mut symbol: LispSymbolRef, definition: LispObject) -> LispObject {
 /// If BASE, interpret STRING as a number in that base.  If BASE isn't
 /// present, base 10 is used.  BASE must be between 2 and 16 (inclusive).
 /// If the base used is not 10, STRING is always parsed as an integer.
-#[lisp_fn(min = "1", name = "string-to-number", c_name = "string_to_number")]
-pub fn string_to_number_lisp(mut string: LispStringRef, base: Option<EmacsInt>) -> LispObject {
+#[lisp_fn(min = "1")]
+pub fn string_to_number(mut string: LispStringRef, base: Option<EmacsInt>) -> LispObject {
     let b = match base {
         None => 10,
         Some(n) => {

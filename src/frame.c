@@ -6412,9 +6412,11 @@ making the child frame unresponsive to user actions, the default is to
 iconify the top level frame instead.  */);
   iconify_child_frame = Qiconify_top_level;
 
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sframep);
   defsubr (&Sframe_live_p);
   defsubr (&Swindow_system);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sframe_windows_min_size);
   defsubr (&Smake_terminal_frame);
   defsubr (&Sselect_frame);
@@ -6488,7 +6490,9 @@ iconify the top level frame instead.  */);
   defsubr (&Sframe_position);
 #endif /* IGNORE_RUST_PORT */
   defsubr (&Sset_frame_position);
+#ifdef IGNORE_RUST_PORT
   defsubr (&Sframe_pointer_visible_p);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sframe_window_state_change);
   defsubr (&Sset_frame_window_state_change);
 

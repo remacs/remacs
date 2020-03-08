@@ -106,11 +106,8 @@ endif
 # Whether to run tests from .el files in preference to .elc, we do
 # this by default since it gives nicer stacktraces.
 # If you just want a pass/fail, setting this to no is much faster.
-# export TEST_LOAD_EL ?= \
-#     $(if $(findstring $(MAKECMDGOALS), all check check-maybe),no,yes)
-#
-# Remacs note: keep 'TEST_LOAD_EL ?= yes' instead of the upstream changes or our tests fail
-TEST_LOAD_EL ?= yes
+export TEST_LOAD_EL ?= \
+    $(if $(findstring $(MAKECMDGOALS), all check check-maybe),no,yes)
 
 # Additional settings for ert.
 ert_opts =
@@ -235,10 +232,11 @@ define test_template
   ## dependencies, it is better than nothing.
   ifeq (,$(patsubst %-tests,,$(1))$(findstring -tests/,$(1)))
     ifeq (,$(patsubst rust_src/%,,$(1)))
-    $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1)).rs
+      $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1)).rs
     else
-    $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1))$(if \
-					$(patsubst src/%,,$(patsubst lib-src/%,,$(1))),.el,.c)
+      $(1).log: $(patsubst %-tests,$(srcdir)/../%,$(1))$(if \
+					 $(patsubst src/%,,$(patsubst lib-src/%,,$(1))),.el,.c)
+    endif
     $(notdir $(1).log): $(1).log
   endif
 

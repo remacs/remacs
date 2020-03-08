@@ -128,13 +128,13 @@ localstatedir=@localstatedir@
 srcdir=@srcdir@
 VPATH=@srcdir@
 
-# Path to rust source files, relative to srcdir
-rust_srcdir=$(top_srcdir)/rust_src
-
 # The top-level source directory, also set by configure.
 top_srcdir=@top_srcdir@
 # MinGW CPPFLAGS may use this.
 abs_top_srcdir=@abs_top_srcdir@
+
+# Path to rust source files, relative to srcdir
+rust_srcdir=$(top_srcdir)/rust_src
 
 # ==================== Emacs-specific directories ====================
 
@@ -170,7 +170,7 @@ MKDIR_P = @MKDIR_P@
 
 # ========================== Lists of Files ===========================
 
-# emacsclientw.exe for MinGW, empty otherwise
+# remacsclientw.exe for MinGW, empty otherwise
 CLIENTW = @CLIENTW@
 
 # Things that a user might actually run, which should be installed in bindir.
@@ -233,7 +233,7 @@ LIB_WSOCK32=@LIB_WSOCK32@
 LIBS_MOVE = $(LIBS_MAIL) $(KRB4LIB) $(DESLIB) $(KRB5LIB) $(CRYPTOLIB) \
             $(COM_ERRLIB) $(LIBHESIOD) $(LIBRESOLV) $(LIB_WSOCK32)
 
-## Extra libraries when linking emacsclient
+## Extra libraries when linking remacsclient
 ## (empty or -lcomctl32 for MinGW)
 LIBS_ECLIENT = @LIBS_ECLIENT@
 
@@ -381,6 +381,17 @@ TAGS: etags${EXEEXT} ${tagsfiles}
 ../lib/libgnu.a: $(config_h)
 	$(MAKE) -C ../lib all
 
+cargo_manifest=../rust_src/remacs-lib/Cargo.toml
+$(RUST_ARCHIVE): $(rust_srcdir)/remacs-lib/**
+	RUSTFLAGS="$(RUSTFLAGS)" \
+	$(CARGO_BUILD) $(CARGO_FLAGS) --manifest-path=$(cargo_manifest)
+
+remacs-libclean:
+	$(CARGO_CLEAN) --manifest-path=$(cargo_manifest)
+
+regex.o: $(srcdir)/../src/regex.c $(srcdir)/../src/regex.h $(config_h)
+	$(AM_V_CC)$(CC) -c $(CPP_CFLAGS) $<
+
 etags_deps = ${srcdir}/etags.c $(NTLIB) $(config_h)
 etags_libs = $(NTLIB) $(LOADLIBES)
 
@@ -398,7 +409,7 @@ ebrowse${EXEEXT}: ${srcdir}/ebrowse.c ${srcdir}/../lib/min-max.h $(NTLIB) \
                    $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} -o $@ $< $(NTLIB) $(LOADLIBES)
 
-make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h) $(RUST_ARCHIVE)
+make-docfile${EXEEXT}: ${srcdir}/make-docfile.c $(NTLIB) $(config_h)
 	$(AM_V_CCLD)$(CC) ${ALL_CFLAGS} $< $(NTLIB) $(LOADLIBES) -o $@
 
 make-fingerprint${EXEEXT}: ${srcdir}/make-fingerprint.c $(NTLIB) $(config_h)
@@ -439,7 +450,7 @@ update-game-score${EXEEXT}: ${srcdir}/update-game-score.c $(NTLIB) $(config_h)
 	  -DHAVE_SHARED_GAME_DIR="\"$(gamedir)\"" \
 	  $< $(NTLIB) $(LOADLIBES) -o $@
 
-emacsclient.res: ../nt/emacsclient.rc $(NTINC)/../icons/emacs.ico
+remacsclient.res: ../nt/emacsclient.rc $(NTINC)/../icons/emacs.ico
 	$(AM_V_RC)$(WINDRES) -O coff --include-dir=$(NTINC)/.. -o $@ $<
 
 ## Makefile ends here.

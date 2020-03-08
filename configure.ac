@@ -1,4 +1,4 @@
-dnl  Autoconf script for GNU Emacs
+dnl  Autoconf script for Remacs
 dnl To rebuild the 'configure' script from this, execute the command
 dnl	autoconf
 dnl in the directory containing this script.
@@ -6,24 +6,24 @@ dnl If you changed any AC_DEFINES, also run autoheader.
 dnl
 dnl Copyright (C) 1994-1996, 1999-2020 Free Software Foundation, Inc.
 dnl
-dnl  This file is part of GNU Emacs.
+dnl  This file is part of Remacs.
 dnl
-dnl  GNU Emacs is free software: you can redistribute it and/or modify
+dnl  Remacs is free software: you can redistribute it and/or modify
 dnl  it under the terms of the GNU General Public License as published by
 dnl  the Free Software Foundation, either version 3 of the License, or
 dnl  (at your option) any later version.
 dnl
-dnl  GNU Emacs is distributed in the hope that it will be useful,
+dnl  Remacs is distributed in the hope that it will be useful,
 dnl  but WITHOUT ANY WARRANTY; without even the implied warranty of
 dnl  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 dnl  GNU General Public License for more details.
 dnl
 dnl  You should have received a copy of the GNU General Public License
-dnl  along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
+dnl  along with Remacs.  If not, see <https://www.gnu.org/licenses/>.
 
 AC_PREREQ(2.65)
 dnl Note this is parsed by (at least) make-dist and lisp/cedet/ede/emacs.el.
-AC_INIT(GNU Emacs, 27.0.60, bug-gnu-emacs@gnu.org, , https://www.gnu.org/software/emacs/)
+AC_INIT(Remacs, 27.0.60, , , )
 
 dnl Set emacs_config_options to the options of 'configure', quoted for the shell,
 dnl and then quoted again for a C string.  Separate options with spaces.
@@ -117,7 +117,7 @@ AC_CACHE_CHECK([for GNU Make], [ac_cv_path_MAKE],
 	 eval emacs_tried_$ac_prog=:]])
    fi])
 $ac_path_MAKE_found || {
-AC_MSG_ERROR([[Building Emacs requires GNU Make, at least version 3.81.
+AC_MSG_ERROR([[Building Remacs requires GNU Make, at least version 3.81.
 If you have it installed under another name, configure with 'MAKE=...'.
 For example, run '$0 MAKE=gnu-make'.]])
 }
@@ -253,8 +253,8 @@ AC_SUBST([with_mailutils])
 
 AC_ARG_WITH([pop],
   [AS_HELP_STRING([--with-pop],
-     [Support POP mail retrieval if Emacs movemail is used (not recommended,
-      as Emacs movemail POP is insecure).  This is the default only on
+     [Support POP mail retrieval if Remacs movemail is used (not recommended,
+      as Remacs movemail POP is insecure).  This is the default only on
       native MS-Windows.])],
   [],
   [case $host in
@@ -342,7 +342,7 @@ this option's value should be 'yes' or 'no'.]) ;;
     [with_unexec=auto])
 
 AC_ARG_WITH([dumping],[AS_HELP_STRING([--with-dumping=VALUE],
-    [kind of dumping to use for initial Emacs build
+    [kind of dumping to use for initial Remacs build
 (VALUE one of: pdumper, unexec, none; default pdumper)])],
     [ case "${withval}" in
         pdumper|unexec|none) val=$withval ;;
@@ -397,19 +397,24 @@ AC_ARG_WITH([x-toolkit],[AS_HELP_STRING([--with-x-toolkit=KIT],
  [use an X toolkit (KIT one of: yes or gtk, gtk2, gtk3, no)])],
 [	  case "${withval}" in
 	    y | ye | yes )	val=gtk ;;
+	    n | no )		val=no  ;;
+            # Remacs only supports GTK.
+	    # l | lu | luc | luci | lucid )	val=lucid ;;
+	    # a | at | ath | athe | athen | athena )	val=athena ;;
+	    # m | mo | mot | moti | motif )	val=motif ;;
 	    g | gt | gtk  )	val=gtk ;;
 	    gtk2  )	val=gtk2 ;;
 	    gtk3  )	val=gtk3 ;;
 	    * )
 AC_MSG_ERROR(['--with-x-toolkit=$withval' is invalid;
-this option's value should be 'yes', 'gtk',
-'gtk2' or 'gtk3'.  'yes' and 'gtk' are synonyms.])
+this option's value should be 'yes', 'no', 'gtk', 'gtk2' or 'gtk3'.
+'yes' and 'gtk' are synonyms.])
 	    ;;
 	  esac
 	  with_x_toolkit=$val
 ])
 
-OPTION_DEFAULT_OFF([wide-int], [prefer wide Emacs integers (typically 62-bit); allows buffer and string size up to 2GB on 32-bit hosts, at the cost of 10% to 30% slowdown of Lisp interpreter and larger memory footprint])
+OPTION_DEFAULT_OFF([wide-int], [prefer wide Remacs integers (typically 62-bit); allows buffer and string size up to 2GB on 32-bit hosts, at the cost of 10% to 30% slowdown of Lisp interpreter and larger memory footprint])
 if test "$with_wide_int" = yes; then
   AC_DEFINE([WIDE_EMACS_INT], 1, [Use long long for EMACS_INT if available.])
 fi
@@ -435,8 +440,8 @@ OPTION_DEFAULT_ON([harfbuzz],[don't use HarfBuzz for text shaping])
 OPTION_DEFAULT_ON([libotf],[don't use libotf for OpenType font support])
 OPTION_DEFAULT_ON([m17n-flt],[don't use m17n-flt for text shaping])
 
-OPTION_DEFAULT_ON([toolkit-scroll-bars],[don't use Motif/Xaw3d/GTK toolkit scroll bars])
-OPTION_DEFAULT_ON([xaw3d],[don't use Xaw3d])
+dnl OPTION_DEFAULT_ON([toolkit-scroll-bars],[don't use Motif/Xaw3d/GTK toolkit scroll bars])
+dnl OPTION_DEFAULT_ON([xaw3d],[don't use Xaw3d])
 OPTION_DEFAULT_ON([xim],[at runtime, default X11 XIM to off])
 AC_ARG_WITH([ns],[AS_HELP_STRING([--with-ns],
 [use Nextstep (macOS Cocoa or GNUstep) windowing system.
@@ -455,7 +460,7 @@ fi])
 OPTION_DEFAULT_ON([gsettings],[don't compile with GSettings support])
 OPTION_DEFAULT_ON([selinux],[don't compile with SELinux support])
 OPTION_DEFAULT_ON([gnutls],[don't use -lgnutls for SSL/TLS support])
-OPTION_DEFAULT_ON([zlib],[don't compile with zlib decompression support])
+dnl OPTION_DEFAULT_ON([zlib],[don't compile with zlib decompression support])
 OPTION_DEFAULT_ON([modules],[don't compile with dynamic modules support])
 OPTION_DEFAULT_ON([threads],[don't compile with elisp threading support])
 
@@ -479,9 +484,9 @@ otherwise for the first of 'inotify', 'kqueue' or 'gfile' that is usable.])
  [with_file_notification=$with_features])
 
 OPTION_DEFAULT_OFF([xwidgets],
-  [enable use of some gtk widgets in Emacs buffers (requires gtk3)])
+  [enable use of some gtk widgets in Remacs buffers (requires gtk3)])
 
-## For the times when you want to build Emacs but don't have
+## For the times when you want to build Remacs but don't have
 ## a suitable makeinfo, and can live without the manuals.
 dnl https://lists.gnu.org/r/emacs-devel/2008-04/msg01844.html
 OPTION_DEFAULT_ON([makeinfo],[don't require makeinfo for building manuals])
@@ -527,7 +532,7 @@ AC_ARG_ENABLE(ns-self-contained,
 locallisppathset=no
 AC_ARG_ENABLE(locallisppath,
 [AS_HELP_STRING([--enable-locallisppath=PATH],
-                [directories Emacs should search for lisp files specific
+                [directories Remacs should search for lisp files specific
 		 to this site])],
 if test "${enableval}" = "no"; then
   locallisppath=
@@ -574,6 +579,7 @@ done
 IFS="$ac_save_IFS"
 
 CARGO_CHECKING_FEATURES=""
+
 if test x$ac_enable_checking != x ; then
   AC_DEFINE(ENABLE_CHECKING, 1,
 [Define to 1 if expensive run-time data type and consistency checks are enabled.])
@@ -615,7 +621,7 @@ dnl https://lists.gnu.org/r/emacs-devel/2012-11/msg00393.html
 AC_ARG_ENABLE(profiling,
 [AS_HELP_STRING([--enable-profiling],
 		[build emacs with low-level, gprof profiling support.
-                Mainly useful for debugging Emacs itself.  May not work on
+                Mainly useful for debugging Remacs itself.  May not work on
                 all platforms.  Stops profiler.el working.])],
 [ac_enable_profiling="${enableval}"],[])
 if test x$ac_enable_profiling != x ; then
@@ -644,12 +650,14 @@ AC_ARG_ENABLE([build-details],
   [test "$enableval" = no && BUILD_DETAILS=--no-build-details])
 AC_SUBST([BUILD_DETAILS])
 
+with_toolkit_scroll_bars=yes
+
 dnl This used to use changequote, but, apart from 'changequote is evil'
 dnl per the autoconf manual, we can speed up autoconf somewhat by quoting
 dnl the great gob of text.  Thus it's not processed for possible expansion.
 dnl Just make sure the brackets remain balanced.
 dnl
-dnl Since Emacs can't find matching pairs of quotes, boundaries are
+dnl Since Remacs can't find matching pairs of quotes, boundaries are
 dnl indicated by comments.
 dnl quotation begins
 [
@@ -843,7 +851,7 @@ fi
 dnl quotation ends
 
 if test $unported = yes; then
-  AC_MSG_ERROR([Emacs does not support '${canonical}' systems.
+  AC_MSG_ERROR([Remacs does not support '${canonical}' systems.
 If you think it should, please send a report to ${PACKAGE_BUGREPORT}.
 Check 'etc/MACHINES' for recognized configuration names.])
 fi
@@ -860,7 +868,7 @@ if test -n "$XCRUN"; then
   test -n "$AR" && export AR
 fi
 
-dnl Emacs needs C99 or later.
+dnl Remacs needs C99 or later.
 gl_PROG_CC_C99
 
 AC_PROG_CC_C_O
@@ -885,7 +893,7 @@ ac_func_list=$funcs
 AC_CHECK_FUNCS_ONCE([putenv])
 AC_DEFUN([gl_FUNC_PUTENV],
   [test "$ac_cv_func_putenv" = yes || REPLACE_PUTENV=1])
-# Emacs does not use the wchar or wctype-h modules.
+# Remacs does not use the wchar or wctype-h modules.
 AC_DEFUN([gt_TYPE_WINT_T],
   [GNULIB_OVERRIDES_WINT_T=0
    AC_SUBST([GNULIB_OVERRIDES_WINT_T])])
@@ -1001,7 +1009,7 @@ AC_CACHE_CHECK([whether the compiler is clang], [emacs_cv_clang],
      [emacs_cv_clang=yes],
      [emacs_cv_clang=no])])
 
-WERROR_CFLAGS=$WERROR_CFLAGS
+WERROR_CFLAGS=
 # When compiling with GCC, prefer -isystem to -I when including system
 # include files, to avoid generating useless diagnostics for the files.
 AS_IF([test $gl_gcc_warnings = no],
@@ -1021,16 +1029,22 @@ AS_IF([test $gl_gcc_warnings = no],
   # This, $nw, is the list of warnings we disable.
   nw=
 
+  # case $with_x_toolkit in
+  #   lucid | athena | motif)
+  #      # Old toolkits mishandle 'const'.
+  #      nw="$nw -Wwrite-strings"
+  #      ;;
+  # esac
   AS_IF([test $gl_gcc_warnings = yes],
     [WERROR_CFLAGS=-Werror])
 
-  nw="$nw -Wcast-align -Wcast-align=strict" # Emacs is tricky with pointers.
+  nw="$nw -Wcast-align -Wcast-align=strict" # Remacs is tricky with pointers.
   nw="$nw -Wduplicated-branches"    # Too many false alarms
   nw="$nw -Wformat-overflow=2"      # False alarms due to GCC bug 80776
   nw="$nw -Wsystem-headers"         # Don't let system headers trigger warnings
   nw="$nw -Woverlength-strings"     # Not a problem these days
   nw="$nw -Wformat-nonliteral"      # we do this a lot
-  nw="$nw -Wvla"                    # Emacs uses <vla.h>.
+  nw="$nw -Wvla"                    # Remacs uses <vla.h>.
   nw="$nw -Wunused-const-variable=2" # lisp.h declares const objects.
   nw="$nw -Winline"                 # OK to ignore 'inline'
   nw="$nw -Wstrict-overflow"        # OK to optimize assuming that
@@ -1044,17 +1058,17 @@ AS_IF([test $gl_gcc_warnings = no],
   # <https://lists.gnu.org/r/emacs-diffs/2011-11/msg00265.html>.
   nw="$nw -Wshadow"
 
-  # Emacs's use of alloca inhibits protecting the stack.
+  # Remacs's use of alloca inhibits protecting the stack.
   nw="$nw -Wstack-protector"
 
-  # Emacs's use of __attribute__ ((cold)) causes false alarms with this option.
+  # Remacs's use of __attribute__ ((cold)) causes false alarms with this option.
   nw="$nw -Wsuggest-attribute=cold"
 
-  # Emacs's use of partly-const functions such as Fgnutls_available_p
+  # Remacs's use of partly-const functions such as Fgnutls_available_p
   # make this option problematic.
   nw="$nw -Wsuggest-attribute=const"
 
-  # Emacs's use of partly-pure functions such as CHECK_TYPE make this
+  # Remacs's use of partly-pure functions such as CHECK_TYPE make this
   # option problematic.
   nw="$nw -Wsuggest-attribute=pure"
 
@@ -1371,7 +1385,7 @@ if test "${MAKEINFO:=makeinfo}" != "no"; then
   esac
 fi
 
-## Makeinfo is unusual.  For a released Emacs, the manuals are
+## Makeinfo is unusual.  For a released Remacs, the manuals are
 ## pre-built, and not deleted by the normal clean rules.  makeinfo is
 ## therefore in the category of "special tools" not normally required, which
 ## configure does not have to check for (eg autoconf itself).
@@ -1416,7 +1430,7 @@ fi
 dnl On some platforms using GNU ld, linking temacs needs -znocombreloc.
 dnl Although this has something to do with dumping, the details are unknown.
 dnl If the flag is used but not needed,
-dnl Emacs should still work (albeit a bit more slowly),
+dnl Remacs should still work (albeit a bit more slowly),
 dnl so use the flag everywhere that it is supported.
 dnl When testing whether the flag works, treat GCC specially
 dnl since it just gives a non-fatal 'unrecognized option'
@@ -1460,7 +1474,7 @@ AC_CACHE_CHECK([whether addresses are sanitized],
      [emacs_cv_sanitize_address=no])])
 
 if test $with_unexec = yes; then
-  AC_DEFINE([HAVE_UNEXEC], 1, [Define if Emacs supports unexec.])
+  AC_DEFINE([HAVE_UNEXEC], 1, [Define if Remacs supports unexec.])
   if test "$emacs_cv_sanitize_address" = yes; then
     AC_MSG_WARN([[Addresses are sanitized; suggest --without-unexec]])
   fi
@@ -1470,6 +1484,7 @@ fi
 UNEXEC_OBJ=
 test $with_unexec = yes &&
 case "$opsys" in
+  # MSDOS uses unexcoff.o
   aix4-2)
    UNEXEC_OBJ=unexaix.o
    ;;
@@ -1524,7 +1539,7 @@ test "$with_unexec" = no || case "$opsys" in
 
   openbsd)
    ## Han Boetes <han@boetes.org> says this is necessary,
-   ## otherwise Emacs dumps core on elf systems.
+   ## otherwise Remacs dumps core on elf systems.
    LD_SWITCH_SYSTEM="-Z"
    ;;
 esac
@@ -1606,7 +1621,8 @@ case "$opsys" in
 
   sol2*) LIBS_SYSTEM="-lsocket -lnsl" ;;
 
-  unixware) LIBS_SYSTEM="-lsocket -lnsl -lelf" ;;
+  ## Motif needs -lgen.
+  unixware) LIBS_SYSTEM="-lsocket -lnsl -lelf -lgen" ;;
 esac
 
 AC_SUBST(LIBS_SYSTEM)
@@ -1619,9 +1635,9 @@ else
   CPPFLAGS="$C_SWITCH_SYSTEM $C_SWITCH_MACHINE $CPPFLAGS"
 fi
 
-# Suppress obsolescent Autoconf test for size_t; Emacs assumes C99 or better.
+# Suppress obsolescent Autoconf test for size_t; Remacs assumes C99 or better.
 AC_DEFUN([AC_TYPE_SIZE_T])
-# Likewise for obsolescent test for uid_t, gid_t; Emacs assumes them.
+# Likewise for obsolescent test for uid_t, gid_t; Remacs assumes them.
 AC_DEFUN([AC_TYPE_UID_T])
 
 # sqrt and other floating-point functions such as fmod and frexp
@@ -1680,9 +1696,6 @@ pre_PKG_CONFIG_CFLAGS=$CFLAGS
 pre_PKG_CONFIG_LIBS=$LIBS
 
 PKG_PROG_PKG_CONFIG(0.9.0)
-if test x$PKG_CONFIG = x ; then
-  AC_MSG_ERROR([pkg-config not found.])
-fi
 
 dnl EMACS_CHECK_MODULES(GSTUFF, gtk+-2.0 >= 1.3 glib = 1.3.4)
 dnl acts like PKG_CHECK_MODULES(GSTUFF, gtk+-2.0 >= 1.3 glib = 1.3.4,
@@ -1936,7 +1949,7 @@ LIBS_GNUSTEP=
 if test "${with_ns}" != no; then
   # macfont.o requires macuvs.h which is absent after 'make extraclean',
   # so avoid NS_IMPL_COCOA if macuvs.h is absent.
-  # Even a headless Emacs can build macuvs.h, so this should let you bootstrap.
+  # Even a headless Remacs can build macuvs.h, so this should let you bootstrap.
   if test "${opsys}" = darwin && test -f "$srcdir/src/macuvs.h"; then
      NS_IMPL_COCOA=yes
      ns_appdir=`pwd`/nextstep/Remacs.app
@@ -2042,6 +2055,10 @@ ns_self_contained=no
 NS_OBJ=
 NS_OBJC_OBJ=
 if test "${HAVE_NS}" = yes; then
+  # if test "$with_toolkit_scroll_bars" = "no"; then
+  #   AC_MSG_ERROR([Non-toolkit scroll bars are not implemented for Nextstep.])
+  # fi
+
   window_system=nextstep
   # set up packaging dirs
   if test "${EN_NS_SELF_CONTAINED}" = yes; then
@@ -2137,6 +2154,9 @@ CM_OBJ="cm.o"
 XARGS_LIMIT=
 if test "${HAVE_W32}" = "yes"; then
   AC_DEFINE(HAVE_NTGUI, 1, [Define to use native MS Windows GUI.])
+  # if test "$with_toolkit_scroll_bars" = "no"; then
+  #   AC_MSG_ERROR([Non-toolkit scroll bars are not implemented for w32 build.])
+  # fi
   AC_CHECK_TOOL(WINDRES, [windres],
                 [AC_MSG_ERROR([No resource compiler found.])])
   W32_OBJ="w32fns.o w32menu.o w32reg.o w32font.o w32term.o"
@@ -2215,6 +2235,8 @@ case "${window_system}" in
     HAVE_X11=yes
     term_header=xterm.h
     case "${with_x_toolkit}" in
+      # athena | lucid ) USE_X_TOOLKIT=LUCID ;;
+      # motif ) USE_X_TOOLKIT=MOTIF ;;
       gtk ) with_gtk=yes
             term_header=gtkutil.h
 dnl Don't set this for GTK.  A lot of tests below assumes Xt when
@@ -2226,6 +2248,7 @@ dnl USE_X_TOOLKIT is set.
       gtk3 ) with_gtk3=yes
              term_header=gtkutil.h
              USE_X_TOOLKIT=none ;;
+      no ) USE_X_TOOLKIT=none ;;
 dnl If user did not say whether to use a toolkit, make this decision later:
 dnl use the toolkit if we have gtk, or X11R5 or newer.
       * ) USE_X_TOOLKIT=maybe ;;
@@ -2250,10 +2273,10 @@ if test "$window_system" = none && test "X$with_x" != "Xno"; then
    then
         AC_MSG_ERROR([You seem to be running X, but no X development libraries
 were found.  You should install the relevant development files for X
-and for the toolkit you want, such as Gtk+.  Also make
+and for the toolkit you want, such as Gtk+ or Motif.  Also make
 sure you have development files for image handling, i.e.
 tiff, gif, jpeg, png and xpm.
-If you are sure you want Emacs compiled without X window support, pass
+If you are sure you want Remacs compiled without X window support, pass
   --without-x
 to configure.])
    fi
@@ -2599,7 +2622,7 @@ if test "${HAVE_X11}" = "yes" || test "${HAVE_NS}" = "yes" || test "${HAVE_W32}"
        AC_DEFINE([HAVE_IMAGEMAGICK7], 1, [Define to 1 if using ImageMagick7.])
     else
        ## 6.3.5 is the earliest version known to work; see Bug#17339.
-       ## 6.8.2 makes Emacs crash; see Bug#13867.
+       ## 6.8.2 makes Remacs crash; see Bug#13867.
        EMACS_CHECK_MODULES([IMAGEMAGICK], [Wand >= 6.3.5 Wand != 6.8.2])
     fi
 
@@ -2736,7 +2759,7 @@ if test x"$pkg_check_gtk" = xyes; then
     AC_MSG_WARN([[Your version of Gtk+ will have problems with
        closing open displays.  This is no problem if you just use
        one display, but if you use more than one and close one of them
-       Emacs may crash.
+       Remacs may crash.
        See https://gitlab.gnome.org/GNOME/gtk/issues/221]])
   fi
 
@@ -2918,7 +2941,7 @@ AC_SUBST(LIBGNUTLS_CFLAGS)
 HAVE_LIBSYSTEMD=no
 if test "${with_libsystemd}" = "yes" ; then
   dnl This code has been tested with libsystemd 222 and later.
-  dnl FIXME: Find the earliest version number for which Emacs should work,
+  dnl FIXME: Find the earliest version number for which Remacs should work,
   dnl and change '222' to that number.
   EMACS_CHECK_MODULES([LIBSYSTEMD], [libsystemd >= 222],
     [HAVE_LIBSYSTEMD=yes], [HAVE_LIBSYSTEMD=no])
@@ -3037,28 +3060,59 @@ AC_SUBST(NOTIFY_CFLAGS)
 AC_SUBST(NOTIFY_LIBS)
 AC_SUBST(NOTIFY_OBJ)
 
+HAVE_XAW3D=no
+
 dnl Do not put whitespace before the #include statements below.
 dnl Older compilers (eg sunos4 cc) choke on it.
-HAVE_XAW3D=no
-LUCID_LIBW=
-if test x"${USE_X_TOOLKIT}" = xmaybe; then
-    emacs_cv_xaw3d=no
-    AC_MSG_CHECKING(for xaw3d)
-    AC_MSG_RESULT(no)
-    AC_MSG_CHECKING(for libXaw)
-    AC_CACHE_VAL(emacs_cv_xaw,
-    [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
-#include <X11/Intrinsic.h>
-#include <X11/Xaw/Simple.h>]],
-      [[]])],
-      emacs_cv_xaw=yes,
-      emacs_cv_xaw=no)])
-      AC_MSG_ERROR([No X toolkit could be found.
-If you are sure you want Emacs compiled without an X toolkit, pass
-  --with-x-toolkit=no
-to configure.  Otherwise, install the development libraries for the toolkit
-that you want to use (e.g. Gtk+) and re-run configure.])
-fi
+dnl HAVE_XAW3D=no
+dnl LUCID_LIBW=
+# if test x"${USE_X_TOOLKIT}" = xmaybe || test x"${USE_X_TOOLKIT}" = xLUCID; then
+#   if test "$with_xaw3d" != no; then
+#     AC_CACHE_VAL(emacs_cv_xaw3d,
+#     [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+# #include <X11/Intrinsic.h>
+# #include <X11/Xaw3d/Simple.h>]],
+#       [[]])],
+#       [AC_CHECK_LIB(Xaw3d, XawScrollbarSetThumb,
+#                     emacs_cv_xaw3d=yes, emacs_cv_xaw3d=no)],
+#       emacs_cv_xaw3d=no)])
+#   else
+#     emacs_cv_xaw3d=no
+#   fi
+#   if test $emacs_cv_xaw3d = yes; then
+#     AC_MSG_CHECKING(for xaw3d)
+#     AC_MSG_RESULT([yes; using Lucid toolkit])
+#     USE_X_TOOLKIT=LUCID
+#     HAVE_XAW3D=yes
+#     LUCID_LIBW=-lXaw3d
+#     AC_DEFINE(HAVE_XAW3D, 1,
+#               [Define to 1 if you have the Xaw3d library (-lXaw3d).])
+#   else
+#     AC_MSG_CHECKING(for xaw3d)
+#     AC_MSG_RESULT(no)
+#     AC_MSG_CHECKING(for libXaw)
+#     AC_CACHE_VAL(emacs_cv_xaw,
+#     [AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+# #include <X11/Intrinsic.h>
+# #include <X11/Xaw/Simple.h>]],
+#       [[]])],
+#       emacs_cv_xaw=yes,
+#       emacs_cv_xaw=no)])
+#     if test $emacs_cv_xaw = yes; then
+#       AC_MSG_RESULT([yes; using Lucid toolkit])
+#       USE_X_TOOLKIT=LUCID
+#       LUCID_LIBW=-lXaw
+#     elif test x"${USE_X_TOOLKIT}" = xLUCID; then
+#       AC_MSG_ERROR([Lucid toolkit requires X11/Xaw include files])
+#     else
+#       AC_MSG_ERROR([No X toolkit could be found.
+# If you are sure you want Remacs compiled without an X toolkit, pass
+#   --with-x-toolkit=no
+# to configure.  Otherwise, install the development libraries for the toolkit
+# that you want to use (e.g. Gtk+) and re-run configure.])
+#     fi
+#   fi
+# fi
 
 X_TOOLKIT_TYPE=$USE_X_TOOLKIT
 
@@ -3103,6 +3157,93 @@ dnl tranle@intellicorp.com says libXmu.a can need XtMalloc in libXt.a to link.
 fi
 AC_SUBST(LIBXTR6)
 AC_SUBST(LIBXMU)
+
+dnl LIBXP=
+# if test "${USE_X_TOOLKIT}" = "MOTIF"; then
+#   # OpenMotif may be installed in such a way on some GNU/Linux systems.
+#   if test -d /usr/include/openmotif; then
+#     CPPFLAGS="-I/usr/include/openmotif $CPPFLAGS"
+#     emacs_cv_openmotif=yes
+#     case "$canonical" in
+#       x86_64-*-linux-gnu* | powerpc64-*-linux-gnu* | sparc64-*-linux-gnu*)
+#       test -d /usr/lib64/openmotif && LDFLAGS="-L/usr/lib64/openmotif $LDFLAGS"
+#       ;;
+#       *)
+#       test -d /usr/lib/openmotif && LDFLAGS="-L/usr/lib/openmotif $LDFLAGS"
+#     esac
+#   else
+#     emacs_cv_openmotif=no
+#   fi
+#   AC_CACHE_CHECK(for (Open)Motif version 2.1, emacs_cv_motif_version_2_1,
+#   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Xm/Xm.h>]],
+#     [[#if XmVERSION > 2 || (XmVERSION == 2 && XmREVISION >= 1)
+# int x = 5;
+# #else
+# Motif version prior to 2.1.
+# #endif]])],
+#     emacs_cv_motif_version_2_1=yes, emacs_cv_motif_version_2_1=no)])
+#   if test $emacs_cv_motif_version_2_1 = yes; then
+#     AC_CHECK_LIB(Xp, XpCreateContext, LIBXP=-lXp)
+#     if test x$emacs_cv_openmotif = xyes; then
+#       REAL_CPPFLAGS="-I/usr/include/openmotif $REAL_CPPFLAGS"
+#     fi
+#   else
+#     AC_CACHE_CHECK(for LessTif where some systems put it, emacs_cv_lesstif,
+#     # We put this in CFLAGS temporarily to precede other -I options
+#     # that might be in CFLAGS temporarily.
+#     # We put this in CPPFLAGS where it precedes the other -I options.
+#     OLD_CPPFLAGS=$CPPFLAGS
+#     OLD_CFLAGS=$CFLAGS
+#     CPPFLAGS="-I/usr/X11R6/LessTif/Motif1.2/include $CPPFLAGS"
+#     CFLAGS="-I/usr/X11R6/LessTif/Motif1.2/include $CFLAGS"
+#     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include </usr/X11R6/LessTif/Motif1.2/include/Xm/Xm.h>]],
+#       [[int x = 5;]])],
+#       emacs_cv_lesstif=yes, emacs_cv_lesstif=no)])
+#     if test $emacs_cv_lesstif = yes; then
+#       # Make sure this -I option remains in CPPFLAGS after it is set
+#       # back to REAL_CPPFLAGS.
+#       # There is no need to change REAL_CFLAGS, because REAL_CFLAGS does not
+#       # have those other -I options anyway.  Ultimately, having this
+#       # directory ultimately in CPPFLAGS will be enough.
+#       REAL_CPPFLAGS="-I/usr/X11R6/LessTif/Motif1.2/include $REAL_CPPFLAGS"
+#       LDFLAGS="-L/usr/X11R6/LessTif/Motif1.2/lib $LDFLAGS"
+#     else
+#       CFLAGS=$OLD_CFLAGS
+#       CPPFLAGS=$OLD_CPPFLAGS
+#     fi
+#   fi
+#   AC_CHECK_HEADER([Xm/BulletinB.h], [],
+#     [AC_MSG_ERROR([Motif toolkit requested but requirements not found.])])
+# fi
+
+dnl Use toolkit scroll bars if configured for GTK or X toolkit and either
+dnl using Motif or Xaw3d is available, and unless
+dnl --with-toolkit-scroll-bars=no was specified.
+
+dnl AH_TEMPLATE(USE_TOOLKIT_SCROLL_BARS,
+dnl 	    [Define to 1 if we should use toolkit scroll bars.])dnl
+dnl USE_TOOLKIT_SCROLL_BARS=no
+# if test "${with_toolkit_scroll_bars}" != "no"; then
+#   if test "${USE_X_TOOLKIT}" != "none"; then
+#     if test "${USE_X_TOOLKIT}" = "MOTIF"; then
+#       AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
+#       HAVE_XAW3D=no
+#       USE_TOOLKIT_SCROLL_BARS=yes
+#     elif test "${HAVE_XAW3D}" = "yes" || test "${USE_X_TOOLKIT}" = "LUCID"; then
+#       AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
+#       USE_TOOLKIT_SCROLL_BARS=yes
+#     fi
+#   elif test "${HAVE_GTK}" = "yes"; then
+#     AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
+#     USE_TOOLKIT_SCROLL_BARS=yes
+#   elif test "${HAVE_NS}" = "yes"; then
+#     AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
+#     USE_TOOLKIT_SCROLL_BARS=yes
+#   elif test "${HAVE_W32}" = "yes"; then
+#     AC_DEFINE(USE_TOOLKIT_SCROLL_BARS)
+#     USE_TOOLKIT_SCROLL_BARS=yes
+#   fi
+# fi
 
 dnl See if XIM is available.
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
@@ -3205,7 +3346,7 @@ if test "${HAVE_X11}" = "yes"; then
     EMACS_CHECK_MODULES([FONTCONFIG], [fontconfig >= 2.2.0])
 
     test "$HAVE_FONTCONFIG" = "no" && AC_MSG_ERROR(cairo requires libfontconfig)
-    dnl For the "Does Emacs use" message at the end.
+    dnl For the "Does Remacs use" message at the end.
     HAVE_XFT=no
   else
     ## Use -lXft if available, unless '--with-xft=no'.
@@ -3252,7 +3393,7 @@ if test "${HAVE_X11}" = "yes"; then
     ## We used to allow building with FreeType and without Xft.
     ## However, the ftx font backend driver is not in good shape.
     if test "$HAVE_XFT" != "yes"; then
-       dnl For the "Does Emacs use" message at the end.
+       dnl For the "Does Remacs use" message at the end.
        HAVE_XFT=no
        HAVE_FREETYPE=no
     else
@@ -3518,23 +3659,24 @@ fi
 AC_SUBST(LCMS2_CFLAGS)
 AC_SUBST(LCMS2_LIBS)
 
-HAVE_ZLIB=no
-LIBZ=
-if test "${with_zlib}" != "no"; then
-  OLIBS=$LIBS
-  AC_SEARCH_LIBS([inflateEnd], [z], [HAVE_ZLIB=yes])
-  LIBS=$OLIBS
-  case $ac_cv_search_inflateEnd in
-    -*) LIBZ=$ac_cv_search_inflateEnd ;;
-  esac
-fi
-if test "${HAVE_ZLIB}" = "yes"; then
-  AC_DEFINE([HAVE_ZLIB], 1, [Define to 1 if you have the zlib library (-lz).])
-  ### mingw32 doesn't use -lz, since it loads the library dynamically.
-  if test "${opsys}" = "mingw32"; then
-     LIBZ=
-  fi
-fi
+dnl HAVE_ZLIB=no
+dnl LIBZ=
+# if test "${with_zlib}" != "no"; then
+#   OLIBS=$LIBS
+#   AC_SEARCH_LIBS([inflateEnd], [z], [HAVE_ZLIB=yes])
+#   LIBS=$OLIBS
+#   case $ac_cv_search_inflateEnd in
+#     -*) LIBZ=$ac_cv_search_inflateEnd ;;
+#   esac
+# fi
+# if test "${HAVE_ZLIB}" = "yes"; then
+#   AC_DEFINE([HAVE_ZLIB], 1, [Define to 1 if you have the zlib library (-lz).])
+#   ### mingw32 doesn't use -lz, since it loads the library dynamically.
+#   if test "${opsys}" = "mingw32"; then
+#      LIBZ=
+#   fi
+# fi
+dnl AC_SUBST(LIBZ)
 
 ### Dynamic modules support
 LIBMODULES=
@@ -3706,7 +3848,7 @@ elif test "${HAVE_X11}" = "yes" && test "${with_gif}" != "no" \
         || test "${HAVE_W32}" = "yes"; then
   AC_CHECK_HEADER(gif_lib.h,
 # EGifPutExtensionLast only exists from version libungif-4.1.0b1.
-# Earlier versions can crash Emacs, but version 5.0 removes EGifPutExtensionLast.
+# Earlier versions can crash Remacs, but version 5.0 removes EGifPutExtensionLast.
     [AC_CHECK_LIB(gif, GifMakeMapObject, HAVE_GIF=yes,
         [AC_CHECK_LIB(gif, EGifPutExtensionLast, HAVE_GIF=yes, HAVE_GIF=maybe)])])
 
@@ -4003,7 +4145,7 @@ There may be a 'development' package to install containing liblockfile.])
     ## configure gets the right answers, and that means *NOT* using flock.
     ## Using flock is guaranteed to be the wrong thing. See Debian Policy
     ## for details." and then uses '#ifdef DEBIAN'.  Unfortunately the
-    ## Debian maintainer hasn't provided a clean fix for Emacs.
+    ## Debian maintainer hasn't provided a clean fix for Remacs.
     ## movemail.c will use 'maillock' when MAILDIR, HAVE_LIBMAIL and
     ## HAVE_MAILLOCK_H are defined, so the following appears to be the
     ## correct logic.  -- fx
@@ -4171,14 +4313,14 @@ For example, a libncurses-dev(el) or similar package.])],
   [*], [LIBS_TERMCAP=])
 
 ## Use termcap instead of terminfo?
-## Only true for: freebsd < 40000, ms-w32, netbsd < 599002500.
+## Only true for: freebsd < 40000, ms-w32, msdos, netbsd < 599002500.
 TERMINFO=yes
 ## FIXME?  In the cases below where we unconditionally set
 ## LIBS_TERMCAP="-lncurses", this overrides LIBS_TERMCAP = -ltinfo,
 ## if that was found above to have tputs.
 ## Should we use the gnu* logic everywhere?
 case "$opsys" in
-  ## darwin: Prevents crashes when running Emacs in Terminal.app under 10.2.
+  ## darwin: Prevents crashes when running Remacs in Terminal.app under 10.2.
   ##  The ncurses library has been moved out of the System framework in
   ##  Mac OS X 10.2.  So if configure detects it, set the command-line
   ##  option to use it.
@@ -4408,9 +4550,9 @@ AC_FUNC_FORK
 AC_CHECK_FUNCS(snprintf)
 
 dnl Check for glib.  This differs from other library checks in that
-dnl Emacs need not link to glib unless some other library is already
-dnl linking to glib.  Although glib provides no facilities that Emacs
-dnl needs for its own purposes, when glib is present Emacs needs to
+dnl Remacs need not link to glib unless some other library is already
+dnl linking to glib.  Although glib provides no facilities that Remacs
+dnl needs for its own purposes, when glib is present Remacs needs to
 dnl use primitives like g_main_context_query to avoid clashing with
 dnl glib at a low level.
 dnl
@@ -4522,6 +4664,9 @@ dnl Note that we cannot rely on PATH_SEPARATOR, as that one will always
 dnl be computed as ':' in MSYS Bash.
 AC_SUBST(SEPCHAR)
 
+dnl Everybody supports this, except MS-DOS.
+AC_DEFINE(subprocesses, 1, [Define to enable asynchronous subprocesses.])
+
 AC_DEFINE(USER_FULL_NAME, [pw->pw_gecos], [How to get a user's full name.])
 
 
@@ -4588,13 +4733,13 @@ esac
 emacs_broken_SIGIO=no
 
 case $opsys in
-  dnl SIGIO exists, but the feature doesn't work in the way Emacs needs.
+  dnl SIGIO exists, but the feature doesn't work in the way Remacs needs.
   hpux* | nacl | openbsd | sol2* | unixware )
     emacs_broken_SIGIO=yes
     ;;
 
   aix4-2)
-    dnl On AIX Emacs uses the gmalloc.c malloc implementation.  But given
+    dnl On AIX Remacs uses the gmalloc.c malloc implementation.  But given
     dnl the way this system works, libc functions that return malloced
     dnl memory use the libc malloc implementation. Calling xfree or
     dnl xrealloc on the results of such functions results in a crash.
@@ -4607,8 +4752,8 @@ case $opsys in
     dnl library and setting the MALLOCTYPE environment variable to point to
     dnl that shared library.
     dnl
-    dnl Emacs currently calls xrealloc on the results of get_current_dir name,
-    dnl to avoid a crash just use the Emacs implementation for that function.
+    dnl Remacs currently calls xrealloc on the results of get_current_dir name,
+    dnl to avoid a crash just use the Remacs implementation for that function.
     dnl
     dnl FIXME We could change the AC_CHECK_FUNCS call near the start
     dnl of this file, so that we do not check for get_current_dir_name
@@ -4663,13 +4808,13 @@ AC_DEFINE_UNQUOTED(DEFAULT_SOUND_DEVICE, "$sound_device",
   [Name of the default sound device.])
 
 
-dnl Emacs can read input using SIGIO and buffering characters itself,
+dnl Remacs can read input using SIGIO and buffering characters itself,
 dnl or using CBREAK mode and making C-g cause SIGINT.
 dnl The choice is controlled by the variable interrupt_input.
 dnl
 dnl Define INTERRUPT_INPUT to make interrupt_input = 1 the default (use SIGIO)
 dnl
-dnl Emacs uses the presence of the USABLE_SIGIO macro
+dnl Remacs uses the presence of the USABLE_SIGIO macro
 dnl to indicate whether or not signal-driven I/O is possible.  It uses
 dnl INTERRUPT_INPUT to decide whether to use it by default.
 dnl
@@ -4681,8 +4826,8 @@ dnl 2) Control-G causes output to be discarded.
 dnl I do not know whether this can be fixed in system V.
 dnl
 dnl Another method of doing input is planned but not implemented.
-dnl It would have Emacs fork off a separate process
-dnl to read the input and send it to the true Emacs process
+dnl It would have Remacs fork off a separate process
+dnl to read the input and send it to the true Remacs process
 dnl through a pipe.
 case $opsys in
   darwin | gnu-linux | gnu-kfreebsd )
@@ -4948,6 +5093,7 @@ esac
 dnl Define symbols to identify the version of Unix this is.
 dnl Define all the symbols that apply correctly.
 AH_TEMPLATE(DOS_NT, [Define if the system is MS DOS or MS Windows.])
+AH_TEMPLATE(MSDOS, [Define if the system is MS DOS.])
 AH_TEMPLATE(USG, [Define if the system is compatible with System III.])
 AH_TEMPLATE(USG5_4, [Define if the system is compatible with System V Release 4.])
 
@@ -5049,7 +5195,7 @@ fi
 
 case $opsys in
   hpux11)
-    dnl It works to open the pty's tty in the parent (Emacs), then
+    dnl It works to open the pty's tty in the parent (Remacs), then
     dnl close and reopen it in the child.
     AC_DEFINE(USG_SUBTTY_WORKS, 1, [Define for USG systems where it
       works to open a pty's tty in the parent process, then close and
@@ -5073,7 +5219,7 @@ if test "$GCC" = yes && \
   case $CFLAGS in
     *-fno-optimize-sibling-calls*) ;;
     *-O@<:@23@:>@*)
-      AC_MSG_ERROR([GCC 4.5.0 has problems compiling Emacs; see etc/PROBLEMS.]);;
+      AC_MSG_ERROR([GCC 4.5.0 has problems compiling Remacs; see etc/PROBLEMS.]);;
   esac
 fi
 
@@ -5081,7 +5227,7 @@ version=$PACKAGE_VERSION
 
 copyright="Copyright (C) 2020 Free Software Foundation, Inc."
 AC_DEFINE_UNQUOTED(COPYRIGHT, ["$copyright"],
-  [Short copyright string for this version of Emacs.])
+  [Short copyright string for this version of Remacs.])
 AC_SUBST(copyright)
 
 ### Specify what sort of things we'll be editing into Makefile and config.h.
@@ -5118,6 +5264,8 @@ AC_SUBST(LD_SWITCH_X_SITE)
 AC_SUBST(C_SWITCH_X_SITE)
 AC_SUBST(GNUSTEP_CFLAGS)
 AC_SUBST(CFLAGS)
+## Used in lwlib/Makefile.in.
+AC_SUBST(X_TOOLKIT_TYPE)
 AC_SUBST(ns_appdir)
 AC_SUBST(ns_appbindir)
 AC_SUBST(ns_appresdir)
@@ -5131,7 +5279,7 @@ if test -n "${term_header}"; then
 fi
 
 AC_DEFINE_UNQUOTED(EMACS_CONFIGURATION,  "${canonical}",
-		   [Define to the canonical Emacs configuration name.])
+		   [Define to the canonical Remacs configuration name.])
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_OPTIONS, "${emacs_config_options}",
 		   [Define to the options passed to configure.])
 
@@ -5165,11 +5313,37 @@ MOTIF_LIBW=
 if test "${USE_X_TOOLKIT}" != "none" ; then
   WIDGET_OBJ=widget.o
   AC_DEFINE(USE_X_TOOLKIT, 1, [Define to 1 if using an X toolkit.])
+  # if test "${USE_X_TOOLKIT}" = "LUCID"; then
+  #   AC_DEFINE(USE_LUCID, 1, [Define to 1 if using the Lucid X toolkit.])
+  # elif test "${USE_X_TOOLKIT}" = "MOTIF"; then
+  #   AC_DEFINE(USE_MOTIF, 1, [Define to 1 if using the Motif X toolkit.])
+  #   MOTIF_LIBW=-lXm
+  #   case "$opsys" in
+  #     gnu-linux)
+  #       ## Paul Abrahams <abrahams at equinox.shaysnet.com> says this is needed.
+  #       MOTIF_LIBW="$MOTIF_LIBW -lXpm"
+  #       ;;
+  #
+  #     unixware)
+  #       ## Richard Anthony Ryan <ryanr at ellingtn.ftc.nrcs.usda.gov>
+  #       ## says -lXimp is needed in UNIX_SV ... 4.2 1.1.2.
+  #       MOTIF_LIBW="MOTIF_LIBW -lXimp"
+  #       ;;
+  #
+  #     aix4-2)
+  #       ## olson@mcs.anl.gov says -li18n is needed by -lXm.
+  #       MOTIF_LIBW="$MOTIF_LIBW -li18n"
+  #       ;;
+  #   esac
+  #   MOTIF_LIBW="$MOTIF_LIBW $LIBXP"
+  # fi
 fi
 AC_SUBST(WIDGET_OBJ)
 
 TOOLKIT_LIBW=
 case "$USE_X_TOOLKIT" in
+  # MOTIF) TOOLKIT_LIBW="$MOTIF_LIBW" ;;
+  # LUCID) TOOLKIT_LIBW="$LUCID_LIBW" ;;
   none) test "x$HAVE_GTK" = "xyes" && TOOLKIT_LIBW="$GTK_LIBS" ;;
 esac
 if test "$HAVE_XWIDGETS" = "yes"; then
@@ -5195,8 +5369,16 @@ else
 fi
 AC_SUBST(LIBX_OTHER)
 
+HAVE_OLDXMENU=no
 if test "$HAVE_GTK" = yes || test "$HAVE_X11" != yes; then
   LIBXMENU=
+# elif test "$USE_X_TOOLKIT" = none; then
+#   HAVE_OLDXMENU=yes
+#   LIBXMENU='$(oldXMenudir)/libXMenu11.a'
+#   AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS oldXMenu"
+else
+  LIBXMENU='$(lwlibdir)/liblw.a'
+  AUTODEPEND_PARENTS="$AUTODEPEND_PARENTS lwlib"
 fi
 AC_SUBST(LIBXMENU)
 
@@ -5266,7 +5448,7 @@ dnl Call this 'FORTIFY_SOUR' so that it sorts before the 'FORTIFY_SOURCE'
 dnl verbatim defined above.  The tricky name is apropos, as this hack
 dnl makes Fortify go sour!
 AH_VERBATIM([FORTIFY_SOUR],
-[/* Without the following workaround, Emacs runs slowly on OS X 10.8.
+[/* Without the following workaround, Remacs runs slowly on OS X 10.8.
    The workaround disables some useful run-time checking, so it
    should be conditional to the platforms with the performance bug.
    Perhaps Apple will fix this some day; also see m4/extern-inline.m4.  */
@@ -5304,6 +5486,12 @@ gl_INIT
 CFLAGS=$SAVE_CFLAGS
 LIBS=$SAVE_LIBS
 
+if test "${opsys}" = "mingw32"; then
+  CPPFLAGS="$CPPFLAGS -DUSE_CRT_DLL=1 -I \${abs_top_srcdir}/nt/inc"
+  # Remove unneeded switches from the value of CC that goes to Makefiles
+  CC=`AS_ECHO(["$CC"]) | sed -e "s,$GCC_TEST_OPTIONS,,"`
+fi
+
 # Add Rust variables, libs and utilities
 
 RUSTFLAGS=$RUSTFLAGS
@@ -5339,10 +5527,10 @@ AC_SUBST(CARGO_FLAGS)
 
 case "${opsys}" in
   darwin) RUST_DEPS="-ldl -lm -lresolv"
-  	REMACSLIB_NAME="libremacs_lib.a"
+       REMACSLIB_NAME="libremacs_lib.a"
         REMACSLIB_CFLAGS="-pthread" ;;
   gnu*) RUST_DEPS="-ldl -lm -lrt"
-    	REMACSLIB_NAME="libremacs_lib.a"
+       REMACSLIB_NAME="libremacs_lib.a"
         REMACSLIB_CFLAGS="-pthread" ;;
 esac
 
@@ -5370,12 +5558,6 @@ AC_SUBST(RUST_DEPS)
 AC_SUBST(REMACSLIB_CFLAGS)
 AC_SUBST(REMACSLIB_NAME)
 AC_SUBST(CARGO_TEST)
-
-if test "${opsys}" = "mingw32"; then
-  CPPFLAGS="$CPPFLAGS -DUSE_CRT_DLL=1 -I \${abs_top_srcdir}/nt/inc"
-  # Remove unneeded switches from the value of CC that goes to Makefiles
-  CC=`AS_ECHO(["$CC"]) | sed -e "s,$GCC_TEST_OPTIONS,,"`
-fi
 
 case "$opsys" in
   aix4-2) LD_SWITCH_SYSTEM_TEMACS="-Wl,-bnodelcsect" ;;
@@ -5482,28 +5664,28 @@ fi
 
 AC_SUBST(WINDOW_SYSTEM_OBJ)
 
-AH_TOP([/* GNU Emacs site configuration template file.
+AH_TOP([/* GNU Remacs site configuration template file.
 
 Copyright (C) 1988, 1993-1994, 1999-2002, 2004-2020
   Free Software Foundation, Inc.
 
-This file is part of GNU Emacs.
+This file is part of GNU Remacs.
 
-GNU Emacs is free software: you can redistribute it and/or modify
+GNU Remacs is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or (at
 your option) any later version.
 
-GNU Emacs is distributed in the hope that it will be useful,
+GNU Remacs is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
+along with GNU Remacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 
-/* No code in Emacs #includes config.h twice, but some bits of code
+/* No code in Remacs #includes config.h twice, but some bits of code
    intended to work with other packages as well (like gmalloc.c)
    think they can include it as many times as they like.  */
 #ifndef EMACS_CONFIG_H
@@ -5523,7 +5705,8 @@ End:
 
 #### Report on what we decided to do.
 #### Report GTK as a toolkit, even if it doesn't use Xt.
-#### It makes printing result more understandable.
+#### It makes printing result more understandable as using GTK sets
+#### toolkit_scroll_bars to yes by default.
 if test "${HAVE_GTK}" = "yes"; then
   USE_X_TOOLKIT="$USE_GTK_TOOLKIT"
 fi
@@ -5540,12 +5723,11 @@ Configured for '${canonical}'.
 
   Where should the build process find the source code?    ${srcdir}
   What compiler should emacs be built with?               ${CC} ${CFLAGS}
-  Should Emacs use the GNU version of malloc?             ${GNU_MALLOC}${GNU_MALLOC_reason}
-  Should Emacs use a relocating allocator for buffers?    ${REL_ALLOC}
-  Should Emacs use mmap(2) for buffer allocation?         $use_mmap_for_buffers
-  What window system should Emacs use?                    ${window_system}
-  What toolkit should Emacs use?                          ${USE_X_TOOLKIT}
-  What libraries will lib-remacs link against?            ${RUST_DEPS}
+  Should Remacs use the GNU version of malloc?             ${GNU_MALLOC}${GNU_MALLOC_reason}
+  Should Remacs use a relocating allocator for buffers?    ${REL_ALLOC}
+  Should Remacs use mmap(2) for buffer allocation?         $use_mmap_for_buffers
+  What window system should Remacs use?                    ${window_system}
+  What toolkit should Remacs use?                          ${USE_X_TOOLKIT}
   Where do we find X Windows header files?                ${x_includes:-$emacs_standard_dirs}
   Where do we find X Windows libraries?                   ${x_libraries:-$emacs_standard_dirs}"])
 
@@ -5561,7 +5743,7 @@ for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
       UNEXEC) val=${with_unexec} ;;
       GLIB) val=${emacs_cv_links_glib} ;;
       NOTIFY|ACL) eval val=\${${opt}_SUMMARY} ;;
-      X_TOOLKIT) eval val=\${USE_$opt} ;;
+      TOOLKIT_SCROLL_BARS|X_TOOLKIT) eval val=\${USE_$opt} ;;
       THREADS) val=${threads_enabled} ;;
       *) eval val=\${HAVE_$opt} ;;
     esac
@@ -5571,7 +5753,7 @@ for opt in XAW3D XPM JPEG TIFF GIF PNG RSVG CAIRO IMAGEMAGICK SOUND GPM DBUS \
     case $opt in
       X_TOOLKIT)
         case $val in
-          GTK*) opt=$val ;;
+          GTK*|LUCID|MOTIF) opt=$val ;;
           *) continue ;;
         esac
       ;;
@@ -5591,40 +5773,40 @@ done
 AC_DEFINE_UNQUOTED(EMACS_CONFIG_FEATURES, "${emacs_config_features}",
   [Summary of some of the main features enabled by configure.])
 
-AS_ECHO(["  Does Emacs use -lXpm?                                   ${HAVE_XPM}
-  Does Emacs use -ljpeg?                                  ${HAVE_JPEG}
-  Does Emacs use -ltiff?                                  ${HAVE_TIFF}
-  Does Emacs use a gif library?                           ${HAVE_GIF} $LIBGIF
-  Does Emacs use a png library?                           ${HAVE_PNG} $LIBPNG
-  Does Emacs use -lrsvg-2?                                ${HAVE_RSVG}
-  Does Emacs use cairo?                                   ${HAVE_CAIRO}
-  Does Emacs use -llcms2?                                 ${HAVE_LCMS2}
-  Does Emacs use imagemagick?                             ${HAVE_IMAGEMAGICK}
-  Does Emacs support sound?                               ${HAVE_SOUND}
-  Does Emacs use -lgpm?                                   ${HAVE_GPM}
-  Does Emacs use -ldbus?                                  ${HAVE_DBUS}
-  Does Emacs use -lgconf?                                 ${HAVE_GCONF}
-  Does Emacs use GSettings?                               ${HAVE_GSETTINGS}
-  Does Emacs use a file notification library?             ${NOTIFY_SUMMARY}
-  Does Emacs use access control lists?                    ${ACL_SUMMARY}
-  Does Emacs use -lselinux?                               ${HAVE_LIBSELINUX}
-  Does Emacs use -lgnutls?                                ${HAVE_GNUTLS}
-  Does Emacs use -lxml2?                                  ${HAVE_LIBXML2}
-  Does Emacs use -lfreetype?                              ${HAVE_FREETYPE}
-  Does Emacs use HarfBuzz?                                ${HAVE_HARFBUZZ}
-  Does Emacs use -lm17n-flt?                              ${HAVE_M17N_FLT}
-  Does Emacs use -lotf?                                   ${HAVE_LIBOTF}
-  Does Emacs use -lxft?                                   ${HAVE_XFT}
-  Does Emacs use -lsystemd?                               ${HAVE_LIBSYSTEMD}
-  Does Emacs use -ljansson?                               ${HAVE_JSON}
-  Does Emacs use -lgmp?                                   ${HAVE_GMP}
-  Does Emacs directly use zlib?                           ${HAVE_ZLIB}
-  Does Emacs have dynamic modules support?                ${HAVE_MODULES}
-  Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
-  Does Emacs have threading support in lisp?              ${threads_enabled}
-  Does Emacs support the portable dumper?                 ${with_pdumper}
-  Does Emacs support legacy unexec dumping?               ${with_unexec}
-  Which dumping strategy does Emacs use?                  ${with_dumping}
+AS_ECHO(["
+  Does Remacs use -lXpm?                                   ${HAVE_XPM}
+  Does Remacs use -ljpeg?                                  ${HAVE_JPEG}
+  Does Remacs use -ltiff?                                  ${HAVE_TIFF}
+  Does Remacs use a gif library?                           ${HAVE_GIF} $LIBGIF
+  Does Remacs use a png library?                           ${HAVE_PNG} $LIBPNG
+  Does Remacs use -lrsvg-2?                                ${HAVE_RSVG}
+  Does Remacs use cairo?                                   ${HAVE_CAIRO}
+  Does Remacs use -llcms2?                                 ${HAVE_LCMS2}
+  Does Remacs use imagemagick?                             ${HAVE_IMAGEMAGICK}
+  Does Remacs support sound?                               ${HAVE_SOUND}
+  Does Remacs use -lgpm?                                   ${HAVE_GPM}
+  Does Remacs use -ldbus?                                  ${HAVE_DBUS}
+  Does Remacs use -lgconf?                                 ${HAVE_GCONF}
+  Does Remacs use GSettings?                               ${HAVE_GSETTINGS}
+  Does Remacs use a file notification library?             ${NOTIFY_SUMMARY}
+  Does Remacs use access control lists?                    ${ACL_SUMMARY}
+  Does Remacs use -lselinux?                               ${HAVE_LIBSELINUX}
+  Does Remacs use -lgnutls?                                ${HAVE_GNUTLS}
+  Does Remacs use -lxml2?                                  ${HAVE_LIBXML2}
+  Does Remacs use -lfreetype?                              ${HAVE_FREETYPE}
+  Does Remacs use HarfBuzz?                                ${HAVE_HARFBUZZ}
+  Does Remacs use -lm17n-flt?                              ${HAVE_M17N_FLT}
+  Does Remacs use -lotf?                                   ${HAVE_LIBOTF}
+  Does Remacs use -lxft?                                   ${HAVE_XFT}
+  Does Remacs use -lsystemd?                               ${HAVE_LIBSYSTEMD}
+  Does Remacs use -ljansson?                               ${HAVE_JSON}
+  Does Remacs use -lgmp?                                   ${HAVE_GMP}
+  Does Remacs have dynamic modules support?                ${HAVE_MODULES}
+  Does Remacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
+  Does Remacs have threading support in lisp?              ${threads_enabled}
+  Does Remacs support the portable dumper?                 ${with_pdumper}
+  Does Remacs support legacy unexec dumping?               ${with_unexec}
+  Which dumping strategy does Remacs use?                  ${with_dumping}
 "])
 
 if test -n "${EMACSDATA}"; then
@@ -5638,9 +5820,9 @@ echo
 
 if test "$HAVE_NS" = "yes"; then
    echo
-   AS_ECHO(["Run '${MAKE-make}' to build Emacs, then run 'src/emacs' to test it.
+   AS_ECHO(["Run '${MAKE-make}' to build Remacs, then run 'src/emacs' to test it.
 Run '${MAKE-make} install' in order to build an application bundle.
-The application will go to nextstep/Emacs.app and can be run or moved
+The application will go to nextstep/Remacs.app and can be run or moved
 from there."])
    if test "$EN_NS_SELF_CONTAINED" = "yes"; then
       echo "The application will be fully self-contained."
@@ -5654,7 +5836,7 @@ fi
 
 case $opsys,$emacs_uname_r in
   cygwin,1.5.*)
-    AC_MSG_WARN([[building Emacs on Cygwin 1.5 is not supported.]])
+    AC_MSG_WARN([[building Remacs on Cygwin 1.5 is not supported.]])
            echo
 	   ;;
   cygwin,3.0.[[0-7]]'('* | cygwin,3.1.[[0-2]]'('*)
@@ -5689,7 +5871,7 @@ dnl config.status treats $srcdir specially, so I think this is ok...
 AC_CONFIG_FILES([$srcdir/doc/man/emacs.1])
 
 m4_define([subdir_makefiles],
-  [lib/Makefile lib-src/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile])
+  [lib/Makefile lib-src/Makefile oldXMenu/Makefile doc/emacs/Makefile doc/misc/Makefile doc/lispintro/Makefile doc/lispref/Makefile src/Makefile lwlib/Makefile lisp/Makefile leim/Makefile nextstep/Makefile nt/Makefile])
 SUBDIR_MAKEFILES="subdir_makefiles"
 AC_CONFIG_FILES(subdir_makefiles)
 
@@ -5732,7 +5914,6 @@ else
 fi || AC_MSG_ERROR(['src/epaths.h' could not be made.])
 ], [GCC="$GCC" CPPFLAGS="$CPPFLAGS" opsys="$opsys"])
 
-
 CARGO_DEFAULT_FEATURES=""
 if test "$HAVE_LIBXML2" = "yes"; then
     CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"use-xml2\", "
@@ -5752,7 +5933,7 @@ case "$window_system" in
         CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-x11\", "
     ;;
     nextstep)
-	CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-nextstep\", "
+       CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-nextstep\", "
     ;;
     w32)
         CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-w32\", "

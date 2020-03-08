@@ -442,7 +442,7 @@ If TYPE is nil, look for a function definition.
 Otherwise, TYPE specifies the kind of definition,
 and it is interpreted via `find-function-regexp-alist'.
 The search is done in the source for library LIBRARY."
-  (unless library
+  (if (null library)
     (error "Don't know where `%s' is defined" symbol))
   ;; Some functions are defined as part of the construct
   ;; that defines something else.

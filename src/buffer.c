@@ -505,6 +505,7 @@ See also `find-buffer-visiting'.  */)
 }
 #endif
 
+#ifdef IGNORE_RUST_PORT
 Lisp_Object
 get_truename_buffer (register Lisp_Object filename)
 {
@@ -518,6 +519,7 @@ get_truename_buffer (register Lisp_Object filename)
     }
   return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
 #ifdef IGNORE_RUST_PORT
 DEFUN ("get-buffer-create", Fget_buffer_create, Sget_buffer_create, 1, 1, 0,
@@ -628,6 +630,7 @@ even if it is dead.  The return value is never nil.  */)
 }
 #endif
 
+#ifdef IGNORE_RUST_PORT
 /* Return a list of overlays which is a copy of the overlay list
    LIST, but for buffer B.  */
 
@@ -660,6 +663,7 @@ copy_overlays (struct buffer *b, struct Lisp_Overlay *list)
 
   return result;
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Set an appropriate overlay of B.  */
 
@@ -946,6 +950,7 @@ delete_all_overlays (struct buffer *b)
   set_buffer_overlays_after (b, NULL);
 }
 
+#ifdef IGNORE_RUST_PORT
 /* Reinitialize everything about a buffer except its name and contents
    and local variables.
    If called on an already-initialized buffer, the list of overlays
@@ -988,7 +993,9 @@ reset_buffer (register struct buffer *b)
 
   b->display_error_modiff = 0;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 /* Reset buffer B's local variables info.
    Don't use this on a buffer that has already been in use;
    it does not treat permanent locals consistently.
@@ -1109,6 +1116,7 @@ reset_buffer_local_variables (struct buffer *b, bool permanent_too)
 	set_per_buffer_value (b, offset, per_buffer_default (offset));
     }
 }
+#endif /* IGNORE_RUST_PORT */
 
 #ifdef IGNORE_RUST_PORT
 /* We split this away from generate-new-buffer, because rename-buffer
@@ -2303,6 +2311,7 @@ so the buffer is truly empty after this.  */)
 }
 #endif
 
+#ifdef IGNORE_RUST_PORT
 void
 validate_region (register Lisp_Object *b, register Lisp_Object *e)
 {
@@ -2318,6 +2327,7 @@ validate_region (register Lisp_Object *b, register Lisp_Object *e)
   if (! (BEGV <= XFIXNUM (*b) && XFIXNUM (*e) <= ZV))
     args_out_of_range_3 (Fcurrent_buffer (), *b, *e);
 }
+#endif /* IGNORE_RUST_PORT */
 
 /* Advance BYTE_POS up to a character boundary
    and return the adjusted position.  */

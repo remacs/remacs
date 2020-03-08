@@ -12,9 +12,10 @@ use crate::{
     objects::eq,
     remacs_sys::EmacsInt,
     remacs_sys::{
-        map_char_table, set_char_table_extras, set_char_table_purpose, staticpro, Fmake_char_table,
-        Fset_char_table_range, CHAR_TABLE_SET,
+        globals, map_char_table, set_char_table_extras, set_char_table_purpose, staticpro,
+        CHAR_TABLE_SET,
     },
+    remacs_sys::{Fmake_char_table, Fset_char_table_range},
     remacs_sys::{Qcase_table, Qcase_table_p, Qchar_table_extra_slots, Qnil},
     threads::ThreadState,
 };
@@ -213,19 +214,7 @@ pub fn current_case_table() -> LispObject {
 /// This is the one used for new buffers.
 #[lisp_fn]
 pub fn standard_case_table() -> LispObject {
-    unsafe { get_downcase_table() }
-}
-
-// These two need to be exposed to our parts of the project.
-
-#[no_mangle]
-pub unsafe extern "C" fn get_downcase_table() -> LispObject {
-    Vascii_downcase_table
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn get_canonical_case_table() -> LispObject {
-    Vascii_canon_table
+    unsafe { globals().Vascii_downcase_table }
 }
 
 /// Select a new case table for the current buffer.
