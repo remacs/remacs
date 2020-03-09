@@ -177,15 +177,17 @@ args_out_of_range_3 (Lisp_Object a1, Lisp_Object a2, Lisp_Object a3)
   xsignal3 (Qargs_out_of_range, a1, a2, a3);
 }
 
+#ifdef IGNORE_RUST_PORT
 void
 circular_list (Lisp_Object list)
 {
   xsignal1 (Qcircular_list, list);
 }
+#endif /* IGNORE_RUST_PORT */
 
 
 /* Data type predicates.  */
-
+#ifdef IGNORE_RUST_PORT
 DEFUN ("eq", Feq, Seq, 2, 2, 0,
        doc: /* Return t if the two args are the same Lisp object.  */
        attributes: const)
@@ -195,7 +197,9 @@ DEFUN ("eq", Feq, Seq, 2, 2, 0,
     return Qt;
   return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
+#ifdef IGNORE_RUST_PORT
 DEFUN ("null", Fnull, Snull, 1, 1, 0,
        doc: /* Return t if OBJECT is nil, and return nil otherwise.  */
        attributes: const)
@@ -205,6 +209,7 @@ DEFUN ("null", Fnull, Snull, 1, 1, 0,
     return Qt;
   return Qnil;
 }
+#endif /* IGNORE_RUST_PORT */
 
 #ifdef IGNORE_RUST_PORT
 DEFUN ("type-of", Ftype_of, Stype_of, 1, 1, 0,

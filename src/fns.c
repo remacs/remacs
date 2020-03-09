@@ -2126,6 +2126,7 @@ the second.  */)
   return seq;
 }
 
+#ifdef IGNORE_RUST_PORT
 Lisp_Object
 merge (Lisp_Object org_l1, Lisp_Object org_l2, Lisp_Object pred)
 {
@@ -2171,6 +2172,7 @@ merge (Lisp_Object org_l1, Lisp_Object org_l2, Lisp_Object pred)
       tail = tem;
     }
 }
+#endif /* IGNORE_RUST_PORT */
 
 
 /* This does not check for quits.  That is safe since it must terminate.  */
