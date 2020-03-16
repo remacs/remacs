@@ -133,7 +133,7 @@ mod xml;
 #[cfg(feature = "window-system-x11")]
 mod xsettings;
 
-// C exports.
+// C exports
 mod utils_ffi;
 
 #[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
