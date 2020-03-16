@@ -87,7 +87,9 @@ jobs:
     name: Linux no GUI build
     runs-on: ubuntu-latest
     needs: [rustfmt, clippy]
-
+    env:
+      CARGO_FLAGS: "--features 'strict'"
+      RUST_BACKTRACE: 1
     steps:
     - uses: actions/checkout@v2
     - name: Cache cargo registry
@@ -112,7 +114,7 @@ jobs:
     - name: autogen
       run: ./autogen.sh
     - name: configure
-      run: ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings
+      run: RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror' ./configure --without-makeinfo --with-x=no --without-gconf --without-gsettings
     - name: make
       run: make -j 3
     - name: make check
@@ -122,6 +124,8 @@ jobs:
     name: Linux full build
     runs-on: ubuntu-latest
     needs: [rustfmt, clippy]
+      CARGO_FLAGS: "--features 'strict'"
+      RUST_BACKTRACE: 1
 
     steps:
     - uses: actions/checkout@v2
@@ -147,7 +151,7 @@ jobs:
     - name: autogen
       run: ./autogen.sh
     - name: configure
-      run: ./configure --without-makeinfo
+      run: RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror' ./configure --without-makeinfo
     - name: make
       run: make -j 3
     - name: make check
@@ -157,6 +161,9 @@ jobs:
     name: Mac no GUI build
     runs-on: macos-10.15
     needs: [rustfmt, clippy]
+      CARGO_FLAGS: "--features 'strict'"
+      RUST_BACKTRACE: 1
+      PKG_CONFIG_PATH: "/usr/local/opt/libxml2/lib/pkgconfig"
 
     steps:
     - uses: actions/checkout@v2
@@ -182,7 +189,8 @@ jobs:
     - name: autogen
       run: ./autogen.sh
     - name: configure
-      run: ./configure --without-makeinfo --with-ns=no
+      # # The -Wno-error allows MacOS code deprecation warnings to remain warnings.
+      run: RUSTFLAGS="-Dwarnings" WERROR_CFLAGS='-Werror -Wno-error=deprecated-declarations' ./configure --without-makeinfo --with-ns=no
     - name: make
       run: make -j 3
     - name: make check
