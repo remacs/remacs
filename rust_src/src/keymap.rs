@@ -23,9 +23,9 @@ use crate::{
     obarray::intern,
     remacs_sys::{
         access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
-        current_minor_maps, describe_vector, make_save_funcptr_ptr_obj, map_char_table,
-        map_keymap_call, map_keymap_char_table_item, map_keymap_function_t, map_keymap_item,
-        map_obarray, maybe_quit, specbind,
+        current_minor_maps, describe_vector, initial_define_key, make_save_funcptr_ptr_obj,
+        map_char_table, map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
+        map_keymap_item, map_obarray, maybe_quit, specbind,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
@@ -43,6 +43,10 @@ use crate::{
 
 pub const fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
+}
+
+pub const fn KeyChar(c: char) -> i32 {
+    c as i32
 }
 
 // Hash table used to cache a reverse-map to speed up calls to where-is.
@@ -167,6 +171,14 @@ pub fn make_keymap(string: LispObject) -> (LispObject, (LispObject, LispObject))
 
     let char_table = unsafe { Fmake_char_table(Qkeymap, Qnil) };
     (Qkeymap, (char_table, tail))
+}
+
+pub fn initial_define_key_rust<T: AsRef<str>>(keymap: LispObject, key: i32, defname: T) {
+    let s = defname.as_ref();
+
+    unsafe {
+        initial_define_key(keymap, key, s.as_ptr() as *const libc::c_char);
+    }
 }
 
 /// Return t if OBJECT is a keymap.

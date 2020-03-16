@@ -1,10 +1,10 @@
 ;;; ob-shen.el --- Babel Functions for Shen          -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte
 ;; Keywords: literate programming, reproducible research, shen
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;; This file is part of GNU Emacs.
 
@@ -61,7 +61,7 @@
 
 (defun org-babel-execute:shen (body params)
   "Execute a block of Shen code with org-babel.
-This function is called by `org-babel-execute-src-block'"
+This function is called by `org-babel-execute-src-block'."
   (require 'inf-shen)
   (let* ((result-params (cdr (assq :result-params params)))
          (full-body (org-babel-expand-body:shen body params)))

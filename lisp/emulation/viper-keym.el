@@ -1,6 +1,6 @@
-;;; viper-keym.el --- Viper keymaps
+;;; viper-keym.el --- Viper keymaps  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1994-1997, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1997, 2000-2020 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: viper
@@ -32,8 +32,6 @@
 (defvar viper-ex-style-editing)
 (defvar viper-ex-style-motion)
 
-(eval-and-compile
-  (unless (fboundp 'declare-function) (defmacro declare-function (&rest  r))))
 ;; end pacifier
 
 (require 'viper-util)
@@ -83,10 +81,6 @@ major mode in effect."
 (defvar viper-vi-intercept-map (make-sparse-keymap))
 (defvar viper-insert-intercept-map (make-sparse-keymap))
 (defvar viper-emacs-intercept-map (make-sparse-keymap))
-
-;; keymap used to zap all keymaps other than function-key-map,
-;; device-function-key-map, etc.
-(defvar viper-overriding-map (make-sparse-keymap))
 
 (viper-deflocalvar viper-vi-local-user-map (make-sparse-keymap)
   "Keymap for user-defined local bindings.
@@ -648,12 +642,8 @@ Arguments: (major-mode viper-state keymap)"
 
 (defun viper-add-keymap (mapsrc mapdst)
   "Add contents of mapsrc to mapdst.  It is assumed that mapsrc is sparse."
-  (if (featurep 'xemacs)
-      ;; Emacs 22 has map-keymap.
-      (map-keymap (lambda (key binding) (define-key mapdst key binding))
-		  mapsrc)
-    (mapc (lambda (p) (define-key mapdst (vector (car p)) (cdr p)))
-	  (cdr mapsrc))))
+  (mapc (lambda (p) (define-key mapdst (vector (car p)) (cdr p)))
+	(cdr mapsrc)))
 
 (defun viper-modify-keymap (map alist)
    "Modifies MAP with bindings specified in the ALIST.  The alist has the

@@ -1,6 +1,6 @@
 /* Declarations having to do with GNU Emacs syntax tables.
 
-Copyright (C) 1985, 1993-1994, 1997-1998, 2001-2018 Free Software
+Copyright (C) 1985, 1993-1994, 1997-1998, 2001-2020 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -118,7 +118,7 @@ INLINE int
 syntax_property_with_flags (int c, bool via_property)
 {
   Lisp_Object ent = syntax_property_entry (c, via_property);
-  return CONSP (ent) ? XINT (XCAR (ent)) : Swhitespace;
+  return CONSP (ent) ? XFIXNUM (XCAR (ent)) : Swhitespace;
 }
 INLINE int
 SYNTAX_WITH_FLAGS (int c)
@@ -186,13 +186,6 @@ UPDATE_SYNTAX_TABLE_FORWARD (ptrdiff_t charpos)
 				 false, gl_state.object);
 }
 
-INLINE void
-UPDATE_SYNTAX_TABLE_FORWARD_FAST (ptrdiff_t charpos)
-{
-  if (parse_sexp_lookup_properties && charpos >= gl_state.e_property)
-    update_syntax_table (charpos + gl_state.offset, 1, false, gl_state.object);
-}
-
 /* Make syntax table state (gl_state) good for CHARPOS, assuming it is
    currently good for a position after CHARPOS.  */
 
@@ -212,13 +205,6 @@ UPDATE_SYNTAX_TABLE (ptrdiff_t charpos)
   UPDATE_SYNTAX_TABLE_FORWARD (charpos);
 }
 
-INLINE void
-UPDATE_SYNTAX_TABLE_FAST (ptrdiff_t charpos)
-{
-  UPDATE_SYNTAX_TABLE_BACKWARD (charpos);
-  UPDATE_SYNTAX_TABLE_FORWARD_FAST (charpos);
-}
-
 /* Set up the buffer-global syntax table.  */
 
 INLINE void
@@ -231,7 +217,6 @@ SETUP_BUFFER_SYNTAX_TABLE (void)
 
 extern ptrdiff_t scan_words (ptrdiff_t, EMACS_INT);
 extern void SETUP_SYNTAX_TABLE_FOR_OBJECT (Lisp_Object, ptrdiff_t, ptrdiff_t);
-extern void check_syntax_table (Lisp_Object obj);
 
 INLINE_HEADER_END
 

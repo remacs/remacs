@@ -1,10 +1,10 @@
 ;;; cal-dst.el --- calendar functions for daylight saving rules  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1993-1996, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1993-1996, 2001-2020 Free Software Foundation, Inc.
 
-;; Author: Paul Eggert <eggert@twinsun.com>
+;; Author: Paul Eggert <eggert@cs.ucla.edu>
 ;;         Edward M. Reingold <reingold@cs.uiuc.edu>
-;; Maintainer: Glenn Morris <rgm@gnu.org>
+;; Maintainer: emacs-devel@gnu.org
 ;; Keywords: calendar
 ;; Human-Keywords: daylight saving time, calendar, diary, holidays
 ;; Package: calendar
@@ -61,11 +61,11 @@ list and for correcting times of day in the solar and lunar calculations.
 For example, if daylight saving time is mandated to start on October 1,
 you would set `calendar-daylight-savings-starts' to
 
-      '(10 1 year)
+      (10 1 year)
 
 If it starts on the first Sunday in April, you would set it to
 
-      '(calendar-nth-named-day 1 0 4 year)
+      (calendar-nth-named-day 1 0 4 year)
 
 If the locale never uses daylight saving time, set this to nil."
   :type 'sexp
@@ -97,62 +97,48 @@ If the locale never uses daylight saving time, set this to nil."
 ;;;###autoload
 (put 'calendar-current-time-zone-cache 'risky-local-variable t)
 
-(defvar calendar-system-time-basis
+(defconst calendar-system-time-basis
   (calendar-absolute-from-gregorian '(1 1 1970))
   "Absolute date of starting date of system clock.")
 
 (defun calendar-absolute-from-time (x utc-diff)
   "Absolute local date of time X; local time is UTC-DIFF seconds from UTC.
 
-X is (HIGH . LOW) or (HIGH LOW . IGNORED) where HIGH and LOW are the
-high and low 16 bits, respectively, of the number of seconds since
-1970-01-01 00:00:00 UTC, ignoring leap seconds.
+X is the number of seconds since 1970-01-01 00:00:00 UTC,
+ignoring leap seconds.
 
 Returns the pair (ABS-DATE . SECONDS) where SECONDS after local midnight on
 absolute date ABS-DATE is the equivalent moment to X."
-  (let* ((h (car x))
-         (xtail (cdr x))
-         (l (+ utc-diff (if (numberp xtail) xtail (car xtail))))
-         (u (+ (* 512 (mod h 675)) (floor l 128))))
-    ;; Overflow is a terrible thing!
-    (cons (+ calendar-system-time-basis
-             ;; floor((2^16 h +l) / (60*60*24))
-             (* 512 (floor h 675)) (floor u 675))
-          ;; (2^16 h +l) mod (60*60*24)
-          (+ (* (mod u 675) 128) (mod l 128)))))
+  (let ((secsperday 86400)
+        (local (+ x utc-diff)))
+    (cons (+ calendar-system-time-basis (floor local secsperday))
+          (mod local secsperday))))
 
 (defun calendar-time-from-absolute (abs-date s)
   "Time of absolute date ABS-DATE, S seconds after midnight.
 
-Returns the list (HIGH LOW) where HIGH and LOW are the high and low
-16 bits, respectively, of the number of seconds 1970-01-01 00:00:00 UTC,
-ignoring leap seconds, that is the equivalent moment to S seconds after
-midnight UTC on absolute date ABS-DATE."
-  (let* ((a (- abs-date calendar-system-time-basis))
-         (u (+ (* 163 (mod a 512)) (floor s 128))))
-    ;; Overflow is a terrible thing!
-    (list
-     ;; floor((60*60*24*a + s) / 2^16)
-     (+ a (* 163 (floor a 512)) (floor u 512))
-     ;; (60*60*24*a + s) mod 2^16
-     (+ (* 128 (mod u 512)) (mod s 128)))))
+Return the number of seconds since 1970-01-01 00:00:00 UTC,
+ignoring leap seconds, that is the equivalent moment to S seconds
+after midnight UTC on absolute date ABS-DATE."
+  (let ((secsperday 86400))
+    (+ s (* secsperday (- abs-date calendar-system-time-basis)))))
 
 (defun calendar-next-time-zone-transition (time)
   "Return the time of the next time zone transition after TIME.
 Both TIME and the result are acceptable arguments to `current-time-zone'.
 Return nil if no such transition can be found."
-  (let* ((base 65536)           ; 2^16 = base of current-time output
-         (quarter-multiple 120) ; approx = (seconds per quarter year) / base
+  (let* ((time (time-convert time 'integer))
          (time-zone (current-time-zone time))
          (time-utc-diff (car time-zone))
          hi
          hi-zone
          (hi-utc-diff time-utc-diff)
+         (quarter-seconds 7889238) ; Average seconds per 1/4 Gregorian year.
          (quarters '(2 1 3)))
     ;; Heuristic: probe the time zone offset in the next three calendar
     ;; quarters, looking for a time zone offset different from TIME.
     (while (and quarters (eq time-utc-diff hi-utc-diff))
-      (setq hi (cons (+ (car time) (* (car quarters) quarter-multiple)) 0)
+      (setq hi (+ time (* (car quarters) quarter-seconds))
             hi-zone (current-time-zone hi)
             hi-utc-diff (car hi-zone)
             quarters (cdr quarters)))
@@ -163,23 +149,16 @@ Return nil if no such transition can be found."
      ;; Now HI is after the next time zone transition.
      ;; Set LO to TIME, and then binary search to increase LO and decrease HI
      ;; until LO is just before and HI is just after the time zone transition.
-     (let* ((tail (cdr time))
-            (lo (cons (car time) (if (numberp tail) tail (car tail))))
+     (let* ((lo time)
             probe)
        (while
            ;; Set PROBE to halfway between LO and HI, rounding down.
            ;; If PROBE equals LO, we are done.
-           (let* ((lsum (+ (cdr lo) (cdr hi)))
-                  (hsum (+ (car lo) (car hi) (/ lsum base)))
-                  (hsumodd (logand 1 hsum)))
-             (setq probe (cons (/ (- hsum hsumodd) 2)
-                               (/ (+ (* hsumodd base) (% lsum base)) 2)))
-             (not (equal lo probe)))
+           (not (= lo (setq probe (floor (+ lo hi) 2))))
          ;; Set either LO or HI to PROBE, depending on probe results.
          (if (eq (car (current-time-zone probe)) hi-utc-diff)
              (setq hi probe)
            (setq lo probe)))
-       (setcdr hi (list (cdr hi)))
        hi))))
 
 (autoload 'calendar-persian-to-absolute "cal-persia")
@@ -252,7 +231,7 @@ The result has the proper form for `calendar-daylight-savings-starts'."
 ;; https://lists.gnu.org/r/emacs-pretest-bug/2006-11/msg00060.html
 (defun calendar-dst-find-data (&optional time)
   "Find data on the first daylight saving time transitions after TIME.
-TIME defaults to `current-time'.  Return value is as described
+TIME defaults to the current time.  Return value is as described
 for `calendar-current-time-zone'."
   (let* ((t0 (or time (current-time)))
          (t0-zone (current-time-zone t0))
@@ -280,7 +259,7 @@ for `calendar-current-time-zone'."
                             (car t2-date-sec) t1-utc-diff))
                  (t1-time (/ (cdr t1-date-sec) 60))
                  (t2-time (/ (cdr t2-date-sec) 60)))
-            (if (nth 7 (decode-time t1))
+            (if (decoded-time-dst (decode-time t1))
                 (list (/ t0-utc-diff 60) (/ (- t1-utc-diff t0-utc-diff) 60)
                       t0-name t1-name t1-rules t2-rules t1-time t2-time)
               (list (/ t1-utc-diff 60) (/ (- t0-utc-diff t1-utc-diff) 60)
@@ -297,11 +276,11 @@ function `calendar-dst-find-startend'.")
   "Find the dates in YEAR on which daylight saving time starts and ends.
 Returns a list (YEAR START END), where START and END are
 expressions that when evaluated return the start and end dates,
-respectively. This function first attempts to use pre-calculated
+respectively.  This function first attempts to use pre-calculated
 data from `calendar-dst-transition-cache', otherwise it calls
 `calendar-dst-find-data' (and adds the results to the cache).
-If dates in YEAR cannot be handled by `encode-time' (e.g. if they
-are too large to be represented as a lisp integer), then rather
+If dates in YEAR cannot be handled by `encode-time' (e.g.,
+if they are out of range for POSIX time_t), then rather
 than an error this function returns the result appropriate for
 the current year."
   (let ((e (assoc year calendar-dst-transition-cache))
@@ -312,7 +291,8 @@ the current year."
                    (condition-case nil
                        (encode-time 1 0 0 1 1 year)
                      (error
-                      (encode-time 1 0 0 1 1 (nth 5 (decode-time))))))
+                      (encode-time 1 0 0 1 1
+                                   (decoded-time-year (decode-time))))))
                 f (nth 4 e)
                 e (list year f (nth 5 e))
                 calendar-dst-transition-cache

@@ -1,6 +1,6 @@
 /* GNU Emacs routines to deal with category tables.
 
-Copyright (C) 1998, 2001-2018 Free Software Foundation, Inc.
+Copyright (C) 1998, 2001-2020 Free Software Foundation, Inc.
 Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
   2005, 2006, 2007, 2008, 2009, 2010, 2011
   National Institute of Advanced Industrial Science and Technology (AIST)
@@ -42,33 +42,21 @@ bset_category_table (struct buffer *b, Lisp_Object val)
   b->category_table_ = val;
 }
 
-/* The version number of the latest category table.  Each category
-   table has a unique version number.  It is assigned a new number
-   also when it is modified.  When a regular expression is compiled
-   into the struct re_pattern_buffer, the version number of the
-   category table (of the current buffer) at that moment is also
-   embedded in the structure.
-
-   For the moment, we are not using this feature.  */
-static int category_table_version;
 
 /* Category set staff.  */
 
 static Lisp_Object
 hash_get_category_set (Lisp_Object table, Lisp_Object category_set)
 {
-  struct Lisp_Hash_Table *h;
-  ptrdiff_t i;
-  EMACS_UINT hash;
-
   if (NILP (XCHAR_TABLE (table)->extras[1]))
     set_char_table_extras
       (table, 1,
        make_hash_table (hashtest_equal, DEFAULT_HASH_SIZE,
 			DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
 			Qnil, false));
-  h = XHASH_TABLE (XCHAR_TABLE (table)->extras[1]);
-  i = hash_lookup (h, category_set, &hash);
+  struct Lisp_Hash_Table *h = XHASH_TABLE (XCHAR_TABLE (table)->extras[1]);
+  Lisp_Object hash;
+  ptrdiff_t i = hash_lookup (h, category_set, &hash);
   if (i >= 0)
     return HASH_KEY (h, i);
   hash_put (h, category_set, Qnil, hash);
@@ -103,7 +91,7 @@ those categories.  */)
   while (--len >= 0)
     {
       unsigned char cat = SREF (categories, len);
-      Lisp_Object category = make_number (cat);
+      Lisp_Object category = make_fixnum (cat);
 
       CHECK_CATEGORY (category);
       set_category_set (val, cat, 1);
@@ -130,11 +118,11 @@ the current buffer's category table.  */)
   CHECK_STRING (docstring);
   table = check_category_table (table);
 
-  if (!NILP (CATEGORY_DOCSTRING (table, XFASTINT (category))))
-    error ("Category `%c' is already defined", (int) XFASTINT (category));
+  if (!NILP (CATEGORY_DOCSTRING (table, XFIXNAT (category))))
+    error ("Category `%c' is already defined", (int) XFIXNAT (category));
   if (!NILP (Vpurify_flag))
     docstring = Fpurecopy (docstring);
-  SET_CATEGORY_DOCSTRING (table, XFASTINT (category), docstring);
+  SET_CATEGORY_DOCSTRING (table, XFIXNAT (category), docstring);
 
   return Qnil;
 }
@@ -148,7 +136,7 @@ category table.  */)
   CHECK_CATEGORY (category);
   table = check_category_table (table);
 
-  return CATEGORY_DOCSTRING (table, XFASTINT (category));
+  return CATEGORY_DOCSTRING (table, XFIXNAT (category));
 }
 
 DEFUN ("get-unused-category", Fget_unused_category, Sget_unused_category,
@@ -165,13 +153,25 @@ it defaults to the current buffer's category table.  */)
 
   for (i = ' '; i <= '~'; i++)
     if (NILP (CATEGORY_DOCSTRING (table, i)))
-      return make_number (i);
+      return make_fixnum (i);
 
   return Qnil;
 }
 
 
 /* Category-table staff.  */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("category-table-p", Fcategory_table_p, Scategory_table_p, 1, 1, 0,
+       doc: /* Return t if ARG is a category table.  */)
+  (Lisp_Object arg)
+{
+  if (CHAR_TABLE_P (arg)
+      && EQ (XCHAR_TABLE (arg)->purpose, Qcategory_table))
+    return Qt;
+  return Qnil;
+}
+#endif
 
 /* If TABLE is nil, return the current category table.  If TABLE is
    not nil, check the validity of TABLE as a category table.  If
@@ -186,6 +186,16 @@ check_category_table (Lisp_Object table)
   CHECK_TYPE (!NILP (Fcategory_table_p (table)), Qcategory_table_p, table);
   return table;
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("category-table", Fcategory_table, Scategory_table, 0, 0, 0,
+       doc: /* Return the current category table.
+This is the one specified by the current buffer.  */)
+  (void)
+{
+  return BVAR (current_buffer, category_table);
+}
+#endif
 
 DEFUN ("standard-category-table", Fstandard_category_table,
    Sstandard_category_table, 0, 0, 0,
@@ -202,9 +212,9 @@ copy_category_entry (Lisp_Object table, Lisp_Object c, Lisp_Object val)
 {
   val = Fcopy_sequence (val);
   if (CONSP (c))
-    char_table_set_range (table, XINT (XCAR (c)), XINT (XCDR (c)), val);
+    char_table_set_range (table, XFIXNUM (XCAR (c)), XFIXNUM (XCDR (c)), val);
   else
-    char_table_set (table, XINT (c), val);
+    char_table_set (table, XFIXNUM (c), val);
 }
 
 /* Return a copy of category table TABLE.  We can't simply use the
@@ -253,8 +263,7 @@ DEFUN ("make-category-table", Fmake_category_table, Smake_category_table,
   set_char_table_defalt (val, MAKE_CATEGORY_SET);
   for (i = 0; i < (1 << CHARTAB_SIZE_BITS_0); i++)
     set_char_table_contents (val, i, MAKE_CATEGORY_SET);
-  Fset_char_table_extra_slot (val, make_number (0),
-			      Fmake_vector (make_number (95), Qnil));
+  Fset_char_table_extra_slot (val, make_fixnum (0), make_nil_vector (95));
   return val;
 }
 
@@ -285,7 +294,7 @@ usage: (char-category-set CHAR)  */)
   (Lisp_Object ch)
 {
   CHECK_CHARACTER (ch);
-  return CATEGORY_SET (XFASTINT (ch));
+  return CATEGORY_SET (XFIXNAT (ch));
 }
 
 DEFUN ("category-set-mnemonics", Fcategory_set_mnemonics,
@@ -328,25 +337,25 @@ then delete CATEGORY from the category set instead of adding it.  */)
   int start, end;
   int from, to;
 
-  if (INTEGERP (character))
+  if (FIXNUMP (character))
     {
       CHECK_CHARACTER (character);
-      start = end = XFASTINT (character);
+      start = end = XFIXNAT (character);
     }
   else
     {
       CHECK_CONS (character);
       CHECK_CHARACTER_CAR (character);
       CHECK_CHARACTER_CDR (character);
-      start = XFASTINT (XCAR (character));
-      end = XFASTINT (XCDR (character));
+      start = XFIXNAT (XCAR (character));
+      end = XFIXNAT (XCDR (character));
     }
 
   CHECK_CATEGORY (category);
   table = check_category_table (table);
 
-  if (NILP (CATEGORY_DOCSTRING (table, XFASTINT (category))))
-    error ("Undefined category: %c", (int) XFASTINT (category));
+  if (NILP (CATEGORY_DOCSTRING (table, XFIXNAT (category))))
+    error ("Undefined category: %c", (int) XFIXNAT (category));
 
   set_value = NILP (reset);
 
@@ -354,10 +363,10 @@ then delete CATEGORY from the category set instead of adding it.  */)
     {
       from = start, to = end;
       category_set = char_table_ref_and_range (table, start, &from, &to);
-      if (CATEGORY_MEMBER (XFASTINT (category), category_set) != NILP (reset))
+      if (CATEGORY_MEMBER (XFIXNAT (category), category_set) != NILP (reset))
 	{
 	  category_set = Fcopy_sequence (category_set);
-	  set_category_set (category_set, XFASTINT (category), set_value);
+	  set_category_set (category_set, XFIXNAT (category), set_value);
 	  category_set = hash_get_category_set (table, category_set);
 	  char_table_set_range (table, start, to, category_set);
 	}
@@ -405,12 +414,12 @@ word_boundary_p (int c1, int c2)
       if (CONSP (elt)
 	  && (NILP (XCAR (elt))
 	      || (CATEGORYP (XCAR (elt))
-		  && CATEGORY_MEMBER (XFASTINT (XCAR (elt)), category_set1)
-		  && ! CATEGORY_MEMBER (XFASTINT (XCAR (elt)), category_set2)))
+		  && CATEGORY_MEMBER (XFIXNAT (XCAR (elt)), category_set1)
+		  && ! CATEGORY_MEMBER (XFIXNAT (XCAR (elt)), category_set2)))
 	  && (NILP (XCDR (elt))
 	      || (CATEGORYP (XCDR (elt))
-		  && ! CATEGORY_MEMBER (XFASTINT (XCDR (elt)), category_set1)
-		  && CATEGORY_MEMBER (XFASTINT (XCDR (elt)), category_set2))))
+		  && ! CATEGORY_MEMBER (XFIXNAT (XCDR (elt)), category_set1)
+		  && CATEGORY_MEMBER (XFIXNAT (XCDR (elt)), category_set2))))
 	return !default_result;
     }
   return default_result;
@@ -422,13 +431,13 @@ init_category_once (void)
 {
   /* This has to be done here, before we call Fmake_char_table.  */
   DEFSYM (Qcategory_table, "category-table");
-  Fput (Qcategory_table, Qchar_table_extra_slots, make_number (2));
+  Fput (Qcategory_table, Qchar_table_extra_slots, make_fixnum (2));
 
   Vstandard_category_table = Fmake_char_table (Qcategory_table, Qnil);
   /* Set a category set which contains nothing to the default.  */
   set_char_table_defalt (Vstandard_category_table, MAKE_CATEGORY_SET);
-  Fset_char_table_extra_slot (Vstandard_category_table, make_number (0),
-			      Fmake_vector (make_number (95), Qnil));
+  Fset_char_table_extra_slot (Vstandard_category_table, make_fixnum (0),
+			      make_nil_vector (95));
 }
 
 void
@@ -486,6 +495,10 @@ See the documentation of the variable `word-combining-categories'.  */);
   defsubr (&Sdefine_category);
   defsubr (&Scategory_docstring);
   defsubr (&Sget_unused_category);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scategory_table_p);
+  defsubr (&Scategory_table);
+#endif
   defsubr (&Sstandard_category_table);
   defsubr (&Scopy_category_table);
   defsubr (&Smake_category_table);
@@ -493,6 +506,4 @@ See the documentation of the variable `word-combining-categories'.  */);
   defsubr (&Schar_category_set);
   defsubr (&Scategory_set_mnemonics);
   defsubr (&Smodify_category_entry);
-
-  category_table_version = 0;
 }

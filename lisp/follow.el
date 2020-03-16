@@ -1,6 +1,6 @@
 ;;; follow.el --- synchronize windows showing the same buffer
 
-;; Copyright (C) 1995-1997, 1999, 2001-2018 Free Software Foundation,
+;; Copyright (C) 1995-1997, 1999, 2001-2020 Free Software Foundation,
 ;; Inc.
 
 ;; Author: Anders Lindgren
@@ -25,8 +25,8 @@
 
 ;;; Commentary:
 
-;; `Follow mode' is a minor mode for Emacs and XEmacs that
-;; combines windows into one tall virtual window.
+;; `Follow mode' is a minor mode that combines windows into one tall
+;; virtual window.
 ;;
 ;; The feeling of a "virtual window" has been accomplished by the use
 ;; of two major techniques:
@@ -187,8 +187,8 @@
 ;; Implementation:
 ;;
 ;; The main method by which Follow mode aligns windows is via the
-;; function `follow-post-command-hook', which is run after each
-;; command.  This "fixes up" the alignment of other windows which are
+;; function `follow-pre-redisplay-function', which is run before each
+;; redisplay.  This "fixes up" the alignment of other windows which are
 ;; showing the same Follow mode buffer, on the same frame as the
 ;; selected window.  It does not try to deal with buffers other than
 ;; the buffer of the selected frame, or windows on other frames.
@@ -311,6 +311,17 @@ are \" Fw\", or simply \"\"."
 	   (remove-hook 'find-file-hook 'follow-find-file-hook))
 	 (set-default symbol value)))
 
+(defcustom follow-hide-ghost-cursors t  ; Maybe this should be nil.
+  "When non-nil, Follow mode attempts to hide the obtrusive cursors
+in the non-selected windows of a window group.
+
+This variable takes effect when `follow-mode' is initialized.
+
+Due to limitations in Emacs, this only operates on the followers
+of the selected window."
+  :type 'boolean
+  :group 'follow)
+
 (defvar follow-cache-command-list
   '(next-line previous-line forward-char backward-char right-char left-char)
   "List of commands that don't require recalculation.
@@ -383,9 +394,6 @@ This is typically set by explicit scrolling commands.")
 ;;;###autoload
 (define-minor-mode follow-mode
   "Toggle Follow mode.
-With a prefix argument ARG, enable Follow mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Follow mode is a minor mode that combines windows into one tall
 virtual window.  This is accomplished by two main techniques:
@@ -421,7 +429,7 @@ Keys specific to Follow mode:
   (if follow-mode
       (progn
 	(add-hook 'compilation-filter-hook 'follow-align-compilation-windows t t)
-	(add-hook 'post-command-hook 'follow-post-command-hook t)
+        (add-function :before pre-redisplay-function 'follow-pre-redisplay-function)
 	(add-hook 'window-size-change-functions 'follow-window-size-change t)
         (add-hook 'after-change-functions 'follow-after-change nil t)
         (add-hook 'isearch-update-post-hook 'follow-post-command-hook nil t)
@@ -430,6 +438,8 @@ Keys specific to Follow mode:
 
         (when isearch-lazy-highlight
           (setq-local isearch-lazy-highlight 'all-windows))
+        (when follow-hide-ghost-cursors
+          (setq-local cursor-in-non-selected-windows nil))
 
         (setq window-group-start-function 'follow-window-start)
         (setq window-group-end-function 'follow-window-end)
@@ -448,7 +458,7 @@ Keys specific to Follow mode:
 	(setq following (buffer-local-value 'follow-mode (car buffers))
 	      buffers (cdr buffers)))
       (unless following
-	(remove-hook 'post-command-hook 'follow-post-command-hook)
+        (remove-function pre-redisplay-function 'follow-pre-redisplay-function)
 	(remove-hook 'window-size-change-functions 'follow-window-size-change)))
 
     (kill-local-variable 'move-to-window-group-line-function)
@@ -458,6 +468,8 @@ Keys specific to Follow mode:
     (kill-local-variable 'set-window-group-start-function)
     (kill-local-variable 'window-group-end-function)
     (kill-local-variable 'window-group-start-function)
+
+    (kill-local-variable 'cursor-in-non-selected-windows)
 
     (remove-hook 'ispell-update-post-hook 'follow-post-command-hook t)
     (remove-hook 'replace-update-post-hook 'follow-post-command-hook t)
@@ -545,7 +557,7 @@ This is an internal function for `follow-scroll-up' and
   (let ((opoint (point))  (owin (selected-window)))
     (while
         ;; If we are too near EOB, try scrolling the previous window.
-        (condition-case nil (progn (scroll-up arg) nil)
+        (condition-case nil (progn (scroll-up-command arg) nil)
           (end-of-buffer
            (condition-case nil (progn (follow-previous-window) t)
              (error
@@ -564,7 +576,7 @@ If ARG is nil, scroll the size of the current window.
 This is an internal function for `follow-scroll-down' and
 `follow-scroll-down-window'."
   (let ((opoint (point)))
-    (scroll-down arg)
+    (scroll-down-command arg)
     (unless (and scroll-preserve-screen-position
                  (get this-command 'scroll-command))
       (goto-char opoint))
@@ -584,7 +596,7 @@ Negative ARG means scroll downward.
 Works like `scroll-up' when not in Follow mode."
   (interactive "P")
   (cond ((not follow-mode)
-	 (scroll-up arg))
+	 (scroll-up-command arg))
 	((eq arg '-)
 	 (follow-scroll-down-window))
 	(t (follow-scroll-up-arg arg))))
@@ -604,7 +616,7 @@ Negative ARG means scroll upward.
 Works like `scroll-down' when not in Follow mode."
   (interactive "P")
   (cond ((not follow-mode)
-	 (scroll-down arg))
+	 (scroll-down-command arg))
 	((eq arg '-)
 	 (follow-scroll-up-window))
 	(t (follow-scroll-down-arg arg))))
@@ -623,13 +635,16 @@ Negative ARG means scroll downward.
 Works like `scroll-up' when not in Follow mode."
   (interactive "P")
   (cond ((not follow-mode)
-	 (scroll-up arg))
+	 (scroll-up-command arg))
 	(arg (follow-scroll-up-arg arg))
         (t
 	 (let* ((windows (follow-all-followers))
 		(end (window-end (car (reverse windows)))))
 	   (if (eq end (point-max))
-	       (signal 'end-of-buffer nil)
+	       (if (or (null scroll-error-top-bottom)
+		       (eobp))
+		   (signal 'end-of-buffer nil)
+		 (goto-char (point-max)))
 	     (select-window (car windows))
 	     ;; `window-end' might return nil.
 	     (if end
@@ -651,14 +666,17 @@ Negative ARG means scroll upward.
 Works like `scroll-down' when not in Follow mode."
   (interactive "P")
   (cond ((not follow-mode)
-	 (scroll-down arg))
+	 (scroll-down-command arg))
 	(arg (follow-scroll-down-arg arg))
         (t
 	 (let* ((windows (follow-all-followers))
 		(win (car (reverse windows)))
 		(start (window-start (car windows))))
 	   (if (eq start (point-min))
-	       (signal 'beginning-of-buffer nil)
+	       (if (or (null scroll-error-top-bottom)
+		       (bobp))
+		   (signal 'beginning-of-buffer nil)
+		 (goto-char (point-min)))
 	     (select-window win)
 	     (goto-char start)
 	     (vertical-motion (- (- (window-height win)
@@ -1263,10 +1281,31 @@ non-first windows in Follow mode."
 	    (not (eq win top))))  ;; Loop while this is true.
       (set-buffer orig-buffer))))
 
+;;; Pre Display Function
+
+(defvar follow-prev-buffer nil
+  "The buffer current at the last call to `follow-adjust-window' or nil.
+follow-mode is not necessarily enabled in this buffer.")
+
+;; This function is added to `pre-display-function' and is thus called
+;; before each redisplay operation.  It supersedes (2018-09) the
+;; former use of the post command hook, and now does the right thing
+;; when a program calls `redisplay' or `sit-for'.
+
+(defun follow-pre-redisplay-function (wins)
+  (if (or (eq wins t)
+          (null wins)
+          (and (listp wins)
+               (memq (selected-window) wins)))
+      (follow-post-command-hook)))
+
 ;;; Post Command Hook
 
-;; The magic little box. This function is called after every command.
-
+;; The magic little box. This function was formerly called after every
+;; command.  It is now called before each redisplay operation (see
+;; `follow-pre-redisplay-function' above), and at the end of several
+;; search/replace commands.  It retains its historical name.
+;;
 ;; This is not as complicated as it seems. It is simply a list of common
 ;; display situations and the actions to take, plus commands for redrawing
 ;; the screen if it should be unaligned.
@@ -1287,9 +1326,33 @@ non-first windows in Follow mode."
 	  (setq follow-windows-start-end-cache nil))
         (follow-adjust-window win)))))
 
+;; NOTE: to debug follow-mode with edebug, it is helpful to add
+;; `follow-post-command-hook' to `post-command-hook' temporarily.  Do
+;; this locally to the target buffer with, say,:
+;; M-: (add-hook 'post-command-hook 'follow-post-command-hook t t)
+;; .
+
 (defun follow-adjust-window (win)
   ;; Adjust the window WIN and its followers.
   (cl-assert (eq (window-buffer win) (current-buffer)))
+
+  ;; Have we moved out of or into a follow-mode window group?
+  ;; If so, attend to the visibility of the cursors.
+  (when (not (eq (current-buffer) follow-prev-buffer))
+    ;; Do we need to switch off cursor handling in the previous buffer?
+    (when (buffer-live-p follow-prev-buffer)
+      (with-current-buffer follow-prev-buffer
+        (when (and follow-mode
+                   (local-variable-p 'cursor-in-non-selected-windows))
+          (setq cursor-in-non-selected-windows
+                (default-value 'cursor-in-non-selected-windows)))))
+    ;; Do we need to switch on cursor handling in the current buffer?
+    (when (and follow-mode
+               (local-variable-p 'cursor-in-non-selected-windows))
+      (setq cursor-in-non-selected-windows nil))
+    (when (buffer-live-p (current-buffer))
+      (setq follow-prev-buffer (current-buffer))))
+
   (when (and follow-mode
              (not (window-minibuffer-p win)))
     (let ((windows (follow-all-followers win)))
@@ -1385,7 +1448,13 @@ non-first windows in Follow mode."
 	  (unless (eq win (selected-window))
 	    (let ((p (window-point win)))
 	      (set-window-start win (window-start win) nil)
-	      (set-window-point win p))))
+              (if (nth 2 (pos-visible-in-window-p p win t))
+                  ;; p is in a partially visible line.  We can't leave
+                  ;; window-point there, because C-x o back into WIN
+                  ;; would then fail.
+                  (with-selected-window win
+                    (forward-line)) ; redisplay will recenter it in WIN.
+	        (set-window-point win p)))))
 
 	(unless visible
 	  ;; If point may not be visible in the selected window,

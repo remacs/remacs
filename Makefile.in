@@ -1,6 +1,6 @@
 ### @configure_input@
 
-# Copyright (C) 1992-2018 Free Software Foundation, Inc.
+# Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
 # This file is part of GNU Emacs.
 
@@ -66,6 +66,8 @@
 
 SHELL = @SHELL@
 
+DUMPING=@DUMPING@
+
 # This only matters when inheriting a CDPATH not starting with the
 # current directory.
 CDPATH=
@@ -78,13 +80,6 @@ CONFIGURE_FLAGS = --cache-file=$(cache_file)
 AWK = @AWK@
 
 EXEEXT=@EXEEXT@
-
-RUSTFLAGS=@RUSTFLAGS@
-CARGO_BUILD=@CARGO_BUILD@
-CARGO_CLEAN=@CARGO_CLEAN@
-CARGO_CLIPPY=@CARGO_CLIPPY@
-CARGO_TEST=@CARGO_TEST@
-CARGO_FLAGS=@CARGO_FLAGS@
 
 ### These help us choose version- and architecture-specific directories
 ### to install files in.
@@ -158,6 +153,9 @@ libexecdir=@libexecdir@
 # Currently only used for the systemd service file.
 libdir=@libdir@
 
+# Where to install emacs-module.h.
+includedir=@includedir@
+
 # Where to install Emacs's man pages.
 # Note they contain cross-references that expect them to be in section 1.
 mandir=@mandir@
@@ -199,7 +197,7 @@ x_default_search_path=@x_default_search_path@
 desktopdir=$(datarootdir)/applications
 
 # Where the etc/emacs.appdata.xml file is to be installed.
-appdatadir=$(datarootdir)/appdata
+appdatadir=$(datarootdir)/metainfo
 
 # Where the etc/emacs.service file is to be installed.
 # The system value (typically /usr/lib/systemd/user) can be
@@ -217,10 +215,6 @@ icondir=$(datarootdir)/icons
 
 # The source directory for the icon files.
 iconsrcdir=$(srcdir)/etc/images/icons
-
-# Root of rust src tree (where Cargo.toml is located).
-rust_srcdir=$(srcdir)/rust_src
-cargo_manifest=$(rust_srcdir)/Cargo.toml
 
 # ==================== Emacs-specific directories ====================
 
@@ -312,9 +306,9 @@ GZIP_PROG = @GZIP_PROG@
 TRANSFORM = @program_transform_name@
 
 # What emacs should be called when installed.
-EMACS_NAME = `echo remacs | sed '$(TRANSFORM)'`
+EMACS_NAME = `echo emacs | sed '$(TRANSFORM)'`
 EMACS = ${EMACS_NAME}${EXEEXT}
-EMACSFULL = `echo remacs-${version} | sed '$(TRANSFORM)'`${EXEEXT}
+EMACSFULL = `echo emacs-${version} | sed '$(TRANSFORM)'`${EXEEXT}
 
 # Subdirectories to make recursively.
 SUBDIR = $(NTDIR) lib lib-src src lisp
@@ -326,7 +320,8 @@ SUBDIR_MAKEFILES = $(patsubst ${srcdir}/%,%,${SUBDIR_MAKEFILES_IN:.in=})
 # Non-makefile files created by config.status.
 CONFIG_STATUS_FILES_IN = \
  ${srcdir}/nt/emacs.rc.in ${srcdir}/nt/emacsclient.rc.in \
- ${srcdir}/doc/man/emacs.1.in
+ ${srcdir}/doc/man/emacs.1.in ${srcdir}/src/emacs-module.h.in \
+ ${srcdir}/src/module-env-*.h
 
 # Subdirectories to install, and where they'll go.  lib-src's and nt's
 # makefiles know how to install them, so we don't do that here.
@@ -447,7 +442,7 @@ blessmail: Makefile src
 MAKEFILE_NAME = Makefile
 $(MAKEFILE_NAME): config.status $(srcdir)/configure \
 	 $(srcdir)/lib/gnulib.mk.in \
-         $(srcdir)/Makefile.in $(SUBDIR_MAKEFILES_IN) $(CONFIG_STATUS_FILES_IN)
+	$(srcdir)/Makefile.in $(SUBDIR_MAKEFILES_IN) $(CONFIG_STATUS_FILES_IN)
 	MAKE='$(MAKE)' ./config.status
 
 # Don't erase these files if make is interrupted while refreshing them.
@@ -498,7 +493,10 @@ install-arch-dep: src install-arch-indep install-etcdoc install-$(NTDIR)
 	umask 022; ${MKDIR_P} "$(DESTDIR)${bindir}"
 	$(MAKE) -C lib-src install
 ifeq (${ns_self_contained},no)
-	${INSTALL_PROGRAM} $(INSTALL_STRIP) src/remacs${EXEEXT} "$(DESTDIR)${bindir}/$(EMACSFULL)"
+	${INSTALL_PROGRAM} $(INSTALL_STRIP) src/emacs${EXEEXT} "$(DESTDIR)${bindir}/$(EMACSFULL)"
+ifeq (${DUMPING},pdumper)
+	${INSTALL_DATA} src/emacs.pdmp "$(DESTDIR)${libexecdir}/emacs/${version}/${configuration}"/emacs.pdmp
+endif
 	-chmod 755 "$(DESTDIR)${bindir}/$(EMACSFULL)"
 ifndef NO_BIN_LINK
 	rm -f "$(DESTDIR)${bindir}/$(EMACS)"
@@ -527,9 +525,11 @@ INSTALL_ARCH_INDEP_EXTRA = @INSTALL_ARCH_INDEP_EXTRA@
 ## https://lists.gnu.org/r/emacs-devel/2007-10/msg01672.html
 ## Needs to be the user running install, so configure can't set it.
 set_installuser=for installuser in $${LOGNAME} $${USERNAME} $${USER} \
-	  `id -un 2> /dev/null`; do \
+	  `(id -u) 2> /dev/null`; do \
 	  [ -n "$${installuser}" ] && break ; \
-	done
+	done; \
+	installgroup=`(id -g) 2>/dev/null` && [ -n "$$installgroup" ] && \
+	  installuser=$$installuser:$$installgroup
 
 ### Install the files that are machine-independent.
 ### Most of them come straight from the distribution; the exception is
@@ -569,6 +569,8 @@ set_installuser=for installuser in $${LOGNAME} $${USERNAME} $${USER} \
 ## See also these comments from 2004 about cp -r working fine:
 ## https://lists.gnu.org/r/autoconf-patches/2004-11/msg00005.html
 install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
+	umask 022 && $(MKDIR_P) "$(DESTDIR)$(includedir)"
+	$(INSTALL_DATA) src/emacs-module.h "$(DESTDIR)$(includedir)/emacs-module.h"
 	-set ${COPYDESTS} ; \
 	unset CDPATH; \
 	$(set_installuser); \
@@ -610,9 +612,9 @@ install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
 	done
 	-rm -f "$(DESTDIR)${lispdir}/subdirs.el"
 	umask 022; $(srcdir)/build-aux/update-subdirs "$(DESTDIR)${lispdir}"
-	subdir="$(DESTDIR)${datadir}/remacs/${version}/site-lisp" ; \
+	subdir="$(DESTDIR)${datadir}/emacs/${version}/site-lisp" ; \
 	  ${write_subdir}
-	subdir="$(DESTDIR)${datadir}/remacs/site-lisp" ; \
+	subdir="$(DESTDIR)${datadir}/emacs/site-lisp" ; \
 	  ${write_subdir} || true
 	[ -z "${GZIP_PROG}" ] || { \
 	  echo "Compressing *.el etc. ..." && \
@@ -622,7 +624,7 @@ install-arch-indep: lisp install-info install-man ${INSTALL_ARCH_INDEP_EXTRA}
 	  done; \
 	  ${GZIP_PROG} -9n "../etc/publicsuffix.txt"; \
 	}
-	-chmod -R a+r "$(DESTDIR)${datadir}/remacs/${version}" ${COPYDESTS}
+	-chmod -R a+r "$(DESTDIR)${datadir}/emacs/${version}" ${COPYDESTS}
 
 ## The above chmods are needed because "umask 022; tar ..." is not
 ## guaranteed to do the right thing; eg if we are root and tar is
@@ -709,23 +711,23 @@ install-etc:
 	tmp=etc/emacs.tmpdesktop; rm -f $${tmp}; \
 	sed -e "/^Exec=emacs/ s/emacs/${EMACS_NAME}/" \
 	  -e "/^Icon=emacs/ s/emacs/${EMACS_NAME}/" \
-	  ${srcdir}/etc/remacs.desktop > $${tmp}; \
+	  ${srcdir}/etc/emacs.desktop > $${tmp}; \
 	${INSTALL_DATA} $${tmp} "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"; \
 	rm -f $${tmp}
 	umask 022; ${MKDIR_P} "$(DESTDIR)${appdatadir}"
-	tmp=etc/remacs.tmpappdata; rm -f $${tmp}; \
-	sed -e "s/remacs\.desktop/${EMACS_NAME}.desktop/" \
-	  ${srcdir}/etc/remacs.appdata.xml > $${tmp}; \
+	tmp=etc/emacs.tmpappdata; rm -f $${tmp}; \
+	sed -e "s/emacs\.desktop/${EMACS_NAME}.desktop/" \
+	  ${srcdir}/etc/emacs.appdata.xml > $${tmp}; \
 	${INSTALL_DATA} $${tmp} "$(DESTDIR)${appdatadir}/${EMACS_NAME}.appdata.xml"; \
 	rm -f $${tmp}
 	umask 022; $(MKDIR_P) "$(DESTDIR)$(systemdunitdir)"
 	tmp=etc/emacs.tmpservice; rm -f $${tmp}; \
-	client_name=`echo remacsclient | sed '$(TRANSFORM)'`${EXEEXT}; \
+	client_name=`echo emacsclient | sed '$(TRANSFORM)'`${EXEEXT}; \
 	sed -e '/^##/d' \
 	  -e "/^Documentation/ s/emacs(1)/${EMACS_NAME}(1)/" \
-	  -e "/^ExecStart/ s|remacs|${bindir}/${EMACS}|" \
-	  -e "/^ExecStop/ s|remacsclient|${bindir}/$${client_name}|" \
-	  ${srcdir}/etc/remacs.service > $${tmp}; \
+	  -e "/^ExecStart/ s|emacs|${bindir}/${EMACS}|" \
+	  -e "/^ExecStop/ s|emacsclient|${bindir}/$${client_name}|" \
+	  ${srcdir}/etc/emacs.service > $${tmp}; \
 	$(INSTALL_DATA) $${tmp} "$(DESTDIR)$(systemdunitdir)/${EMACS_NAME}.service"; \
 	rm -f $${tmp}
 	thisdir=`/bin/pwd`; \
@@ -736,7 +738,7 @@ install-etc:
 	  for icon in $${dir}/${EMACS_ICON}[.-]*; do \
 	    [ -r $${icon} ] || continue ; \
 	    ext=`echo "$${icon}" | sed -e 's|.*\.||'`; \
-	    dest=`echo "$${icon}" | sed -e 's|.*/||' -e "s|\\.$${ext}\$$||" -e 's/$(EMACS_ICON)/remacs/' -e '$(TRANSFORM)'`.$${ext} ; \
+	    dest=`echo "$${icon}" | sed -e 's|.*/||' -e "s|\\.$${ext}\$$||" -e 's/$(EMACS_ICON)/emacs/' -e '$(TRANSFORM)'`.$${ext} ; \
 	    ( cd "$${thisdir}"; \
 	      ${INSTALL_DATA} ${iconsrcdir}/$${icon} "$(DESTDIR)${icondir}/$${dir}/$${dest}" ) \
 	    || exit 1; \
@@ -752,6 +754,7 @@ install-strip:
 ###
 ### Don't delete the lisp and etc directories if they're in the source tree.
 uninstall: uninstall-$(NTDIR) uninstall-doc
+	rm -f "$(DESTDIR)$(includedir)/emacs-module.h"
 	$(MAKE) -C lib-src uninstall
 	-unset CDPATH; \
 	for dir in "$(DESTDIR)${lispdir}" "$(DESTDIR)${etcdir}" ; do 	\
@@ -761,13 +764,13 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	      * ) rm -rf "$${dir}" ;;			\
 	    esac ;					\
 	    case "$${dir}" in				\
-	      "$(DESTDIR)${datadir}/remacs/${version}"/* )		\
-	        rm -rf "$(DESTDIR)${datadir}/remacs/${version}"	\
+	      "$(DESTDIR)${datadir}/emacs/${version}"/* )		\
+	        rm -rf "$(DESTDIR)${datadir}/emacs/${version}"	\
 	      ;;					\
 	    esac ;					\
 	  fi ;						\
 	done
-	-rm -rf "$(DESTDIR)${libexecdir}/remacs/${version}"
+	-rm -rf "$(DESTDIR)${libexecdir}/emacs/${version}"
 	thisdir=`/bin/pwd`; \
 	(info_misc=`$(MAKE) --no-print-directory -s -C doc/misc echo-info`; \
 	 if cd "$(DESTDIR)${infodir}"; then \
@@ -789,7 +792,9 @@ uninstall: uninstall-$(NTDIR) uninstall-doc
 	(if cd "$(DESTDIR)${icondir}"; then \
 	   rm -f hicolor/*x*/apps/"${EMACS_NAME}.png" \
 	     "hicolor/scalable/apps/${EMACS_NAME}.svg" \
-	     hicolor/scalable/mimetypes/`echo emacs-document | sed '$(TRANSFORM)'`.svg; \
+	     "hicolor/scalable/apps/${EMACS_NAME}.ico" \
+	     "hicolor/scalable/mimetypes/${EMACS_NAME}-document.svg" \
+	     "hicolor/scalable/mimetypes/${EMACS_NAME}-document23.svg"; \
 	fi)
 	-rm -f "$(DESTDIR)${desktopdir}/${EMACS_NAME}.desktop"
 	-rm -f "$(DESTDIR)${appdatadir}/${EMACS_NAME}.appdata.xml"
@@ -825,7 +830,7 @@ endef
 ###      normally don't want to recompile.  For example, the 'mostlyclean'
 ###      target for GCC does not delete 'libgcc.a', because recompiling it
 ###      is rarely necessary and takes a lot of time.
-mostlyclean_dirs = src lib lib-src nt doc/emacs doc/misc \
+mostlyclean_dirs = src oldXMenu lwlib lib lib-src nt doc/emacs doc/misc \
   doc/lispref doc/lispintro
 
 $(foreach dir,$(mostlyclean_dirs),$(eval $(call submake_template,$(dir),mostlyclean)))
@@ -841,17 +846,15 @@ mostlyclean: $(mostlyclean_dirs:=_mostlyclean)
 ###      with them.
 ###
 ###      Delete '.dvi' files here if they are not part of the distribution.
-clean_dirs = $(mostlyclean_dirs) nextstep lisp admin/unidata
+clean_dirs = $(mostlyclean_dirs) nextstep
 
 $(foreach dir,$(clean_dirs),$(eval $(call submake_template,$(dir),clean)))
 
 clean: $(clean_dirs:=_clean)
 	$(MAKE) -C admin/charsets $@
 	[ ! -d test ] || $(MAKE) -C test $@
-	-rm -f *.tmp etc/*.tmp*
+	-rm -f ./*.tmp etc/*.tmp*
 	-rm -rf info-dir.*
-	-rm -rf *.elc
-	-$(CARGO_CLEAN) --manifest-path ${cargo_manifest}
 
 ### 'bootclean'
 ###      Delete all files that need to be remade for a clean bootstrap.
@@ -867,9 +870,9 @@ top_bootclean=\
 top_distclean=\
 	${top_bootclean}; \
 	rm -f config.status config.log~ \
-	  Makefile lib/gnulib.mk ${SUBDIR_MAKEFILES}
+	  Makefile makefile lib/gnulib.mk ${SUBDIR_MAKEFILES}
 
-distclean_dirs = $(clean_dirs) leim
+distclean_dirs = $(clean_dirs) leim lisp
 
 $(foreach dir,$(distclean_dirs),$(eval $(call submake_template,$(dir),distclean)))
 
@@ -930,41 +933,34 @@ maintainer-clean: bootstrap-clean $(maintainer_clean_dirs:=_maintainer-clean)
 ### Note that we abuse this in some subdirectories (eg leim),
 ### to delete some generated files that are slow to rebuild.
 extraclean_dirs = ${NTDIR} lib-src src leim \
-  admin/charsets admin/grammars admin/unidata
+  admin/charsets admin/grammars admin/unidata lisp lib
 
 $(foreach dir,$(extraclean_dirs),$(eval $(call submake_template,$(dir),extraclean)))
 
 extraclean: $(extraclean_dirs:=_extraclean)
 	${top_maintainer_clean}
-	-rm -f config-tmp-*
-	-rm -f *~ \#*
+	-rm -f config-tmp-* aclocal.m4 configure
+	-rm -f ./*~ \#* etc/refcards/emacsver.tex doc/emacs/emacsver.texi
+	-rm -f info/*.info info/dir
+	-rmdir info 2>/dev/null
 
 # The src subdir knows how to do the right thing
 # even when the build directory and source dir are different.
 .PHONY: TAGS tags
-TAGS tags: lib lib-src src
+# FIXME: We used to include `src` in the dependencies, not sure why.
+# I removed it because it causes `make tags` to build Emacs.
+TAGS tags: lib lib-src # src
 	$(MAKE) -C src tags
 
-.PHONY: have-tests
-have-tests:
-	@if test ! -d test; then \
-	  echo "You do not seem to have the test/ directory."; \
-	  echo "Maybe you are using a release tarfile, rather than a repository checkout."; \
-	 exit 1; \
-	fi
-
-.PHONY: check check-maybe check-expensive check-all
-check check-maybe check-expensive check-all: have-tests all
-	$(MAKE) -C src $@
+CHECK_TARGETS = check check-maybe check-expensive check-all
+.PHONY: $(CHECK_TARGETS)
+$(CHECK_TARGETS): all
+ifeq ($(wildcard test),test)
 	$(MAKE) -C test $@
-
-clippy:
-	$(MAKE) -C src $@
-
-rustdoc:
-	$(MAKE) -C src $@
-
-.PHONY: clippy
+else
+	@echo "You do not seem to have the test/ directory."
+	@echo "Maybe you used a release tarfile that lacks tests."
+endif
 
 dist:
 	cd ${srcdir}; ./make-dist
@@ -1140,7 +1136,7 @@ ChangeLog:
 	  ./$(emacslog) -o $(CHANGELOG) -n $(CHANGELOG_HISTORY_INDEX_MAX)
 
 # Check that we are in a good state for changing history.
-PREFERRED_BRANCH = emacs-26
+PREFERRED_BRANCH = emacs-27
 preferred-branch-is-current:
 	git branch | grep -q '^\* $(PREFERRED_BRANCH)$$'
 unchanged-history-files:
@@ -1175,21 +1171,12 @@ change-history-commit:
 .PHONY: check-declare
 
 check-declare:
-	@if [ ! -f $(srcdir)/src/remacs ]; then \
+	@if [ ! -f $(srcdir)/src/emacs ]; then \
 	  echo "You must build Emacs to use this command"; \
 	  exit 1; \
 	fi
 	$(MAKE) -C lisp $@
 	$(MAKE) -C test $@
-
-.PHONY: rustfmt
-
-rustfmt:
-	(cd rust_src && cargo fmt)
-	(cd rust_src/remacs-lib && cargo fmt)
-	(cd rust_src/remacs-util && cargo fmt)
-	(cd rust_src/remacs-macros && cargo fmt)
-	(cd rust_src/alloc_unexecmacosx && cargo fmt)
 
 .PHONY: gitmerge
 

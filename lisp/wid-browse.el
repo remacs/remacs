@@ -1,6 +1,6 @@
 ;;; wid-browse.el --- functions for browsing widgets
 ;;
-;; Copyright (C) 1997, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2001-2020 Free Software Foundation, Inc.
 ;;
 ;; Author: Per Abrahamsen <abraham@dina.kvl.dk>
 ;; Keywords: extensions
@@ -89,7 +89,11 @@ if that value is non-nil."
 (defun widget-browse-at (pos)
   "Browse the widget under point."
   (interactive "d")
-  (let* ((field (get-char-property pos 'field))
+  (let* ((field (or
+                 ;; See comments in `widget-specify-field' to know why we
+                 ;; need this.
+                 (get-char-property pos 'real-field)
+                 (get-char-property pos 'field)))
 	 (button (get-char-property pos 'button))
 	 (doc (get-char-property pos 'widget-doc))
 	 (text (cond (field "This is an editable text area.")
@@ -269,10 +273,7 @@ VALUE is assumed to be a list of widgets."
 
 ;;;###autoload
 (define-minor-mode widget-minor-mode
-  "Minor mode for traversing widgets.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil."
+  "Minor mode for traversing widgets."
   :lighter " Widget")
 
 ;;; The End:

@@ -1,6 +1,6 @@
 ;;; rst.el --- Mode for viewing and editing reStructuredText-documents  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2003-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
 ;; Maintainer: Stefan Merten <stefan at merten-home dot de>
 ;; Author: Stefan Merten <stefan at merten-home dot de>,
@@ -225,7 +225,7 @@ and before TAIL-RE and DELIM-RE in VAR or DEFAULT for no match."
   "The SVN revision of this file.
 SVN revision is the upstream (docutils) revision.")
 (defconst rst-svn-timestamp
-  (rst-extract-version "\\$" "LastChangedDate: " ".+?+" " "
+  (rst-extract-version "\\$" "LastChangedDate: " ".+" " "
 		       "$LastChangedDate: 2017-01-08 10:54:35 +0100 (Sun, 08 Jan 2017) $")
   "The SVN time stamp of this file.")
 
@@ -388,8 +388,8 @@ in parentheses follows the development revision and the time stamp.")
 				        ; item tag.
 
     ;; Inline markup (`ilm')
-    (ilm-pfx (:alt "^" hws-prt "[-'\"([{<‘“«’/:]"))
-    (ilm-sfx (:alt "$" hws-prt "[]-'\")}>’”»/:.,;!?\\]"))
+    (ilm-pfx (:alt "^" hws-prt "['\"([{<‘“«’/:-]"))
+    (ilm-sfx (:alt "$" hws-prt "[]'\")}>’”»/:.,;!?\\-]"))
 
     ;; Inline markup content (`ilc')
     (ilcsgl-tag "\\S ") ; A single non-white character.
@@ -431,7 +431,7 @@ in parentheses follows the development revision and the time stamp.")
     (fld-tag ":" fldnam-tag ":") ; A field marker.
 
     ;; Options (`opt')
-    (optsta-tag (:alt "[-+/]" "--")) ; Start of an option.
+    (optsta-tag (:alt "[+/-]" "--")) ; Start of an option.
     (optnam-tag "\\sw" (:alt "-" "\\sw") "*") ; Name of an option.
     (optarg-tag (:shy "[ =]\\S +")) ; Option argument.
     (optsep-tag (:shy "," hws-prt)) ; Separator between options.
@@ -457,7 +457,7 @@ in parentheses follows the development revision and the time stamp.")
 				       ; tag.
 
     ;; Symbol (`sym')
-    (sym-prt "[-+.:_]") ; Non-word part of a symbol.
+    (sym-prt "[+.:_-]") ; Non-word part of a symbol.
     (sym-tag (:shy "\\sw+" (:shy sym-prt "\\sw+") "*"))
 
     ;; URIs (`uri')
@@ -795,6 +795,9 @@ Return ADO if so or signal an error otherwise."
    (ado)))
 
 ;; Public class methods
+
+(define-obsolete-variable-alias
+  'rst-preferred-decorations 'rst-preferred-adornments "rst 1.0.0")
 
 (defvar rst-preferred-adornments) ; Forward declaration.
 
@@ -1408,9 +1411,6 @@ highlighting.
 ;;;###autoload
 (define-minor-mode rst-minor-mode
   "Toggle ReST minor mode.
-With a prefix argument ARG, enable ReST minor mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 When ReST minor mode is enabled, the ReST mode keybindings
 are installed on top of the major mode bindings.  Use this
@@ -1481,8 +1481,6 @@ for modes derived from Text mode, like Mail mode."
   :group 'rst
   :version "21.1")
 
-(define-obsolete-variable-alias
-  'rst-preferred-decorations 'rst-preferred-adornments "rst 1.0.0")
 ;; FIXME: Default must match suggestion in
 ;;        http://sphinx-doc.org/rest.html#sections for Python documentation.
 (defcustom rst-preferred-adornments '((?= over-and-under 1)
@@ -1906,7 +1904,7 @@ includes indentation and correct length of adornment lines."
   "Return the next best `rst-Hdr' upward from HDR.
 Consider existing hierarchy HIER and preferred headers.  PREV may
 be a previous `rst-Hdr' which may be taken into account.  If DOWN
-return the next best `rst-Hdr' downward instead. Return nil in
+return the next best `rst-Hdr' downward instead.  Return nil if
 HIER is nil."
   (let* ((normalized-hier (if down
 			      hier
@@ -2880,7 +2878,7 @@ file-write hook to always make it up-to-date automatically."
   ;; testcover: ok.
   "Display a table of contents for current buffer.
 Displays all section titles found in the current buffer in a
-hierarchical list. The resulting buffer can be navigated, and
+hierarchical list.  The resulting buffer can be navigated, and
 selecting a section title moves the cursor to that section."
   (interactive)
   (rst-reset-section-caches)
@@ -3399,7 +3397,7 @@ Region is from BEG to END.  Uncomment if ARG."
 
 (defun rst-uncomment-region (beg end &optional _arg)
   "Uncomment the current region.
-Region is from BEG to END.  _ARG is ignored"
+Region is from BEG to END.  _ARG is ignored."
   (save-excursion
     (goto-char beg)
     (rst-forward-line-strict 0)
@@ -4005,7 +4003,7 @@ to `font-lock-end'."
 
 (defun rst-font-lock-extend-region-internal (beg end)
   "Check the region BEG / END for being in the middle of a multi-line construct.
-Return nil if not or a cons with new values for BEG / END"
+Return nil if not or a cons with new values for BEG / END."
   (let ((nbeg (rst-font-lock-extend-region-extend beg -1))
 	(nend (rst-font-lock-extend-region-extend end 1)))
     (if (or nbeg nend)
@@ -4382,10 +4380,15 @@ buffer, if the region is not selected."
   "Convert the document to a PDF file and launch a preview program."
   (interactive)
   (let* ((tmp-filename (make-temp-file "rst_el" nil ".pdf"))
+         (pdf-compile-program (cadr (assq 'pdf rst-compile-toolsets)))
 	 (command (format "%s %s %s && %s %s ; rm %s"
-			  (cadr (assq 'pdf rst-compile-toolsets))
+			  pdf-compile-program
 			  buffer-file-name tmp-filename
 			  rst-pdf-program tmp-filename tmp-filename)))
+    (unless (executable-find pdf-compile-program)
+      (error "Cannot find executable `%s'" pdf-compile-program))
+    (unless (executable-find rst-pdf-program)
+      (error "Cannot find executable `%s'" rst-pdf-program))
     (start-process-shell-command "rst-pdf-preview" nil command)
     ;; Note: you could also use (compile command) to view the compilation
     ;; output.

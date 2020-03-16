@@ -1,6 +1,6 @@
 /* Generate doc-string file for GNU Emacs from source files.
 
-Copyright (C) 1985-1986, 1992-1994, 1997, 1999-2018 Free Software
+Copyright (C) 1985-1986, 1992-1994, 1997, 1999-2020 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -57,12 +57,50 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #ifdef DOS_NT
 /* Defined to be sys_chdir in ms-w32.h, but only #ifdef emacs, so this
-   is really just insurance.  */
+   is really just insurance.
+
+   Similarly, msdos defines this as sys_chdir, but we're not linking with the
+   file where that function is defined.  */
 #undef chdir
 #define IS_SLASH(c)  ((c) == '/' || (c) == '\\' || (c) == ':')
 #else  /* not DOS_NT */
 #define IS_SLASH(c)  ((c) == '/')
 #endif /* not DOS_NT */
+
+/* The types of globals.  These are sorted roughly in decreasing alignment
+   order to avoid allocation gaps, except that symbols and functions
+   are last.  */
+enum global_type
+{
+  INVALID,
+  LISP_OBJECT,
+  EMACS_INTEGER,
+  BOOLEAN,
+  SYMBOL,
+  FUNCTION
+};
+
+/* A single global.  */
+struct global
+{
+  enum global_type type;
+  char *name;
+  int flags;
+  union
+  {
+    int value;
+    char const *svalue;
+  } v;
+};
+
+/* Bit values for FLAGS field from the above.  Applied for DEFUNs only.  */
+enum { DEFUN_noreturn = 1, DEFUN_const = 2, DEFUN_noinline = 4 };
+
+/* All the variable names we saw while scanning C sources in `-g'
+   mode.  */
+static ptrdiff_t num_globals;
+static ptrdiff_t num_globals_allocated;
+static struct global *globals;
 
 static void scan_file (char *filename);
 static void scan_lisp_file (const char *filename, const char *mode);
@@ -70,9 +108,11 @@ static void scan_c_file (char *filename, const char *mode);
 static void scan_c_stream (FILE *infile);
 static void start_globals (void);
 static void write_globals (void);
-struct global *add_global (int type, char const *name, int value, char const *svalue);
 
-typedef struct global * (*add_global_fn) (int, char const *, int, char const *);
+struct global *
+add_global (enum global_type type, char const *name, int value, char const *svalue);
+
+typedef struct global * (*add_global_fn) (enum global_type, char const *, int, char const *);
 
 /* Implemented in remacs_lib. */
 void scan_rust_file (char *filename, int generate_globals, add_global_fn add_global);
@@ -126,7 +166,7 @@ memory_exhausted (void)
 
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (ptrdiff_t size)
 {
   void *result = malloc (size);
@@ -233,7 +273,6 @@ put_filename (char *filename)
     }
 
   printf ("\037S%s\n", filename);
-  fflush (stdout);
 }
 
 /* Read file FILENAME and output its doc strings to stdout.
@@ -566,43 +605,9 @@ write_c_args (char *func, char *buf, int minargs, int maxargs)
   putchar (')');
 }
 
-/* The types of globals.  These are sorted roughly in decreasing alignment
-   order to avoid allocation gaps, except that symbols and functions
-   are last.  */
-enum global_type
-{
-  INVALID,
-  LISP_OBJECT,
-  EMACS_INTEGER,
-  BOOLEAN,
-  SYMBOL,
-  FUNCTION
-};
-
-/* A single global.  */
-struct global
-{
-  enum global_type type;
-  char *name;
-  int flags;
-  union
-  {
-    int value;
-    char const *svalue;
-  } v;
-};
-
-/* Bit values for FLAGS field from the above.  Applied for DEFUNs only.  */
-enum { DEFUN_noreturn = 1, DEFUN_const = 2, DEFUN_noinline = 4 };
-
-/* All the variable names we saw while scanning C sources in `-g'
-   mode.  */
-static ptrdiff_t num_globals;
-static ptrdiff_t num_globals_allocated;
-static struct global *globals;
-
 struct global *
-add_global (int type, char const *name, int value, char const *svalue)
+add_global (enum global_type type, char const *name, int value,
+	    char const *svalue)
 {
   /* Ignore the one non-symbol that can occur.  */
   if (strcmp (name, "..."))
@@ -646,13 +651,24 @@ compare_globals (const void *a, const void *b)
     return ga->type - gb->type;
 
   /* Consider "nil" to be the least, so that iQnil is zero.  That
-     way, Qnil's internal representation is zero, which is a bit faster.  */
+     way, Qnil's internal representation is zero, which is a bit faster.
+     Similarly, consider "t" to be the second-least, and so forth.  */
   if (ga->type == SYMBOL)
     {
-      bool a_nil = strcmp (ga->name, "Qnil") == 0;
-      bool b_nil = strcmp (gb->name, "Qnil") == 0;
-      if (a_nil | b_nil)
-	return b_nil - a_nil;
+      /* Common symbols in decreasing popularity order.  */
+      static char const commonsym[][8]
+	= { "nil", "t", "unbound", "error", "lambda" };
+      int ncommonsym = sizeof commonsym / sizeof *commonsym;
+      int ai = ncommonsym, bi = ncommonsym;
+      for (int i = 0; i < ncommonsym; i++)
+	{
+	  if (ga->name[0] == 'Q' && strcmp (ga->name + 1, commonsym[i]) == 0)
+	    ai = i;
+	  if (gb->name[0] == 'Q' && strcmp (gb->name + 1, commonsym[i]) == 0)
+	    bi = i;
+	}
+      if (! (ai == ncommonsym && bi == ncommonsym))
+	return ai - bi;
     }
 
   return strcmp (ga->name, gb->name);
@@ -705,7 +721,7 @@ write_globals (void)
       switch (globals[i].type)
 	{
 	case EMACS_INTEGER:
-	  type = "EMACS_INT";
+	  type = "intmax_t";
 	  break;
 	case BOOLEAN:
 	  type = "bool";
@@ -752,6 +768,8 @@ write_globals (void)
 	    printf ("%d", globals[i].v.value);
 	  putchar (')');
 
+	  if (globals[i].flags & DEFUN_noreturn)
+	    fputs (" ATTRIBUTE_COLD", stdout);
 	  if (globals[i].flags & DEFUN_const)
 	    fputs (" ATTRIBUTE_CONST", stdout);
 
@@ -1112,6 +1130,9 @@ scan_c_stream (FILE *infile)
 		g->flags |= DEFUN_noreturn;
 	      if (strstr (input_buffer, "const"))
 		g->flags |= DEFUN_const;
+
+	      /* Although the noinline attribute is no longer used,
+		 leave its support in, in case it's needed later.  */
 	      if (strstr (input_buffer, "noinline"))
 		g->flags |= DEFUN_noinline;
 	    }

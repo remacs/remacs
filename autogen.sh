@@ -1,7 +1,7 @@
 #!/bin/sh
 ### autogen.sh - tool to help build Remacs from a repository checkout
 
-## Copyright (C) 2011-2018 Free Software Foundation, Inc.
+## Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
 ## Author: Glenn Morris <rgm@gnu.org>
 ## Maintainer: emacs-devel@gnu.org
@@ -341,7 +341,108 @@ git_config ()
     }
 }
 
-echo "You can now run './configure'."
+## Configure Git, if requested.
+
+# Get location of Git's common configuration directory.  For older Git
+# versions this is just '.git'.  Newer Git versions support worktrees.
+
+{ test -r .git &&
+  git_common_dir=`git rev-parse --no-flags --git-common-dir 2>/dev/null` &&
+  test -n "$git_common_dir"
+} || git_common_dir=.git
+hooks=$git_common_dir/hooks
+
+# Check hashes when transferring objects among repositories.
+
+git_config transfer.fsckObjects true
+
+
+# Configure 'git diff' hunk header format.
+
+# This xfuncname is based on Git's built-in 'cpp' pattern.
+# The first line rejects jump targets and access declarations.
+# The second line matches top-level functions and methods.
+# The third line matches preprocessor and DEFUN macros.
+git_config diff.cpp.xfuncname \
+'!^[ \t]*[A-Za-z_][A-Za-z_0-9]*:[[:space:]]*($|/[/*])
+^((::[[:space:]]*)?[A-Za-z_][A-Za-z_0-9]*[[:space:]]*\(.*)$
+^((#define[[:space:]]|DEFUN).*)$'
+git_config diff.elisp.xfuncname \
+           '^\([^[:space:]]*def[^[:space:]]+[[:space:]]+([^()[:space:]]+)'
+git_config 'diff.m4.xfuncname' '^((m4_)?define|A._DEFUN(_ONCE)?)\([^),]*'
+git_config 'diff.make.xfuncname' \
+	   '^([$.[:alnum:]_].*:|[[:alnum:]_]+[[:space:]]*([*:+]?[:?]?|!?)=|define .*)'
+git_config 'diff.shell.xfuncname' \
+	   '^([[:space:]]*[[:alpha:]_][[:alnum:]_]*[[:space:]]*\(\)|[[:alpha:]_][[:alnum:]_]*=)'
+git_config diff.texinfo.xfuncname \
+	   '^@node[[:space:]]+([^,[:space:]][^,]+)'
+
+
+# Install Git hooks.
+
+tailored_hooks=
+sample_hooks=
+
+for hook in commit-msg pre-commit prepare-commit-msg; do
+    cmp -- build-aux/git-hooks/$hook "$hooks/$hook" >/dev/null 2>&1 ||
+	tailored_hooks="$tailored_hooks $hook"
+done
+
+git_sample_hook_src ()
+{
+    hook=$1
+    src=$hooks/$hook.sample
+    if test ! -r "$src"; then
+	case $hook in
+	    applypatch-msg) src=build-aux/git-hooks/commit-msg;;
+	    pre-applypatch) src=build-aux/git-hooks/pre-commit;;
+	esac
+    fi
+}
+for hook in applypatch-msg pre-applypatch; do
+    git_sample_hook_src $hook
+    cmp -- "$src" "$hooks/$hook" >/dev/null 2>&1 ||
+	sample_hooks="$sample_hooks $hook"
+done
+
+if test -n "$tailored_hooks$sample_hooks"; then
+    if $do_git; then
+	echo "Installing git hooks..."
+
+	if test ! -d "$hooks"; then
+	    printf "mkdir -p -- '%s'\\n" "$hooks"
+	    mkdir -p -- "$hooks" || exit
+	fi
+
+	if test -n "$tailored_hooks"; then
+	    for hook in $tailored_hooks; do
+		dst=$hooks/$hook
+		cp $cp_options -- build-aux/git-hooks/$hook "$dst" || exit
+		chmod -- a-w "$dst" || exit
+	    done
+	fi
+
+	if test -n "$sample_hooks"; then
+	    for hook in $sample_hooks; do
+		git_sample_hook_src $hook
+		dst=$hooks/$hook
+		cp $cp_options -- "$src" "$dst" || exit
+		chmod -- a-w "$dst" || exit
+	    done
+	fi
+    else
+	git_was_ok=false
+    fi
+fi
+
+if test ! -f configure; then
+    echo "You can now run '$0 autoconf'."
+elif test -r .git && test $git_was_ok = false && test $do_git = false; then
+    echo "You can now run '$0 git'."
+elif test ! -f config.status ||
+	test -n "`find configure src/config.in -newer config.status`"; then
+    echo "You can now run './configure'."
+fi
 
 exit 0
 

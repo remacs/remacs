@@ -1,8 +1,9 @@
 ;;; erc-services.el --- Identify to NickServ  -*- lexical-binding:t -*-
 
-;; Copyright (C) 2002-2004, 2006-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2004, 2006-2020 Free Software Foundation, Inc.
 
-;; Maintainer: emacs-devel@gnu.org
+;; Maintainer: Amin Bandali <mab@gnu.org>
+;; URL: https://www.emacswiki.org/emacs/ErcNickserv
 
 ;; This file is part of GNU Emacs.
 
@@ -214,7 +215,7 @@ Example of use:
      "identify" nil nil nil)
     (Azzurra
      "NickServ!service@azzurra.org"
-     "/ns\\s-IDENTIFY\\s-password"
+     "\^B/ns\\s-IDENTIFY\\s-password\^B"
      "NickServ"
      "IDENTIFY" nil nil nil)
     (BitlBee
@@ -223,7 +224,7 @@ Example of use:
      "identify" nil nil nil)
     (BRASnet
      "NickServ!services@brasnet.org"
-     "/NickServ\\s-IDENTIFY\\s-senha"
+     "\^B/NickServ\\s-IDENTIFY\\s-\^_senha\^_\^B"
      "NickServ"
      "IDENTIFY" nil "" nil)
     (DALnet
@@ -262,7 +263,7 @@ Example of use:
      nil
      "NickServ"
      "IDENTIFY" nil nil
-     "You\\s-are\\s-successfully\\s-identified\\s-as\\s-")
+     "You\\s-are\\s-successfully\\s-identified\\s-as\\s-\^B")
     (Rizon
      "NickServ!service@rizon.net"
      "This\\s-nickname\\s-is\\s-registered\\s-and\\s-protected."
@@ -275,7 +276,7 @@ Example of use:
      "auth" t nil nil)
     (SlashNET
      "NickServ!services@services.slashnet.org"
-     "/msg\\s-NickServ\\s-IDENTIFY\\s-password"
+     "/msg\\s-NickServ\\s-IDENTIFY\\s-\^_password"
      "NickServ@services.slashnet.org"
      "IDENTIFY" nil nil nil))
    "Alist of NickServer details, sorted by network.
@@ -289,7 +290,7 @@ NICK is nickserv's nickname.  Use nick@server where necessary/possible.
 KEYWORD is the keyword to use in the reply message to identify yourself.
 USE-CURRENT indicates whether the current nickname must be used when
   identifying.
-ANSWER is the command to use for the answer.  The default is 'privmsg.
+ANSWER is the command to use for the answer.  The default is `privmsg'.
 SUCCESS-REGEXP is a regular expression matching the message nickserv
   sends when you've successfully identified.
 The last two elements are optional."
@@ -454,6 +455,4 @@ When called interactively, read the password using `read-passwd'."
 ;;
 ;; Local Variables:
 ;; generated-autoload-file: "erc-loaddefs.el"
-;; indent-tabs-mode: t
-;; tab-width: 8
 ;; End:

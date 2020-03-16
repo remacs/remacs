@@ -1,6 +1,6 @@
 @c -*-texinfo-*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1994, 1998-1999, 2001-2018 Free Software
+@c Copyright (C) 1990--1994, 1998--1999, 2001--2020 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Read and Print
@@ -716,6 +716,7 @@ For example, if the current buffer name is @samp{foo},
 returns @code{"The buffer is foo"}.
 @end defmac
 
+@cindex pretty-printer
 @defun pp object &optional stream
 This function outputs @var{object} to @var{stream}, just like
 @code{prin1}, but does it in a prettier way.  That is, it'll
@@ -740,7 +741,8 @@ The default is @code{t}, meaning display in the echo area.
 @defvar print-quoted
 If this is non-@code{nil}, that means to print quoted forms using
 abbreviated reader syntax, e.g., @code{(quote foo)} prints as
-@code{'foo}, and @code{(function foo)} as @code{#'foo}.
+@code{'foo}, and @code{(function foo)} as @code{#'foo}.  The default
+is @code{t}.
 @end defvar
 
 @defvar print-escape-newlines
@@ -807,6 +809,21 @@ Those functions also use backslash sequences for multibyte
 non-@acronym{ASCII} characters, regardless of the value of this variable,
 when the output stream is a unibyte buffer or a marker pointing into
 one.
+@end defvar
+
+@defvar print-charset-text-property
+This variable controls printing of `charset' text property on printing
+a string.  The value should be @code{nil}, @code{t}, or
+@code{default}.
+
+If the value is @code{nil}, @code{charset} text properties are never
+printed.  If @code{t}, they are always printed.
+
+If the value is @code{default}, only print @code{charset} text
+properties if there is an ``unexpected'' @code{charset} property.  For
+ascii characters, all charsets are considered ``expected''.
+Otherwise, the expected @code{charset} property of a character is
+given by @code{char-charset}.
 @end defvar
 
 @defvar print-length

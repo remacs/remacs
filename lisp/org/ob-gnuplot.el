@@ -1,10 +1,10 @@
 ;;; ob-gnuplot.el --- Babel Functions for Gnuplot    -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2009-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte
 ;; Keywords: literate programming, reproducible research
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;; This file is part of GNU Emacs.
 
@@ -39,9 +39,9 @@
 
 ;;; Code:
 (require 'ob)
+(require 'org-macs)
 
 (declare-function org-time-string-to-time "org" (s))
-(declare-function org-combine-plists "org" (&rest plists))
 (declare-function orgtbl-to-generic "org-table" (table params))
 (declare-function gnuplot-mode "ext:gnuplot-mode" ())
 (declare-function gnuplot-send-string-to-gnuplot "ext:gnuplot-mode" (str txt))

@@ -1,6 +1,6 @@
 ;;; recentf.el --- setup a menu of recently opened files
 
-;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
 ;; Author: David Ponce <david@dponce.com>
 ;; Created: July 19 1999
@@ -67,7 +67,8 @@ You should define the options of your own filters in this group."
 A nil value means to save the whole list.
 See the command `recentf-save-list'."
   :group 'recentf
-  :type 'integer)
+  :type '(choice (integer :tag "Entries" :value 1)
+		 (const :tag "No Limit" nil)))
 
 (defcustom recentf-save-file (locate-user-emacs-file "recentf" ".recentf")
   "File to save the recent list into."
@@ -657,15 +658,17 @@ Return nil if file NAME is not one of the ten more recent."
 
 (defun recentf-show-menu ()
   "Show the menu of recently opened files."
-  (easy-menu-add-item
-   (recentf-menu-bar) recentf-menu-path
-   (list recentf-menu-title :filter 'recentf-make-menu-items)
-   recentf-menu-before))
+  (when (keymapp (recentf-menu-bar))
+    (easy-menu-add-item
+     (recentf-menu-bar) recentf-menu-path
+     (list recentf-menu-title :filter 'recentf-make-menu-items)
+     recentf-menu-before)))
 
 (defun recentf-hide-menu ()
   "Hide the menu of recently opened files."
-  (easy-menu-remove-item (recentf-menu-bar) recentf-menu-path
-                         recentf-menu-title))
+  (when (keymapp (recentf-menu-bar))
+    (easy-menu-remove-item (recentf-menu-bar) recentf-menu-path
+                           recentf-menu-title)))
 
 ;;; Predefined menu filters
 ;;
@@ -1183,9 +1186,6 @@ IGNORE other arguments."
            :format "%[%t\n%]"
            :help-echo ,(concat "Open " (cdr menu-element))
            :action recentf-open-files-action
-           ;; Override the (problematic) follow-link property of the
-           ;; `link' widget (bug#22434).
-           :follow-link nil
            ,(cdr menu-element))))
 
 (defun recentf-open-files-items (files)
@@ -1342,13 +1342,10 @@ That is, remove duplicates, non-kept, and excluded files."
 ;;;###autoload
 (define-minor-mode recentf-mode
   "Toggle \"Open Recent\" menu (Recentf mode).
-With a prefix argument ARG, enable Recentf mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-Recentf mode if ARG is omitted or nil.
 
 When Recentf mode is enabled, a \"Open Recent\" submenu is
 displayed in the \"File\" menu, containing a list of files that
-were operated on recently."
+were operated on recently, in the most-recently-used order."
   :global t
   :group 'recentf
   :keymap recentf-mode-map

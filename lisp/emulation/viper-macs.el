@@ -1,6 +1,6 @@
-;;; viper-macs.el --- functions implementing keyboard macros for Viper
+;;; viper-macs.el --- functions implementing keyboard macros for Viper  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1994-1997, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1994-1997, 2000-2020 Free Software Foundation, Inc.
 
 ;; Author: Michael Kifer <kifer@cs.stonybrook.edu>
 ;; Package: viper
@@ -174,7 +174,7 @@ a key is a symbol, e.g., `a', `\\1', `f2', etc., or a list, e.g.,
 			   (prin1-to-string (viper-display-macro key-seq))
 			 "")))
 	(message "%s" message)
-	(setq event (viper-read-key))
+	(setq event (read-key))
 	;;(setq event (viper-read-event))
 	(setq key
 	      (if (viper-mouse-event-p event)
@@ -251,7 +251,7 @@ a key is a symbol, e.g., `a', `\\1', `f2', etc., or a list, e.g.,
 			    (viper-display-macro key-seq))
 			 "")))
 	(message "%s" message)
-	(setq event (viper-read-key))
+	(setq event (read-key))
 	;;(setq event (viper-read-event))
 	(setq key
 	      (if (viper-mouse-event-p event)
@@ -415,7 +415,7 @@ If SCOPE is nil, the user is asked to specify the scope."
 		  t)))
 	  (if (y-or-n-p
 	       (format "Save this macro in %s? "
-		       (viper-abbreviate-file-name viper-custom-file-name)))
+		       (abbreviate-file-name viper-custom-file-name)))
 	      (viper-save-string-in-file
 	       (format "\n(viper-record-kbd-macro %S '%S %s '%S)"
 		       (viper-display-macro macro-name)
@@ -815,12 +815,7 @@ mistakes in macro names to be passed to this function is to use
 
 ;; convert strings or arrays of characters to Viper macro form
 (defun viper-char-array-to-macro (array)
-  (let ((vec (vconcat array))
-	macro)
-    (if (featurep 'xemacs)
-	(setq macro (mapcar 'character-to-event vec))
-      (setq macro vec))
-    (vconcat (mapcar 'viper-event-key macro))))
+  (vconcat (mapcar 'viper-event-key (vconcat array))))
 
 ;; For macros bodies and names, goes over MACRO and checks if all members are
 ;; names of keys (actually, it only checks if they are symbols or lists
@@ -867,16 +862,19 @@ mistakes in macro names to be passed to this function is to use
 ;; A fast keysequence is one that is terminated by a pause longer than
 ;; viper-fast-keyseq-timeout.
 (defun viper-read-fast-keysequence (event macro-alist)
+  ;; FIXME: Do we still need this?  Now that the discrimination between the ESC
+  ;; key and the ESC byte sent as part of terminal escape sequences is performed
+  ;; in the input-decode-map, I suspect that we don't need this hack any more.
   (let ((lis (vector event))
 	next-event)
     (while (and (viper-fast-keysequence-p)
            (viper-keyseq-is-a-possible-macro lis macro-alist))
       ;; Seems that viper-read-event is more robust here. We need to be able to
       ;; place these events on unread-command-events list. If we use
-      ;; viper-read-key then events will be converted to keys, and sometimes
+      ;; read-key then events will be converted to keys, and sometimes
       ;; (e.g., (control \[)) those keys differ from the corresponding events.
-      ;; So, do not use (setq next-event (viper-read-key))
-      (setq next-event (viper-read-event))
+      ;; So, do not use (setq next-event (read-key))
+      (setq next-event (read-event))
       (or (viper-mouse-event-p next-event)
 	  (setq lis (vconcat lis (vector next-event)))))
     lis))

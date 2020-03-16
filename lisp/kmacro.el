@@ -1,6 +1,6 @@
 ;;; kmacro.el --- enhanced keyboard macros -*- lexical-binding: t -*-
 
-;; Copyright (C) 2002-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
 ;; Author: Kim F. Storm <storm@cua.dk>
 ;; Keywords: keyboard convenience
@@ -112,6 +112,7 @@
 
 ;; Customization:
 (require 'replace)
+(require 'cl-lib)
 
 (defgroup kmacro nil
   "Simplified keyboard macro user interface."
@@ -226,12 +227,19 @@ macro to be executed before appending to it."
 ;;; Keyboard macro counter
 
 (defvar kmacro-counter 0
-  "Current keyboard macro counter.")
+  "Current keyboard macro counter.
+
+This is normally initialized to zero when the macro is defined,
+and incremented each time the value of the counter is inserted
+into a buffer.  See `kmacro-start-macro-or-insert-counter' for
+more details.")
 
 (defvar kmacro-default-counter-format "%d")
 
 (defvar kmacro-counter-format "%d"
-  "Current keyboard macro counter format.")
+  "Current keyboard macro counter format.
+
+Can be set directly via `kmacro-set-format', which see.")
 
 (defvar kmacro-counter-format-start kmacro-counter-format
   "Macro format at start of macro execution.")
@@ -247,9 +255,12 @@ macro to be executed before appending to it."
 
 
 (defun kmacro-insert-counter (arg)
-  "Insert macro counter, then increment it by ARG.
+  "Insert current value of `kmacro-counter', then increment it by ARG.
 Interactively, ARG defaults to 1.  With \\[universal-argument], insert
-previous `kmacro-counter', and do not modify counter."
+the previous value of `kmacro-counter', and do not increment the
+current value.
+The previous value of the counter is the one it had before
+the last increment."
   (interactive "P")
   (if kmacro-initial-counter-value
       (setq kmacro-counter kmacro-initial-counter-value
@@ -261,7 +272,7 @@ previous `kmacro-counter', and do not modify counter."
 
 
 (defun kmacro-set-format (format)
-  "Set macro counter FORMAT."
+  "Set the format of `kmacro-counter' to FORMAT."
   (interactive "sMacro Counter Format: ")
   (setq kmacro-counter-format
 	(if (equal format "") "%d" format))
@@ -277,7 +288,7 @@ previous `kmacro-counter', and do not modify counter."
            (format kmacro-counter-format value) value))
 
 (defun kmacro-set-counter (arg)
-  "Set `kmacro-counter' to ARG or prompt if missing.
+  "Set the value of `kmacro-counter' to ARG, or prompt for value if no argument.
 With \\[universal-argument] prefix, reset counter to its value prior to this iteration of the macro."
   (interactive "NMacro counter value: ")
   (if (not (or defining-kbd-macro executing-kbd-macro))
@@ -291,7 +302,7 @@ With \\[universal-argument] prefix, reset counter to its value prior to this ite
 
 
 (defun kmacro-add-counter (arg)
-  "Add numeric prefix arg (prompt if missing) to macro counter.
+  "Add the value of numeric prefix arg (prompt if missing) to `kmacro-counter'.
 With \\[universal-argument], restore previous counter value."
   (interactive "NAdd to macro counter: ")
   (if kmacro-initial-counter-value
@@ -670,18 +681,22 @@ use \\[kmacro-name-last-macro]."
   "Record subsequent keyboard input, defining a keyboard macro.
 The commands are recorded even as they are executed.
 
-Sets the `kmacro-counter' to ARG (or 0 if no prefix arg) before defining the
-macro.
+Initializes the macro's `kmacro-counter' to ARG (or 0 if no prefix arg)
+before defining the macro.
 
 With \\[universal-argument], appends to current keyboard macro (keeping
 the current value of `kmacro-counter').
 
-When defining/executing macro, inserts macro counter and increments
-the counter with ARG or 1 if missing.  With \\[universal-argument],
-inserts previous `kmacro-counter' (but do not modify counter).
+When used during defining/executing a macro, inserts the current value
+of `kmacro-counter' and increments the counter value by ARG (or by 1 if no
+prefix argument).  With just \\[universal-argument], inserts the previous
+value of `kmacro-counter', and does not modify the counter; this is
+different from incrementing the counter by zero.  (The previous value
+of the counter is the one it had before the last increment.)
 
-The macro counter can be modified via \\[kmacro-set-counter] and \\[kmacro-add-counter].
-The format of the counter can be modified via \\[kmacro-set-format]."
+The macro counter can be set directly via \\[kmacro-set-counter] and \\[kmacro-add-counter].
+The format of the inserted value of the counter can be controlled
+via \\[kmacro-set-format]."
   (interactive "P")
   (if (or defining-kbd-macro executing-kbd-macro)
       (kmacro-insert-counter arg)
@@ -762,6 +777,7 @@ If kbd macro currently being defined end it before activating it."
 ;; letters and digits, provided that we inhibit the keymap while
 ;; executing the macro later on (but that's controversial...)
 
+;;;###autoload
 (defun kmacro-lambda-form (mac &optional counter format)
   "Create lambda form for macro bound to symbol or key."
   (if counter
@@ -813,7 +829,7 @@ The ARG parameter is unused."
 		       (and (>= ch ?A) (<= ch ?Z))))
 	      (setq key-seq (concat "\C-x\C-k" key-seq)
 		    ok t))))
-      (when (and (not (equal key-seq ""))
+      (when (and (not (equal key-seq "\^G"))
 		 (or ok
 		     (not (setq cmd (key-binding key-seq)))
 		     (stringp cmd)
@@ -857,8 +873,20 @@ Such a \"function\" cannot be called from Lisp, but it is a valid editor command
   (put symbol 'kmacro t))
 
 
-(defun kmacro-execute-from-register (k)
-  (kmacro-call-macro current-prefix-arg nil nil k))
+(cl-defstruct (kmacro-register
+               (:constructor nil)
+               (:constructor kmacro-make-register (macro)))
+  macro)
+
+(cl-defmethod register-val-jump-to ((data kmacro-register) _arg)
+  (kmacro-call-macro current-prefix-arg nil nil (kmacro-register-macro data)))
+
+(cl-defmethod register-val-describe ((data kmacro-register) _verbose)
+  (princ (format "a keyboard macro:\n   %s"
+		 (format-kbd-macro (kmacro-register-macro data)))))
+
+(cl-defmethod register-val-insert ((data kmacro-register))
+  (insert (format-kbd-macro (kmacro-register-macro data))))
 
 (defun kmacro-to-register (r)
   "Store the last keyboard macro in register R.
@@ -868,14 +896,7 @@ Interactively, reads the register using `register-read-with-preview'."
    (progn
      (or last-kbd-macro (error "No keyboard macro defined"))
      (list (register-read-with-preview "Save to register: "))))
-  (set-register r (registerv-make
-		   last-kbd-macro
-		   :jump-func 'kmacro-execute-from-register
-		   :print-func (lambda (k)
-				 (princ (format "a keyboard macro:\n   %s"
-						(format-kbd-macro k))))
-		   :insert-func (lambda (k)
-				  (insert (format-kbd-macro k))))))
+  (set-register r (kmacro-make-register last-kbd-macro)))
 
 
 (defun kmacro-view-macro (&optional _arg)

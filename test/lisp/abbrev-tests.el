@@ -1,6 +1,6 @@
 ;;; abbrev-tests.el --- Test suite for abbrevs  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 ;; Author: Eli Zaretskii <eliz@gnu.org>
 ;; Keywords: abbrevs
@@ -63,6 +63,14 @@
     (should (abbrev-table-p table))
     (should (= (length table) obarray-default-size))
     (should (eq (abbrev-table-get table 'foo) 'bar))))
+
+(ert-deftest abbrev--table-symbols-test ()
+  (let ((ert-test-abbrevs (setup-test-abbrev-table)))
+    (define-abbrev ert-test-abbrevs "sys" "system abbrev" nil :system t)
+    (should (equal (mapcar #'symbol-name (abbrev--table-symbols 'ert-test-abbrevs))
+                   '("a-e-t")))
+    (should (equal (mapcar #'symbol-name (abbrev--table-symbols 'ert-test-abbrevs t))
+                   '("a-e-t" "sys")))))
 
 (ert-deftest abbrev-table-get-put-test ()
   (let ((table (make-abbrev-table)))
@@ -265,6 +273,34 @@
       (should (equal "save-abbrevs-test"
                      (abbrev-expansion "s-a-t" ert-save-test-table)))
       (delete-file temp-test-file))))
+
+(ert-deftest inverse-add-abbrev-skips-trailing-nonword ()
+  "Test that adding an inverse abbrev skips trailing nonword characters."
+  (let ((table (make-abbrev-table)))
+    (with-temp-buffer
+      (insert "some text foo ")
+      (cl-letf (((symbol-function 'read-string) (lambda (&rest _) "bar")))
+        (inverse-add-abbrev table "Global" 1)))
+    (should (string= (abbrev-expansion "foo" table) "bar"))))
+
+(ert-deftest inverse-add-abbrev-skips-trailing-nonword/positive-arg ()
+  "Test that adding an inverse abbrev skips trailing nonword characters."
+  (let ((table (make-abbrev-table)))
+    (with-temp-buffer
+      (insert "some text foo ")
+      (cl-letf (((symbol-function 'read-string) (lambda (&rest _) "bar")))
+        (inverse-add-abbrev table "Global" 2)))
+    (should (string= (abbrev-expansion "text" table) "bar"))))
+
+(ert-deftest inverse-add-abbrev-skips-trailing-nonword/negative-arg ()
+  "Test that adding an inverse abbrev skips trailing nonword characters."
+  (let ((table (make-abbrev-table)))
+    (with-temp-buffer
+      (insert "some     text foo")
+      (goto-char (point-min))
+      (cl-letf (((symbol-function 'read-string) (lambda (&rest _) "bar")))
+        (inverse-add-abbrev table "Global" -1)))
+    (should (string= (abbrev-expansion "text" table) "bar"))))
 
 (provide 'abbrev-tests)
 

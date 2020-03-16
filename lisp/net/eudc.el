@@ -1,6 +1,6 @@
-;;; eudc.el --- Emacs Unified Directory Client
+;;; eudc.el --- Emacs Unified Directory Client  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1998-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
 ;; Author: Oscar Figueiredo <oscar@cpe.fr>
 ;;         Pavel Janík <Pavel@Janik.cz>
@@ -47,7 +47,7 @@
 
 (require 'wid-edit)
 
-(eval-when-compile (require 'cl-lib))
+(require 'cl-lib)
 
 (eval-and-compile
   (if (not (fboundp 'make-overlay))
@@ -68,6 +68,7 @@
 
 (defvar eudc-mode-map
   (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map widget-keymap)
     (define-key map "q" 'kill-current-buffer)
     (define-key map "x" 'kill-current-buffer)
     (define-key map "f" 'eudc-query-form)
@@ -75,7 +76,6 @@
     (define-key map "n" 'eudc-move-to-next-record)
     (define-key map "p" 'eudc-move-to-previous-record)
     map))
-(set-keymap-parent eudc-mode-map widget-keymap)
 
 (defvar mode-popup-menu)
 
@@ -158,25 +158,6 @@ properties on the list."
       (setq plist (cdr (cdr plist))))
     default))
 
-(if (not (fboundp 'split-string))
-    (defun split-string (string &optional pattern)
-      "Return a list of substrings of STRING which are separated by PATTERN.
-If PATTERN is omitted, it defaults to \"[ \\f\\t\\n\\r\\v]+\"."
-  (or pattern
-      (setq pattern "[ \f\t\n\r\v]+"))
-  (let (parts (start 0))
-    (when (string-match pattern string 0)
-      (if (> (match-beginning 0) 0)
-	  (setq parts (cons (substring string 0 (match-beginning 0)) nil)))
-      (setq start (match-end 0))
-      (while (and (string-match pattern string start)
-		  (> (match-end 0) start))
-	(setq parts (cons (substring string start (match-beginning 0)) parts)
-	      start (match-end 0))))
-    (nreverse (if (< start (length string))
-		  (cons (substring string start) parts)
-		parts)))))
-
 (defun eudc-replace-in-string (str regexp newtext)
   "Replace all matches in STR for REGEXP with NEWTEXT.
 Value is the new string."
@@ -248,7 +229,7 @@ The current binding of VAR is changed only if SERVER is omitted."
 
 (defun eudc-set (var val)
   "Set the most local (server, protocol or default) binding of VAR to VAL.
-The current binding of VAR is also set to VAL"
+The current binding of VAR is also set to VAL."
   (cond
    ((not (eq 'unbound (eudc-variable-server-value var)))
     (eudc-server-set var val))
@@ -270,7 +251,7 @@ Return `unbound' if VAR has no EUDC default value."
 (defun eudc-variable-protocol-value (var &optional protocol)
   "Return the value of VAR local to PROTOCOL.
 Return `unbound' if VAR has no value local to PROTOCOL.
-PROTOCOL defaults to `eudc-protocol'"
+PROTOCOL defaults to `eudc-protocol'."
   (let* ((eudc-locals (get var 'eudc-locals))
 	 protocol-locals)
     (if (not (and  (boundp var)
@@ -285,7 +266,7 @@ PROTOCOL defaults to `eudc-protocol'"
 (defun eudc-variable-server-value (var &optional server)
   "Return the value of VAR local to SERVER.
 Return `unbound' if VAR has no value local to SERVER.
-SERVER defaults to `eudc-server'"
+SERVER defaults to `eudc-server'."
   (let* ((eudc-locals (get var 'eudc-locals))
 	 server-locals)
     (if (not (and (boundp var)
@@ -301,7 +282,7 @@ SERVER defaults to `eudc-server'"
   "Set the value of VAR according to its locals.
 If the VAR has a server- or protocol-local value corresponding
 to the current `eudc-server' and `eudc-protocol' then it is set
-accordingly. Otherwise it is set to its EUDC default binding"
+accordingly.  Otherwise it is set to its EUDC default binding."
   (let (val)
     (cond
      ((not (eq 'unbound (setq val (eudc-variable-server-value var))))
@@ -314,7 +295,7 @@ accordingly. Otherwise it is set to its EUDC default binding"
 (defun eudc-update-local-variables ()
   "Update all EUDC variables according to their local settings."
   (interactive)
-  (mapcar 'eudc-update-variable eudc-local-vars))
+  (mapcar #'eudc-update-variable eudc-local-vars))
 
 (eudc-default-set 'eudc-query-function nil)
 (eudc-default-set 'eudc-list-attributes-function nil)
@@ -378,7 +359,7 @@ BEG and END delimit the text which is to be replaced."
   (let ((replacement))
    (setq replacement
 	 (completing-read "Multiple matches found; choose one: "
-			  (mapcar 'list choices)))
+			  (mapcar #'list choices)))
    (delete-region beg end)
    (insert replacement)))
 
@@ -415,7 +396,7 @@ underscore characters are replaced by spaces."
     (if match
 	(cdr match)
       (capitalize
-       (mapconcat 'identity
+       (mapconcat #'identity
 		  (split-string (symbol-name attribute) "_")
 		  " ")))))
 
@@ -432,7 +413,7 @@ if any, is called to print the value in cdr of FIELD."
 	(progn
 	  (eval (list (cdr match) val))
 	  (insert "\n"))
-      (mapcar
+      (mapc
        (function
 	(lambda (val-elem)
 	  (indent-to col)
@@ -598,9 +579,10 @@ otherwise they are formatted according to `eudc-user-attribute-names-alist'."
 	      (setq result
 		    (eudc-add-field-to-records (cons (car field)
 						     (mapconcat
-						      'identity
+						      #'identity
 						      (cdr field)
-						      "\n")) result)))
+						      "\n"))
+                                               result)))
 	     ((eq 'duplicate method)
 	      (setq result
 		    (eudc-distribute-field-on-records field result)))))))
@@ -613,12 +595,9 @@ otherwise they are formatted according to `eudc-user-attribute-names-alist'."
 	(mapcar
 	 (function
 	  (lambda (rec)
-	    (if (eval (cons 'and
-		       (mapcar
-			(function
-			 (lambda (attr)
-			   (consp (assq attr rec))))
-			attrs)))
+	    (if (cl-every (lambda (attr)
+			    (consp (assq attr rec)))
+			  attrs)
 		rec)))
 	 records)))
 
@@ -632,24 +611,13 @@ otherwise they are formatted according to `eudc-user-attribute-names-alist'."
 (defun eudc-distribute-field-on-records (field records)
   "Duplicate each individual record in RECORDS according to value of FIELD.
 Each copy is added a new field containing one of the values of FIELD."
-  (let (result
-	(values (cdr field)))
-    ;; Uniquify values first
-    (while values
-      (setcdr values (delete (car values) (cdr values)))
-      (setq values (cdr values)))
-    (mapc
-     (function
-      (lambda (value)
-	(let ((result-list (copy-sequence records)))
-	  (setq result-list (eudc-add-field-to-records
-			     (cons (car field) value)
-			     result-list))
-	  (setq result (append result-list result))
-		 )))
-	    (cdr field))
+  (let (result)
+    (dolist (value (delete-dups (cdr field))) ;; Uniquify values first.
+      (setq result (nconc (eudc-add-field-to-records
+			   (cons (car field) value)
+			   records)
+                          result)))
     result))
-
 
 (define-derived-mode eudc-mode special-mode "EUDC"
   "Major mode used in buffers displaying the results of directory queries.
@@ -662,9 +630,7 @@ These are the special commands of EUDC mode:
     n -- Move to next record.
     p -- Move to previous record.
     b -- Insert record at point into the BBDB database."
-  (if (not (featurep 'xemacs))
-      (easy-menu-define eudc-emacs-menu eudc-mode-map "" (eudc-menu))
-    (setq mode-popup-menu (eudc-menu))))
+  (easy-menu-define eudc-emacs-menu eudc-mode-map "" (eudc-menu)))
 
 ;;}}}
 
@@ -776,8 +742,8 @@ otherwise a list of symbols is returned."
 	    (setq query-alist (cdr query-alist)))
 	  query)
       (if eudc-protocol-has-default-query-attributes
-	  (mapconcat 'identity words " ")
-	(list (cons 'name (mapconcat 'identity words " ")))))))
+	  (mapconcat #'identity words " ")
+	(list (cons 'name (mapconcat #'identity words " ")))))))
 
 (defun eudc-extract-n-word-formats (format-list n)
   "Extract a list of N-long formats from FORMAT-LIST.
@@ -809,8 +775,47 @@ After querying the server for the given string, the expansion specified by
 If REPLACE is non-nil, then this expansion replaces the name in the buffer.
 `eudc-expansion-overwrites-query' being non-nil inverts the meaning of REPLACE.
 Multiple servers can be tried with the same query until one finds a match,
-see `eudc-inline-expansion-servers'"
+see `eudc-inline-expansion-servers'."
   (interactive)
+  (let* ((end (point))
+	 (beg (save-excursion
+		(if (re-search-backward "\\([:,]\\|^\\)[ \t]*"
+					(point-at-bol) 'move)
+		    (goto-char (match-end 0)))
+		(point)))
+	 (query-words (split-string (buffer-substring-no-properties beg end)
+				    "[ \t]+"))
+	 (response-strings (eudc-query-with-words query-words)))
+    (if (null response-strings)
+        (error "No match")
+
+      (if (or
+	   (and replace (not eudc-expansion-overwrites-query))
+	   (and (not replace) eudc-expansion-overwrites-query))
+	  (kill-ring-save beg end))
+      (cond
+       ((or (= (length response-strings) 1)
+	    (null eudc-multiple-match-handling-method)
+	    (eq eudc-multiple-match-handling-method 'first))
+	(delete-region beg end)
+	(insert (car response-strings)))
+       ((eq eudc-multiple-match-handling-method 'select)
+	(eudc-select response-strings beg end))
+       ((eq eudc-multiple-match-handling-method 'all)
+	(delete-region beg end)
+	(insert (mapconcat #'identity response-strings ", ")))
+       ((eq eudc-multiple-match-handling-method 'abort)
+	(error "There is more than one match for the query"))))))
+
+;;;###autoload
+(defun eudc-query-with-words (query-words)
+  "Query the directory server, and return the matching responses.
+The variable `eudc-inline-query-format' controls how to associate the
+individual QUERY-WORDS with directory attribute names.
+After querying the server for the given string, the expansion specified by
+`eudc-inline-expansion-format' is applied to the matches before returning them.inserted in the buffer at point.
+Multiple servers can be tried with the same query until one finds a match,
+see `eudc-inline-expansion-servers'."
   (cond
    ((eq eudc-inline-expansion-servers 'current-server)
     (or eudc-server
@@ -826,106 +831,70 @@ see `eudc-inline-expansion-servers'"
    (t
     (error "Wrong value for `eudc-inline-expansion-servers': %S"
 	   eudc-inline-expansion-servers)))
-  (let* ((end (point))
-	 (beg (save-excursion
-		(if (re-search-backward "\\([:,]\\|^\\)[ \t]*"
-					(point-at-bol) 'move)
-		    (goto-char (match-end 0)))
-		(point)))
-	 (query-words (split-string (buffer-substring-no-properties beg end)
-				    "[ \t]+"))
-	 query-formats
-	 response
-	 response-string
-	 response-strings
+  (let* (query-formats
 	 (eudc-former-server eudc-server)
 	 (eudc-former-protocol eudc-protocol)
-	 servers)
-
-    ;; Prepare the list of servers to query
-    (setq servers (copy-sequence eudc-server-hotlist))
-    (setq servers
+	 ;; Prepare the list of servers to query
+	 (servers
 	  (cond
 	   ((eq eudc-inline-expansion-servers 'hotlist)
 	    eudc-server-hotlist)
 	   ((eq eudc-inline-expansion-servers 'server-then-hotlist)
 	    (if eudc-server
 		(cons (cons eudc-server eudc-protocol)
-		      (delete (cons eudc-server eudc-protocol) servers))
+		      (delete (cons eudc-server eudc-protocol)
+		              (copy-sequence eudc-server-hotlist)))
 	      eudc-server-hotlist))
 	   ((eq eudc-inline-expansion-servers 'current-server)
-	    (list (cons eudc-server eudc-protocol)))))
+	    (list (cons eudc-server eudc-protocol))))))
+
     (if (and eudc-max-servers-to-query
 	     (> (length servers) eudc-max-servers-to-query))
 	(setcdr (nthcdr (1- eudc-max-servers-to-query) servers) nil))
 
     (unwind-protect
-	(progn
-	  (setq response
-		(catch 'found
-		  ;; Loop on the servers
-		  (while servers
-		    (eudc-set-server (caar servers) (cdar servers) t)
+	(let ((response
+	       (catch 'found
+		 ;; Loop on the servers
+		 (dolist (server servers)
+		   (eudc-set-server (car server) (cdr server) t)
 
-		    ;; Determine which formats apply in the query-format list
-		    (setq query-formats
-			  (or
-			   (eudc-extract-n-word-formats eudc-inline-query-format
-							(length query-words))
-			   (if (null eudc-protocol-has-default-query-attributes)
-			       '(name))))
+		   ;; Determine which formats apply in the query-format list
+		   (setq query-formats
+			 (or
+			  (eudc-extract-n-word-formats eudc-inline-query-format
+						       (length query-words))
+			  (if (null eudc-protocol-has-default-query-attributes)
+			      '(name))))
 
-		    ;; Loop on query-formats
-		    (while query-formats
-		      (setq response
+		   ;; Loop on query-formats
+		   (while query-formats
+		     (let ((response
 			    (eudc-query
 			     (eudc-format-query query-words (car query-formats))
 			     (eudc-translate-attribute-list
-			      (cdr eudc-inline-expansion-format))))
-		      (if response
-			  (throw 'found response))
-		      (setq query-formats (cdr query-formats)))
-		    (setq servers (cdr servers)))
-		  ;; No more servers to try... no match found
-		  nil))
+			      (cdr eudc-inline-expansion-format)))))
+		       (if response
+			   (throw 'found response)))
+		     (setq query-formats (cdr query-formats))))
+		 ;; No more servers to try... no match found
+		 nil))
+	      (response-strings '()))
 
-
-	  (if (null response)
-	      (error "No match")
-
-	    ;; Process response through eudc-inline-expansion-format
-	    (while response
-	      (setq response-string
-                    (apply 'format
-                           (car eudc-inline-expansion-format)
-                           (mapcar (function
-                                    (lambda (field)
-                                      (or (cdr (assq field (car response)))
-                                          "")))
-                                   (eudc-translate-attribute-list
-                                    (cdr eudc-inline-expansion-format)))))
+	  ;; Process response through eudc-inline-expansion-format
+	  (dolist (r response)
+	    (let ((response-string
+                   (apply #'format
+                          (car eudc-inline-expansion-format)
+                          (mapcar (function
+                                   (lambda (field)
+                                     (or (cdr (assq field r))
+                                         "")))
+                                  (eudc-translate-attribute-list
+                                   (cdr eudc-inline-expansion-format))))))
 	      (if (> (length response-string) 0)
-		  (setq response-strings
-			(cons response-string response-strings)))
-	      (setq response (cdr response)))
-
-	    (if (or
-		 (and replace (not eudc-expansion-overwrites-query))
-		 (and (not replace) eudc-expansion-overwrites-query))
-		(kill-ring-save beg end))
-	    (cond
-	     ((or (= (length response-strings) 1)
-		  (null eudc-multiple-match-handling-method)
-		  (eq eudc-multiple-match-handling-method 'first))
-	      (delete-region beg end)
-	      (insert (car response-strings)))
-	     ((eq eudc-multiple-match-handling-method 'select)
-	      (eudc-select response-strings beg end))
-	     ((eq eudc-multiple-match-handling-method 'all)
-	      (delete-region beg end)
-	      (insert (mapconcat 'identity response-strings ", ")))
-	     ((eq eudc-multiple-match-handling-method 'abort)
-	      (error "There is more than one match for the query")))))
+		  (push response-string response-strings))))
+	  response-strings)
       (or (and (equal eudc-server eudc-former-server)
 	       (equal eudc-protocol eudc-former-protocol))
 	  (eudc-set-server eudc-former-server eudc-former-protocol t)))))
@@ -943,10 +912,9 @@ queries the server for the existing fields and displays a corresponding form."
 	prompts
 	widget
 	(width 0)
-	inhibit-read-only
 	pt)
     (switch-to-buffer buffer)
-    (setq inhibit-read-only t)
+    (let ((inhibit-read-only t))
     (erase-buffer)
     (kill-all-local-variables)
     (make-local-variable 'eudc-form-widget-list)
@@ -960,11 +928,10 @@ queries the server for the existing fields and displays a corresponding form."
     (widget-insert "Protocol         : " (symbol-name eudc-protocol) "\n")
     ;; Build the list of prompts
     (setq prompts (if eudc-use-raw-directory-names
-		      (mapcar 'symbol-name (eudc-translate-attribute-list fields))
+		      (mapcar #'symbol-name (eudc-translate-attribute-list fields))
 		    (mapcar (function
 			     (lambda (field)
-			       (or (and (assq field eudc-user-attribute-names-alist)
-					(cdr (assq field eudc-user-attribute-names-alist)))
+			       (or (cdr (assq field eudc-user-attribute-names-alist))
 				   (capitalize (symbol-name field)))))
 			    fields)))
     ;; Loop over prompt strings to find the longest one
@@ -1008,7 +975,7 @@ queries the server for the existing fields and displays a corresponding form."
 		   "Quit")
     (goto-char pt)
     (use-local-map widget-keymap)
-    (widget-setup))
+    (widget-setup)))
   )
 
 (defun eudc-bookmark-server (server protocol)
@@ -1177,60 +1144,41 @@ queries the server for the existing fields and displays a corresponding form."
 	    eudc-tail-menu)))
 
 (defun eudc-install-menu ()
-  (cond
-   ((and (featurep 'xemacs) (featurep 'menubar))
-    (add-submenu '("Tools") (eudc-menu)))
-   ((not (featurep 'xemacs))
-    (cond
-     ((fboundp 'easy-menu-create-menu)
-      (define-key
-	global-map
-	[menu-bar tools directory-search]
-	(cons "Directory Servers"
-	      (easy-menu-create-menu "Directory Servers" (cdr (eudc-menu))))))
-     ((fboundp 'easy-menu-add-item)
-      (let ((menu (eudc-menu)))
-	(easy-menu-add-item nil '("tools") (easy-menu-create-menu (car menu)
-								  (cdr menu)))))
-     ((fboundp 'easy-menu-create-keymaps)
-      (easy-menu-define eudc-menu-map eudc-mode-map "Directory Client Menu" (eudc-menu))
-      (define-key
-	global-map
-	[menu-bar tools eudc]
-	(cons "Directory Servers"
-	      (easy-menu-create-keymaps "Directory Servers"
-                                        (cdr (eudc-menu))))))
-     (t
-      (error "Unknown version of easymenu"))))
-   ))
-
+  (define-key
+    global-map
+    [menu-bar tools directory-search]
+    (cons "Directory Servers"
+	  (easy-menu-create-menu "Directory Servers" (cdr (eudc-menu))))))
 
 ;;; Load time initializations :
 
-;;; Load the options file
+;; Load the options file
 (if (and (not noninteractive)
 	 (and (locate-library eudc-options-file)
 	      (progn (message "") t))   ; Remove mode line message
 	 (not (featurep 'eudc-options-file)))
     (load eudc-options-file))
 
-;;; Install the full menu
+;; Install the full menu
 (unless (featurep 'infodock)
   (eudc-install-menu))
 
 
-;;; The following installs a short menu for EUDC at XEmacs startup.
+;; The following installs a short menu for EUDC at Emacs startup.
 
 ;;;###autoload
 (defun eudc-load-eudc ()
   "Load the Emacs Unified Directory Client.
 This does nothing except loading eudc by autoload side-effect."
   (interactive)
+  ;; FIXME: By convention, loading a file should "do nothing significant"
+  ;; since Emacs may occasionally load a file for "frivolous" reasons
+  ;; (e.g. to find a docstring), so having a function which just loads
+  ;; the file doesn't seem very useful.
   nil)
 
 ;;;###autoload
-(cond
- ((not (featurep 'xemacs))
+(progn
   (defvar eudc-tools-menu
     (let ((map (make-sparse-keymap "Directory Servers")))
       (define-key map [phone]
@@ -1255,34 +1203,6 @@ This does nothing except loading eudc by autoload side-effect."
 		    :help ,(purecopy "Load the Emacs Unified Directory Client")))
       map))
   (fset 'eudc-tools-menu (symbol-value 'eudc-tools-menu)))
- (t
-  (let ((menu  '("Directory Servers"
-		 ["Load Hotlist of Servers" eudc-load-eudc t]
-		 ["New Server" eudc-set-server t]
-		 ["---" nil nil]
-		 ["Query with Form" eudc-query-form t]
-		 ["Expand Inline Query" eudc-expand-inline t]
-		 ["---" nil nil]
-		 ["Get Email" eudc-get-email t]
-		 ["Get Phone" eudc-get-phone t])))
-    (if (not (featurep 'eudc-autoloads))
-	(if (featurep 'xemacs)
-	    (if (and (featurep 'menubar)
-		     (not (featurep 'infodock)))
-		(add-submenu '("Tools") menu))
-	  (require 'easymenu)
-	  (cond
-	   ((fboundp 'easy-menu-add-item)
-	    (easy-menu-add-item nil '("tools")
-				(easy-menu-create-menu (car menu)
-						       (cdr menu))))
-	   ((fboundp 'easy-menu-create-keymaps)
-	    (define-key
-	      global-map
-	      [menu-bar tools eudc]
-	      (cons "Directory Servers"
-		    (easy-menu-create-keymaps "Directory Servers"
-					      (cdr menu)))))))))))
 
 ;;}}}
 

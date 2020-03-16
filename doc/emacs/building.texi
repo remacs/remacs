@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
+@c Copyright (C) 1985--1987, 1993--1995, 1997, 2000--2020 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Building
@@ -151,6 +151,20 @@ with the mouse (@pxref{Mouse References}), to visit the @dfn{locus} of
 the error message in a separate window.  The locus is the specific
 position in a file where that error occurred.
 
+@cindex compilation mode faces
+@vindex compilation-error
+@vindex compilation-warning
+  The appearance of the @file{*compilation*} buffer can be controlled
+by customizing the faces which are used to highlight parts of the
+@file{*compilation*} buffer, e.g., @code{compilation-error} or
+@code{compilation-warning}, for error and warning messages
+respectively.  Note that since those faces inherit from the
+@code{error} and @code{warning} faces, it is also possible to
+customize the parent face directly instead.
+
+  Use @w{@kbd{M-x customize-group RET compilation}} to see the entire
+list of customization variables and faces.
+
 @findex compile-goto-error
 @vindex compilation-auto-jump-to-first-error
   If you change the variable
@@ -190,6 +204,9 @@ compilation buffer produce automatic source display.
 @item g
 Re-run the last command whose output is shown in the
 @file{*compilation*} buffer.
+@item M-x next-error-select-buffer
+Select a buffer to be used by next invocation of @code{next-error} and
+@code{previous-error}.
 @end table
 
 @kindex M-g M-n
@@ -197,21 +214,24 @@ Re-run the last command whose output is shown in the
 @kindex C-x `
 @findex next-error
 @vindex next-error-highlight
+@vindex next-error-highlight-no-select
   To visit errors sequentially, type @w{@kbd{C-x `}}
 (@code{next-error}), or equivalently @kbd{M-g M-n} or @kbd{M-g n}.
 This command can be invoked from any buffer, not just a Compilation
 mode buffer.  The first time you invoke it after a compilation, it
 visits the locus of the first error message.  Each subsequent
-@w{@kbd{C-x `}} visits the next error, in a similar fashion.  If you
+@w{@kbd{M-g M-n}} visits the next error, in a similar fashion.  If you
 visit a specific error with @key{RET} or a mouse click in the
-@file{*compilation*} buffer, subsequent @w{@kbd{C-x `}} commands
-advance from there.  When @w{@kbd{C-x `}} finds no more error messages
-to visit, it signals an error.  @w{@kbd{C-u C-x `}} starts again from
+@file{*compilation*} buffer, subsequent @w{@kbd{M-g M-n}} commands
+advance from there.  When @w{@kbd{M-g M-n}} finds no more error messages
+to visit, it signals an error.  @w{@kbd{C-u M-g M-n}} starts again from
 the beginning of the compilation buffer, and visits the first locus.
 
   @kbd{M-g M-p} or @kbd{M-g p} (@code{previous-error}) iterates
 through errors in the opposite direction.
 
+@vindex next-error-find-buffer-function
+@findex next-error-select-buffer
   The @code{next-error} and @code{previous-error} commands don't just
 act on the errors or matches listed in @file{*compilation*} and
 @file{*grep*} buffers; they also know how to iterate through error or
@@ -219,10 +239,15 @@ match lists produced by other commands, such as @kbd{M-x occur}
 (@pxref{Other Repeating Search}).  If the current buffer contains
 error messages or matches, these commands will iterate through them;
 otherwise, Emacs looks for a buffer containing error messages or
-matches amongst the windows of the selected frame, then for any buffer
-that @code{next-error} or @code{previous-error} previously visited,
-and finally all other buffers.  Any buffer these commands iterate
-through that is not currently displayed in a window will be displayed.
+matches amongst the windows of the selected frame (if the variable
+@code{next-error-find-buffer-function} is customized to the value
+@code{next-error-buffer-on-selected-frame}), then for a buffer used
+previously by @code{next-error} or @code{previous-error}, and finally
+all other buffers.  Any buffer these commands iterate through that is
+not currently displayed in a window will be displayed.  You can use
+the @command{next-error-select-buffer} command to switch to
+a different buffer to be used by the subsequent invocation of
+@code{next-error}.
 
 @vindex compilation-skip-threshold
   By default, the @code{next-error} and @code{previous-error} commands
@@ -234,7 +259,9 @@ to skip any messages.
 
   When Emacs visits the locus of an error message, it momentarily
 highlights the relevant source line.  The duration of this highlight
-is determined by the variable @code{next-error-highlight}.
+is determined by the variable @code{next-error-highlight} for the locus
+in the selected buffer, and @code{next-error-highlight-no-select} for
+the locus in non-selected buffers.
 
 @vindex compilation-context-lines
   If the @file{*compilation*} buffer is shown in a window with a left
@@ -242,11 +269,12 @@ fringe (@pxref{Fringes}), the locus-visiting commands put an arrow in
 the fringe, pointing to the current error message.  If the window has
 no left fringe, such as on a text terminal, these commands scroll the
 window so that the current message is at the top of the window.  If
-you change the variable @code{compilation-context-lines} to an integer
-value @var{n}, these commands scroll the window so that the current
-error message is @var{n} lines from the top, whether or not there is a
-fringe; the default value, @code{nil}, gives the behavior described
-above.
+you change the variable @code{compilation-context-lines} to @code{t},
+a visible arrow is inserted before column zero instead.  If you change
+the variable to an integer value @var{n}, these commands scroll the
+window so that the current error message is @var{n} lines from the
+top, whether or not there is a fringe; the default value, @code{nil},
+gives the behavior described above.
 
 @vindex compilation-error-regexp-alist
 @vindex grep-regexp-alist
@@ -387,8 +415,8 @@ grep -nH -e foo *.el | grep bar | grep toto
 @end example
 
   The output from @command{grep} goes in the @file{*grep*} buffer.  You
-can find the corresponding lines in the original files using @w{@kbd{C-x
-`}}, @key{RET}, and so forth, just like compilation errors.
+can find the corresponding lines in the original files using @w{@kbd{M-g
+M-n}}, @key{RET}, and so forth, just like compilation errors.
 @xref{Compilation Mode}, for detailed description of commands and key
 bindings available in the @file{*grep*} buffer.
 
@@ -917,6 +945,7 @@ height and width values during the debugging session.
 @cindex GDB User Interface layout
 
 @vindex gdb-many-windows
+@vindex gdb-show-main
   If the variable @code{gdb-many-windows} is @code{nil} (the default),
 @kbd{M-x gdb} normally displays only the GUD interaction buffer.
 However, if the variable @code{gdb-show-main} is also non-@code{nil},
@@ -1015,6 +1044,15 @@ that line without executing the intermediate lines.  This command
 allows you to go backwards, which can be useful for running through
 code that has already executed, in order to examine its execution in
 more detail.
+
+@vindex gdb-mi-decode-strings
+  If the file names of the source files are shown with octal escapes,
+set the variable @code{gdb-mi-decode-strings} to the appropriate
+coding-system, most probably @code{utf-8}.  (This is @code{nil} by
+default because GDB may emit octal escapes in situations where
+decoding is undesirable, and also because the program being debugged
+might use an encoding different from the one used to encode non-ASCII
+file names on your system.)
 
 @node Breakpoints Buffer
 @subsubsection Breakpoints Buffer
@@ -1154,6 +1192,11 @@ also updates the Locals buffer
 @iftex
 (described in the next section).
 @end iftex
+
+@vindex gdb-stack-buffer-addresses
+  If you want the frame address to be shown each stack frame,
+customize the variable @code{gdb-stack-buffer-addresses} to a
+non-@code{nil} value.
 
 @node Other GDB Buffers
 @subsubsection Other GDB Buffers
@@ -1467,13 +1510,19 @@ call it, Emacs automatically loads the @code{compile} library first.
 In contrast, the command @kbd{M-x recompile} is not autoloaded, so it
 is unavailable until you load the @code{compile} library.
 
-@vindex help-enable-auto-load
+@vindex help-enable-autoload
   Automatic loading can also occur when you look up the documentation
 of an autoloaded command (@pxref{Name Help}), if the documentation
 refers to other functions and variables in its library (loading the
 library lets Emacs properly set up the hyperlinks in the @file{*Help*}
 buffer).  To disable this feature, change the variable
-@code{help-enable-auto-load} to @code{nil}.
+@code{help-enable-autoload} to @code{nil}.
+
+@vindex help-enable-completion-autoload
+Automatic loading also occurs when completing names for
+@code{describe-variable} and @code{describe-function}, based on the
+prefix being completed.  To disable this feature, change the variable
+@code{help-enable-completion-autoload} to @code{nil}.
 
 @vindex load-dangerous-libraries
 @cindex Lisp files byte-compiled by XEmacs

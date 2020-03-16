@@ -1,5 +1,5 @@
 @c This is part of the Emacs manual.  -*- coding: utf-8 -*-
-@c Copyright (C) 1985-1987, 1993-1995, 1997, 2000-2018 Free Software
+@c Copyright (C) 1985--1987, 1993--1995, 1997, 2000--2020 Free Software
 @c Foundation, Inc.
 @c See file emacs.texi for copying conditions.
 @node Calendar/Diary
@@ -246,9 +246,11 @@ Scroll calendar one month forward (@code{calendar-scroll-left}).
 @item <
 Scroll calendar one month backward (@code{calendar-scroll-right}).
 @item C-v
+@itemx @key{PageDown}
 @itemx @key{next}
 Scroll forward by three months (@code{calendar-scroll-left-three-months}).
 @item M-v
+@itemx @key{PageUp}
 @itemx @key{prior}
 Scroll backward by three months (@code{calendar-scroll-right-three-months}).
 @end table
@@ -264,8 +266,12 @@ calendar contents one month forward in time.  @kbd{<} scrolls the
 contents one month backwards in time.
 
 @kindex C-v @r{(Calendar mode)}
+@kindex PageDown @r{(Calendar mode)}
+@kindex next @r{(Calendar mode)}
 @findex calendar-scroll-left-three-months
 @kindex M-v @r{(Calendar mode)}
+@kindex PageUp @r{(Calendar mode)}
+@kindex prior @r{(Calendar mode)}
 @findex calendar-scroll-right-three-months
   The commands @kbd{C-v} and @kbd{M-v} scroll the calendar by an entire
 screenful---three months---in analogy with the usual meaning of
@@ -275,8 +281,9 @@ repeat count; in particular, since @kbd{C-u} multiplies the next command
 by four, typing @kbd{C-u C-v} scrolls the calendar forward by a year and
 typing @kbd{C-u M-v} scrolls the calendar backward by a year.
 
-  The function keys @key{next} and @key{prior} are equivalent to
-@kbd{C-v} and @kbd{M-v}, just as they are in other modes.
+  The function keys @key{PageDown} (or @key{next}) and @key{PageUp}
+(or @key{prior}) are equivalent to @kbd{C-v} and @kbd{M-v}, just as
+they are in other modes.
 
 @node Counting Days
 @section Counting Days
@@ -699,7 +706,7 @@ century.
 @cindex Julian day numbers
 @cindex astronomical day numbers
   Astronomers use a simple counting of days elapsed since noon, Monday,
-January 1, 4713 B.C. on the Julian calendar.  The number of days elapsed
+January 1, 4713 BC on the Julian calendar.  The number of days elapsed
 is called the @dfn{Julian day number} or the @dfn{Astronomical day number}.
 
 @cindex Hebrew calendar
@@ -1592,7 +1599,7 @@ variables' values are 120.
   The timeclock package adds up time intervals, so you can (for
 instance) keep track of how much time you spend working on particular
 projects.  (A more advanced alternative is to use the Org Mode's
-facilities for clocking time, @pxref{Clocking work time,,,org, The Org
+facilities for clocking time, @pxref{Clocking Work Time,,,org, The Org
 Manual}).
 
 @findex timeclock-in
@@ -1611,12 +1618,12 @@ timeclock-change}.
 work today (assuming a typical average of 8 hours a day), and @kbd{M-x
 timeclock-when-to-leave} which will calculate when you're done.
 
-@vindex timeclock-modeline-display
-@findex timeclock-modeline-display
+@vindex timeclock-mode-line-display
+@findex timeclock-mode-line-display
   If you want Emacs to display the amount of time left of your
 workday in the mode line, either customize the
-@code{timeclock-modeline-display} variable and set its value to
-@code{t}, or invoke the @kbd{M-x timeclock-modeline-display} command.
+@code{timeclock-mode-line-display} variable and set its value to
+@code{t}, or invoke the @kbd{M-x timeclock-mode-line-display} command.
 
 @vindex timeclock-ask-before-exiting
   Terminating the current Emacs session might or might not mean that

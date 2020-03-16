@@ -1,6 +1,6 @@
 ;;; mailalias.el --- expand and complete mailing address aliases -*- lexical-binding: t -*-
 
-;; Copyright (C) 1985, 1987, 1995-1997, 2001-2018 Free Software
+;; Copyright (C) 1985, 1987, 1995-1997, 2001-2020 Free Software
 ;; Foundation, Inc.
 
 ;; Maintainer: emacs-devel@gnu.org
@@ -50,14 +50,18 @@
 When t this still needs to be initialized.")
 
 (defvar mail-address-field-regexp
-  "^\\(Resent-\\)?\\(To\\|From\\|CC\\|BCC\\|Reply-to\\):")
+  "^\\(Resent-\\)?\\(To\\|From\\|Cc\\|Bcc\\|Reply-To\\):")
 
-(defvar pattern)
+;; `pattern' is bound dynamically before evaluating the forms in
+;; `mail-complete-alist' and may be part of user customizations of
+;; that variable.
+(with-suppressed-warnings ((lexical pattern))
+  (defvar pattern))
 
 (defcustom mail-complete-alist
   ;; Don't refer to mail-address-field-regexp here;
   ;; that confuses some things such as cus-dep.el.
-  '(("^\\(Resent-\\)?\\(To\\|From\\|CC\\|BCC\\|Reply-to\\):"
+  '(("^\\(Resent-\\)?\\(To\\|From\\|Cc\\|Bcc\\|Reply-To\\):"
      . (mail-get-names pattern))
     ("Newsgroups:" . (if (boundp 'gnus-active-hashtb)
                          gnus-active-hashtb
@@ -169,7 +173,7 @@ When t this still needs to be initialized.")
 (defun expand-mail-aliases (beg end &optional exclude)
   "Expand all mail aliases in suitable header fields found between BEG and END.
 If interactive, expand in header fields.
-Suitable header fields are `To', `From', `CC' and `BCC', `Reply-to', and
+Suitable header fields are `To', `From', `Cc' and `Bcc', `Reply-To', and
 their `Resent-' variants.
 
 Optional second arg EXCLUDE may be a regular expression defining text to be

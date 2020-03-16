@@ -52,12 +52,7 @@
 @end ifset
 @end tex
 
-
-@c Version of the manual and of Emacs.
-@c (See comments for EDITION in emacs.texi)
-@set VERSION  3.1
 @include emacsver.texi
-@set DATE October 2014
 
 @c in general, keep the following line commented out, unless doing a
 @c copy of this manual that will be published.  The manual should go
@@ -90,16 +85,22 @@
 @c We use the "type index" to index new functions and variables.
 @c @syncodeindex tp fn
 
+@c When printing, define VERSION to be the printed edition number and
+@c DATE to be the printed edition's date.  E.g., run the shell command
+@c "texi2any -D 'VERSION 3.2' -D 'DATE 31 March 2020'".  This relates
+@c mainly to the published book sold by the FSF.
+
 @copying
-@iftex
+@ifset VERSION
 This is edition @value{VERSION} of the @cite{GNU Emacs Lisp Reference Manual},@*
-@end iftex
-@ifnottex
+@end ifset
+@ifclear VERSION
 This is the @cite{GNU Emacs Lisp Reference Manual}
-@end ifnottex
+@end ifclear
 corresponding to Emacs version @value{EMACSVER}.
 
-Copyright @copyright{} 1990--1996, 1998--2018 Free Software Foundation, Inc.
+Copyright @copyright{} 1990--1996, 1998--2020 Free Software Foundation,
+Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -127,7 +128,9 @@ developing GNU and promoting software freedom.''
 @subtitle @value{voltitle}
 @end ifset
 @subtitle For Emacs Version @value{EMACSVER}
+@ifset VERSION
 @subtitle Revision @value{VERSION}, @value{DATE}
+@end ifset
 
 @author by Bil Lewis, Dan LaLiberte, Richard Stallman,
 @author the GNU Manual Group, et al.
@@ -230,7 +233,7 @@ To view this manual in other formats, click
 
 Appendices
 
-* Antinews::                Info for users downgrading to Emacs 25.
+* Antinews::                Info for users downgrading to Emacs 26.
 * GNU Free Documentation License:: The license for this documentation.
 * GPL::                     Conditions for copying and changing GNU Emacs.
 * Tips::                    Advice and coding conventions for Emacs Lisp.
@@ -287,6 +290,7 @@ Format of Descriptions
 Lisp Data Types
 
 * Printed Representation::  How Lisp objects are represented as text.
+* Special Read Syntax::     An overview of all the special sequences.
 * Comments::                Comments and their formatting conventions.
 * Programming Types::       Types found in all Lisp systems.
 * Editing Types::           Types specific to Emacs.
@@ -476,13 +480,10 @@ Control Structures
 * Sequencing::              Evaluation in textual order.
 * Conditionals::            @code{if}, @code{cond}, @code{when}, @code{unless}.
 * Combining Conditions::    @code{and}, @code{or}, @code{not}.
+* Pattern-Matching Conditional::  How to use @code{pcase} and friends.
 * Iteration::               @code{while} loops.
 * Generators::              Generic sequences and coroutines.
 * Nonlocal Exits::          Jumping out of a sequence.
-
-Conditionals
-
-* Pattern matching case statement::  How to use @code{pcase}.
 
 Nonlocal Exits
 
@@ -577,8 +578,8 @@ Advising Emacs Lisp Functions
 
 * Core Advising Primitives::  Primitives to manipulate advice.
 * Advising Named Functions::  Advising named functions.
-* Advice combinators::        Ways to compose advice.
-* Porting old advice::        Adapting code using the old defadvice.
+* Advice Combinators::        Ways to compose advice.
+* Porting Old Advice::        Adapting code using the old defadvice.
 
 Macros
 
@@ -658,7 +659,8 @@ The Lisp Debugger
 * Function Debugging::      Entering it when a certain function is called.
 * Variable Debugging::      Entering it when a variable is modified.
 * Explicit Debug::          Entering it at a certain point in the program.
-* Using Debugger::          What the debugger does; what you see while in it.
+* Using Debugger::          What the debugger does.
+* Backtraces::              What you see while in the debugger.
 * Debugger Commands::       Commands used while in the debugger.
 * Invoking the Debugger::   How to call the function @code{debug}.
 * Internals of Debugger::   Subroutines of the debugger, and global variables.
@@ -1047,9 +1049,7 @@ Windows
 * Cyclic Window Ordering::  Moving around the existing windows.
 * Buffers and Windows::     Each window displays the contents of a buffer.
 * Switching Buffers::       Higher-level functions for switching to a buffer.
-* Choosing Window::         How to choose a window for displaying a buffer.
-* Display Action Functions:: Subroutines for @code{display-buffer}.
-* Choosing Window Options:: Extra options affecting how buffers are displayed.
+* Displaying Buffers::      Displaying a buffer in a suitable window.
 * Window History::          Each window remembers the buffers displayed in it.
 * Dedicated Windows::       How to avoid displaying another buffer in
                               a specific window.
@@ -1070,6 +1070,18 @@ Windows
 * Window Hooks::            Hooks for scrolling, window size changes,
                               redisplay going past a certain point,
                               or window configuration changes.
+
+Displaying Buffers
+
+* Choosing Window::         How to choose a window for displaying a buffer.
+* Buffer Display Action Functions:: Support functions for buffer display.
+* Buffer Display Action Alists:: Alists for fine-tuning buffer display
+                              action functions.
+* Choosing Window Options:: Extra options affecting how buffers are displayed.
+* Precedence of Action Functions:: A tutorial explaining the precedence of
+                              buffer display action functions.
+* The Zen of Buffer Display:: How to avoid that buffers get lost in between
+                              windows.
 
 Side Windows
 
@@ -1290,6 +1302,9 @@ Regular Expressions
 
 * Syntax of Regexps::       Rules for writing regular expressions.
 * Regexp Example::          Illustrates regular expression syntax.
+@ifnottex
+* Rx Notation::             An alternative, structured regexp notation.
+@end ifnottex
 * Regexp Functions::        Functions for operating on regular expressions.
 
 Syntax of Regular Expressions
@@ -1348,6 +1363,7 @@ Threads
 * Basic Thread Functions::  Basic thread functions.
 * Mutexes::                 Mutexes allow exclusive access to data.
 * Condition Variables::     Inter-thread events.
+* The Thread List::         Show the active threads.
 
 Processes
 
@@ -1392,7 +1408,6 @@ Packing and Unpacking Byte Arrays
 
 * Bindat Spec::             Describing data layout.
 * Bindat Functions::        Doing the unpacking and packing.
-* Bindat Examples::         Samples of what bindat.el can do for you!
 
 Emacs Display
 
@@ -1525,10 +1540,8 @@ Operating System Interface
 * System Environment::      Distinguish the name and kind of system.
 * User Identification::     Finding the name and user id of the user.
 * Time of Day::             Getting the current time.
-* Time Conversion::         Converting a time from numeric form to
-                              calendrical data and vice versa.
-* Time Parsing::            Converting a time from numeric form to text
-                              and vice versa.
+* Time Conversion::         Converting among timestamp forms.
+* Time Parsing::            Converting timestamps to text and vice versa.
 * Processor Run Time::      Getting the run time used by Emacs.
 * Time Calculations::       Adding, subtracting, comparing times, etc.
 * Timers::                  Setting a timer to call a function at a
@@ -1592,8 +1605,17 @@ GNU Emacs Internals
 * Memory Usage::            Info about total size of Lisp objects made so far.
 * C Dialect::               What C variant Emacs is written in.
 * Writing Emacs Primitives::  Writing C code for Emacs.
+* Writing Dynamic Modules::   Writing loadable modules for Emacs.
 * Object Internals::        Data formats of buffers, windows, processes.
 * C Integer Types::         How C integer types are used inside Emacs.
+
+Writing Dynamic Modules
+
+* Module Initialization::
+* Module Functions::
+* Module Values::
+* Module Misc::
+* Module Nonlocal::
 
 Object Internals
 

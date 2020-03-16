@@ -1,5 +1,5 @@
 /* Code for doing intervals.
-   Copyright (C) 1993-1995, 1997-1998, 2001-2018 Free Software
+   Copyright (C) 1993-1995, 1997-1998, 2001-2020 Free Software
    Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -197,7 +197,7 @@ intervals_equal (INTERVAL i0, INTERVAL i1)
 	}
 
       /* i0 has something i1 doesn't.  */
-      if (EQ (i1_val, Qnil))
+      if (NILP (i1_val))
 	return false;
 
       /* i0 and i1 both have sym, but it has different values in each.  */
@@ -713,11 +713,21 @@ previous_interval (register INTERVAL interval)
   return NULL;
 }
 
-/* Find the interval containing POS given some non-NULL INTERVAL
-   in the same tree.  Note that we need to update interval->position
-   if we go down the tree.
-   To speed up the process, we assume that the ->position of
-   I and all its parents is already uptodate.  */
+/* Set the ->position field of I's parent, based on I->position. */
+#define SET_PARENT_POSITION(i)                                  \
+  if (AM_LEFT_CHILD (i))                                        \
+    INTERVAL_PARENT (i)->position =                             \
+      i->position + TOTAL_LENGTH (i) - LEFT_TOTAL_LENGTH (i);   \
+  else                                                          \
+    INTERVAL_PARENT (i)->position =                             \
+      i->position - LEFT_TOTAL_LENGTH (i)                       \
+      - LENGTH (INTERVAL_PARENT (i))
+
+/* Find the interval containing POS, given some non-NULL INTERVAL in
+   the same tree.  Note that we update interval->position in each
+   interval we traverse, assuming it is already correctly set for the
+   argument I.  We don't assume that any other interval already has a
+   correctly set ->position.  */
 INTERVAL
 update_interval (register INTERVAL i, ptrdiff_t pos)
 {
@@ -738,7 +748,10 @@ update_interval (register INTERVAL i, ptrdiff_t pos)
 	  else if (NULL_PARENT (i))
 	    error ("Point before start of properties");
 	  else
-	      i = INTERVAL_PARENT (i);
+            {
+              SET_PARENT_POSITION (i);
+              i = INTERVAL_PARENT (i);
+            }
 	  continue;
 	}
       else if (pos >= INTERVAL_LAST_POS (i))
@@ -753,7 +766,10 @@ update_interval (register INTERVAL i, ptrdiff_t pos)
 	  else if (NULL_PARENT (i))
 	    error ("Point %"pD"d after end of properties", pos);
 	  else
-            i = INTERVAL_PARENT (i);
+            {
+              SET_PARENT_POSITION (i);
+              i = INTERVAL_PARENT (i);
+            }
 	  continue;
 	}
       else
@@ -1557,8 +1573,8 @@ graft_intervals_into_buffer (INTERVAL source, ptrdiff_t position,
       if (!inherit && tree && length > 0)
 	{
 	  XSETBUFFER (buf, buffer);
-	  set_text_properties_1 (make_number (position),
-				 make_number (position + length),
+	  set_text_properties_1 (make_fixnum (position),
+				 make_fixnum (position + length),
 				 Qnil, buf,
 				 find_interval (tree, position));
 	}
@@ -1754,6 +1770,25 @@ set_point (ptrdiff_t charpos)
   set_point_both (charpos, buf_charpos_to_bytepos (current_buffer, charpos));
 }
 
+#ifdef IGNORE_RUST_PORT
+/* Set PT from MARKER's clipped position.  */
+
+void
+set_point_from_marker (Lisp_Object marker)
+{
+  ptrdiff_t charpos = clip_to_bounds (BEGV, marker_position (marker), ZV);
+  ptrdiff_t bytepos = marker_byte_position (marker);
+
+  /* Don't trust the byte position if the marker belongs to a
+     different buffer.  */
+  if (XMARKER (marker)->buffer != current_buffer)
+    bytepos = buf_charpos_to_bytepos (current_buffer, charpos);
+  else
+    bytepos = clip_to_bounds (BEGV_BYTE, bytepos, ZV_BYTE);
+  set_point_both (charpos, bytepos);
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* If there's an invisible character at position POS + TEST_OFFS in the
    current buffer, and the invisible property has a `stickiness' such that
    inserting a character at position POS would inherit the property it,
@@ -1776,7 +1811,7 @@ adjust_for_invis_intang (ptrdiff_t pos, ptrdiff_t test_offs, ptrdiff_t adj,
     /* POS + ADJ would be beyond the buffer bounds, so do no adjustment.  */
     return pos;
 
-  test_pos = make_number (pos + test_offs);
+  test_pos = make_fixnum (pos + test_offs);
 
   invis_propval
     = get_char_property_and_overlay (test_pos, Qinvisible, Qnil,
@@ -1789,7 +1824,7 @@ adjust_for_invis_intang (ptrdiff_t pos, ptrdiff_t test_offs, ptrdiff_t adj,
 	 such that an insertion at POS would inherit it.  */
       && (NILP (invis_overlay)
 	  /* Invisible property is from a text-property.  */
-	  ? (text_property_stickiness (Qinvisible, make_number (pos), Qnil)
+	  ? (text_property_stickiness (Qinvisible, make_fixnum (pos), Qnil)
 	     == (test_offs == 0 ? 1 : -1))
 	  /* Invisible property is from an overlay.  */
 	  : (test_offs == 0
@@ -1909,8 +1944,8 @@ set_point_both (ptrdiff_t charpos, ptrdiff_t bytepos)
 
 	  if (! NILP (intangible_propval))
 	    {
-	      while (XINT (pos) > BEGV
-		     && EQ (Fget_char_property (make_number (XINT (pos) - 1),
+	      while (XFIXNUM (pos) > BEGV
+		     && EQ (Fget_char_property (make_fixnum (XFIXNUM (pos) - 1),
 						Qintangible, Qnil),
 			    intangible_propval))
 		pos = Fprevious_char_property_change (pos, Qnil);
@@ -1920,7 +1955,7 @@ set_point_both (ptrdiff_t charpos, ptrdiff_t bytepos)
 		 property is `front-sticky', perturb it to be one character
 		 earlier -- this ensures that point can never move to the
 		 beginning of an invisible/intangible/front-sticky region.  */
-	      charpos = adjust_for_invis_intang (XINT (pos), 0, -1, 0);
+	      charpos = adjust_for_invis_intang (XFIXNUM (pos), 0, -1, 0);
 	    }
 	}
       else
@@ -1937,12 +1972,12 @@ set_point_both (ptrdiff_t charpos, ptrdiff_t bytepos)
 	  /* If preceding char is intangible,
 	     skip forward over all chars with matching intangible property.  */
 
-	  intangible_propval = Fget_char_property (make_number (charpos - 1),
+	  intangible_propval = Fget_char_property (make_fixnum (charpos - 1),
 						   Qintangible, Qnil);
 
 	  if (! NILP (intangible_propval))
 	    {
-	      while (XINT (pos) < ZV
+	      while (XFIXNUM (pos) < ZV
 		     && EQ (Fget_char_property (pos, Qintangible, Qnil),
 			    intangible_propval))
 		pos = Fnext_char_property_change (pos, Qnil);
@@ -1952,7 +1987,7 @@ set_point_both (ptrdiff_t charpos, ptrdiff_t bytepos)
 		 property is `rear-sticky', perturb it to be one character
 		 later -- this ensures that point can never move to the
 		 end of an invisible/intangible/rear-sticky region.  */
-	      charpos = adjust_for_invis_intang (XINT (pos), -1, 1, 0);
+	      charpos = adjust_for_invis_intang (XFIXNUM (pos), -1, 1, 0);
 	    }
 	}
 
@@ -2009,18 +2044,18 @@ set_point_both (ptrdiff_t charpos, ptrdiff_t bytepos)
 	enter_after = Qnil;
 
       if (! EQ (leave_before, enter_before) && !NILP (leave_before))
-      	call2 (leave_before, make_number (old_position),
-      	       make_number (charpos));
+      	call2 (leave_before, make_fixnum (old_position),
+      	       make_fixnum (charpos));
       if (! EQ (leave_after, enter_after) && !NILP (leave_after))
-      	call2 (leave_after, make_number (old_position),
-      	       make_number (charpos));
+      	call2 (leave_after, make_fixnum (old_position),
+      	       make_fixnum (charpos));
 
       if (! EQ (enter_before, leave_before) && !NILP (enter_before))
-      	call2 (enter_before, make_number (old_position),
-      	       make_number (charpos));
+      	call2 (enter_before, make_fixnum (old_position),
+      	       make_fixnum (charpos));
       if (! EQ (enter_after, leave_after) && !NILP (enter_after))
-      	call2 (enter_after, make_number (old_position),
-      	       make_number (charpos));
+      	call2 (enter_after, make_fixnum (old_position),
+      	       make_fixnum (charpos));
     }
 }
 
@@ -2038,7 +2073,7 @@ move_if_not_intangible (ptrdiff_t position)
   if (! NILP (Vinhibit_point_motion_hooks))
     /* If intangible is inhibited, always move point to POSITION.  */
     ;
-  else if (PT < position && XINT (pos) < ZV)
+  else if (PT < position && XFIXNUM (pos) < ZV)
     {
       /* We want to move forward, so check the text before POSITION.  */
 
@@ -2048,23 +2083,23 @@ move_if_not_intangible (ptrdiff_t position)
       /* If following char is intangible,
 	 skip back over all chars with matching intangible property.  */
       if (! NILP (intangible_propval))
-	while (XINT (pos) > BEGV
-	       && EQ (Fget_char_property (make_number (XINT (pos) - 1),
+	while (XFIXNUM (pos) > BEGV
+	       && EQ (Fget_char_property (make_fixnum (XFIXNUM (pos) - 1),
 					  Qintangible, Qnil),
 		      intangible_propval))
 	  pos = Fprevious_char_property_change (pos, Qnil);
     }
-  else if (XINT (pos) > BEGV)
+  else if (XFIXNUM (pos) > BEGV)
     {
       /* We want to move backward, so check the text after POSITION.  */
 
-      intangible_propval = Fget_char_property (make_number (XINT (pos) - 1),
+      intangible_propval = Fget_char_property (make_fixnum (XFIXNUM (pos) - 1),
 					       Qintangible, Qnil);
 
       /* If following char is intangible,
 	 skip forward over all chars with matching intangible property.  */
       if (! NILP (intangible_propval))
-	while (XINT (pos) < ZV
+	while (XFIXNUM (pos) < ZV
 	       && EQ (Fget_char_property (pos, Qintangible, Qnil),
 		      intangible_propval))
 	  pos = Fnext_char_property_change (pos, Qnil);
@@ -2079,7 +2114,7 @@ move_if_not_intangible (ptrdiff_t position)
      try moving to POSITION (which means we actually move farther
      if POSITION is inside of intangible text).  */
 
-  if (XINT (pos) != PT)
+  if (XFIXNUM (pos) != PT)
     SET_PT (position);
 }
 
@@ -2301,23 +2336,10 @@ set_intervals_multibyte_1 (INTERVAL i, bool multi_flag,
 
       if (multi_flag)
 	{
-	  ptrdiff_t temp;
-	  left_end_byte = start_byte + LEFT_TOTAL_LENGTH (i);
+	  left_end_byte
+            = advance_to_char_boundary (start_byte + LEFT_TOTAL_LENGTH (i));
 	  left_end = BYTE_TO_CHAR (left_end_byte);
-
-	  temp = CHAR_TO_BYTE (left_end);
-
-	  /* If LEFT_END_BYTE is in the middle of a character,
-	     adjust it and LEFT_END to a char boundary.  */
-	  if (left_end_byte > temp)
-	    {
-	      left_end_byte = temp;
-	    }
-	  if (left_end_byte < temp)
-	    {
-	      left_end--;
-	      left_end_byte = CHAR_TO_BYTE (left_end);
-	    }
+	  eassert (CHAR_TO_BYTE (left_end) == left_end_byte);
 	}
       else
 	{
@@ -2334,24 +2356,10 @@ set_intervals_multibyte_1 (INTERVAL i, bool multi_flag,
 
       if (multi_flag)
 	{
-	  ptrdiff_t temp;
-
-	  right_start_byte = end_byte - RIGHT_TOTAL_LENGTH (i);
+	  right_start_byte
+            = advance_to_char_boundary (end_byte - RIGHT_TOTAL_LENGTH (i));
 	  right_start = BYTE_TO_CHAR (right_start_byte);
-
-	  /* If RIGHT_START_BYTE is in the middle of a character,
-	     adjust it and RIGHT_START to a char boundary.  */
-	  temp = CHAR_TO_BYTE (right_start);
-
-	  if (right_start_byte < temp)
-	    {
-	      right_start_byte = temp;
-	    }
-	  if (right_start_byte > temp)
-	    {
-	      right_start++;
-	      right_start_byte = CHAR_TO_BYTE (right_start);
-	    }
+	  eassert (CHAR_TO_BYTE (right_start) == right_start_byte);
 	}
       else
 	{

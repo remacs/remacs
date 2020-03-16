@@ -1,6 +1,6 @@
 @c -*- mode: texinfo; coding: utf-8 -*-
 @c This is part of the GNU Emacs Lisp Reference Manual.
-@c Copyright (C) 1990-1995, 1998-1999, 2001-2018 Free Software
+@c Copyright (C) 1990--1995, 1998--1999, 2001--2020 Free Software
 @c Foundation, Inc.
 @c See the file elisp.texi for copying conditions.
 @node Lisp Data Types
@@ -52,6 +52,7 @@ to use these types can be found in later chapters.
 
 @menu
 * Printed Representation::      How Lisp objects are represented as text.
+* Special Read Syntax::         An overview of all the special sequences.
 * Comments::                    Comments and their formatting conventions.
 * Programming Types::           Types found in all Lisp systems.
 * Editing Types::               Types specific to Emacs.
@@ -106,18 +107,94 @@ Lisp object represented by the text that is read; the object may or may
 not be evaluated later.  @xref{Input Functions}, for a description of
 @code{read}, the basic function for reading objects.
 
+@node Special Read Syntax
+@section Special Read Syntax
+@cindex special read syntax
+
+  Emacs Lisp represents many special objects and constructs via
+special hash notations.
+
+@table @samp
+@item #<@dots{}>
+Objects that have no read syntax are presented like this
+(@pxref{Printed Representation}).
+
+@item ##
+The printed representation of an interned symbol whose name is an
+empty string (@pxref{Symbol Type}).
+
+@item #'
+This is a shortcut for @code{function}, see @ref{Anonymous Functions}.
+
+@item #:
+The printed representation of an uninterned symbol whose name is
+@var{foo} is @samp{#:@var{foo}} (@pxref{Symbol Type}).
+
+@item #N
+When printing circular structures, this construct is used to represent
+where the structure loops back onto itself, and @samp{N} is the
+starting list count:
+
+@lisp
+(let ((a (list 1)))
+  (setcdr a a))
+=> (1 . #0)
+@end lisp
+
+@item #N=
+@itemx #N#
+@samp{#N=} gives the name to an object, and @samp{#N#} represents that
+object, so when reading back the object, they will be the same object
+instead of copies (@pxref{Circular Objects}).
+
+@item #@@N
+Skip the next @samp{N} characters (@pxref{Comments}).
+
+@item #xN
+@samp{N} represented as a hexadecimal number (@samp{#x2a}).
+
+@item #oN
+@samp{N} represented as an octal number (@samp{#o52}).
+
+@item #bN
+@samp{N} represented as a binary number (@samp{#b101010}).
+
+@item #(@dots{})
+String text properties (@pxref{Text Props and Strings}).
+
+@item #^
+A char table (@pxref{Char-Table Type}).
+
+@item #s(hash-table @dots{})
+A hash table (@pxref{Hash Table Type}).
+
+@item ?C
+A character (@pxref{Basic Char Syntax}).
+
+@item #$
+The current file name in byte-compiled files (@pxref{Docs and
+Compilation}).  This is not meant to be used in Emacs Lisp source
+files.
+
+@item #@@N
+Skip the next @samp{N} characters (@pxref{Comments}).  This is used in
+byte-compiled files, and is not meant to be used in Emacs Lisp source
+files.
+@end table
+
+
 @node Comments
 @section Comments
 @cindex comments
-@cindex @samp{;} in comment
+@cindex @samp{;} for commenting
 
-  A @dfn{comment} is text that is written in a program only for the sake
-of humans that read the program, and that has no effect on the meaning
-of the program.  In Lisp, a semicolon (@samp{;}) starts a comment if it
-is not within a string or character constant.  The comment continues to
-the end of line.  The Lisp reader discards comments; they do not become
-part of the Lisp objects which represent the program within the Lisp
-system.
+  A @dfn{comment} is text that is written in a program only for the
+sake of humans that read the program, and that has no effect on the
+meaning of the program.  In Lisp, an unescaped semicolon (@samp{;})
+starts a comment if it is not within a string or character constant.
+The comment continues to the end of line.  The Lisp reader discards
+comments; they do not become part of the Lisp objects which represent
+the program within the Lisp system.
 
   The @samp{#@@@var{count}} construct, which skips the next @var{count}
 characters, is useful for program-generated comments containing binary
@@ -166,7 +243,10 @@ latter are unique to Emacs Lisp.
 @node Integer Type
 @subsection Integer Type
 
-  The range of values for an integer depends on the machine.  The
+  Under the hood, there are two kinds of integers---small integers,
+called @dfn{fixnums}, and large integers, called @dfn{bignums}.
+
+  The range of values for a fixnum depends on the machine.  The
 minimum range is @minus{}536,870,912 to 536,870,911 (30 bits; i.e.,
 @ifnottex
 @minus{}2**29
@@ -182,8 +262,15 @@ to
 @math{2^{29}-1})
 @end tex
 but many machines provide a wider range.
-Emacs Lisp arithmetic functions do not check for integer overflow.  Thus
-@code{(1+ 536870911)} is @minus{}536,870,912 if Emacs integers are 30 bits.
+
+  Bignums can have arbitrary precision.  Operations that overflow a
+fixnum will return a bignum instead.
+
+  All numbers can be compared with @code{eql} or @code{=}; fixnums can
+also be compared with @code{eq}.  To test whether an integer is a fixnum or a
+bignum, you can compare it to @code{most-negative-fixnum} and
+@code{most-positive-fixnum}, or you can use the convenience predicates
+@code{fixnump} and @code{bignump} on any object.
 
   The read syntax for integers is a sequence of (base ten) digits with an
 optional sign at the beginning and an optional period at the end.  The
@@ -200,11 +287,6 @@ leading @samp{+} or a final @samp{.}.
 @end example
 
 @noindent
-As a special exception, if a sequence of digits specifies an integer
-too large or too small to be a valid integer object, the Lisp reader
-reads it as a floating-point number (@pxref{Floating-Point Type}).
-For instance, if Emacs integers are 30 bits, @code{536870912} is read
-as the floating-point number @code{536870912.0}.
 
   @xref{Numbers}, for more information.
 
@@ -342,7 +424,11 @@ without a special escape meaning; thus, @samp{?\+} is equivalent to
 characters.  However, you must add a backslash before any of the
 characters @samp{()[]\;"}, and you should add a backslash before any
 of the characters @samp{|'`#.,} to avoid confusing the Emacs commands
-for editing Lisp code.  You can also add a backslash before whitespace
+for editing Lisp code.  You should also add a backslash before Unicode
+characters which resemble the previously mentioned @acronym{ASCII}
+ones, to avoid confusing people reading your code.  Emacs will
+highlight some non-escaped commonly confused characters such as
+@samp{‘} to encourage this.  You can also add a backslash before whitespace
 characters such as space, tab, newline and formfeed.  However, it is
 cleaner to use one of the easily readable escape sequences, such as
 @samp{\t} or @samp{\s}, instead of an actual whitespace character such
@@ -959,7 +1045,8 @@ char-tables.
 
   A string is an array of characters and a vector is an array of
 arbitrary objects.  A bool-vector can hold only @code{t} or @code{nil}.
-These kinds of array may have any length up to the largest integer.
+These kinds of array may have any length up to the largest fixnum,
+subject to system architecture limits and available memory.
 Char-tables are sparse arrays indexed by any valid character code; they
 can hold arbitrary objects.
 
@@ -1895,6 +1982,9 @@ with references to further information.
 @item arrayp
 @xref{Array Functions, arrayp}.
 
+@item bignump
+@xref{Predicates on Numbers, floatp}.
+
 @item bool-vector-p
 @xref{Bool-Vectors, bool-vector-p}.
 
@@ -1927,6 +2017,9 @@ with references to further information.
 
 @item custom-variable-p
 @xref{Variable Definitions, custom-variable-p}.
+
+@item fixnump
+@xref{Predicates on Numbers, floatp}.
 
 @item floatp
 @xref{Predicates on Numbers, floatp}.
@@ -2074,15 +2167,22 @@ appropriate chapter describing the data type.
 This function returns @code{t} if @var{object1} and @var{object2} are
 the same object, and @code{nil} otherwise.
 
-If @var{object1} and @var{object2} are integers with the same value,
-they are considered to be the same object (i.e., @code{eq} returns
-@code{t}).  If @var{object1} and @var{object2} are symbols with the
+If @var{object1} and @var{object2} are symbols with the
 same name, they are normally the same object---but see @ref{Creating
-Symbols} for exceptions.  For other types (e.g., lists, vectors,
+Symbols} for exceptions.  For other non-numeric types (e.g., lists, vectors,
 strings), two arguments with the same contents or elements are not
 necessarily @code{eq} to each other: they are @code{eq} only if they
 are the same object, meaning that a change in the contents of one will
 be reflected by the same change in the contents of the other.
+
+If @var{object1} and @var{object2} are numbers with differing types or values,
+then they cannot be the same object and @code{eq} returns @code{nil}.
+If they are fixnums with the same value,
+then they are the same object and @code{eq} returns @code{t}.
+If they were computed separately but happen to have the same value
+and the same non-fixnum numeric type, then they might or might not be
+the same object, and @code{eq} returns @code{t} or @code{nil}
+depending on whether the Lisp interpreter created one object or two.
 
 @example
 @group
@@ -2091,20 +2191,25 @@ be reflected by the same change in the contents of the other.
 @end group
 
 @group
-(eq 456 456)
+(eq ?A ?A)
      @result{} t
 @end group
 
 @group
-(eq "asdf" "asdf")
+(eq 3.0 3.0)
+     @result{} t @r{or} nil
+;; @r{Equal floats may or may not be the same object.}
+@end group
+
+@group
+(eq (make-string 3 ?A) (make-string 3 ?A))
      @result{} nil
 @end group
 
 @group
-(eq "" "")
-     @result{} t
-;; @r{This exception occurs because Emacs Lisp}
-;; @r{makes just one multibyte empty string, to save space.}
+(eq "asdf" "asdf")
+     @result{} t @r{or} nil
+;; @r{Equal string constants or may not be the same object.}
 @end group
 
 @group
@@ -2144,6 +2249,21 @@ Symbols}.
      @result{} nil
 @end group
 @end example
+
+@noindent
+@cindex identical-contents objects, and byte-compiler
+@cindex objects with identical contents, and byte-compiler
+The Emacs Lisp byte compiler may collapse identical literal objects,
+such as literal strings, into references to the same object, with the
+effect that the byte-compiled code will compare such objects as
+@code{eq}, while the interpreted version of the same code will not.
+Therefore, your code should never rely on objects with the same
+literal contents being either @code{eq} or not @code{eq}, it should
+instead use functions that compare object contents such as
+@code{equal}, described below.  Similarly, your code should not modify
+literal objects (e.g., put text properties on literal strings), since
+doing that might affect other literal objects of the same contents, if
+the byte compiler collapses them.
 @end defun
 
 @defun equal object1 object2
@@ -2222,7 +2342,7 @@ However, two distinct buffers are never considered @code{equal}, even if
 their textual contents are the same.
 @end defun
 
-  The test for equality is implemented recursively; for example, given
+  For @code{equal}, equality is defined recursively; for example, given
 two cons cells @var{x} and @var{y}, @code{(equal @var{x} @var{y})}
 returns @code{t} if and only if both the expressions below return
 @code{t}:
@@ -2232,8 +2352,10 @@ returns @code{t} if and only if both the expressions below return
 (equal (cdr @var{x}) (cdr @var{y}))
 @end example
 
-Because of this recursive method, circular lists may therefore cause
-infinite recursion (leading to an error).
+Comparing circular lists may therefore cause deep recursion that leads
+to an error, and this may result in counterintuitive behavior such as
+@code{(equal a b)} returning @code{t} whereas @code{(equal b a)}
+signals an error.
 
 @defun equal-including-properties object1 object2
 This function behaves like @code{equal} in all cases but also requires

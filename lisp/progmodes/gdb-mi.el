@@ -1,6 +1,6 @@
 ;;; gdb-mi.el --- User Interface for running GDB  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2020 Free Software Foundation, Inc.
 
 ;; Author: Nick Roberts <nickrob@gnu.org>
 ;; Maintainer: emacs-devel@gnu.org
@@ -37,7 +37,7 @@
 ;; buffers which control the execution and describe the state of your program.
 ;; It separates the input/output of your program from that of GDB and displays
 ;; expressions and their current values in their own buffers.  It also uses
-;; features of Emacs 21 such as the fringe/display margin for breakpoints, and
+;; features such as the fringe/display margin for breakpoints, and
 ;; the toolbar (see the GDB Graphical Interface section in the Emacs info
 ;; manual).
 
@@ -154,7 +154,7 @@ May be manually changed by user with `gdb-select-frame'.")
   "Associative list of threads provided by \"-thread-info\" MI command.
 
 Keys are thread numbers (in strings) and values are structures as
-returned from -thread-info by `gdb-json-partial-output'. Updated in
+returned from -thread-info by `gdb-json-partial-output'.  Updated in
 `gdb-thread-list-handler-custom'.")
 
 (defvar gdb-running-threads-count nil
@@ -324,7 +324,10 @@ in `gdb-handler-list' and clears all pending handlers invalidated
 by the reception of this reply."
   (let ((handler-function (gdb-get-handler-function token-number)))
     (when handler-function
-      (funcall handler-function)
+      ;; Protect against errors in handler-function.
+      (condition-case err
+          (funcall handler-function)
+        (error (message (error-message-string err))))
       (gdb-delete-handler token-number))))
 
 (defun gdb-remove-all-pending-triggers ()
@@ -378,18 +381,18 @@ Must be a list of pairs with cars being buffers and cdr's being
 valid signal handlers.")
 
 (defgroup gdb nil
-  "GDB graphical interface"
+  "GDB graphical interface."
   :group 'tools
   :link '(info-link "(emacs)GDB Graphical Interface")
   :version "23.2")
 
 (defgroup gdb-non-stop nil
-  "GDB non-stop debugging settings"
+  "GDB non-stop debugging settings."
   :group 'gdb
   :version "23.2")
 
 (defgroup gdb-buffers nil
-  "GDB buffers"
+  "GDB buffers."
   :group 'gdb
   :version "23.2")
 
@@ -657,7 +660,7 @@ When `gdb-non-stop' is nil, return COMMAND unchanged."
   "`gud-call' wrapper which adds --thread/--all options between
 CMD1 and CMD2.  NOALL is the same as in `gdb-gud-context-command'.
 
-NOARG must be t when this macro is used outside `gud-def'"
+NOARG must be t when this macro is used outside `gud-def'."
   `(gud-call
     (concat (gdb-gud-context-command ,cmd1 ,noall) " " ,cmd2)
     ,(when (not noarg) 'arg)))
@@ -955,6 +958,7 @@ detailed description of this mode.
     (gdb-input "-gdb-set non-stop 1" 'gdb-non-stop-handler))
 
   (gdb-input "-enable-pretty-printing" 'ignore)
+  (gdb-input "-enable-frame-filters" 'ignore)
 
   ;; Find source file and compilation directory here.
   (if gdb-create-source-file-list
@@ -1000,8 +1004,10 @@ no input, and GDB is waiting for input."
 	;; Sending an EOF does not work with GDB-MI; submit an
 	;; explicit quit command.
 	(progn
-	  (insert "quit")
-	  (comint-send-input t t))
+          (if (> gdb-control-level 0)
+              (process-send-eof proc)
+            (insert "quit")
+            (comint-send-input t t)))
       (delete-char arg))))
 
 (defvar gdb-define-alist nil "Alist of #define directives for GUD tooltips.")
@@ -1120,13 +1126,15 @@ line, and no execution takes place."
 (defcustom gdb-show-changed-values t
   "If non-nil change the face of out of scope variables and changed values.
 Out of scope variables are suppressed with `shadow' face.
-Changed values are highlighted with the face `font-lock-warning-face'."
+Changed values are highlighted with the face `font-lock-warning-face'.
+Used by Speedbar."
   :type 'boolean
   :group 'gdb
   :version "22.1")
 
 (defcustom gdb-max-children 40
-  "Maximum number of children before expansion requires confirmation."
+  "Maximum number of children before expansion requires confirmation.
+Used by Speedbar."
   :type 'integer
   :group 'gdb
   :version "22.1")
@@ -1138,9 +1146,7 @@ Changed values are highlighted with the face `font-lock-warning-face'."
   :version "22.2")
 
 (define-minor-mode gdb-speedbar-auto-raise
-  "Minor mode to automatically raise the speedbar for watch expressions.
-With prefix argument ARG, automatically raise speedbar if ARG is
-positive, otherwise don't automatically raise it."
+  "Minor mode to automatically raise the speedbar for watch expressions."
   :global t
   :group 'gdb
   :version "22.1")
@@ -1373,7 +1379,7 @@ With arg, enter name of variable to be watched in the minibuffer."
 TEXT is the text of the button we clicked on, a + or - item.
 TOKEN is data related to this node.
 INDENT is the current indentation depth."
-  (cond ((string-match "+" text)        ;expand this node
+  (cond ((string-match "\\+" text)        ;expand this node
 	 (let* ((var (assoc token gdb-var-list))
 		(expr (nth 1 var)) (children (nth 2 var)))
 	   (if (or (<= (string-to-number children) gdb-max-children)
@@ -1743,16 +1749,12 @@ static char *magick[] = {
 (defvar breakpoint-disabled-icon nil
   "Icon for disabled breakpoint in display margin.")
 
-(declare-function define-fringe-bitmap "fringe.c"
-		  (bitmap bits &optional height width align))
-
-(and (display-images-p)
-     ;; Bitmap for breakpoint in fringe
-     (define-fringe-bitmap 'breakpoint
-       "\x3c\x7e\xff\xff\xff\xff\x7e\x3c")
-     ;; Bitmap for gud-overlay-arrow in fringe
-     (define-fringe-bitmap 'hollow-right-triangle
-       "\xe0\x90\x88\x84\x84\x88\x90\xe0"))
+;; Bitmap for breakpoint in fringe
+(define-fringe-bitmap 'breakpoint
+  "\x3c\x7e\xff\xff\xff\xff\x7e\x3c")
+;; Bitmap for gud-overlay-arrow in fringe
+(define-fringe-bitmap 'hollow-right-triangle
+  "\xe0\x90\x88\x84\x84\x88\x90\xe0")
 
 (defface breakpoint-enabled
   '((t
@@ -1782,9 +1784,10 @@ static char *magick[] = {
 (defvar gdb-control-commands-regexp
   (concat
    "^\\("
-   "commands\\|if\\|while\\|define\\|document\\|"
+   "comm\\(a\\(n\\(ds?\\)?\\)?\\)?\\|if\\|while"
+   "\\|def\\(i\\(ne?\\)?\\)?\\|doc\\(u\\(m\\(e\\(nt?\\)?\\)?\\)?\\)?\\|"
    gdb-python-guile-commands-regexp
-   "\\|while-stepping\\|stepping\\|ws\\|actions"
+   "\\|while-stepping\\|stepp\\(i\\(ng?\\)?\\)?\\|ws\\|actions"
    "\\)\\([[:blank:]]+\\([^[:blank:]]*\\)\\)?$")
   "Regexp matching GDB commands that enter a recursive reading loop.
 As long as GDB is in the recursive reading loop, it does not expect
@@ -1797,7 +1800,7 @@ commands to be prefixed by \"-interpreter-exec console\".")
   "A comint send filter for gdb."
   (with-current-buffer gud-comint-buffer
     (let ((inhibit-read-only t))
-      (remove-text-properties (point-min) (point-max) '(face))))
+      (remove-text-properties (point-min) (point-max) '(face nil))))
   ;; mimic <RET> key to repeat previous command in GDB
   (when (= gdb-control-level 0)
     (if (not (string= "" string))
@@ -1830,7 +1833,7 @@ commands to be prefixed by \"-interpreter-exec console\".")
 		      " "))
       (setq gdb-first-done-or-error t)
       (let ((to-send (concat "-interpreter-exec console "
-                             (gdb-mi-quote (concat gdb-continuation string " "))
+                             (gdb-mi-quote (concat gdb-continuation string))
                              "\n")))
         (if gdb-enable-debug
             (push (cons 'mi-send to-send) gdb-debug-log))
@@ -1846,7 +1849,7 @@ commands to be prefixed by \"-interpreter-exec console\".")
   ;; Python and Guile commands that have an argument don't enter the
   ;; recursive reading loop.
   (let* ((control-command-p (string-match gdb-control-commands-regexp string))
-         (command-arg (match-string 3 string))
+         (command-arg (and control-command-p (match-string 3 string)))
          (python-or-guile-p (string-match gdb-python-guile-commands-regexp
                                           string)))
     (if (and control-command-p
@@ -1936,10 +1939,10 @@ If NO-PROC is non-nil, do not try to contact the GDB process."
   ;; gdb-break-list is maintained in breakpoints handler
   (gdb-get-buffer-create 'gdb-breakpoints-buffer)
 
+  (gdb-get-changed-registers)
   (unless no-proc
     (gdb-emit-signal gdb-buf-publisher 'update))
 
-  (gdb-get-changed-registers)
   (when (and (boundp 'speedbar-frame) (frame-live-p speedbar-frame))
     (dolist (var gdb-var-list)
       (setcar (nthcdr 5 var) nil))
@@ -2684,7 +2687,7 @@ in MI messages, e.g.: [key=.., key=..].  -stack-list-frames and
 responses.
 
 If FIX-LIST is non-nil, \"FIX-LIST={..}\" is replaced with
-\"FIX-LIST=[..]\" prior to parsing. This is used to fix broken
+\"FIX-LIST=[..]\" prior to parsing.  This is used to fix broken
 -break-info output when it contains breakpoint script field
 incompatible with GDB/MI output syntax.
 
@@ -2717,7 +2720,7 @@ If `default-directory' is remote, full file names are adapted accordingly."
               (insert "]"))))))
     (goto-char (point-min))
     (insert "{")
-    (let ((re (concat "\\([[:alnum:]-_]+\\)=")))
+    (let ((re (concat "\\([[:alnum:]_-]+\\)=")))
       (while (re-search-forward re nil t)
         (replace-match "\"\\1\":" nil nil)
         (if (eq (char-after) ?\") (forward-sexp) (forward-char))))
@@ -4156,7 +4159,7 @@ member."
         (when (not value)
           (setq value "<complex data type>"))
         (if (or (not value)
-                (string-match "\\0x" value))
+                (string-match "0x" value))
             (add-text-properties 0 (length name)
                                  `(mouse-face highlight
                                               help-echo "mouse-2: create watch expression"

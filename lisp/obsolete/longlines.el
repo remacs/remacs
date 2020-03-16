@@ -1,11 +1,11 @@
 ;;; longlines.el --- automatically wrap long lines   -*- coding:utf-8 -*-
 
-;; Copyright (C) 2000-2001, 2004-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2001, 2004-2020 Free Software Foundation, Inc.
 
 ;; Authors:    Kai Grossjohann <Kai.Grossjohann@CS.Uni-Dortmund.DE>
 ;;             Alex Schroeder <alex@gnu.org>
 ;;             Chong Yidong <cyd@stupidchicken.com>
-;; Maintainer: Chong Yidong <cyd@stupidchicken.com>
+;; Maintainer: emacs-devel@gnu.org
 ;; Obsolete-since: 24.4
 ;; Keywords: convenience, wp
 
@@ -97,9 +97,6 @@ This is used when `longlines-show-hard-newlines' is on."
 ;;;###autoload
 (define-minor-mode longlines-mode
   "Toggle Long Lines mode in this buffer.
-With a prefix argument ARG, enable Long Lines mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 When Long Lines mode is enabled, long lines are wrapped if they
 extend beyond `fill-column'.  The soft newlines used for line
@@ -251,7 +248,7 @@ With optional argument ARG, make the hard newlines invisible again."
 	(inhibit-modification-hooks t)
 	buffer-file-name buffer-file-truename)
     (while pos
-      (remove-text-properties pos (1+ pos) '(display))
+      (remove-text-properties pos (1+ pos) '(display nil))
       (setq pos (text-property-not-all (1+ pos) (point-max) 'hard nil)))
     (restore-buffer-modified-p mod)))
 
@@ -390,7 +387,7 @@ compatibility with `format-alist', and is ignored."
 	    (goto-char (1+ pos))
 	    (insert-and-inherit " ")
 	    (delete-region pos (1+ pos))
-	    (remove-text-properties pos (1+ pos) 'hard))))
+            (remove-text-properties pos (1+ pos) '(hard nil)))))
       (set-buffer-modified-p mod)
       end)))
 

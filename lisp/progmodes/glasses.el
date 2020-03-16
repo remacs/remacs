@@ -1,9 +1,8 @@
 ;;; glasses.el --- make cantReadThis readable
 
-;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
 ;; Author: Milan Zamazal <pdm@zamazal.org>
-;; Maintainer: Milan Zamazal <pdm@zamazal.org>
 ;; Keywords: tools
 
 ;; This file is part of GNU Emacs.
@@ -312,10 +311,9 @@ recognized according to the current value of the variable `glasses-separator'."
 ;;;###autoload
 (define-minor-mode glasses-mode
   "Minor mode for making identifiers likeThis readable.
-With a prefix argument ARG, enable the mode if ARG is positive,
-and disable it otherwise.  If called from Lisp, enable the mode
-if ARG is omitted or nil.  When this mode is active, it tries to
-add virtual separators (like underscores) at places they belong to."
+
+When this mode is active, it tries to add virtual
+separators (like underscores) at places they belong to."
   :group 'glasses :lighter " o^o"
   (save-excursion
     (save-restriction

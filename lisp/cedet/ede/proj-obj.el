@@ -1,6 +1,6 @@
 ;;; ede/proj-obj.el --- EDE Generic Project Object code generation support
 
-;;; Copyright (C) 1998-2000, 2005, 2008-2018 Free Software Foundation,
+;;; Copyright (C) 1998-2000, 2005, 2008-2020 Free Software Foundation,
 ;;; Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
@@ -26,7 +26,6 @@
 ;; Handles a superclass of target types which create object code in
 ;; and EDE Project file.
 
-(eval-when-compile (require 'cl))
 (require 'ede/proj)
 (declare-function ede-pmake-varname "ede/pmake")
 

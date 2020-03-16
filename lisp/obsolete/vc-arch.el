@@ -1,10 +1,11 @@
 ;;; vc-arch.el --- VC backend for the Arch version-control system  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2004-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 ;; Author:      FSF (see vc.el for full credits)
 ;; Maintainer:  Stefan Monnier <monnier@gnu.org>
 ;; Package: vc
+;; Obsolete-since: 25.1
 
 ;; This file is part of GNU Emacs.
 
@@ -133,7 +134,8 @@ If nil, use the value of `vc-diff-switches'.  If t, use no switches."
 	(file-error (insert (format "%s <%s> %s"
 				    (current-time-string)
 				    user-mail-address
-				    (+ (nth 2 (current-time))
+				    (+ (% (car (time-convert nil 1000000))
+					  1000000)
 				       (buffer-size)))))))
     (comment-region beg (point))))
 
@@ -304,8 +306,9 @@ Only the value `maybe' can be trusted :-(."
 		;; Buh?  Unexpected format.
 		'edited
 	      (let ((ats (file-attributes file)))
-		(if (and (eq (nth 7 ats) (string-to-number (match-string 2)))
-			 (equal (format-time-string "%s" (nth 5 ats))
+		(if (and (eq (file-attribute-size ats) (string-to-number (match-string 2)))
+			 (equal (format-time-string
+				 "%s" (file-attribute-modification-time ats))
 				(match-string 1)))
 		    'up-to-date
 		  'edited)))))))))
@@ -395,14 +398,14 @@ CALLBACK expects (ENTRIES &optional MORE-TO-COME); see
 	  (setq rev (replace-match (cdr rule) t nil rev))))
     (format "Arch%c%s"
 	    (pcase (vc-state file)
-	      ((or `up-to-date `needs-update) ?-)
-	      (`added ?@)
+	      ((or 'up-to-date 'needs-update) ?-)
+	      ('added ?@)
 	      (_ ?:))
 	    rev)))
 
 (defun vc-arch-diff3-rej-p (rej)
   (let ((attrs (file-attributes rej)))
-    (and attrs (< (nth 7 attrs) 60)
+    (and attrs (< (file-attribute-size attrs) 60)
 	 (with-temp-buffer
 	   (insert-file-contents rej)
 	   (goto-char (point-min))

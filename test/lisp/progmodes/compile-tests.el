@@ -1,6 +1,6 @@
 ;;; compile-tests.el --- Test suite for compile.el.  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2011-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
 ;; Author: Chong Yidong <cyd@stupidchicken.com>
 ;; Keywords:       internal
@@ -30,7 +30,7 @@
 (require 'ert)
 (require 'compile)
 
-(defvar compile-tests--test-regexps-data
+(defconst compile-tests--test-regexps-data
   ;; The computed column numbers are zero-indexed, so subtract 1 from
   ;; what's reported in the string.  The end column numbers are for
   ;; the character after, so it matches what's reported in the string.
@@ -55,11 +55,19 @@
      25 nil 8 "errors.c")
     ;; ant
     ("[javac] /src/DataBaseTestCase.java:27: unreported exception ..."
-     13 nil 27 "/src/DataBaseTestCase.java")
+     13 nil 27 "/src/DataBaseTestCase.java" 2)
     ("[javac] /src/DataBaseTestCase.java:49: warning: finally clause cannot complete normally"
-     13 nil 49 "/src/DataBaseTestCase.java")
+     13 nil 49 "/src/DataBaseTestCase.java" 1)
     ("[jikes]  foo.java:3:5:7:9: blah blah"
-     14 (5 . 10) (3 . 7) "foo.java")
+     14 (5 . 10) (3 . 7) "foo.java" 2)
+    ("[javac] c:/cygwin/Test.java:12: error: foo: bar"
+     9 nil 12 "c:/cygwin/Test.java" 2)
+    ("[javac] c:\\cygwin\\Test.java:87: error: foo: bar"
+     9 nil 87 "c:\\cygwin\\Test.java" 2)
+    ;; Checkstyle error, but ant reports a warning (note additional
+    ;; severity level after task name)
+    ("[checkstyle] [ERROR] /src/Test.java:38: warning: foo"
+     22 nil 38 "/src/Test.java" 1)
     ;; bash
     ("a.sh: line 1: ls-l: command not found"
      1 nil 1 "a.sh")
@@ -180,6 +188,12 @@
      1 0 31 "/usr/include/c++/3.3/backward/iostream.h")
     ("                 from test_clt.cc:1:"
      1 nil 1 "test_clt.cc")
+    ;; gmake
+    ("make: *** [Makefile:20: all] Error 2" 12 nil 20 "Makefile" 0)
+    ("make[4]: *** [sub/make.mk:19: all] Error 127" 15 nil 19 "sub/make.mk" 0)
+    ("gmake[4]: *** [sub/make.mk:19: all] Error 2" 16 nil 19 "sub/make.mk" 0)
+    ("gmake-4.3[4]: *** [make.mk:1119: all] Error 2" 20 nil 1119 "make.mk" 0)
+    ("Make-4.3: *** [make.INC:1119: dir/all] Error 2" 16 nil 1119 "make.INC" 0)
     ;; gnu
     ("foo.c:8: message" 1 nil 8 "foo.c")
     ("../foo.c:8: W: message" 1 nil 8 "../foo.c")
@@ -204,6 +218,15 @@
      1 nil 54 "G:/cygwin/dev/build-myproj.xml")
     ("{standard input}:27041: Warning: end of file not at end of a line; newline inserted"
      1 nil 27041 "{standard input}")
+    ("boost/container/detail/flat_tree.hpp:589:25:   [ skipping 5 instantiation contexts, use -ftemplate-backtrace-limit=0 to disable ]"
+     1 25 589 "boost/container/detail/flat_tree.hpp" 0)
+    ;; gradle-kotlin
+    ("e: /src/Test.kt: (34, 15): foo: bar" 4 15 34 "/src/Test.kt" 2)
+    ("w: /src/Test.kt: (11, 98): foo: bar" 4 98 11 "/src/Test.kt" 1)
+    ("e: e:/cygwin/src/Test.kt: (34, 15): foo: bar" 4 15 34 "e:/cygwin/src/Test.kt" 2)
+    ("w: e:/cygwin/src/Test.kt: (11, 98): foo: bar" 4 98 11 "e:/cygwin/src/Test.kt" 1)
+    ("e: e:\\src\\Test.kt: (34, 15): foo: bar" 4 15 34 "e:\\src\\Test.kt" 2)
+    ("w: e:\\src\\Test.kt: (11, 98): foo: bar" 4 98 11 "e:\\src\\Test.kt" 1)
     ;; Guile
     ("In foo.scm:\n" 1 nil nil "foo.scm")
     ("  63:4 [call-with-prompt prompt0 ...]" 1 4 63 nil)
@@ -219,7 +242,7 @@
     ;; maven
     ("FooBar.java:[111,53] no interface expected here"
      1 53 111 "FooBar.java" 2)
-    ("  [ERROR] /Users/cinsk/hello.java:[651,96] ';' expected"
+    ("[ERROR] /Users/cinsk/hello.java:[651,96] ';' expected"
      15 96 651 "/Users/cinsk/hello.java" 2) ;Bug#11517.
     ("[WARNING] /foo/bar/Test.java:[27,43] unchecked conversion"
      11 43 27 "/foo/bar/Test.java" 1) ;Bug#20556
@@ -246,6 +269,9 @@
      1 nil 109 "..\\src\\ctrl\\lister.c")
     ("..\\src\\ctrl\\lister.c(120): Warning! W201: Unreachable code"
      1 nil 120 "..\\src\\ctrl\\lister.c")
+    ;; omake
+    ("      alpha.c:5:15: error: expected ';' after expression"
+     1 15 5 "alpha.c")
     ;; oracle
     ("Semantic error at line 528, column 5, file erosacqdb.pc:"
      1 5 528 "erosacqdb.pc")
@@ -343,6 +369,29 @@ meaning a range of columns starting on LINE and ending on
 END-LINE, if that matched.  TYPE can be left out, in which case
 any message type is accepted.")
 
+(defconst compile-tests--grep-regexp-testcases
+  ;; Bug#32051.
+  '(("c:/Users/my.name/src/project\\src\\kbhit.hpp\0\ 29:#include <termios.h>"
+     1 nil 29 "c:/Users/my.name/src/project\\src\\kbhit.hpp")
+    ("d:/gnu/emacs/branch/src/callproc.c\0\ 214:#ifdef DOS_NT"
+     1 nil 214 "d:/gnu/emacs/branch/src/callproc.c")
+    ("/gnu/emacs/branch/src/callproc.c\0\ 214:#ifdef DOS_NT"
+     1 nil 214 "/gnu/emacs/branch/src/callproc.c"))
+  "List of tests for `grep-regexp-list'.
+The format is the same as `compile-tests--test-regexps-data', but
+the match is expected to be the same when NUL bytes are replaced
+with colon.")
+
+(defconst compile-tests--grep-regexp-tricky-testcases
+  ;; Bug#7378.
+  '(("./x11-libs---nx/3.4.0:0:C.30253.1289557929.792611.C/nx-3.4.0.exheres-0\0\ 42:some text"
+     1 nil 42 "./x11-libs---nx/3.4.0:0:C.30253.1289557929.792611.C/nx-3.4.0.exheres-0")
+    ("2011-08-31_11:57:03_1\0\ 7:Date: Wed, 31 Aug 2011 11:57:03 +0000"
+     1 nil 7 "2011-08-31_11:57:03_1"))
+  "List of tricky tests for `grep-regexp-list'.
+Same as `compile-tests--grep-regexp-testcases', but these cases
+can only work with the NUL byte to disambiguate colons.")
+
 (defun compile--test-error-line (test)
   (erase-buffer)
   (setq compilation-locs (make-hash-table))
@@ -370,13 +419,41 @@ any message type is accepted.")
       (should (equal (car (nth 2 (compilation--loc->file-struct loc)))
                      (or end-line line)))
       (when type
-        (should (equal type (compilation--message->type msg)))))))
+        (should (equal type (compilation--message->type msg)))))
+    msg))
 
 (ert-deftest compile-test-error-regexps ()
   "Test the `compilation-error-regexp-alist' regexps.
 The test data is in `compile-tests--test-regexps-data'."
   (with-temp-buffer
     (font-lock-mode -1)
-    (mapc #'compile--test-error-line compile-tests--test-regexps-data)))
+    (let ((compilation-num-errors-found 0)
+          (compilation-num-warnings-found 0)
+          (compilation-num-infos-found 0))
+      (mapc #'compile--test-error-line compile-tests--test-regexps-data)
+      (should (eq compilation-num-errors-found 93))
+      (should (eq compilation-num-warnings-found 36))
+      (should (eq compilation-num-infos-found 26)))))
+
+(ert-deftest compile-test-grep-regexps ()
+  "Test the `grep-regexp-alist' regexps.
+The test data is in `compile-tests--grep-regexp-testcases'."
+  (with-temp-buffer
+    (grep-mode)
+    (setq buffer-read-only nil)
+    (font-lock-mode -1)
+    (dolist (testcase compile-tests--grep-regexp-testcases)
+      (let (msg1 msg2)
+        (setq msg1 (ert-info ((format "%S" testcase) :prefix "testcase: ")
+                     (compile--test-error-line testcase)))
+        ;; Make sure replacing the NUL character with a colon still matches.
+        (setf (car testcase) (replace-regexp-in-string "\0" ":" (car testcase)))
+        (setq msg2 (ert-info ((format "%S" testcase) :prefix "testcase: ")
+                     (compile--test-error-line testcase)))
+        (should (equal msg1 msg2))))
+    (dolist (testcase compile-tests--grep-regexp-tricky-testcases)
+      (ert-info ((format "%S" testcase) :prefix "testcase: ")
+        (compile--test-error-line testcase)))
+    (should (eq compilation-num-errors-found 8))))
 
 ;;; compile-tests.el ends here

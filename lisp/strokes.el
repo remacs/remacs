@@ -1,6 +1,6 @@
 ;;; strokes.el --- control Emacs through mouse strokes
 
-;; Copyright (C) 1997, 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1997, 2000-2020 Free Software Foundation, Inc.
 
 ;; Author: David Bakhash <cadet@alum.mit.edu>
 ;; Maintainer: emacs-devel@gnu.org
@@ -155,7 +155,7 @@
 ;; Euna Kim for her help in Korean, and massive thanks to the helpful
 ;; guys on the help instance on athena (zeno, jered, amu, gsstark,
 ;; ghudson, etc) Special thanks to Steve Baur, Kyle Jones, and Hrvoje
-;; Niksic for all their help.  And special thanks to Dave Gillespie
+;; Nikšić for all their help.  And special thanks to Dave Gillespie
 ;; for all the elisp help--he is responsible for helping me use the cl
 ;; macros at (near) max speed.
 
@@ -1216,9 +1216,7 @@ the stroke as a character in some language."
 
 ;;(defun strokes-edit-quit ()
 ;;  (interactive)
-;;  (or (one-window-p t 0)
-;;      (delete-window))
-;;  (kill-buffer "*Strokes List*"))
+;;  (quit-windows-on "*Strokes List*" t))
 
 ;;(define-derived-mode edit-strokes-mode list-mode
 ;;  "Edit-Strokes"
@@ -1388,9 +1386,6 @@ If STROKES-MAP is not given, `strokes-global-map' will be used instead."
 ;;;###autoload
 (define-minor-mode strokes-mode
   "Toggle Strokes mode, a global minor mode.
-With a prefix argument ARG, enable Strokes mode if ARG is
-positive, and disable it otherwise.  If called from Lisp,
-enable the mode if ARG is omitted or nil.
 
 \\<strokes-mode-map>
 Strokes are pictographic mouse gestures which invoke commands.
@@ -1526,12 +1521,6 @@ Encode/decode your strokes with \\[strokes-encode-buffer],
   "Non-nil if CHAR represents an `on' or `off' bit in the XPM."
   (or (eq char ?\s)
       (eq char ?*)))
-
-;;(defsubst strokes-xor (a b)  ### Should I make this an inline function? ###
-;;  "T if one and only one of A and B is non-nil; otherwise, returns nil.
-;;NOTE: Don't use this as a numeric xor since it treats all non-nil
-;;      values as t including `0' (zero)."
-;;  (eq (null a) (not (null b))))
 
 (defsubst strokes-xpm-encode-length-as-string (length)
   "Given some LENGTH in [0,62) do a fast lookup of its encoding."

@@ -1,5 +1,5 @@
 /* Definitions and global variables for intervals.
-   Copyright (C) 1993-1994, 2000-2018 Free Software Foundation, Inc.
+   Copyright (C) 1993-1994, 2000-2020 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -29,14 +29,17 @@ INLINE_HEADER_BEGIN
 struct interval
 {
   /* The first group of entries deal with the tree structure.  */
-
   ptrdiff_t total_length;       /* Length of myself and both children.  */
   ptrdiff_t position;	        /* Cache of interval's character position.  */
-				/* This field is usually updated
-				   simultaneously with an interval
-				   traversal, there is no guarantee
-				   that it is valid for a random
-				   interval.  */
+                                /* This field is valid in the final
+                                   target interval returned by
+                                   find_interval, next_interval,
+                                   previous_interval and
+                                   update_interval.  It cannot be
+                                   depended upon in any intermediate
+                                   intervals traversed by these
+                                   functions, or any other
+                                   interval. */
   struct interval *left;	/* Intervals which precede me.  */
   struct interval *right;	/* Intervals which succeed me.  */
 
@@ -116,7 +119,7 @@ struct interval
 
 /* True if this is a default interval, which is the same as being null
    or having no properties.  */
-#define DEFAULT_INTERVAL_P(i) (!i || EQ ((i)->plist, Qnil))
+#define DEFAULT_INTERVAL_P(i) (!i || NILP ((i)->plist))
 
 /* Test what type of parent we have.  Three possibilities: another
    interval, a buffer or string object, or NULL.  */
@@ -223,9 +226,11 @@ set_interval_plist (INTERVAL i, Lisp_Object plist)
 /* If PROP is the `invisible' property of a character,
    this is 1 if the character should be treated as invisible,
    and 2 if it is invisible but with an ellipsis.  */
-extern EMACS_INT text_prop_means_invisible(Lisp_Object); // defined in intervals.rs
+
 #define TEXT_PROP_MEANS_INVISIBLE(prop)					\
-  (text_prop_means_invisible(prop))
+  (EQ (BVAR (current_buffer, invisibility_spec), Qt)			\
+   ? !NILP (prop)							\
+   : invisible_prop (prop, BVAR (current_buffer, invisibility_spec)))
 
 /* Declared in alloc.c.  */
 

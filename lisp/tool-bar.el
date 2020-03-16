@@ -1,6 +1,6 @@
 ;;; tool-bar.el --- setting up the tool bar
 
-;; Copyright (C) 2000-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
 ;; Author: Dave Love <fx@gnu.org>
 ;; Keywords: mouse frames
@@ -44,9 +44,6 @@
 ;; when you are on a tty.  I hope that won't cause too much trouble -- rms.
 (define-minor-mode tool-bar-mode
   "Toggle the tool bar in all graphical frames (Tool Bar mode).
-With a prefix argument ARG, enable Tool Bar mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-Tool Bar mode if ARG is omitted or nil.
 
 See `tool-bar-add-item' and `tool-bar-add-item-from-menu' for
 conveniently adding tool bar items."
@@ -80,7 +77,11 @@ See `tool-bar-mode' for more information."
 
 (defvar tool-bar-map (make-sparse-keymap)
   "Keymap for the tool bar.
-Define this locally to override the global tool bar.")
+
+To override the global tool bar, define this variable
+buffer-locally and add the items you want to it with
+`tool-bar-add-item', `tool-bar-add-item-from-menu' and related
+functions.")
 
 (global-set-key [tool-bar]
 		`(menu-item ,(purecopy "tool bar") ignore

@@ -1,6 +1,6 @@
 /* Functions for handle font changes dynamically.
 
-Copyright (C) 2009-2018 Free Software Foundation, Inc.
+Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -27,10 +27,9 @@ struct x_display_info;
 extern void xsettings_initialize (struct x_display_info *);
 extern void xft_settings_event (struct x_display_info *, const XEvent *);
 extern const char *xsettings_get_system_font (void);
-
-extern char *current_mono_font;
-extern char *current_font;
-extern Lisp_Object current_tool_bar_style;
+#ifdef USE_LUCID
+extern const char *xsettings_get_system_normal_font (void);
+#endif
 
 
 #endif /* XSETTINGS_H */

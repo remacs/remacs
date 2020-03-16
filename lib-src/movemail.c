@@ -1,7 +1,7 @@
 /* movemail foo bar -- move file foo to file bar,
    locking file foo the way /bin/mail respects.
 
-Copyright (C) 1986, 1992-1994, 1996, 1999, 2001-2018 Free Software
+Copyright (C) 1986, 1992-1994, 1996, 1999, 2001-2020 Free Software
 Foundation, Inc.
 
 This file is part of GNU Emacs.
@@ -77,6 +77,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "pop.h"
 #endif
 
+#ifdef MSDOS
+#undef access
+#endif /* MSDOS */
+
 #ifdef WINDOWSNT
 #include "ntlib.h"
 #undef access
@@ -142,7 +146,7 @@ static bool mbx_delimit_end (FILE *);
      || (!defined DISABLE_DIRECT_ACCESS && !defined MAIL_USE_SYSTEM_LOCK))
 /* Like malloc but get fatal error if memory is exhausted.  */
 
-static void *
+static void * ATTRIBUTE_MALLOC
 xmalloc (size_t size)
 {
   void *result = malloc (size);

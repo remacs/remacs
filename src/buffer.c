@@ -1,6 +1,6 @@
 /* Buffer manipulation primitives for GNU Emacs.
 
-Copyright (C) 1985-1989, 1993-1995, 1997-2018 Free Software Foundation,
+Copyright (C) 1985-1989, 1993-1995, 1997-2020 Free Software Foundation,
 Inc.
 
 This file is part of GNU Emacs.
@@ -37,6 +37,7 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "window.h"
 #include "commands.h"
 #include "character.h"
+#include "coding.h"
 #include "buffer.h"
 #include "region-cache.h"
 #include "indent.h"
@@ -44,14 +45,11 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "keymap.h"
 #include "frame.h"
 #include "xwidget.h"
+#include "pdumper.h"
 
 #ifdef WINDOWSNT
 #include "w32heap.h"		/* for mmap_* */
 #endif
-
-/* File and lookahead for get-file-char and get-emacs-mule-file-char
-   to read from.  Used by Fload.  */
-struct infile *infile;
 
 /* First buffer in chain of all buffers (in reverse order of creation).
    Threaded through ->header.next.buffer.  */
@@ -112,10 +110,7 @@ int last_per_buffer_idx;
 static void call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay,
                                     bool after, Lisp_Object arg1,
                                     Lisp_Object arg2, Lisp_Object arg3);
-static void swap_out_buffer_local_variables (struct buffer *b);
-
-extern void drop_overlay (struct buffer *, struct Lisp_Overlay *);
-void unchain_both (struct buffer *, Lisp_Object);
+static void reset_buffer_local_variables (struct buffer *, bool);
 
 /* Alist of all buffer names vs the buffers.  This used to be
    a Lisp-visible variable, but is no longer, to prevent lossage
@@ -128,8 +123,10 @@ Lisp_Object buffer_fundamental_string(void)
   return QSFundamental;
 }
 
+void alloc_buffer_text (struct buffer *, ptrdiff_t);
 static void free_buffer_text (struct buffer *b);
-extern struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
+struct Lisp_Overlay * copy_overlays (struct buffer *, struct Lisp_Overlay *);
+void modify_overlay (struct buffer *, ptrdiff_t, ptrdiff_t);
 static Lisp_Object buffer_lisp_local_variables (struct buffer *, bool);
 
 static void
@@ -256,6 +253,11 @@ bset_header_line_format (struct buffer *b, Lisp_Object val)
   b->header_line_format_ = val;
 }
 static void
+bset_tab_line_format (struct buffer *b, Lisp_Object val)
+{
+  b->tab_line_format_ = val;
+}
+static void
 bset_indicate_buffer_boundaries (struct buffer *b, Lisp_Object val)
 {
   b->indicate_buffer_boundaries_ = val;
@@ -376,7 +378,293 @@ bset_zv_marker (struct buffer *b, Lisp_Object val)
   b->zv_marker_ = val;
 }
 
+#ifdef IGNORE_RUST_PORT
+void
+nsberror (Lisp_Object spec)
+{
+  if (STRINGP (spec))
+    error ("No buffer named %s", SDATA (spec));
+  error ("Invalid buffer argument");
+}
+#endif
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-live-p", Fbuffer_live_p, Sbuffer_live_p, 1, 1, 0,
+       doc: /* Return t if OBJECT is a buffer which has not been killed.
+Value is nil if OBJECT is not a buffer or if it has been killed.  */)
+  (Lisp_Object object)
+{
+  return ((BUFFERP (object) && BUFFER_LIVE_P (XBUFFER (object)))
+	  ? Qt : Qnil);
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-list", Fbuffer_list, Sbuffer_list, 0, 1, 0,
+       doc: /* Return a list of all live buffers.
+If the optional arg FRAME is a frame, return the buffer list in the
+proper order for that frame: the buffers shown in FRAME come first,
+followed by the rest of the buffers.  */)
+  (Lisp_Object frame)
+{
+  Lisp_Object general;
+  general = Fmapcar (Qcdr, Vbuffer_alist);
+
+  if (FRAMEP (frame))
+    {
+      Lisp_Object framelist, prevlist, tail;
+
+      framelist = Fcopy_sequence (XFRAME (frame)->buffer_list);
+      prevlist = Fnreverse (Fcopy_sequence
+			    (XFRAME (frame)->buried_buffer_list));
+
+      /* Remove from GENERAL any buffer that duplicates one in
+         FRAMELIST or PREVLIST.  */
+      tail = framelist;
+      while (CONSP (tail))
+	{
+	  general = Fdelq (XCAR (tail), general);
+	  tail = XCDR (tail);
+	}
+      tail = prevlist;
+      while (CONSP (tail))
+	{
+	  general = Fdelq (XCAR (tail), general);
+	  tail = XCDR (tail);
+	}
+
+      return CALLN (Fnconc, framelist, general, prevlist);
+    }
+  else
+    return general;
+}
+#endif
+
+/* Like Fassoc, but use Fstring_equal to compare
+   (which ignores text properties), and don't ever quit.  */
+
+static Lisp_Object
+assoc_ignore_text_properties (Lisp_Object key, Lisp_Object list)
+{
+  Lisp_Object tail;
+  for (tail = list; CONSP (tail); tail = XCDR (tail))
+    {
+      Lisp_Object elt = XCAR (tail);
+      if (!NILP (Fstring_equal (Fcar (elt), key)))
+	return elt;
+    }
+  return Qnil;
+}
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("get-buffer", Fget_buffer, Sget_buffer, 1, 1, 0,
+       doc: /* Return the buffer named BUFFER-OR-NAME.
+BUFFER-OR-NAME must be either a string or a buffer.  If BUFFER-OR-NAME
+is a string and there is no buffer with that name, return nil.  If
+BUFFER-OR-NAME is a buffer, return it as given.  */)
+  (register Lisp_Object buffer_or_name)
+{
+  if (BUFFERP (buffer_or_name))
+    return buffer_or_name;
+  CHECK_STRING (buffer_or_name);
+
+  return Fcdr (assoc_ignore_text_properties (buffer_or_name, Vbuffer_alist));
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("get-file-buffer", Fget_file_buffer, Sget_file_buffer, 1, 1, 0,
+       doc: /* Return the buffer visiting file FILENAME (a string).
+The buffer's `buffer-file-name' must match exactly the expansion of FILENAME.
+If there is no such live buffer, return nil.
+See also `find-buffer-visiting'.  */)
+  (register Lisp_Object filename)
+{
+  register Lisp_Object tail, buf, handler;
+
+  CHECK_STRING (filename);
+  filename = Fexpand_file_name (filename, Qnil);
+
+  /* If the file name has special constructs in it,
+     call the corresponding file name handler.  */
+  handler = Ffind_file_name_handler (filename, Qget_file_buffer);
+  if (!NILP (handler))
+    {
+      Lisp_Object handled_buf = call2 (handler, Qget_file_buffer,
+				       filename);
+      return BUFFERP (handled_buf) ? handled_buf : Qnil;
+    }
+
+  FOR_EACH_LIVE_BUFFER (tail, buf)
+    {
+      if (!STRINGP (BVAR (XBUFFER (buf), filename))) continue;
+      if (!NILP (Fstring_equal (BVAR (XBUFFER (buf), filename), filename)))
+	return buf;
+    }
+  return Qnil;
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+Lisp_Object
+get_truename_buffer (register Lisp_Object filename)
+{
+  register Lisp_Object tail, buf;
+
+  FOR_EACH_LIVE_BUFFER (tail, buf)
+    {
+      if (!STRINGP (BVAR (XBUFFER (buf), file_truename))) continue;
+      if (!NILP (Fstring_equal (BVAR (XBUFFER (buf), file_truename), filename)))
+	return buf;
+    }
+  return Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("get-buffer-create", Fget_buffer_create, Sget_buffer_create, 1, 1, 0,
+       doc: /* Return the buffer specified by BUFFER-OR-NAME, creating a new one if needed.
+If BUFFER-OR-NAME is a string and a live buffer with that name exists,
+return that buffer.  If no such buffer exists, create a new buffer with
+that name and return it.  If BUFFER-OR-NAME starts with a space, the new
+buffer does not keep undo information.
+
+If BUFFER-OR-NAME is a buffer instead of a string, return it as given,
+even if it is dead.  The return value is never nil.  */)
+  (register Lisp_Object buffer_or_name)
+{
+  register Lisp_Object buffer, name;
+  register struct buffer *b;
+
+  buffer = Fget_buffer (buffer_or_name);
+  if (!NILP (buffer))
+    return buffer;
+
+  if (SCHARS (buffer_or_name) == 0)
+    error ("Empty string for buffer name is not allowed");
+
+  b = allocate_buffer ();
+
+  /* An ordinary buffer uses its own struct buffer_text.  */
+  b->text = &b->own_text;
+  b->base_buffer = NULL;
+  /* No one shares the text with us now.  */
+  b->indirections = 0;
+  /* No one shows us now.  */
+  b->window_count = 0;
+
+  memset (&b->local_flags, 0, sizeof (b->local_flags));
+
+  BUF_GAP_SIZE (b) = 20;
+  block_input ();
+  /* We allocate extra 1-byte at the tail and keep it always '\0' for
+     anchoring a search.  */
+  alloc_buffer_text (b, BUF_GAP_SIZE (b) + 1);
+  unblock_input ();
+  if (! BUF_BEG_ADDR (b))
+    buffer_memory_full (BUF_GAP_SIZE (b) + 1);
+
+  b->pt = BEG;
+  b->begv = BEG;
+  b->zv = BEG;
+  b->pt_byte = BEG_BYTE;
+  b->begv_byte = BEG_BYTE;
+  b->zv_byte = BEG_BYTE;
+
+  BUF_GPT (b) = BEG;
+  BUF_GPT_BYTE (b) = BEG_BYTE;
+
+  BUF_Z (b) = BEG;
+  BUF_Z_BYTE (b) = BEG_BYTE;
+  BUF_MODIFF (b) = 1;
+  BUF_CHARS_MODIFF (b) = 1;
+  BUF_OVERLAY_MODIFF (b) = 1;
+  BUF_SAVE_MODIFF (b) = 1;
+  BUF_COMPACT (b) = 1;
+  set_buffer_intervals (b, NULL);
+  BUF_UNCHANGED_MODIFIED (b) = 1;
+  BUF_OVERLAY_UNCHANGED_MODIFIED (b) = 1;
+  BUF_END_UNCHANGED (b) = 0;
+  BUF_BEG_UNCHANGED (b) = 0;
+  *(BUF_GPT_ADDR (b)) = *(BUF_Z_ADDR (b)) = 0; /* Put an anchor '\0'.  */
+  b->text->inhibit_shrinking = false;
+  b->text->redisplay = false;
+
+  b->newline_cache = 0;
+  b->width_run_cache = 0;
+  b->bidi_paragraph_cache = 0;
+  bset_width_table (b, Qnil);
+  b->prevent_redisplay_optimizations_p = 1;
+
+  /* An ordinary buffer normally doesn't need markers
+     to handle BEGV and ZV.  */
+  bset_pt_marker (b, Qnil);
+  bset_begv_marker (b, Qnil);
+  bset_zv_marker (b, Qnil);
+
+  name = Fcopy_sequence (buffer_or_name);
+  set_string_intervals (name, NULL);
+  bset_name (b, name);
+
+  b->inhibit_buffer_hooks
+    = (STRINGP (Vcode_conversion_workbuf_name)
+       && strncmp (SSDATA (name), SSDATA (Vcode_conversion_workbuf_name),
+		   SBYTES (Vcode_conversion_workbuf_name)) == 0);
+
+  bset_undo_list (b, SREF (name, 0) != ' ' ? Qnil : Qt);
+
+  reset_buffer (b);
+  reset_buffer_local_variables (b, 1);
+
+  bset_mark (b, Fmake_marker ());
+  BUF_MARKERS (b) = NULL;
+
+  /* Put this in the alist of all live buffers.  */
+  XSETBUFFER (buffer, b);
+  Vbuffer_alist = nconc2 (Vbuffer_alist, list1 (Fcons (name, buffer)));
+  /* And run buffer-list-update-hook.  */
+  if (!NILP (Vrun_hooks) && !b->inhibit_buffer_hooks)
+    call1 (Vrun_hooks, Qbuffer_list_update_hook);
+
+  return buffer;
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+/* Return a list of overlays which is a copy of the overlay list
+   LIST, but for buffer B.  */
+
+static struct Lisp_Overlay *
+copy_overlays (struct buffer *b, struct Lisp_Overlay *list)
+{
+  struct Lisp_Overlay *result = NULL, *tail = NULL;
+
+  for (; list; list = list->next)
+    {
+      Lisp_Object overlay, start, end;
+      struct Lisp_Marker *m;
+
+      eassert (MARKERP (list->start));
+      m = XMARKER (list->start);
+      start = build_marker (b, m->charpos, m->bytepos);
+      XMARKER (start)->insertion_type = m->insertion_type;
+
+      eassert (MARKERP (list->end));
+      m = XMARKER (list->end);
+      end = build_marker (b, m->charpos, m->bytepos);
+      XMARKER (end)->insertion_type = m->insertion_type;
+
+      overlay = build_overlay (start, end, Fcopy_sequence (list->plist));
+      if (tail)
+	tail = tail->next = XOVERLAY (overlay);
+      else
+	result = tail = XOVERLAY (overlay);
+    }
+
+  return result;
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Set an appropriate overlay of B.  */
 
 static void
@@ -389,6 +677,12 @@ static void
 set_buffer_overlays_after (struct buffer *b, struct Lisp_Overlay *o)
 {
   b->overlays_after = o;
+}
+
+bool
+valid_per_buffer_idx (int idx)
+{
+  return 0 <= idx && idx < last_per_buffer_idx;
 }
 
 /* Clone per-buffer values of buffer FROM.
@@ -433,11 +727,53 @@ clone_per_buffer_values (struct buffer *from, struct buffer *to)
   bset_local_var_alist (to, buffer_lisp_local_variables (from, 1));
 }
 
+#ifdef IGNORE_RUST_PORT
+/* If buffer B has markers to record PT, BEGV and ZV when it is not
+   current, update these markers.  */
 
-void record_buffer_markers (struct buffer *b);
+static void
+record_buffer_markers (struct buffer *b)
+{
+  if (! NILP (BVAR (b, pt_marker)))
+    {
+      Lisp_Object buffer;
 
-void fetch_buffer_markers (struct buffer *b);
+      eassert (!NILP (BVAR (b, begv_marker)));
+      eassert (!NILP (BVAR (b, zv_marker)));
 
+      XSETBUFFER (buffer, b);
+      set_marker_both (BVAR (b, pt_marker), buffer, b->pt, b->pt_byte);
+      set_marker_both (BVAR (b, begv_marker), buffer, b->begv, b->begv_byte);
+      set_marker_both (BVAR (b, zv_marker), buffer, b->zv, b->zv_byte);
+    }
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+/* If buffer B has markers to record PT, BEGV and ZV when it is not
+   current, fetch these values into B->begv etc.  */
+
+static void
+fetch_buffer_markers (struct buffer *b)
+{
+  if (! NILP (BVAR (b, pt_marker)))
+    {
+      Lisp_Object m;
+
+      eassert (!NILP (BVAR (b, begv_marker)));
+      eassert (!NILP (BVAR (b, zv_marker)));
+
+      m = BVAR (b, pt_marker);
+      SET_BUF_PT_BOTH (b, marker_position (m), marker_byte_position (m));
+
+      m = BVAR (b, begv_marker);
+      SET_BUF_BEGV_BOTH (b, marker_position (m), marker_byte_position (m));
+
+      m = BVAR (b, zv_marker);
+      SET_BUF_ZV_BOTH (b, marker_position (m), marker_byte_position (m));
+    }
+}
+#endif
 
 DEFUN ("make-indirect-buffer", Fmake_indirect_buffer, Smake_indirect_buffer,
        2, 3,
@@ -484,6 +820,8 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
   b->base_buffer->indirections++;
   /* Always -1 for an indirect buffer.  */
   b->window_count = -1;
+
+  memset (&b->local_flags, 0, sizeof (b->local_flags));
 
   b->pt = b->base_buffer->pt;
   b->begv = b->base_buffer->begv;
@@ -553,7 +891,7 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
       clone_per_buffer_values (b->base_buffer, b);
       bset_filename (b, Qnil);
       bset_file_truename (b, Qnil);
-      bset_display_count (b, make_number (0));
+      bset_display_count (b, make_fixnum (0));
       bset_backed_up (b, Qnil);
       bset_auto_save_file_name (b, Qnil);
       set_buffer_internal_1 (b);
@@ -569,6 +907,21 @@ CLONE nil means the indirect buffer's state is reset to default values.  */)
 
   return buf;
 }
+
+#ifdef IGNORE_RUST_PORT
+/* Mark OV as no longer associated with B.  */
+
+static void
+drop_overlay (struct buffer *b, struct Lisp_Overlay *ov)
+{
+  eassert (b == XBUFFER (Fmarker_buffer (ov->start)));
+  modify_overlay (b, marker_position (ov->start),
+		  marker_position (ov->end));
+  unchain_marker (XMARKER (ov->start));
+  unchain_marker (XMARKER (ov->end));
+
+}
+#endif
 
 /* Delete all overlays of B and reset its overlay lists.  */
 
@@ -597,7 +950,281 @@ delete_all_overlays (struct buffer *b)
   set_buffer_overlays_after (b, NULL);
 }
 
+#ifdef IGNORE_RUST_PORT
+/* Reinitialize everything about a buffer except its name and contents
+   and local variables.
+   If called on an already-initialized buffer, the list of overlays
+   should be deleted before calling this function, otherwise we end up
+   with overlays that claim to belong to the buffer but the buffer
+   claims it doesn't belong to it.  */
+
+void
+reset_buffer (register struct buffer *b)
+{
+  bset_filename (b, Qnil);
+  bset_file_truename (b, Qnil);
+  bset_directory (b, current_buffer ? BVAR (current_buffer, directory) : Qnil);
+  b->modtime = make_timespec (0, UNKNOWN_MODTIME_NSECS);
+  b->modtime_size = -1;
+  XSETFASTINT (BVAR (b, save_length), 0);
+  b->last_window_start = 1;
+  /* It is more conservative to start out "changed" than "unchanged".  */
+  b->clip_changed = 0;
+  b->prevent_redisplay_optimizations_p = 1;
+  bset_backed_up (b, Qnil);
+  BUF_AUTOSAVE_MODIFF (b) = 0;
+  b->auto_save_failure_time = 0;
+  bset_auto_save_file_name (b, Qnil);
+  bset_read_only (b, Qnil);
+  set_buffer_overlays_before (b, NULL);
+  set_buffer_overlays_after (b, NULL);
+  b->overlay_center = BEG;
+  bset_mark_active (b, Qnil);
+  bset_point_before_scroll (b, Qnil);
+  bset_file_format (b, Qnil);
+  bset_auto_save_file_format (b, Qt);
+  bset_last_selected_window (b, Qnil);
+  bset_display_count (b, make_fixnum (0));
+  bset_display_time (b, Qnil);
+  bset_enable_multibyte_characters
+    (b, BVAR (&buffer_defaults, enable_multibyte_characters));
+  bset_cursor_type (b, BVAR (&buffer_defaults, cursor_type));
+  bset_extra_line_spacing (b, BVAR (&buffer_defaults, extra_line_spacing));
+
+  b->display_error_modiff = 0;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Reset buffer B's local variables info.
+   Don't use this on a buffer that has already been in use;
+   it does not treat permanent locals consistently.
+   Instead, use Fkill_all_local_variables.
+
+   If PERMANENT_TOO, reset permanent buffer-local variables.
+   If not, preserve those.  */
+
+static void
+reset_buffer_local_variables (struct buffer *b, bool permanent_too)
+{
+  int offset, i;
+
+  /* Reset the major mode to Fundamental, together with all the
+     things that depend on the major mode.
+     default-major-mode is handled at a higher level.
+     We ignore it here.  */
+  bset_major_mode (b, Qfundamental_mode);
+  bset_keymap (b, Qnil);
+  bset_mode_name (b, QSFundamental);
+  bset_minor_modes (b, Qnil);
+
+  /* If the standard case table has been altered and invalidated,
+     fix up its insides first.  */
+  if (! (CHAR_TABLE_P (XCHAR_TABLE (Vascii_downcase_table)->extras[0])
+	 && CHAR_TABLE_P (XCHAR_TABLE (Vascii_downcase_table)->extras[1])
+	 && CHAR_TABLE_P (XCHAR_TABLE (Vascii_downcase_table)->extras[2])))
+    Fset_standard_case_table (Vascii_downcase_table);
+
+  bset_downcase_table (b, Vascii_downcase_table);
+  bset_upcase_table (b, XCHAR_TABLE (Vascii_downcase_table)->extras[0]);
+  bset_case_canon_table (b, XCHAR_TABLE (Vascii_downcase_table)->extras[1]);
+  bset_case_eqv_table (b, XCHAR_TABLE (Vascii_downcase_table)->extras[2]);
+  bset_invisibility_spec (b, Qt);
+
+  /* Reset all (or most) per-buffer variables to their defaults.  */
+  if (permanent_too)
+    bset_local_var_alist (b, Qnil);
+  else
+    {
+      Lisp_Object tmp, last = Qnil;
+      Lisp_Object buffer;
+      XSETBUFFER (buffer, b);
+
+      for (tmp = BVAR (b, local_var_alist); CONSP (tmp); tmp = XCDR (tmp))
+        {
+          Lisp_Object local_var = XCAR (XCAR (tmp));
+          Lisp_Object prop = Fget (local_var, Qpermanent_local);
+          Lisp_Object sym = local_var;
+
+          /* Watchers are run *before* modifying the var.  */
+          if (XSYMBOL (local_var)->u.s.trapped_write == SYMBOL_TRAPPED_WRITE)
+            notify_variable_watchers (local_var, Qnil,
+                                      Qmakunbound, Fcurrent_buffer ());
+
+          eassert (XSYMBOL (sym)->u.s.redirect == SYMBOL_LOCALIZED);
+          /* Need not do anything if some other buffer's binding is
+	     now cached.  */
+          if (EQ (SYMBOL_BLV (XSYMBOL (sym))->where, buffer))
+	    {
+	      /* Symbol is set up for this buffer's old local value:
+	         swap it out!  */
+	      swap_in_global_binding (XSYMBOL (sym));
+	    }
+
+          if (!NILP (prop))
+            {
+              /* If permanent-local, keep it.  */
+              last = tmp;
+              if (EQ (prop, Qpermanent_local_hook))
+                {
+                  /* This is a partially permanent hook variable.
+                     Preserve only the elements that want to be preserved.  */
+                  Lisp_Object list, newlist;
+                  list = XCDR (XCAR (tmp));
+                  if (!CONSP (list))
+                    newlist = list;
+                  else
+                    for (newlist = Qnil; CONSP (list); list = XCDR (list))
+                      {
+                        Lisp_Object elt = XCAR (list);
+                        /* Preserve element ELT if it's t,
+                           if it is a function with a `permanent-local-hook' property,
+                           or if it's not a symbol.  */
+                        if (! SYMBOLP (elt)
+                            || EQ (elt, Qt)
+                            || !NILP (Fget (elt, Qpermanent_local_hook)))
+                          newlist = Fcons (elt, newlist);
+                      }
+                  newlist = Fnreverse (newlist);
+                  if (XSYMBOL (local_var)->u.s.trapped_write
+		      == SYMBOL_TRAPPED_WRITE)
+                    notify_variable_watchers (local_var, newlist,
+                                              Qmakunbound, Fcurrent_buffer ());
+                  XSETCDR (XCAR (tmp), newlist);
+                  continue; /* Don't do variable write trapping twice.  */
+                }
+            }
+          /* Delete this local variable.  */
+          else if (NILP (last))
+            bset_local_var_alist (b, XCDR (tmp));
+          else
+            XSETCDR (last, XCDR (tmp));
+        }
+    }
+
+  for (i = 0; i < last_per_buffer_idx; ++i)
+    if (permanent_too || buffer_permanent_local_flags[i] == 0)
+      SET_PER_BUFFER_VALUE_P (b, i, 0);
+
+  /* For each slot that has a default value, copy that into the slot.  */
+  FOR_EACH_PER_BUFFER_OBJECT_AT (offset)
+    {
+      int idx = PER_BUFFER_IDX (offset);
+      if ((idx > 0
+	   && (permanent_too
+	       || buffer_permanent_local_flags[idx] == 0)))
+	set_per_buffer_value (b, offset, per_buffer_default (offset));
+    }
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* We split this away from generate-new-buffer, because rename-buffer
+   and set-visited-file-name ought to be able to use this to really
+   rename the buffer properly.  */
+
+DEFUN ("generate-new-buffer-name", Fgenerate_new_buffer_name,
+       Sgenerate_new_buffer_name, 1, 2, 0,
+       doc: /* Return a string that is the name of no existing buffer based on NAME.
+If there is no live buffer named NAME, then return NAME.
+Otherwise modify name by appending `<NUMBER>', incrementing NUMBER
+\(starting at 2) until an unused name is found, and then return that name.
+Optional second argument IGNORE specifies a name that is okay to use (if
+it is in the sequence to be tried) even if a buffer with that name exists.
+
+If NAME begins with a space (i.e., a buffer that is not normally
+visible to users), then if buffer NAME already exists a random number
+is first appended to NAME, to speed up finding a non-existent buffer.  */)
+  (Lisp_Object name, Lisp_Object ignore)
+{
+  Lisp_Object genbase;
+
+  CHECK_STRING (name);
+
+  if ((!NILP (ignore) && !NILP (Fstring_equal (name, ignore)))
+      || NILP (Fget_buffer (name)))
+    return name;
+
+  if (SREF (name, 0) != ' ') /* See bug#1229.  */
+    genbase = name;
+  else
+    {
+      char number[sizeof "-999999"];
+
+      /* Use XFIXNUM instead of XFIXNAT to work around GCC bug 80776.  */
+      int i = XFIXNUM (Frandom (make_fixnum (1000000)));
+      eassume (0 <= i && i < 1000000);
+
+      AUTO_STRING_WITH_LEN (lnumber, number, sprintf (number, "-%d", i));
+      genbase = concat2 (name, lnumber);
+      if (NILP (Fget_buffer (genbase)))
+	return genbase;
+    }
+
+  for (ptrdiff_t count = 2; ; count++)
+    {
+      char number[INT_BUFSIZE_BOUND (ptrdiff_t) + sizeof "<>"];
+      AUTO_STRING_WITH_LEN (lnumber, number,
+			    sprintf (number, "<%"pD"d>", count));
+      Lisp_Object gentemp = concat2 (genbase, lnumber);
+      if (!NILP (Fstring_equal (gentemp, ignore))
+	  || NILP (Fget_buffer (gentemp)))
+	return gentemp;
+    }
+}
+#endif
+
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-name", Fbuffer_name, Sbuffer_name, 0, 1, 0,
+       doc: /* Return the name of BUFFER, as a string.
+BUFFER defaults to the current buffer.
+Return nil if BUFFER has been killed.  */)
+  (register Lisp_Object buffer)
+{
+  return BVAR (decode_buffer (buffer), name);
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-file-name", Fbuffer_file_name, Sbuffer_file_name, 0, 1, 0,
+       doc: /* Return name of file BUFFER is visiting, or nil if none.
+No argument or nil as argument means use the current buffer.  */)
+  (register Lisp_Object buffer)
+{
+  return BVAR (decode_buffer (buffer), filename);
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-base-buffer", Fbuffer_base_buffer, Sbuffer_base_buffer,
+       0, 1, 0,
+       doc: /* Return the base buffer of indirect buffer BUFFER.
+If BUFFER is not indirect, return nil.
+BUFFER defaults to the current buffer.  */)
+  (register Lisp_Object buffer)
+{
+  struct buffer *base = decode_buffer (buffer)->base_buffer;
+  return base ? (XSETBUFFER (buffer, base), buffer) : Qnil;
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-local-value", Fbuffer_local_value,
+       Sbuffer_local_value, 2, 2, 0,
+       doc: /* Return the value of VARIABLE in BUFFER.
+If VARIABLE does not have a buffer-local binding in BUFFER, the value
+is the default binding of the variable.  */)
+  (register Lisp_Object variable, register Lisp_Object buffer)
+{
+  register Lisp_Object result = buffer_local_value (variable, buffer);
+
+  if (EQ (result, Qunbound))
+    xsignal1 (Qvoid_variable, variable);
+
+  return result;
+}
+#endif
 
 /* Like Fbuffer_local_value, but return Qunbound if the variable is
    locally unbound.  */
@@ -626,7 +1253,7 @@ buffer_local_value (Lisp_Object variable, Lisp_Object buffer)
 	result = Fassoc (variable, BVAR (buf, local_var_alist), Qnil);
 	if (!NILP (result))
 	  {
-	    if (blv->fwd)
+	    if (blv->fwd.fwdptr)
 	      { /* What binding is loaded right now?  */
 		Lisp_Object current_alist_element = blv->valcell;
 
@@ -647,7 +1274,7 @@ buffer_local_value (Lisp_Object variable, Lisp_Object buffer)
       }
     case SYMBOL_FORWARDED:
       {
-	union Lisp_Fwd *fwd = SYMBOL_FWD (sym);
+	lispfwd fwd = SYMBOL_FWD (sym);
 	if (BUFFER_OBJFWDP (fwd))
 	  result = per_buffer_value (buf, XBUFFER_OBJFWD (fwd)->offset);
 	else
@@ -729,6 +1356,42 @@ No argument or nil as argument means use current buffer as BUFFER.  */)
   return result;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-modified-p", Fbuffer_modified_p, Sbuffer_modified_p,
+       0, 1, 0,
+       doc: /* Return t if BUFFER was modified since its file was last read or saved.
+No argument or nil as argument means use current buffer as BUFFER.  */)
+  (Lisp_Object buffer)
+{
+  struct buffer *buf = decode_buffer (buffer);
+  return BUF_SAVE_MODIFF (buf) < BUF_MODIFF (buf) ? Qt : Qnil;
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("force-mode-line-update", Fforce_mode_line_update,
+       Sforce_mode_line_update, 0, 1, 0,
+       doc: /* Force redisplay of the current buffer's mode line and header line.
+With optional non-nil ALL, force redisplay of all mode lines, tab lines and
+header lines.  This function also forces recomputation of the
+menu bar menus and the frame title.  */)
+     (Lisp_Object all)
+{
+  if (!NILP (all))
+    {
+      update_mode_lines = 10;
+      /* FIXME: This can't be right.  */
+      current_buffer->prevent_redisplay_optimizations_p = true;
+    }
+  else if (buffer_window_count (current_buffer))
+    {
+      bset_update_mode_line (current_buffer);
+      current_buffer->prevent_redisplay_optimizations_p = true;
+    }
+  return all;
+}
+#endif
+
 DEFUN ("set-buffer-modified-p", Fset_buffer_modified_p, Sset_buffer_modified_p,
        1, 1, 0,
        doc: /* Mark current buffer as modified or unmodified according to FLAG.
@@ -806,12 +1469,99 @@ state of the current buffer.  Use with care.  */)
 		 /* If SAVE_MODIFF == auto_save_modified == MODIFF,
 		    we can either decrease SAVE_MODIFF and auto_save_modified
 		    or increase MODIFF.  */
-		 : MODIFF++);
+		 : modiff_incr (&MODIFF));
 
   return flag;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-modified-tick", Fbuffer_modified_tick, Sbuffer_modified_tick,
+       0, 1, 0,
+       doc: /* Return BUFFER's tick counter, incremented for each change in text.
+Each buffer has a tick counter which is incremented each time the
+text in that buffer is changed.  No argument or nil as argument means
+use current buffer as BUFFER.  */)
+  (Lisp_Object buffer)
+{
+  return modiff_to_integer (BUF_MODIFF (decode_buffer (buffer)));
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-chars-modified-tick", Fbuffer_chars_modified_tick,
+       Sbuffer_chars_modified_tick, 0, 1, 0,
+       doc: /* Return BUFFER's character-change tick counter.
+Each buffer has a character-change tick counter, which is set to the
+value of the buffer's tick counter (see `buffer-modified-tick'), each
+time text in that buffer is inserted or deleted.  By comparing the
+values returned by two individual calls of `buffer-chars-modified-tick',
+you can tell whether a character change occurred in that buffer in
+between these calls.  No argument or nil as argument means use current
+buffer as BUFFER.  */)
+  (Lisp_Object buffer)
+{
+  return modiff_to_integer (BUF_CHARS_MODIFF (decode_buffer (buffer)));
+}
+#endif
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("rename-buffer", Frename_buffer, Srename_buffer, 1, 2,
+       "(list (read-string \"Rename buffer (to new name): \" \
+	      nil 'buffer-name-history (buffer-name (current-buffer))) \
+	      current-prefix-arg)",
+       doc: /* Change current buffer's name to NEWNAME (a string).
+If second arg UNIQUE is nil or omitted, it is an error if a
+buffer named NEWNAME already exists.
+If UNIQUE is non-nil, come up with a new name using
+`generate-new-buffer-name'.
+Interactively, you can set UNIQUE with a prefix argument.
+We return the name we actually gave the buffer.
+This does not change the name of the visited file (if any).  */)
+  (register Lisp_Object newname, Lisp_Object unique)
+{
+  register Lisp_Object tem, buf;
+
+  CHECK_STRING (newname);
+
+  if (SCHARS (newname) == 0)
+    error ("Empty string is invalid as a buffer name");
+
+  tem = Fget_buffer (newname);
+  if (!NILP (tem))
+    {
+      /* Don't short-circuit if UNIQUE is t.  That is a useful way to
+	 rename the buffer automatically so you can create another
+	 with the original name.  It makes UNIQUE equivalent to
+	 (rename-buffer (generate-new-buffer-name NEWNAME)).  */
+      if (NILP (unique) && XBUFFER (tem) == current_buffer)
+	return BVAR (current_buffer, name);
+      if (!NILP (unique))
+	newname = Fgenerate_new_buffer_name (newname, BVAR (current_buffer, name));
+      else
+	error ("Buffer name `%s' is in use", SDATA (newname));
+    }
+
+  bset_name (current_buffer, newname);
+
+  /* Catch redisplay's attention.  Unless we do this, the mode lines for
+     any windows displaying current_buffer will stay unchanged.  */
+  update_mode_lines = 11;
+
+  XSETBUFFER (buf, current_buffer);
+  Fsetcar (Frassq (buf, Vbuffer_alist), newname);
+  if (NILP (BVAR (current_buffer, filename))
+      && !NILP (BVAR (current_buffer, auto_save_file_name)))
+    call0 (intern ("rename-auto-save-file"));
+
+  /* Run buffer-list-update-hook.  */
+  if (!NILP (Vrun_hooks) && !current_buffer->inhibit_buffer_hooks)
+    call1 (Vrun_hooks, Qbuffer_list_update_hook);
+
+  /* Refetch since that last call may have done GC.  */
+  return BVAR (current_buffer, name);
+}
+#endif
+
 /* True if B can be used as 'other-than-BUFFER' buffer.  */
 
 static bool
@@ -911,6 +1661,31 @@ other_buffer_safely (Lisp_Object buffer)
   return buf;
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("buffer-enable-undo", Fbuffer_enable_undo, Sbuffer_enable_undo,
+       0, 1, "",
+       doc: /* Start keeping undo information for buffer BUFFER.
+No argument or nil as argument means do this for the current buffer.  */)
+  (register Lisp_Object buffer)
+{
+  Lisp_Object real_buffer;
+
+  if (NILP (buffer))
+    XSETBUFFER (real_buffer, current_buffer);
+  else
+    {
+      real_buffer = Fget_buffer (buffer);
+      if (NILP (real_buffer))
+	nsberror (buffer);
+    }
+
+  if (EQ (BVAR (XBUFFER (real_buffer), undo_list), Qt))
+    bset_undo_list (XBUFFER (real_buffer), Qnil);
+
+  return Qnil;
+}
+#endif
+
 /* Truncate undo list and shrink the gap of BUFFER.  */
 
 void
@@ -990,15 +1765,18 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   {
     ptrdiff_t count = SPECPDL_INDEX ();
 
-    record_unwind_protect (save_excursion_restore, save_excursion_save ());
+    record_unwind_protect_excursion ();
     set_buffer_internal (b);
 
     /* First run the query functions; if any query is answered no,
        don't kill the buffer.  */
-    tem = CALLN (Frun_hook_with_args_until_failure,
-		 Qkill_buffer_query_functions);
-    if (NILP (tem))
-      return unbind_to (count, Qnil);
+    if (!b->inhibit_buffer_hooks)
+      {
+	tem = CALLN (Frun_hook_with_args_until_failure,
+		     Qkill_buffer_query_functions);
+	if (NILP (tem))
+	  return unbind_to (count, Qnil);
+      }
 
     /* Query if the buffer is still modified.  */
     if (INTERACTIVE && !NILP (BVAR (b, filename))
@@ -1015,7 +1793,8 @@ cleaning up all windows currently displaying the buffer to be killed. */)
       return unbind_to (count, Qt);
 
     /* Then run the hooks.  */
-    run_hook (Qkill_buffer_hook);
+    if (!b->inhibit_buffer_hooks)
+      run_hook (Qkill_buffer_hook);
     unbind_to (count, Qnil);
   }
 
@@ -1175,7 +1954,6 @@ cleaning up all windows currently displaying the buffer to be killed. */)
      won't be protected from GC.  They would be protected
      if they happened to remain cached in their symbols.
      This gets rid of them for certain.  */
-  swap_out_buffer_local_variables (b);
   reset_buffer_local_variables (b, 1);
 
   bset_name (b, Qnil);
@@ -1218,7 +1996,7 @@ cleaning up all windows currently displaying the buffer to be killed. */)
   bset_undo_list (b, Qnil);
 
   /* Run buffer-list-update-hook.  */
-  if (!NILP (Vrun_hooks))
+  if (!NILP (Vrun_hooks) && !b->inhibit_buffer_hooks)
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
 
   return Qt;
@@ -1260,7 +2038,7 @@ record_buffer (Lisp_Object buffer)
   fset_buried_buffer_list (f, Fdelq (buffer, f->buried_buffer_list));
 
   /* Run buffer-list-update-hook.  */
-  if (!NILP (Vrun_hooks))
+  if (!NILP (Vrun_hooks) && !XBUFFER (buffer)->inhibit_buffer_hooks)
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
 }
 
@@ -1299,7 +2077,7 @@ DEFUN ("bury-buffer-internal", Fbury_buffer_internal, Sbury_buffer_internal,
     (f, Fcons (buffer, Fdelq (buffer, f->buried_buffer_list)));
 
   /* Run buffer-list-update-hook.  */
-  if (!NILP (Vrun_hooks))
+  if (!NILP (Vrun_hooks) && !XBUFFER (buffer)->inhibit_buffer_hooks)
     call1 (Vrun_hooks, Qbuffer_list_update_hook);
 
   return Qnil;
@@ -1348,6 +2126,17 @@ the current buffer's major mode.  */)
 
   return unbind_to (count, Qnil);
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("current-buffer", Fcurrent_buffer, Scurrent_buffer, 0, 0, 0,
+       doc: /* Return the current buffer as a Lisp object.  */)
+  (void)
+{
+  register Lisp_Object buf;
+  XSETBUFFER (buf, current_buffer);
+  return buf;
+}
+#endif
 
 /* Set the current buffer to B, and do not set windows_or_buffers_changed.
    This is used by redisplay.  */
@@ -1411,7 +2200,7 @@ void set_buffer_internal_2 (register struct buffer *b)
 	  Lisp_Object var = XCAR (XCAR (tail));
 	  struct Lisp_Symbol *sym = XSYMBOL (var);
 	  if (sym->u.s.redirect == SYMBOL_LOCALIZED /* Just to be sure.  */
-	      && SYMBOL_BLV (sym)->fwd)
+	      && SYMBOL_BLV (sym)->fwd.fwdptr)
 	    /* Just reference the variable
 	       to cause it to become set for this buffer.  */
 	    Fsymbol_value (var);
@@ -1444,6 +2233,28 @@ set_buffer_temp (struct buffer *b)
   fetch_buffer_markers (b);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("set-buffer", Fset_buffer, Sset_buffer, 1, 1, 0,
+       doc: /* Make buffer BUFFER-OR-NAME current for editing operations.
+BUFFER-OR-NAME may be a buffer or the name of an existing buffer.
+See also `with-current-buffer' when you want to make a buffer current
+temporarily.  This function does not display the buffer, so its effect
+ends when the current command terminates.  Use `switch-to-buffer' or
+`pop-to-buffer' to switch buffers permanently.
+The return value is the buffer made current.  */)
+  (register Lisp_Object buffer_or_name)
+{
+  register Lisp_Object buffer;
+  buffer = Fget_buffer (buffer_or_name);
+  if (NILP (buffer))
+    nsberror (buffer_or_name);
+  if (!BUFFER_LIVE_P (XBUFFER (buffer)))
+    error ("Selecting deleted buffer");
+  set_buffer_internal (XBUFFER (buffer));
+  return buffer;
+}
+#endif
+
 void
 restore_buffer (Lisp_Object buffer_or_name)
 {
@@ -1459,11 +2270,69 @@ set_buffer_if_live (Lisp_Object buffer)
     set_buffer_internal (XBUFFER (buffer));
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("barf-if-buffer-read-only", Fbarf_if_buffer_read_only,
+				   Sbarf_if_buffer_read_only, 0, 1, 0,
+       doc: /* Signal a `buffer-read-only' error if the current buffer is read-only.
+If the text under POSITION (which defaults to point) has the
+`inhibit-read-only' text property set, the error will not be raised.  */)
+  (Lisp_Object position)
+{
+  if (NILP (position))
+    XSETFASTINT (position, PT);
+  else
+    CHECK_FIXNUM (position);
 
+  if (!NILP (BVAR (current_buffer, read_only))
+      && NILP (Vinhibit_read_only)
+      && NILP (Fget_text_property (position, Qinhibit_read_only, Qnil)))
+    xsignal1 (Qbuffer_read_only, Fcurrent_buffer ());
+  return Qnil;
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("erase-buffer", Ferase_buffer, Serase_buffer, 0, 0, "*",
+       doc: /* Delete the entire contents of the current buffer.
+Any narrowing restriction in effect (see `narrow-to-region') is removed,
+so the buffer is truly empty after this.  */)
+  (void)
+{
+  Fwiden ();
+
+  del_range (BEG, Z);
+
+  current_buffer->last_window_start = 1;
+  /* Prevent warnings, or suspension of auto saving, that would happen
+     if future size is less than past size.  Use of erase-buffer
+     implies that the future text is not really related to the past text.  */
+  XSETFASTINT (BVAR (current_buffer, save_length), 0);
+  return Qnil;
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+void
+validate_region (register Lisp_Object *b, register Lisp_Object *e)
+{
+  CHECK_FIXNUM_COERCE_MARKER (*b);
+  CHECK_FIXNUM_COERCE_MARKER (*e);
+
+  if (XFIXNUM (*b) > XFIXNUM (*e))
+    {
+      Lisp_Object tem;
+      tem = *b;  *b = *e;  *e = tem;
+    }
+
+  if (! (BEGV <= XFIXNUM (*b) && XFIXNUM (*e) <= ZV))
+    args_out_of_range_3 (Fcurrent_buffer (), *b, *e);
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Advance BYTE_POS up to a character boundary
    and return the adjusted position.  */
 
-static ptrdiff_t
+ptrdiff_t
 advance_to_char_boundary (ptrdiff_t byte_pos)
 {
   int c;
@@ -1584,9 +2453,12 @@ results, see Info node `(elisp)Swapping Text'.  */)
   bset_point_before_scroll (current_buffer, Qnil);
   bset_point_before_scroll (other_buffer, Qnil);
 
-  current_buffer->text->modiff++;	  other_buffer->text->modiff++;
-  current_buffer->text->chars_modiff++;	  other_buffer->text->chars_modiff++;
-  current_buffer->text->overlay_modiff++; other_buffer->text->overlay_modiff++;
+  modiff_incr (&current_buffer->text->modiff);
+  modiff_incr (&other_buffer->text->modiff);
+  modiff_incr (&current_buffer->text->chars_modiff);
+  modiff_incr (&other_buffer->text->chars_modiff);
+  modiff_incr (&current_buffer->text->overlay_modiff);
+  modiff_incr (&other_buffer->text->overlay_modiff);
   current_buffer->text->beg_unchanged = current_buffer->text->gpt;
   current_buffer->text->end_unchanged = current_buffer->text->gpt;
   other_buffer->text->beg_unchanged = other_buffer->text->gpt;
@@ -1623,7 +2495,7 @@ results, see Info node `(elisp)Swapping Text'.  */)
 	    && (EQ (XWINDOW (w)->contents, buf1)
 		|| EQ (XWINDOW (w)->contents, buf2)))
 	  Fset_marker (XWINDOW (w)->pointm,
-		       make_number
+		       make_fixnum
 		       (BUF_BEGV (XBUFFER (XWINDOW (w)->contents))),
 		       XWINDOW (w)->contents);
 	/* Blindly copied from pointm part.  */
@@ -1631,14 +2503,14 @@ results, see Info node `(elisp)Swapping Text'.  */)
 	    && (EQ (XWINDOW (w)->contents, buf1)
 		|| EQ (XWINDOW (w)->contents, buf2)))
 	  Fset_marker (XWINDOW (w)->old_pointm,
-		       make_number
+		       make_fixnum
 		       (BUF_BEGV (XBUFFER (XWINDOW (w)->contents))),
 		       XWINDOW (w)->contents);
 	if (MARKERP (XWINDOW (w)->start)
 	    && (EQ (XWINDOW (w)->contents, buf1)
 		|| EQ (XWINDOW (w)->contents, buf2)))
 	  Fset_marker (XWINDOW (w)->start,
-		       make_number
+		       make_fixnum
 		       (XBUFFER (XWINDOW (w)->contents)->last_window_start),
 		       XWINDOW (w)->contents);
 	w = Fnext_window (w, Qt, Qt);
@@ -1761,7 +2633,7 @@ current buffer is cleared.  */)
 	    }
 	}
       if (narrowed)
-	Fnarrow_to_region (make_number (begv), make_number (zv));
+	Fnarrow_to_region (make_fixnum (begv), make_fixnum (zv));
     }
   else
     {
@@ -1842,7 +2714,7 @@ current buffer is cleared.  */)
 	TEMP_SET_PT (pt);
 
       if (narrowed)
-	Fnarrow_to_region (make_number (begv), make_number (zv));
+	Fnarrow_to_region (make_fixnum (begv), make_fixnum (zv));
 
       /* Do this first, so that chars_in_text asks the right question.
 	 set_intervals_multibyte needs it too.  */
@@ -1898,6 +2770,9 @@ current buffer is cleared.  */)
 
       /* Do this last, so it can calculate the new correspondences
 	 between chars and bytes.  */
+      /* FIXME: Is it worth the trouble, really?  Couldn't we just throw
+         away all the text-properties instead of trying to guess how
+         to adjust them?  AFAICT the result is not reliable anyway.  */
       set_intervals_multibyte (1);
     }
 
@@ -1964,11 +2839,6 @@ the normal hook `change-major-mode-hook'.  */)
 {
   run_hook (Qchange_major_mode_hook);
 
-  /* Make sure none of the bindings in local_var_alist
-     remain swapped in, in their symbols.  */
-
-  swap_out_buffer_local_variables (current_buffer);
-
   /* Actually eliminate all local bindings of this buffer.  */
 
   reset_buffer_local_variables (current_buffer, 0);
@@ -1980,31 +2850,6 @@ the normal hook `change-major-mode-hook'.  */)
   return Qnil;
 }
 
-/* Make sure no local variables remain set up with buffer B
-   for their current values.  */
-
-static void
-swap_out_buffer_local_variables (struct buffer *b)
-{
-  Lisp_Object oalist, alist, buffer;
-
-  XSETBUFFER (buffer, b);
-  oalist = BVAR (b, local_var_alist);
-
-  for (alist = oalist; CONSP (alist); alist = XCDR (alist))
-    {
-      Lisp_Object sym = XCAR (XCAR (alist));
-      eassert (XSYMBOL (sym)->u.s.redirect == SYMBOL_LOCALIZED);
-      /* Need not do anything if some other buffer's binding is
-	 now cached.  */
-      if (EQ (SYMBOL_BLV (XSYMBOL (sym))->where, buffer))
-	{
-	  /* Symbol is set up for this buffer's old local value:
-	     swap it out!  */
-	  swap_in_global_binding (XSYMBOL (sym));
-	}
-    }
-}
 
 /* Find all the overlays in the current buffer that contain position POS.
    Return the number found, and store them in a vector in *VEC_PTR.
@@ -2033,8 +2878,6 @@ overlays_at (EMACS_INT pos, bool extend, Lisp_Object **vec_ptr,
 	     ptrdiff_t *len_ptr,
 	     ptrdiff_t *next_ptr, ptrdiff_t *prev_ptr, bool change_req)
 {
-  Lisp_Object overlay, start, end;
-  struct Lisp_Overlay *tail;
   ptrdiff_t idx = 0;
   ptrdiff_t len = *len_ptr;
   Lisp_Object *vec = *vec_ptr;
@@ -2042,22 +2885,20 @@ overlays_at (EMACS_INT pos, bool extend, Lisp_Object **vec_ptr,
   ptrdiff_t prev = BEGV;
   bool inhibit_storing = 0;
 
-  for (tail = current_buffer->overlays_before; tail; tail = tail->next)
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_before;
+       tail; tail = tail->next)
     {
-      ptrdiff_t startpos, endpos;
-
-      XSETMISC (overlay, tail);
-
-      start = OVERLAY_START (overlay);
-      end = OVERLAY_END (overlay);
-      endpos = OVERLAY_POSITION (end);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
+      Lisp_Object start = OVERLAY_START (overlay);
+      Lisp_Object end = OVERLAY_END (overlay);
+      ptrdiff_t endpos = OVERLAY_POSITION (end);
       if (endpos < pos)
 	{
 	  if (prev < endpos)
 	    prev = endpos;
 	  break;
 	}
-      startpos = OVERLAY_POSITION (start);
+      ptrdiff_t startpos = OVERLAY_POSITION (start);
       /* This one ends at or after POS
 	 so its start counts for PREV_PTR if it's before POS.  */
       if (prev < startpos && startpos < pos)
@@ -2090,22 +2931,20 @@ overlays_at (EMACS_INT pos, bool extend, Lisp_Object **vec_ptr,
 	next = startpos;
     }
 
-  for (tail = current_buffer->overlays_after; tail; tail = tail->next)
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_after;
+       tail; tail = tail->next)
     {
-      ptrdiff_t startpos, endpos;
-
-      XSETMISC (overlay, tail);
-
-      start = OVERLAY_START (overlay);
-      end = OVERLAY_END (overlay);
-      startpos = OVERLAY_POSITION (start);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
+      Lisp_Object start = OVERLAY_START (overlay);
+      Lisp_Object end = OVERLAY_END (overlay);
+      ptrdiff_t startpos = OVERLAY_POSITION (start);
       if (pos < startpos)
 	{
 	  if (startpos < next)
 	    next = startpos;
 	  break;
 	}
-      endpos = OVERLAY_POSITION (end);
+      ptrdiff_t endpos = OVERLAY_POSITION (end);
       if (pos < endpos)
 	{
 	  if (idx == len)
@@ -2167,8 +3006,6 @@ overlays_in (EMACS_INT beg, EMACS_INT end, bool extend,
 	     Lisp_Object **vec_ptr, ptrdiff_t *len_ptr,
 	     ptrdiff_t *next_ptr, ptrdiff_t *prev_ptr)
 {
-  Lisp_Object overlay, ostart, oend;
-  struct Lisp_Overlay *tail;
   ptrdiff_t idx = 0;
   ptrdiff_t len = *len_ptr;
   Lisp_Object *vec = *vec_ptr;
@@ -2177,22 +3014,20 @@ overlays_in (EMACS_INT beg, EMACS_INT end, bool extend,
   bool inhibit_storing = 0;
   bool end_is_Z = end == Z;
 
-  for (tail = current_buffer->overlays_before; tail; tail = tail->next)
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_before;
+       tail; tail = tail->next)
     {
-      ptrdiff_t startpos, endpos;
-
-      XSETMISC (overlay, tail);
-
-      ostart = OVERLAY_START (overlay);
-      oend = OVERLAY_END (overlay);
-      endpos = OVERLAY_POSITION (oend);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
+      Lisp_Object ostart = OVERLAY_START (overlay);
+      Lisp_Object oend = OVERLAY_END (overlay);
+      ptrdiff_t endpos = OVERLAY_POSITION (oend);
       if (endpos < beg)
 	{
 	  if (prev < endpos)
 	    prev = endpos;
 	  break;
 	}
-      startpos = OVERLAY_POSITION (ostart);
+      ptrdiff_t startpos = OVERLAY_POSITION (ostart);
       /* Count an interval if it overlaps the range, is empty at the
 	 start of the range, or is empty at END provided END denotes the
 	 end of the buffer.  */
@@ -2224,22 +3059,20 @@ overlays_in (EMACS_INT beg, EMACS_INT end, bool extend,
 	next = startpos;
     }
 
-  for (tail = current_buffer->overlays_after; tail; tail = tail->next)
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_after;
+       tail; tail = tail->next)
     {
-      ptrdiff_t startpos, endpos;
-
-      XSETMISC (overlay, tail);
-
-      ostart = OVERLAY_START (overlay);
-      oend = OVERLAY_END (overlay);
-      startpos = OVERLAY_POSITION (ostart);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
+      Lisp_Object ostart = OVERLAY_START (overlay);
+      Lisp_Object oend = OVERLAY_END (overlay);
+      ptrdiff_t startpos = OVERLAY_POSITION (ostart);
       if (end < startpos)
 	{
 	  if (startpos < next)
 	    next = startpos;
 	  break;
 	}
-      endpos = OVERLAY_POSITION (oend);
+      ptrdiff_t endpos = OVERLAY_POSITION (oend);
       /* Count an interval if it overlaps the range, is empty at the
 	 start of the range, or is empty at END provided END denotes the
 	 end of the buffer.  */
@@ -2341,31 +3174,26 @@ disable_line_numbers_overlay_at_eob (void)
 bool
 overlay_touches_p (ptrdiff_t pos)
 {
-  Lisp_Object overlay;
-  struct Lisp_Overlay *tail;
-
-  for (tail = current_buffer->overlays_before; tail; tail = tail->next)
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_before;
+       tail; tail = tail->next)
     {
-      ptrdiff_t endpos;
-
-      XSETMISC (overlay ,tail);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
       eassert (OVERLAYP (overlay));
 
-      endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
+      ptrdiff_t endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
       if (endpos < pos)
 	break;
       if (endpos == pos || OVERLAY_POSITION (OVERLAY_START (overlay)) == pos)
 	return 1;
     }
 
-  for (tail = current_buffer->overlays_after; tail; tail = tail->next)
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_after;
+       tail; tail = tail->next)
     {
-      ptrdiff_t startpos;
-
-      XSETMISC (overlay, tail);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
       eassert (OVERLAYP (overlay));
 
-      startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
+      ptrdiff_t startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
       if (pos < startpos)
 	break;
       if (startpos == pos || OVERLAY_POSITION (OVERLAY_END (overlay)) == pos)
@@ -2456,17 +3284,17 @@ sort_overlays (Lisp_Object *overlay_vec, ptrdiff_t noverlays, struct window *w)
 	      sortvec[j].priority = 0;
 	      sortvec[j].spriority = 0;
 	    }
-	  else if (INTEGERP (tem))
+	  else if (FIXNUMP (tem))
 	    {
-	      sortvec[j].priority = XINT (tem);
+	      sortvec[j].priority = XFIXNUM (tem);
 	      sortvec[j].spriority = 0;
 	    }
 	  else if (CONSP (tem))
 	    {
 	      Lisp_Object car = XCAR (tem);
 	      Lisp_Object cdr = XCDR (tem);
-	      sortvec[j].priority  = INTEGERP (car) ? XINT (car) : 0;
-	      sortvec[j].spriority = INTEGERP (cdr) ? XINT (cdr) : 0;
+	      sortvec[j].priority  = FIXNUMP (car) ? XFIXNUM (car) : 0;
+	      sortvec[j].spriority = FIXNUMP (cdr) ? XFIXNUM (cdr) : 0;
 	    }
 	  j++;
 	}
@@ -2534,7 +3362,7 @@ record_overlay_string (struct sortstrlist *ssl, Lisp_Object str,
   ssl->buf[ssl->used].string = str;
   ssl->buf[ssl->used].string2 = str2;
   ssl->buf[ssl->used].size = size;
-  ssl->buf[ssl->used].priority = (INTEGERP (pri) ? XINT (pri) : 0);
+  ssl->buf[ssl->used].priority = (FIXNUMP (pri) ? XFIXNUM (pri) : 0);
   ssl->used++;
 
   if (NILP (BVAR (current_buffer, enable_multibyte_characters)))
@@ -2581,27 +3409,26 @@ record_overlay_string (struct sortstrlist *ssl, Lisp_Object str,
 ptrdiff_t
 overlay_strings (ptrdiff_t pos, struct window *w, unsigned char **pstr)
 {
-  Lisp_Object overlay, window, str;
-  struct Lisp_Overlay *ov;
-  ptrdiff_t startpos, endpos;
   bool multibyte = ! NILP (BVAR (current_buffer, enable_multibyte_characters));
 
   overlay_heads.used = overlay_heads.bytes = 0;
   overlay_tails.used = overlay_tails.bytes = 0;
-  for (ov = current_buffer->overlays_before; ov; ov = ov->next)
+  for (struct Lisp_Overlay *ov = current_buffer->overlays_before;
+       ov; ov = ov->next)
     {
-      XSETMISC (overlay, ov);
+      Lisp_Object overlay = make_lisp_ptr (ov, Lisp_Vectorlike);
       eassert (OVERLAYP (overlay));
 
-      startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
-      endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
+      ptrdiff_t startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
+      ptrdiff_t endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
       if (endpos < pos)
 	break;
       if (endpos != pos && startpos != pos)
 	continue;
-      window = Foverlay_get (overlay, Qwindow);
+      Lisp_Object window = Foverlay_get (overlay, Qwindow);
       if (WINDOWP (window) && XWINDOW (window) != w)
 	continue;
+      Lisp_Object str;
       if (startpos == pos
 	  && (str = Foverlay_get (overlay, Qbefore_string), STRINGP (str)))
 	record_overlay_string (&overlay_heads, str,
@@ -2616,20 +3443,22 @@ overlay_strings (ptrdiff_t pos, struct window *w, unsigned char **pstr)
 			       Foverlay_get (overlay, Qpriority),
 			       endpos - startpos);
     }
-  for (ov = current_buffer->overlays_after; ov; ov = ov->next)
+  for (struct Lisp_Overlay *ov = current_buffer->overlays_after;
+       ov; ov = ov->next)
     {
-      XSETMISC (overlay, ov);
+      Lisp_Object overlay = make_lisp_ptr (ov, Lisp_Vectorlike);
       eassert (OVERLAYP (overlay));
 
-      startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
-      endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
+      ptrdiff_t startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
+      ptrdiff_t endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
       if (startpos > pos)
 	break;
       if (endpos != pos && startpos != pos)
 	continue;
-      window = Foverlay_get (overlay, Qwindow);
+      Lisp_Object window = Foverlay_get (overlay, Qwindow);
       if (WINDOWP (window) && XWINDOW (window) != w)
 	continue;
+      Lisp_Object str;
       if (startpos == pos
 	  && (str = Foverlay_get (overlay, Qbefore_string), STRINGP (str)))
 	record_overlay_string (&overlay_heads, str,
@@ -2704,8 +3533,7 @@ overlay_strings (ptrdiff_t pos, struct window *w, unsigned char **pstr)
 void
 recenter_overlay_lists (struct buffer *buf, ptrdiff_t pos)
 {
-  Lisp_Object overlay, beg, end;
-  struct Lisp_Overlay *prev, *tail, *next;
+  struct Lisp_Overlay *prev, *next;
 
   /* See if anything in overlays_before should move to overlays_after.  */
 
@@ -2713,14 +3541,15 @@ recenter_overlay_lists (struct buffer *buf, ptrdiff_t pos)
      But we use it for symmetry and in case that should cease to be true
      with some future change.  */
   prev = NULL;
-  for (tail = buf->overlays_before; tail; prev = tail, tail = next)
+  for (struct Lisp_Overlay *tail = buf->overlays_before;
+       tail; prev = tail, tail = next)
     {
       next = tail->next;
-      XSETMISC (overlay, tail);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
       eassert (OVERLAYP (overlay));
 
-      beg = OVERLAY_START (overlay);
-      end = OVERLAY_END (overlay);
+      Lisp_Object beg = OVERLAY_START (overlay);
+      Lisp_Object end = OVERLAY_END (overlay);
 
       if (OVERLAY_POSITION (end) > pos)
 	{
@@ -2739,12 +3568,10 @@ recenter_overlay_lists (struct buffer *buf, ptrdiff_t pos)
 	  for (other = buf->overlays_after; other;
 	       other_prev = other, other = other->next)
 	    {
-	      Lisp_Object otherbeg, otheroverlay;
-
-	      XSETMISC (otheroverlay, other);
+	      Lisp_Object otheroverlay = make_lisp_ptr (other, Lisp_Vectorlike);
 	      eassert (OVERLAYP (otheroverlay));
 
-	      otherbeg = OVERLAY_START (otheroverlay);
+	      Lisp_Object otherbeg = OVERLAY_START (otheroverlay);
 	      if (OVERLAY_POSITION (otherbeg) >= where)
 		break;
 	    }
@@ -2766,14 +3593,15 @@ recenter_overlay_lists (struct buffer *buf, ptrdiff_t pos)
 
   /* See if anything in overlays_after should be in overlays_before.  */
   prev = NULL;
-  for (tail = buf->overlays_after; tail; prev = tail, tail = next)
+  for (struct Lisp_Overlay *tail = buf->overlays_after;
+       tail; prev = tail, tail = next)
     {
       next = tail->next;
-      XSETMISC (overlay, tail);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
       eassert (OVERLAYP (overlay));
 
-      beg = OVERLAY_START (overlay);
-      end = OVERLAY_END (overlay);
+      Lisp_Object beg = OVERLAY_START (overlay);
+      Lisp_Object end = OVERLAY_END (overlay);
 
       /* Stop looking, when we know that nothing further
 	 can possibly end before POS.  */
@@ -2797,12 +3625,10 @@ recenter_overlay_lists (struct buffer *buf, ptrdiff_t pos)
 	  for (other = buf->overlays_before; other;
 	       other_prev = other, other = other->next)
 	    {
-	      Lisp_Object otherend, otheroverlay;
-
-	      XSETMISC (otheroverlay, other);
+	      Lisp_Object otheroverlay = make_lisp_ptr (other, Lisp_Vectorlike);
 	      eassert (OVERLAYP (otheroverlay));
 
-	      otherend = OVERLAY_END (otheroverlay);
+	      Lisp_Object otherend = OVERLAY_END (otheroverlay);
 	      if (OVERLAY_POSITION (otherend) <= where)
 		break;
 	    }
@@ -2857,7 +3683,6 @@ adjust_overlays_for_delete (ptrdiff_t pos, ptrdiff_t length)
 void
 fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
 {
-  Lisp_Object overlay;
   struct Lisp_Overlay *before_list UNINIT;
   struct Lisp_Overlay *after_list UNINIT;
   /* These are either nil, indicating that before_list or after_list
@@ -2867,8 +3692,7 @@ fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
   /* 'Parent', likewise, indicates a cons cell or
      current_buffer->overlays_before or overlays_after, depending
      which loop we're in.  */
-  struct Lisp_Overlay *tail, *parent;
-  ptrdiff_t startpos, endpos;
+  struct Lisp_Overlay *parent;
 
   /* This algorithm shifts links around instead of consing and GCing.
      The loop invariant is that before_list (resp. after_list) is a
@@ -2877,18 +3701,20 @@ fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
      (after_list) if it is, is still uninitialized.  So it's not a bug
      that before_list isn't initialized, although it may look
      strange.  */
-  for (parent = NULL, tail = current_buffer->overlays_before; tail;)
+  parent = NULL;
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_before;
+       tail; tail = tail->next)
     {
-      XSETMISC (overlay, tail);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
 
-      endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
-      startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
+      ptrdiff_t endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
+      ptrdiff_t startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
 
       /* If the overlay is backwards, make it empty.  */
       if (endpos < startpos)
 	{
 	  startpos = endpos;
-	  Fset_marker (OVERLAY_START (overlay), make_number (startpos),
+	  Fset_marker (OVERLAY_START (overlay), make_fixnum (startpos),
 		       Qnil);
 	}
 
@@ -2920,23 +3746,24 @@ fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
 	    set_buffer_overlays_before (current_buffer, tail->next);
 	  else
 	    parent->next = tail->next;
-	  tail = tail->next;
 	}
       else
-	parent = tail, tail = parent->next;
+	parent = tail;
     }
-  for (parent = NULL, tail = current_buffer->overlays_after; tail;)
+  parent = NULL;
+  for (struct Lisp_Overlay *tail = current_buffer->overlays_after;
+       tail; tail = tail->next)
     {
-      XSETMISC (overlay, tail);
+      Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
 
-      startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
-      endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
+      ptrdiff_t startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
+      ptrdiff_t endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
 
       /* If the overlay is backwards, make it empty.  */
       if (endpos < startpos)
 	{
 	  startpos = endpos;
-	  Fset_marker (OVERLAY_START (overlay), make_number (startpos),
+	  Fset_marker (OVERLAY_START (overlay), make_fixnum (startpos),
 		       Qnil);
 	}
 
@@ -2966,10 +3793,9 @@ fix_start_end_in_overlays (register ptrdiff_t start, register ptrdiff_t end)
 	    set_buffer_overlays_after (current_buffer, tail->next);
 	  else
 	    parent->next = tail->next;
-	  tail = tail->next;
 	}
       else
-	parent = tail, tail = parent->next;
+	parent = tail;
     }
 
   /* Splice the constructed (wrong) lists into the buffer's lists,
@@ -3020,7 +3846,7 @@ fix_overlays_before (struct buffer *bp, ptrdiff_t prev, ptrdiff_t pos)
      overlay whose ending marker is after-insertion-marker if disorder
      exists).  */
   while (tail
-	 && (XSETMISC (tem, tail),
+	 && (tem = make_lisp_ptr (tail, Lisp_Vectorlike),
 	     (end = OVERLAY_POSITION (OVERLAY_END (tem))) >= pos))
     {
       parent = tail;
@@ -3045,7 +3871,7 @@ fix_overlays_before (struct buffer *bp, ptrdiff_t prev, ptrdiff_t pos)
      overlays are in correct order.  */
   while (tail)
     {
-      XSETMISC (tem, tail);
+      tem = make_lisp_ptr (tail, Lisp_Vectorlike);
       end = OVERLAY_POSITION (OVERLAY_END (tem));
 
       if (end == pos)
@@ -3077,6 +3903,15 @@ fix_overlays_before (struct buffer *bp, ptrdiff_t prev, ptrdiff_t pos)
 	break;
     }
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlayp", Foverlayp, Soverlayp, 1, 1, 0,
+       doc: /* Return t if OBJECT is an overlay.  */)
+  (Lisp_Object object)
+{
+  return (OVERLAYP (object) ? Qt : Qnil);
+}
+#endif
 
 DEFUN ("make-overlay", Fmake_overlay, Smake_overlay, 2, 5, 0,
        doc: /* Create a new overlay with range BEG to END in BUFFER and return it.
@@ -3104,10 +3939,10 @@ for the rear of the overlay advance when text is inserted there
   if (MARKERP (end) && !EQ (Fmarker_buffer (end), buffer))
     signal_error ("Marker points into wrong buffer", end);
 
-  CHECK_NUMBER_COERCE_MARKER (beg);
-  CHECK_NUMBER_COERCE_MARKER (end);
+  CHECK_FIXNUM_COERCE_MARKER (beg);
+  CHECK_FIXNUM_COERCE_MARKER (end);
 
-  if (XINT (beg) > XINT (end))
+  if (XFIXNUM (beg) > XFIXNUM (end))
     {
       Lisp_Object temp;
       temp = beg; beg = end; end = temp;
@@ -3164,7 +3999,7 @@ modify_overlay (struct buffer *buf, ptrdiff_t start, ptrdiff_t end)
 
   bset_redisplay (buf);
 
-  ++BUF_OVERLAY_MODIFF (buf);
+  modiff_incr (&BUF_OVERLAY_MODIFF (buf));
 }
 
 /* Remove OVERLAY from LIST.  */
@@ -3196,9 +4031,226 @@ unchain_both (struct buffer *b, Lisp_Object overlay)
   eassert (XOVERLAY (overlay)->next == NULL);
 }
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("move-overlay", Fmove_overlay, Smove_overlay, 3, 4, 0,
+       doc: /* Set the endpoints of OVERLAY to BEG and END in BUFFER.
+If BUFFER is omitted, leave OVERLAY in the same buffer it inhabits now.
+If BUFFER is omitted, and OVERLAY is in no buffer, put it in the current
+buffer.  */)
+  (Lisp_Object overlay, Lisp_Object beg, Lisp_Object end, Lisp_Object buffer)
+{
+  struct buffer *b, *ob = 0;
+  Lisp_Object obuffer;
+  ptrdiff_t count = SPECPDL_INDEX ();
+  ptrdiff_t n_beg, n_end;
+  ptrdiff_t o_beg UNINIT, o_end UNINIT;
+
+  CHECK_OVERLAY (overlay);
+  if (NILP (buffer))
+    buffer = Fmarker_buffer (OVERLAY_START (overlay));
+  if (NILP (buffer))
+    XSETBUFFER (buffer, current_buffer);
+  CHECK_BUFFER (buffer);
+
+  if (NILP (Fbuffer_live_p (buffer)))
+    error ("Attempt to move overlay to a dead buffer");
+
+  if (MARKERP (beg) && !EQ (Fmarker_buffer (beg), buffer))
+    signal_error ("Marker points into wrong buffer", beg);
+  if (MARKERP (end) && !EQ (Fmarker_buffer (end), buffer))
+    signal_error ("Marker points into wrong buffer", end);
+
+  CHECK_FIXNUM_COERCE_MARKER (beg);
+  CHECK_FIXNUM_COERCE_MARKER (end);
+
+  if (XFIXNUM (beg) > XFIXNUM (end))
+    {
+      Lisp_Object temp;
+      temp = beg; beg = end; end = temp;
+    }
+
+  specbind (Qinhibit_quit, Qt);
+
+  obuffer = Fmarker_buffer (OVERLAY_START (overlay));
+  b = XBUFFER (buffer);
+
+  if (!NILP (obuffer))
+    {
+      ob = XBUFFER (obuffer);
+
+      o_beg = OVERLAY_POSITION (OVERLAY_START (overlay));
+      o_end = OVERLAY_POSITION (OVERLAY_END (overlay));
+
+      unchain_both (ob, overlay);
+    }
+  else
+    /* An overlay not associated with any buffer will normally have its
+       `next' field set to NULL, but not always: when killing a buffer,
+       we just set its overlays_after and overlays_before to NULL without
+       manually setting each overlay's `next' field to NULL.
+       Let's correct it here, to simplify subsequent assertions.
+       FIXME: Maybe the better fix is to change `kill-buffer'!?  */
+    XOVERLAY (overlay)->next = NULL;
+
+  eassert (XOVERLAY (overlay)->next == NULL);
+
+  /* Set the overlay boundaries, which may clip them.  */
+  Fset_marker (OVERLAY_START (overlay), beg, buffer);
+  Fset_marker (OVERLAY_END (overlay), end, buffer);
+
+  n_beg = marker_position (OVERLAY_START (overlay));
+  n_end = marker_position (OVERLAY_END (overlay));
+
+  /* If the overlay has changed buffers, do a thorough redisplay.  */
+  if (!EQ (buffer, obuffer))
+    {
+      /* Redisplay where the overlay was.  */
+      if (ob)
+        modify_overlay (ob, o_beg, o_end);
+
+      /* Redisplay where the overlay is going to be.  */
+      modify_overlay (b, n_beg, n_end);
+    }
+  else
+    /* Redisplay the area the overlay has just left, or just enclosed.  */
+    {
+      if (o_beg == n_beg)
+	modify_overlay (b, o_end, n_end);
+      else if (o_end == n_end)
+	modify_overlay (b, o_beg, n_beg);
+      else
+	modify_overlay (b, min (o_beg, n_beg), max (o_end, n_end));
+    }
+
+  eassert (XOVERLAY (overlay)->next == NULL);
+
+  /* Delete the overlay if it is empty after clipping and has the
+     evaporate property.  */
+  if (n_beg == n_end && !NILP (Foverlay_get (overlay, Qevaporate)))
+    { /* We used to call `Fdelete_overlay' here, but it causes problems:
+         - At this stage, `overlay' is not included in its buffer's lists
+           of overlays (the data-structure is in an inconsistent state),
+           contrary to `Fdelete_overlay's assumptions.
+         - Most of the work done by Fdelete_overlay has already been done
+           here for other reasons.  */
+      drop_overlay (XBUFFER (buffer), XOVERLAY (overlay));
+      return unbind_to (count, overlay);
+    }
+
+  /* Put the overlay into the new buffer's overlay lists, first on the
+     wrong list.  */
+  if (n_end < b->overlay_center)
+    {
+      XOVERLAY (overlay)->next = b->overlays_after;
+      set_buffer_overlays_after (b, XOVERLAY (overlay));
+    }
+  else
+    {
+      XOVERLAY (overlay)->next = b->overlays_before;
+      set_buffer_overlays_before (b, XOVERLAY (overlay));
+    }
+
+  /* This puts it in the right list, and in the right order.  */
+  recenter_overlay_lists (b, b->overlay_center);
+
+  return unbind_to (count, overlay);
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("delete-overlay", Fdelete_overlay, Sdelete_overlay, 1, 1, 0,
+       doc: /* Delete the overlay OVERLAY from its buffer.  */)
+  (Lisp_Object overlay)
+{
+  Lisp_Object buffer;
+  struct buffer *b;
+  ptrdiff_t count = SPECPDL_INDEX ();
+
+  CHECK_OVERLAY (overlay);
+
+  buffer = Fmarker_buffer (OVERLAY_START (overlay));
+  if (NILP (buffer))
+    return Qnil;
+
+  b = XBUFFER (buffer);
+  specbind (Qinhibit_quit, Qt);
+
+  unchain_both (b, overlay);
+  drop_overlay (b, XOVERLAY (overlay));
+
+  /* When deleting an overlay with before or after strings, turn off
+     display optimizations for the affected buffer, on the basis that
+     these strings may contain newlines.  This is easier to do than to
+     check for that situation during redisplay.  */
+  if (!windows_or_buffers_changed
+      && (!NILP (Foverlay_get (overlay, Qbefore_string))
+	  || !NILP (Foverlay_get (overlay, Qafter_string))))
+    b->prevent_redisplay_optimizations_p = 1;
+
+  return unbind_to (count, Qnil);
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("delete-all-overlays", Fdelete_all_overlays, Sdelete_all_overlays, 0, 1, 0,
+       doc: /* Delete all overlays of BUFFER.
+BUFFER omitted or nil means delete all overlays of the current
+buffer.  */)
+  (Lisp_Object buffer)
+{
+  delete_all_overlays (decode_buffer (buffer));
+  return Qnil;
+}
+#endif
 
 /* Overlay dissection functions.  */
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-start", Foverlay_start, Soverlay_start, 1, 1, 0,
+       doc: /* Return the position at which OVERLAY starts.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return (Fmarker_position (OVERLAY_START (overlay)));
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-end", Foverlay_end, Soverlay_end, 1, 1, 0,
+       doc: /* Return the position at which OVERLAY ends.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return (Fmarker_position (OVERLAY_END (overlay)));
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-buffer", Foverlay_buffer, Soverlay_buffer, 1, 1, 0,
+       doc: /* Return the buffer OVERLAY belongs to.
+Return nil if OVERLAY has been deleted.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return Fmarker_buffer (OVERLAY_START (overlay));
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-properties", Foverlay_properties, Soverlay_properties, 1, 1, 0,
+       doc: /* Return a list of the properties on OVERLAY.
+This is a copy of OVERLAY's plist; modifying its conses has no effect on
+OVERLAY.  */)
+  (Lisp_Object overlay)
+{
+  CHECK_OVERLAY (overlay);
+
+  return Fcopy_sequence (XOVERLAY (overlay)->plist);
+}
+#endif
 
 DEFUN ("overlays-at", Foverlays_at, Soverlays_at, 1, 2, 0,
        doc: /* Return a list of the overlays that contain the character at POS.
@@ -3209,7 +4261,7 @@ If SORTED is non-nil, then sort them by decreasing priority.  */)
   Lisp_Object *overlay_vec;
   Lisp_Object result;
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
 
   if (!buffer_has_overlays ())
     return Qnil;
@@ -3220,7 +4272,7 @@ If SORTED is non-nil, then sort them by decreasing priority.  */)
 
   /* Put all the overlays we want in a vector in overlay_vec.
      Store the length in len.  */
-  noverlays = overlays_at (XINT (pos), 1, &overlay_vec, &len,
+  noverlays = overlays_at (XFIXNUM (pos), 1, &overlay_vec, &len,
 			   NULL, NULL, 0);
 
   if (!NILP (sorted))
@@ -3253,8 +4305,8 @@ end of the buffer.  */)
   Lisp_Object *overlay_vec;
   Lisp_Object result;
 
-  CHECK_NUMBER_COERCE_MARKER (beg);
-  CHECK_NUMBER_COERCE_MARKER (end);
+  CHECK_FIXNUM_COERCE_MARKER (beg);
+  CHECK_FIXNUM_COERCE_MARKER (end);
 
   if (!buffer_has_overlays ())
     return Qnil;
@@ -3264,7 +4316,7 @@ end of the buffer.  */)
 
   /* Put all the overlays we want in a vector in overlay_vec.
      Store the length in len.  */
-  noverlays = overlays_in (XINT (beg), XINT (end), 1, &overlay_vec, &len,
+  noverlays = overlays_in (XFIXNUM (beg), XFIXNUM (end), 1, &overlay_vec, &len,
 			   NULL, NULL);
 
   /* Make a list of them all.  */
@@ -3285,10 +4337,10 @@ the value is (point-max).  */)
   ptrdiff_t endpos;
   Lisp_Object *overlay_vec;
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
 
   if (!buffer_has_overlays ())
-    return make_number (ZV);
+    return make_fixnum (ZV);
 
   len = 10;
   overlay_vec = xmalloc (len * sizeof *overlay_vec);
@@ -3296,7 +4348,7 @@ the value is (point-max).  */)
   /* Put all the overlays we want in a vector in overlay_vec.
      Store the length in len.
      endpos gets the position where the next overlay starts.  */
-  noverlays = overlays_at (XINT (pos), 1, &overlay_vec, &len,
+  noverlays = overlays_at (XFIXNUM (pos), 1, &overlay_vec, &len,
 			   &endpos, 0, 1);
 
   /* If any of these overlays ends before endpos,
@@ -3313,7 +4365,7 @@ the value is (point-max).  */)
     }
 
   xfree (overlay_vec);
-  return make_number (endpos);
+  return make_fixnum (endpos);
 }
 
 DEFUN ("previous-overlay-change", Fprevious_overlay_change,
@@ -3327,14 +4379,14 @@ the value is (point-min).  */)
   Lisp_Object *overlay_vec;
   ptrdiff_t len;
 
-  CHECK_NUMBER_COERCE_MARKER (pos);
+  CHECK_FIXNUM_COERCE_MARKER (pos);
 
   if (!buffer_has_overlays ())
-    return make_number (BEGV);
+    return make_fixnum (BEGV);
 
   /* At beginning of buffer, we know the answer;
      avoid bug subtracting 1 below.  */
-  if (XINT (pos) == BEGV)
+  if (XFIXNUM (pos) == BEGV)
     return pos;
 
   len = 10;
@@ -3343,15 +4395,63 @@ the value is (point-min).  */)
   /* Put all the overlays we want in a vector in overlay_vec.
      Store the length in len.
      prevpos gets the position of the previous change.  */
-  overlays_at (XINT (pos), 1, &overlay_vec, &len,
+  overlays_at (XFIXNUM (pos), 1, &overlay_vec, &len,
 	       0, &prevpos, 1);
 
   xfree (overlay_vec);
-  return make_number (prevpos);
+  return make_fixnum (prevpos);
 }
 
 /* These functions are for debugging overlays.  */
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-lists", Foverlay_lists, Soverlay_lists, 0, 0, 0,
+       doc: /* Return a pair of lists giving all the overlays of the current buffer.
+The car has all the overlays before the overlay center;
+the cdr has all the overlays after the overlay center.
+Recentering overlays moves overlays between these lists.
+The lists you get are copies, so that changing them has no effect.
+However, the overlays you get are the real objects that the buffer uses.  */)
+  (void)
+{
+  Lisp_Object before = Qnil, after = Qnil;
+
+  for (struct Lisp_Overlay *ol = current_buffer->overlays_before;
+       ol; ol = ol->next)
+    before = Fcons (make_lisp_ptr (ol, Lisp_Vectorlike), before);
+  for (struct Lisp_Overlay *ol = current_buffer->overlays_after;
+       ol; ol = ol->next)
+    after = Fcons (make_lisp_ptr (ol, Lisp_Vectorlike), after);
+
+  return Fcons (Fnreverse (before), Fnreverse (after));
+}
+#endif
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-recenter", Foverlay_recenter, Soverlay_recenter, 1, 1, 0,
+       doc: /* Recenter the overlays of the current buffer around position POS.
+That makes overlay lookup faster for positions near POS (but perhaps slower
+for positions far away from POS).  */)
+  (Lisp_Object pos)
+{
+  ptrdiff_t p;
+  CHECK_FIXNUM_COERCE_MARKER (pos);
+
+  p = clip_to_bounds (PTRDIFF_MIN, XFIXNUM (pos), PTRDIFF_MAX);
+  recenter_overlay_lists (current_buffer, p);
+  return Qnil;
+}
+#endif
 
+#ifdef IGNORE_RUST_PORT
+DEFUN ("overlay-get", Foverlay_get, Soverlay_get, 2, 2, 0,
+       doc: /* Get the property of overlay OVERLAY with property name PROP.  */)
+  (Lisp_Object overlay, Lisp_Object prop)
+{
+  CHECK_OVERLAY (overlay);
+  return lookup_char_property (XOVERLAY (overlay)->plist, prop, 0);
+}
+#endif
+
 DEFUN ("overlay-put", Foverlay_put, Soverlay_put, 3, 3, 0,
        doc: /* Set one property of overlay OVERLAY: give property PROP value VALUE.
 VALUE will be returned.*/)
@@ -3444,13 +4544,8 @@ void
 report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
 			     Lisp_Object arg1, Lisp_Object arg2, Lisp_Object arg3)
 {
-  Lisp_Object prop, overlay;
-  struct Lisp_Overlay *tail;
   /* True if this change is an insertion.  */
-  bool insertion = (after ? XFASTINT (arg3) == 0 : EQ (start, end));
-
-  overlay = Qnil;
-  tail = NULL;
+  bool insertion = (after ? XFIXNAT (arg3) == 0 : EQ (start, end));
 
   /* We used to run the functions as soon as we found them and only register
      them in last_overlay_modification_hooks for the purpose of the `after'
@@ -3465,75 +4560,77 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
       /* We are being called before a change.
 	 Scan the overlays to find the functions to call.  */
       last_overlay_modification_hooks_used = 0;
-      for (tail = current_buffer->overlays_before; tail; tail = tail->next)
+      for (struct Lisp_Overlay *tail = current_buffer->overlays_before;
+	   tail; tail = tail->next)
 	{
 	  ptrdiff_t startpos, endpos;
 	  Lisp_Object ostart, oend;
 
-	  XSETMISC (overlay, tail);
+	  Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
 
 	  ostart = OVERLAY_START (overlay);
 	  oend = OVERLAY_END (overlay);
 	  endpos = OVERLAY_POSITION (oend);
-	  if (XFASTINT (start) > endpos)
+	  if (XFIXNAT (start) > endpos)
 	    break;
 	  startpos = OVERLAY_POSITION (ostart);
-	  if (insertion && (XFASTINT (start) == startpos
-			    || XFASTINT (end) == startpos))
+	  if (insertion && (XFIXNAT (start) == startpos
+			    || XFIXNAT (end) == startpos))
 	    {
-	      prop = Foverlay_get (overlay, Qinsert_in_front_hooks);
+	      Lisp_Object prop = Foverlay_get (overlay, Qinsert_in_front_hooks);
 	      if (!NILP (prop))
 		add_overlay_mod_hooklist (prop, overlay);
 	    }
-	  if (insertion && (XFASTINT (start) == endpos
-			    || XFASTINT (end) == endpos))
+	  if (insertion && (XFIXNAT (start) == endpos
+			    || XFIXNAT (end) == endpos))
 	    {
-	      prop = Foverlay_get (overlay, Qinsert_behind_hooks);
+	      Lisp_Object prop = Foverlay_get (overlay, Qinsert_behind_hooks);
 	      if (!NILP (prop))
 		add_overlay_mod_hooklist (prop, overlay);
 	    }
 	  /* Test for intersecting intervals.  This does the right thing
 	     for both insertion and deletion.  */
-	  if (XFASTINT (end) > startpos && XFASTINT (start) < endpos)
+	  if (XFIXNAT (end) > startpos && XFIXNAT (start) < endpos)
 	    {
-	      prop = Foverlay_get (overlay, Qmodification_hooks);
+	      Lisp_Object prop = Foverlay_get (overlay, Qmodification_hooks);
 	      if (!NILP (prop))
 		add_overlay_mod_hooklist (prop, overlay);
 	    }
 	}
 
-      for (tail = current_buffer->overlays_after; tail; tail = tail->next)
+      for (struct Lisp_Overlay *tail = current_buffer->overlays_after;
+	   tail; tail = tail->next)
 	{
 	  ptrdiff_t startpos, endpos;
 	  Lisp_Object ostart, oend;
 
-	  XSETMISC (overlay, tail);
+	  Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
 
 	  ostart = OVERLAY_START (overlay);
 	  oend = OVERLAY_END (overlay);
 	  startpos = OVERLAY_POSITION (ostart);
 	  endpos = OVERLAY_POSITION (oend);
-	  if (XFASTINT (end) < startpos)
+	  if (XFIXNAT (end) < startpos)
 	    break;
-	  if (insertion && (XFASTINT (start) == startpos
-			    || XFASTINT (end) == startpos))
+	  if (insertion && (XFIXNAT (start) == startpos
+			    || XFIXNAT (end) == startpos))
 	    {
-	      prop = Foverlay_get (overlay, Qinsert_in_front_hooks);
+	      Lisp_Object prop = Foverlay_get (overlay, Qinsert_in_front_hooks);
 	      if (!NILP (prop))
 		add_overlay_mod_hooklist (prop, overlay);
 	    }
-	  if (insertion && (XFASTINT (start) == endpos
-			    || XFASTINT (end) == endpos))
+	  if (insertion && (XFIXNAT (start) == endpos
+			    || XFIXNAT (end) == endpos))
 	    {
-	      prop = Foverlay_get (overlay, Qinsert_behind_hooks);
+	      Lisp_Object prop = Foverlay_get (overlay, Qinsert_behind_hooks);
 	      if (!NILP (prop))
 		add_overlay_mod_hooklist (prop, overlay);
 	    }
 	  /* Test for intersecting intervals.  This does the right thing
 	     for both insertion and deletion.  */
-	  if (XFASTINT (end) > startpos && XFASTINT (start) < endpos)
+	  if (XFIXNAT (end) > startpos && XFIXNAT (start) < endpos)
 	    {
-	      prop = Foverlay_get (overlay, Qmodification_hooks);
+	      Lisp_Object prop = Foverlay_get (overlay, Qmodification_hooks);
 	      if (!NILP (prop))
 		add_overlay_mod_hooklist (prop, overlay);
 	    }
@@ -3548,23 +4645,6 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
     Lisp_Object *copy;
     ptrdiff_t i;
 
-    if (size)
-      {
-	Lisp_Object ovl
-	  = XVECTOR (last_overlay_modification_hooks)->contents[1];
-
-	/* If the buffer of the first overlay in the array doesn't
-	   match the current buffer, then these modification hooks
-	   should not be run in this buffer.  This could happen when
-	   some code calls some insdel functions, such as del_range_1,
-	   with the PREPARE argument false -- in that case this
-	   function is never called to record the overlay modification
-	   hook functions in the last_overlay_modification_hooks
-	   array, so anything we find there is not ours.  */
-	if (XMARKER (OVERLAY_START (ovl))->buffer != current_buffer)
-	  return;
-      }
-
     USE_SAFE_ALLOCA;
     SAFE_ALLOCA_LISP (copy, size);
     memcpy (copy, XVECTOR (last_overlay_modification_hooks)->contents,
@@ -3575,7 +4655,12 @@ report_overlay_modification (Lisp_Object start, Lisp_Object end, bool after,
 	Lisp_Object prop_i, overlay_i;
 	prop_i = copy[i++];
 	overlay_i = copy[i++];
-	call_overlay_mod_hooks (prop_i, overlay_i, after, arg1, arg2, arg3);
+	/* It is possible that the recorded overlay has been deleted
+	   (which makes its markers' buffers be nil), or that (due to
+	   some bug) it belongs to a different buffer.  Only run this
+	   hook if the overlay belongs to the current buffer.  */
+	if (XMARKER (OVERLAY_START (overlay_i))->buffer == current_buffer)
+	  call_overlay_mod_hooks (prop_i, overlay_i, after, arg1, arg2, arg3);
       }
 
     SAFE_FREE ();
@@ -3601,16 +4686,13 @@ call_overlay_mod_hooks (Lisp_Object list, Lisp_Object overlay, bool after,
 void
 evaporate_overlays (ptrdiff_t pos)
 {
-  Lisp_Object overlay, hit_list;
-  struct Lisp_Overlay *tail;
-
-  hit_list = Qnil;
+  Lisp_Object hit_list = Qnil;
   if (pos <= current_buffer->overlay_center)
-    for (tail = current_buffer->overlays_before; tail; tail = tail->next)
+    for (struct Lisp_Overlay *tail = current_buffer->overlays_before;
+	 tail; tail = tail->next)
       {
-	ptrdiff_t endpos;
-	XSETMISC (overlay, tail);
-	endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
+	Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
+	ptrdiff_t endpos = OVERLAY_POSITION (OVERLAY_END (overlay));
 	if (endpos < pos)
 	  break;
 	if (endpos == pos && OVERLAY_POSITION (OVERLAY_START (overlay)) == pos
@@ -3618,11 +4700,11 @@ evaporate_overlays (ptrdiff_t pos)
 	  hit_list = Fcons (overlay, hit_list);
       }
   else
-    for (tail = current_buffer->overlays_after; tail; tail = tail->next)
+    for (struct Lisp_Overlay *tail = current_buffer->overlays_after;
+	 tail; tail = tail->next)
       {
-	ptrdiff_t startpos;
-	XSETMISC (overlay, tail);
-	startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
+	Lisp_Object overlay = make_lisp_ptr (tail, Lisp_Vectorlike);
+	ptrdiff_t startpos = OVERLAY_POSITION (OVERLAY_START (overlay));
 	if (startpos > pos)
 	  break;
 	if (startpos == pos && OVERLAY_POSITION (OVERLAY_END (overlay)) == pos
@@ -4028,23 +5110,36 @@ alloc_buffer_text (struct buffer *b, ptrdiff_t nbytes)
 void
 enlarge_buffer_text (struct buffer *b, ptrdiff_t delta)
 {
-  void *p;
-  ptrdiff_t nbytes = (BUF_Z_BYTE (b) - BUF_BEG_BYTE (b) + BUF_GAP_SIZE (b) + 1
-		      + delta);
   block_input ();
+  void *p;
+  unsigned char *old_beg = b->text->beg;
+  ptrdiff_t old_nbytes =
+    BUF_Z_BYTE (b) - BUF_BEG_BYTE (b) + BUF_GAP_SIZE (b) + 1;
+  ptrdiff_t new_nbytes = old_nbytes + delta;
+
+  if (pdumper_object_p (old_beg))
+    b->text->beg = NULL;
+  else
+    old_beg = NULL;
+
 #if defined USE_MMAP_FOR_BUFFERS
-  p = mmap_realloc ((void **) &b->text->beg, nbytes);
+  p = mmap_realloc ((void **) &b->text->beg, new_nbytes);
 #elif defined REL_ALLOC
-  p = r_re_alloc ((void **) &b->text->beg, nbytes);
+  p = r_re_alloc ((void **) &b->text->beg, new_nbytes);
 #else
-  p = xrealloc (b->text->beg, nbytes);
+  p = xrealloc (b->text->beg, new_nbytes);
 #endif
 
   if (p == NULL)
     {
+      if (old_beg)
+        b->text->beg = old_beg;
       unblock_input ();
-      memory_full (nbytes);
+      memory_full (new_nbytes);
     }
+
+  if (old_beg)
+    memcpy (p, old_beg, min (old_nbytes, new_nbytes));
 
   BUF_BEG_ADDR (b) = p;
   unblock_input ();
@@ -4058,13 +5153,16 @@ free_buffer_text (struct buffer *b)
 {
   block_input ();
 
+  if (!pdumper_object_p (b->text->beg))
+    {
 #if defined USE_MMAP_FOR_BUFFERS
-  mmap_free ((void **) &b->text->beg);
+      mmap_free ((void **) &b->text->beg);
 #elif defined REL_ALLOC
-  r_alloc_free ((void **) &b->text->beg);
+      r_alloc_free ((void **) &b->text->beg);
 #else
-  xfree (b->text->beg);
+      xfree (b->text->beg);
 #endif
+    }
 
   BUF_BEG_ADDR (b) = NULL;
   unblock_input ();
@@ -4075,53 +5173,64 @@ free_buffer_text (struct buffer *b)
 /***********************************************************************
 			    Initialization
  ***********************************************************************/
-
 void
 init_buffer_once (void)
 {
+  /* TODO: clean up the buffer-local machinery.  Right now,
+     we have:
+
+     buffer_defaults: default values of buffer-locals
+     buffer_local_flags: metadata
+     buffer_permanent_local_flags: metadata
+     buffer_local_symbols: metadata
+
+     There must be a simpler way to store the metadata.
+  */
+
   int idx;
 
   /* Items flagged permanent get an explicit permanent-local property
      added in bindings.el, for clarity.  */
+  PDUMPER_REMEMBER_SCALAR (buffer_permanent_local_flags);
   memset (buffer_permanent_local_flags, 0, sizeof buffer_permanent_local_flags);
 
   /* 0 means not a lisp var, -1 means always local, else mask.  */
   memset (&buffer_local_flags, 0, sizeof buffer_local_flags);
-  bset_filename (&buffer_local_flags, make_number (-1));
-  bset_directory (&buffer_local_flags, make_number (-1));
-  bset_backed_up (&buffer_local_flags, make_number (-1));
-  bset_save_length (&buffer_local_flags, make_number (-1));
-  bset_auto_save_file_name (&buffer_local_flags, make_number (-1));
-  bset_read_only (&buffer_local_flags, make_number (-1));
-  bset_major_mode (&buffer_local_flags, make_number (-1));
-  bset_mode_name (&buffer_local_flags, make_number (-1));
-  bset_undo_list (&buffer_local_flags, make_number (-1));
-  bset_mark_active (&buffer_local_flags, make_number (-1));
-  bset_point_before_scroll (&buffer_local_flags, make_number (-1));
-  bset_file_truename (&buffer_local_flags, make_number (-1));
-  bset_invisibility_spec (&buffer_local_flags, make_number (-1));
-  bset_file_format (&buffer_local_flags, make_number (-1));
-  bset_auto_save_file_format (&buffer_local_flags, make_number (-1));
-  bset_display_count (&buffer_local_flags, make_number (-1));
-  bset_display_time (&buffer_local_flags, make_number (-1));
-  bset_enable_multibyte_characters (&buffer_local_flags, make_number (-1));
+  bset_filename (&buffer_local_flags, make_fixnum (-1));
+  bset_directory (&buffer_local_flags, make_fixnum (-1));
+  bset_backed_up (&buffer_local_flags, make_fixnum (-1));
+  bset_save_length (&buffer_local_flags, make_fixnum (-1));
+  bset_auto_save_file_name (&buffer_local_flags, make_fixnum (-1));
+  bset_read_only (&buffer_local_flags, make_fixnum (-1));
+  bset_major_mode (&buffer_local_flags, make_fixnum (-1));
+  bset_mode_name (&buffer_local_flags, make_fixnum (-1));
+  bset_undo_list (&buffer_local_flags, make_fixnum (-1));
+  bset_mark_active (&buffer_local_flags, make_fixnum (-1));
+  bset_point_before_scroll (&buffer_local_flags, make_fixnum (-1));
+  bset_file_truename (&buffer_local_flags, make_fixnum (-1));
+  bset_invisibility_spec (&buffer_local_flags, make_fixnum (-1));
+  bset_file_format (&buffer_local_flags, make_fixnum (-1));
+  bset_auto_save_file_format (&buffer_local_flags, make_fixnum (-1));
+  bset_display_count (&buffer_local_flags, make_fixnum (-1));
+  bset_display_time (&buffer_local_flags, make_fixnum (-1));
+  bset_enable_multibyte_characters (&buffer_local_flags, make_fixnum (-1));
 
   /* These used to be stuck at 0 by default, but now that the all-zero value
      means Qnil, we have to initialize them explicitly.  */
-  bset_name (&buffer_local_flags, make_number (0));
-  bset_mark (&buffer_local_flags, make_number (0));
-  bset_local_var_alist (&buffer_local_flags, make_number (0));
-  bset_keymap (&buffer_local_flags, make_number (0));
-  bset_downcase_table (&buffer_local_flags, make_number (0));
-  bset_upcase_table (&buffer_local_flags, make_number (0));
-  bset_case_canon_table (&buffer_local_flags, make_number (0));
-  bset_case_eqv_table (&buffer_local_flags, make_number (0));
-  bset_minor_modes (&buffer_local_flags, make_number (0));
-  bset_width_table (&buffer_local_flags, make_number (0));
-  bset_pt_marker (&buffer_local_flags, make_number (0));
-  bset_begv_marker (&buffer_local_flags, make_number (0));
-  bset_zv_marker (&buffer_local_flags, make_number (0));
-  bset_last_selected_window (&buffer_local_flags, make_number (0));
+  bset_name (&buffer_local_flags, make_fixnum (0));
+  bset_mark (&buffer_local_flags, make_fixnum (0));
+  bset_local_var_alist (&buffer_local_flags, make_fixnum (0));
+  bset_keymap (&buffer_local_flags, make_fixnum (0));
+  bset_downcase_table (&buffer_local_flags, make_fixnum (0));
+  bset_upcase_table (&buffer_local_flags, make_fixnum (0));
+  bset_case_canon_table (&buffer_local_flags, make_fixnum (0));
+  bset_case_eqv_table (&buffer_local_flags, make_fixnum (0));
+  bset_minor_modes (&buffer_local_flags, make_fixnum (0));
+  bset_width_table (&buffer_local_flags, make_fixnum (0));
+  bset_pt_marker (&buffer_local_flags, make_fixnum (0));
+  bset_begv_marker (&buffer_local_flags, make_fixnum (0));
+  bset_zv_marker (&buffer_local_flags, make_fixnum (0));
+  bset_last_selected_window (&buffer_local_flags, make_fixnum (0));
 
   idx = 1;
   XSETFASTINT (BVAR (&buffer_local_flags, mode_line_format), idx); ++idx;
@@ -4167,14 +5276,20 @@ init_buffer_once (void)
   XSETFASTINT (BVAR (&buffer_local_flags, scroll_up_aggressively), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, scroll_down_aggressively), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, header_line_format), idx); ++idx;
+  XSETFASTINT (BVAR (&buffer_local_flags, tab_line_format), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, cursor_type), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, extra_line_spacing), idx); ++idx;
   XSETFASTINT (BVAR (&buffer_local_flags, cursor_in_non_selected_windows), idx); ++idx;
+
+  /* buffer_local_flags contains no pointers, so it's safe to treat it
+     as a blob for pdumper.  */
+  PDUMPER_REMEMBER_SCALAR (buffer_local_flags);
 
   /* Need more room? */
   if (idx >= MAX_PER_BUFFER_VARS)
     emacs_abort ();
   last_per_buffer_idx = idx;
+  PDUMPER_REMEMBER_SCALAR (last_per_buffer_idx);
 
   /* Make sure all markable slots in buffer_defaults
      are initialized reasonably, so mark_buffer won't choke.  */
@@ -4207,6 +5322,7 @@ init_buffer_once (void)
   /* real setup is done in bindings.el */
   bset_mode_line_format (&buffer_defaults, build_pure_c_string ("%-"));
   bset_header_line_format (&buffer_defaults, Qnil);
+  bset_tab_line_format (&buffer_defaults, Qnil);
   bset_abbrev_mode (&buffer_defaults, Qnil);
   bset_overwrite_mode (&buffer_defaults, Qnil);
   bset_case_fold_search (&buffer_defaults, Qt);
@@ -4269,7 +5385,9 @@ init_buffer_once (void)
 
   Vbuffer_alist = Qnil;
   current_buffer = 0;
+  pdumper_remember_lv_ptr_raw (&current_buffer, Lisp_Vectorlike);
   all_buffers = 0;
+  pdumper_remember_lv_ptr_raw (&all_buffers, Lisp_Vectorlike);
 
   QSFundamental = build_pure_c_string ("Fundamental");
 
@@ -4293,14 +5411,12 @@ init_buffer_once (void)
 }
 
 void
-init_buffer (int initialized)
+init_buffer (void)
 {
-  char *pwd;
   Lisp_Object temp;
-  ptrdiff_t len;
 
 #ifdef USE_MMAP_FOR_BUFFERS
-  if (initialized)
+  if (dumped_with_unexec_p ())
     {
       struct buffer *b;
 
@@ -4341,9 +5457,6 @@ init_buffer (int initialized)
 	  eassert (b->text->beg != NULL);
 	}
     }
-#else  /* not USE_MMAP_FOR_BUFFERS */
-  /* Avoid compiler warnings.  */
-  (void) initialized;
 #endif /* USE_MMAP_FOR_BUFFERS */
 
   AUTO_STRING (scratch, "*scratch*");
@@ -4351,7 +5464,7 @@ init_buffer (int initialized)
   if (NILP (BVAR (&buffer_defaults, enable_multibyte_characters)))
     Fset_buffer_multibyte (Qnil);
 
-  pwd = emacs_get_current_dir_name ();
+  char const *pwd = emacs_wd;
 
   if (!pwd)
     {
@@ -4363,22 +5476,16 @@ init_buffer (int initialized)
     {
       /* Maybe this should really use some standard subroutine
          whose definition is filename syntax dependent.  */
-      len = strlen (pwd);
-      if (!(IS_DIRECTORY_SEP (pwd[len - 1])))
-        {
-          /* Grow buffer to add directory separator and '\0'.  */
-          pwd = realloc (pwd, len + 2);
-          if (!pwd)
-            fatal ("get_current_dir_name: %s\n", strerror (errno));
-          pwd[len] = DIRECTORY_SEP;
-          pwd[len + 1] = '\0';
-          len++;
-        }
+      ptrdiff_t len = strlen (pwd);
+      bool add_slash = ! IS_DIRECTORY_SEP (pwd[len - 1]);
 
       /* At this moment, we still don't know how to decode the directory
          name.  So, we keep the bytes in unibyte form so that file I/O
          routines correctly get the original bytes.  */
-      bset_directory (current_buffer, make_unibyte_string (pwd, len));
+      Lisp_Object dirname = make_unibyte_string (pwd, len + add_slash);
+      if (add_slash)
+	SSET (dirname, len, DIRECTORY_SEP);
+      bset_directory (current_buffer, dirname);
 
       /* Add /: to the front of the name
          if it would otherwise be treated as magic.  */
@@ -4399,8 +5506,6 @@ init_buffer (int initialized)
 
   temp = get_minibuffer (0);
   bset_directory (XBUFFER (temp), BVAR (current_buffer, directory));
-
-  free (pwd);
 }
 
 /* Similar to defvar_lisp but define a variable whose value is the
@@ -4432,13 +5537,19 @@ defvar_per_buffer (struct Lisp_Buffer_Objfwd *bo_fwd, const char *namestring,
   bo_fwd->predicate = predicate;
   sym->u.s.declared_special = true;
   sym->u.s.redirect = SYMBOL_FORWARDED;
-  SET_SYMBOL_FWD (sym, (union Lisp_Fwd *) bo_fwd);
+  SET_SYMBOL_FWD (sym, bo_fwd);
   XSETSYMBOL (PER_BUFFER_SYMBOL (offset), sym);
 
   if (PER_BUFFER_IDX (offset) == 0)
     /* Did a DEFVAR_PER_BUFFER without initializing the corresponding
        slot of buffer_local_flags.  */
     emacs_abort ();
+}
+
+extern void
+set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
+{
+  *(Lisp_Object *)(offset + (char *) b) = value;
 }
 
 extern void rust_syms_of_buffer(void);
@@ -4448,8 +5559,7 @@ void
 syms_of_buffer (void)
 {
   staticpro (&last_overlay_modification_hooks);
-  last_overlay_modification_hooks
-    = Fmake_vector (make_number (10), Qnil);
+  last_overlay_modification_hooks = make_nil_vector (10);
 
   staticpro (&QSFundamental);
   staticpro (&Vbuffer_alist);
@@ -4465,6 +5575,9 @@ syms_of_buffer (void)
   DEFSYM (Qmodification_hooks, "modification-hooks");
   DEFSYM (Qinsert_in_front_hooks, "insert-in-front-hooks");
   DEFSYM (Qinsert_behind_hooks, "insert-behind-hooks");
+#ifdef IGNORE_RUST_PORT
+  DEFSYM (Qget_file_buffer, "get-file-buffer");
+#endif
   DEFSYM (Qpriority, "priority");
   DEFSYM (Qbefore_string, "before-string");
   DEFSYM (Qafter_string, "after-string");
@@ -4486,11 +5599,23 @@ syms_of_buffer (void)
 	       Qoverwrite_mode_binary));
 
   Fput (Qprotected_field, Qerror_conditions,
-	listn (CONSTYPE_PURE, 2, Qprotected_field, Qerror));
+	pure_list (Qprotected_field, Qerror));
   Fput (Qprotected_field, Qerror_message,
 	build_pure_c_string ("Attempt to modify a protected field"));
 
-  rust_syms_of_buffer();
+  DEFVAR_PER_BUFFER ("tab-line-format",
+		     &BVAR (current_buffer, tab_line_format),
+		     Qnil,
+		     doc: /* Analogous to `mode-line-format', but controls the tab line.
+The tab line appears, optionally, at the top of a window;
+the mode line appears at the bottom.  */);
+
+  DEFVAR_PER_BUFFER ("header-line-format",
+		     &BVAR (current_buffer, header_line_format),
+		     Qnil,
+		     doc: /* Analogous to `mode-line-format', but controls the header line.
+The header line appears, optionally, at the top of a window;
+the mode line appears at the bottom.  */);
 
   DEFVAR_PER_BUFFER ("mode-line-format", &BVAR (current_buffer, mode_line_format),
 		     Qnil,
@@ -4640,7 +5765,11 @@ This variable is never applied to a way of decoding a file while reading it.  */
 
   DEFVAR_PER_BUFFER ("bidi-display-reordering",
 		     &BVAR (current_buffer, bidi_display_reordering), Qnil,
-		     doc: /* Non-nil means reorder bidirectional text for display in the visual order.  */);
+		     doc: /* Non-nil means reorder bidirectional text for display in the visual order.
+Setting this to nil is intended for use in debugging the display code.
+Don't set to nil in normal sessions, as that is not supported.
+See also `bidi-paragraph-direction'; setting that non-nil might
+speed up redisplay.  */);
 
   DEFVAR_PER_BUFFER ("bidi-paragraph-start-re",
 		     &BVAR (current_buffer, bidi_paragraph_start_re), Qnil,
@@ -4728,8 +5857,8 @@ visual lines rather than logical lines.  See the documentation of
   DEFVAR_PER_BUFFER ("default-directory", &BVAR (current_buffer, directory),
 		     Qstringp,
 		     doc: /* Name of default directory of current buffer.
-It should be a directory name (as opposed to a directory file-name).
-On GNU and Unix systems, directory names end in a slash `/'.
+It should be an absolute directory name; on GNU and Unix systems,
+these names start with `/' or `~' and end with `/'.
 To interactively change the default directory, use command `cd'. */);
 
   DEFVAR_PER_BUFFER ("auto-fill-function", &BVAR (current_buffer, auto_fill_function),
@@ -5052,11 +6181,11 @@ An entry (TEXT . POSITION) represents the deletion of the string TEXT
 from (abs POSITION).  If POSITION is positive, point was at the front
 of the text being deleted; if negative, point was at the end.
 
-An entry (t HIGH LOW USEC PSEC) indicates that the buffer was previously
-unmodified; (HIGH LOW USEC PSEC) is in the same style as (current-time)
-and is the visited file's modification time, as of that time.  If the
-modification time of the most recent save is different, this entry is
-obsolete.
+An entry (t . TIMESTAMP), where TIMESTAMP is in the style of
+`current-time', indicates that the buffer was previously unmodified;
+TIMESTAMP is the visited file's modification time, as of that time.
+If the modification time of the most recent save is different, this
+entry is obsolete.
 
 An entry (t . 0) means the buffer was previously unmodified but
 its time stamp was unknown because it was not associated with a file.
@@ -5250,28 +6379,79 @@ The function `kill-all-local-variables' runs this before doing anything else.  *
 
   DEFVAR_LISP ("buffer-list-update-hook", Vbuffer_list_update_hook,
 	       doc: /* Hook run when the buffer list changes.
-Functions running this hook are, `get-buffer-create',
-`make-indirect-buffer', `rename-buffer', `kill-buffer',
-`bury-buffer-internal' and `select-window'.  */);
+Functions (implicitly) running this hook are `get-buffer-create',
+`make-indirect-buffer', `rename-buffer', `kill-buffer', `bury-buffer'
+and `select-window'.  Functions run by this hook should avoid calling
+`select-window' with a nil NORECORD argument or `with-temp-buffer'
+since either may lead to infinite recursion.  */);
   Vbuffer_list_update_hook = Qnil;
   DEFSYM (Qbuffer_list_update_hook, "buffer-list-update-hook");
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbuffer_live_p);
+  defsubr (&Sbuffer_list);
+  defsubr (&Sget_buffer);
+  defsubr (&Sget_file_buffer);
+  defsubr (&Sget_buffer_create);
+#endif
   defsubr (&Smake_indirect_buffer);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sgenerate_new_buffer_name);
+  defsubr (&Sbuffer_name);
+  defsubr (&Sbuffer_file_name);
+  defsubr (&Sbuffer_base_buffer);
+  defsubr (&Sbuffer_local_value);
+#endif
   defsubr (&Sbuffer_local_variables);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbuffer_modified_p);
+  defsubr (&Sforce_mode_line_update);
+#endif
   defsubr (&Sset_buffer_modified_p);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbuffer_modified_tick);
+  defsubr (&Sbuffer_chars_modified_tick);
+  defsubr (&Srename_buffer);
+#endif
   defsubr (&Sother_buffer);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sbuffer_enable_undo);
+#endif
   defsubr (&Skill_buffer);
   defsubr (&Sbury_buffer_internal);
   defsubr (&Sset_buffer_major_mode);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Scurrent_buffer);
+  defsubr (&Sset_buffer);
+  defsubr (&Sbarf_if_buffer_read_only);
+  defsubr (&Serase_buffer);
+#endif
   defsubr (&Sbuffer_swap_text);
   defsubr (&Sset_buffer_multibyte);
   defsubr (&Skill_all_local_variables);
 
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Soverlayp);
+#endif
   defsubr (&Smake_overlay);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sdelete_overlay);
+  defsubr (&Sdelete_all_overlays);
+  defsubr (&Smove_overlay);
+  defsubr (&Soverlay_start);
+  defsubr (&Soverlay_end);
+  defsubr (&Soverlay_buffer);
+  defsubr (&Soverlay_properties);
+#endif
   defsubr (&Soverlays_at);
   defsubr (&Soverlays_in);
   defsubr (&Snext_overlay_change);
   defsubr (&Sprevious_overlay_change);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Soverlay_recenter);
+  defsubr (&Soverlay_lists);
+  defsubr (&Soverlay_get);
+#endif
   defsubr (&Soverlay_put);
   defsubr (&Srestore_buffer_modified_p);
 
@@ -5283,10 +6463,4 @@ keys_of_buffer (void)
 {
   initial_define_key (control_x_map, 'b', "switch-to-buffer");
   initial_define_key (control_x_map, 'k', "kill-buffer");
-}
-
-extern void
-set_per_buffer_value (struct buffer *b, int offset, Lisp_Object value)
-{
-  *(Lisp_Object *)(offset + (char *) b) = value;
 }

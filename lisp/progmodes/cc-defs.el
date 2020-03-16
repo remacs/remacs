@@ -1,6 +1,6 @@
 ;;; cc-defs.el --- compile time definitions for CC Mode
 
-;; Copyright (C) 1985, 1987, 1992-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1987, 1992-2020 Free Software Foundation, Inc.
 
 ;; Authors:    2003- Alan Mackenzie
 ;;             1998- Martin Stjernholm
@@ -81,13 +81,13 @@
   (progn
     (require 'font-lock)
     (let (font-lock-keywords)
-      (font-lock-compile-keywords '("\\<\\>"))
+      (font-lock-compile-keywords (list regexp-unmatchable))
       font-lock-keywords))))
 
 
 ;;; Variables also used at compile time.
 
-(defconst c-version "5.33.1"
+(defconst c-version "5.34"
   "CC Mode version number.")
 
 (defconst c-version-sym (intern c-version))
@@ -106,6 +106,13 @@ not known.")
 ;; Have to make `c-buffer-is-cc-mode' permanently local so that it
 ;; survives the initialization of the derived mode.
 (put 'c-buffer-is-cc-mode 'permanent-local t)
+
+(defvar c-syntax-table-hwm most-positive-fixnum)
+;; A workaround for `syntax-ppss''s failure to take account of changes in
+;; syntax-table text properties.  This variable gets set to the lowest
+;; position where the syntax-table text property is changed, and that value
+;; gets supplied to `syntax-ppss-flush-cache' just before a font locking is
+;; due to take place.
 
 
 ;; The following is used below during compilation.
@@ -212,6 +219,13 @@ This variant works around bugs in `eval-when-compile' in various
 	`(cl-delete-duplicates ,cl-seq ,@cl-keys)
       `(delete-duplicates ,cl-seq ,@cl-keys))))
 
+(defmacro c-font-lock-flush (beg end)
+  "Declare the region BEG...END's fontification as out-of-date.
+On XEmacs and older Emacsen, this refontifies that region immediately."
+  (if (fboundp 'font-lock-flush)
+      `(font-lock-flush ,beg ,end)
+    `(font-lock-fontify-region ,beg ,end)))
+
 (defmacro c-point (position &optional point)
   "Return the value of certain commonly referenced POSITIONs relative to POINT.
 The current point is used if POINT isn't specified.  POSITION can be
@@ -219,6 +233,7 @@ one of the following symbols:
 
 `bol'   -- beginning of line
 `eol'   -- end of line
+`eoll'  -- end of logical line (i.e. without escaped NL)
 `bod'   -- beginning of defun
 `eod'   -- end of defun
 `boi'   -- beginning of indentation
@@ -240,7 +255,7 @@ to it is returned.  This function does not modify the point or the mark."
 
 	 ((eq position 'bol)
 	  (if (and (cc-bytecomp-fboundp 'line-beginning-position) (not point))
-	      `(line-beginning-position)
+	      '(line-beginning-position)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
 	       (beginning-of-line)
@@ -248,11 +263,25 @@ to it is returned.  This function does not modify the point or the mark."
 
 	 ((eq position 'eol)
 	  (if (and (cc-bytecomp-fboundp 'line-end-position) (not point))
-	      `(line-end-position)
+	      '(line-end-position)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
 	       (end-of-line)
 	       (point))))
+
+	 ((eq position 'eoll)
+	  `(save-excursion
+	     ,@(if point `((goto-char ,point)))
+	     (while (and
+		     (not (eobp))
+		     (progn
+		       (end-of-line)
+		       (c-is-escaped (point))
+		       ;; (prog1 (eq (logand 1 (skip-chars-backward "\\\\")) 1))
+		       ))
+	       (forward-line))
+	     (end-of-line)
+	     (point)))
 
 	 ((eq position 'boi)
 	  `(save-excursion
@@ -274,7 +303,7 @@ to it is returned.  This function does not modify the point or the mark."
 
 	 ((eq position 'bopl)
 	  (if (and (cc-bytecomp-fboundp 'line-beginning-position) (not point))
-	      `(line-beginning-position 0)
+	      '(line-beginning-position 0)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
 	       (forward-line -1)
@@ -282,7 +311,7 @@ to it is returned.  This function does not modify the point or the mark."
 
 	 ((eq position 'bonl)
 	  (if (and (cc-bytecomp-fboundp 'line-beginning-position) (not point))
-	      `(line-beginning-position 2)
+	      '(line-beginning-position 2)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
 	       (forward-line 1)
@@ -290,7 +319,7 @@ to it is returned.  This function does not modify the point or the mark."
 
 	 ((eq position 'eopl)
 	  (if (and (cc-bytecomp-fboundp 'line-end-position) (not point))
-	      `(line-end-position 0)
+	      '(line-end-position 0)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
 	       (beginning-of-line)
@@ -299,7 +328,7 @@ to it is returned.  This function does not modify the point or the mark."
 
 	 ((eq position 'eonl)
 	  (if (and (cc-bytecomp-fboundp 'line-end-position) (not point))
-	      `(line-end-position 2)
+	      '(line-end-position 2)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
 	       (forward-line 1)
@@ -386,6 +415,25 @@ to it is returned.  This function does not modify the point or the mark."
         (forward-sexp)
         (= (point) (+ 4 (point-min)))))))
 
+(defmacro c-is-escaped (pos)
+  ;; Are there an odd number of backslashes before POS?
+  `(save-excursion
+     (goto-char ,pos)
+     (not (zerop (logand (skip-chars-backward "\\\\") 1)))))
+
+(defmacro c-will-be-escaped (pos beg end)
+  ;; Will the character after POS be escaped after the removal of (BEG END)?
+  ;; It is assumed that (>= POS END).
+  `(save-excursion
+     (let ((-end- ,end)
+	   count)
+       (goto-char ,pos)
+       (setq count (skip-chars-backward "\\\\" -end-))
+       (when (eq (point) -end-)
+	 (goto-char ,beg)
+	 (setq count (+ count (skip-chars-backward "\\\\"))))
+       (not (zerop (logand count 1))))))
+
 (defvar c-use-extents)
 
 (defmacro c-next-single-property-change (position prop &optional object limit)
@@ -453,6 +501,13 @@ to it is returned.  This function does not modify the point or the mark."
       `(int-to-char ,integer)
     integer))
 
+(defmacro c-characterp (arg)
+  ;; Return t when ARG is a character (XEmacs) or integer (Emacs), otherwise
+  ;; return nil.
+  (if (integerp ?c)
+      `(integerp ,arg)
+    `(characterp ,arg)))
+
 (defmacro c-last-command-char ()
   ;; The last character just typed.  Note that `last-command-event' exists in
   ;; both Emacs and XEmacs, but with confusingly different meanings.
@@ -464,17 +519,42 @@ to it is returned.  This function does not modify the point or the mark."
   ;; Get the regular expression `sentence-end'.
   (if (cc-bytecomp-fboundp 'sentence-end)
       ;; Emacs 22:
-      `(sentence-end)
+      '(sentence-end)
     ;; Emacs <22 + XEmacs
-    `sentence-end))
+    'sentence-end))
 
 (defmacro c-default-value-sentence-end ()
   ;; Get the default value of the variable sentence end.
   (if (cc-bytecomp-fboundp 'sentence-end)
       ;; Emacs 22:
-      `(let (sentence-end) (sentence-end))
+      '(let (sentence-end) (sentence-end))
     ;; Emacs <22 + XEmacs
-    `(default-value 'sentence-end)))
+    '(default-value 'sentence-end)))
+
+(defconst c-c++-raw-string-opener-re "R\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
+;; Matches a C++ raw string opener.  Submatch 1 is its identifier.
+
+(defconst c-c++-raw-string-opener-1-re "\"\\([^ ()\\\n\r\t]\\{0,16\\}\\)(")
+;; Matches a C++ raw string opener starting after the initial R.
+
+(defmacro c-sub-at-c++-raw-string-opener ()
+  `(save-excursion
+     (and
+      (if (eq (char-after) ?R)
+	  (progn (forward-char) t)
+	(eq (char-before) ?R))
+      (looking-at c-c++-raw-string-opener-1-re))))
+
+(defmacro c-at-c++-raw-string-opener (&optional pos)
+  ;; Return non-nil if POS (default point) is either at the start of a C++ raw
+  ;; string opener, or after the introductory R of one.  The match data is
+  ;; overwritten.  On success the opener's identifier will be (match-string
+  ;; 1).  Text properties on any characters are ignored.
+  (if pos
+      `(save-excursion
+	 (goto-char ,pos)
+	 (c-sub-at-c++-raw-string-opener))
+    `(c-sub-at-c++-raw-string-opener)))
 
 ;; The following is essentially `save-buffer-state' from lazy-lock.el.
 ;; It ought to be a standard macro.
@@ -493,11 +573,11 @@ known to be writable.  That way, these text properties remain set
 even if the user undoes the command which set them.
 
 This macro should ALWAYS be placed around \"temporary\" internal buffer
-changes \(like adding a newline to calculate a text-property then
+changes (like adding a newline to calculate a text-property then
 deleting it again), so that the user never sees them on his
 `buffer-undo-list'.  See also `c-tentative-buffer-changes'.
 
-However, any user-visible changes to the buffer \(like auto-newlines)
+However, any user-visible changes to the buffer (like auto-newlines)
 must not be within a `c-save-buffer-state', since the user then
 wouldn't be able to undo them.
 
@@ -524,7 +604,7 @@ was in before BODY.  Any changes are kept if the last form in BODY
 returns non-nil.  Otherwise it's undone using the undo facility, and
 various other buffer state that might be affected by the changes is
 restored.  That includes the current buffer, point, mark, mark
-activation \(similar to `save-excursion'), and the modified state.
+activation (similar to `save-excursion'), and the modified state.
 The state is also restored if BODY exits nonlocally.
 
 If BODY makes a change that unconditionally is undone then wrap this
@@ -673,7 +753,7 @@ leave point unmoved.
 
 A LIMIT for the search may be given.  The start position is assumed to be
 before it."
-  `(let ((dest (c-safe-scan-lists ,(or pos `(point)) 1 0 ,limit)))
+  `(let ((dest (c-safe-scan-lists ,(or pos '(point)) 1 0 ,limit)))
      (when dest (goto-char dest) dest)))
 
 (defmacro c-go-list-backward (&optional pos limit)
@@ -683,7 +763,7 @@ leave point unmoved.
 
 A LIMIT for the search may be given.  The start position is assumed to be
 after it."
-  `(let ((dest (c-safe-scan-lists ,(or pos `(point)) -1 0 ,limit)))
+  `(let ((dest (c-safe-scan-lists ,(or pos '(point)) -1 0 ,limit)))
      (when dest (goto-char dest) dest)))
 
 (defmacro c-up-list-forward (&optional pos limit)
@@ -692,7 +772,7 @@ or nil if no such position exists.  The point is used if POS is left out.
 
 A limit for the search may be given.  The start position is assumed to
 be before it."
-  `(c-safe-scan-lists ,(or pos `(point)) 1 1 ,limit))
+  `(c-safe-scan-lists ,(or pos '(point)) 1 1 ,limit))
 
 (defmacro c-up-list-backward (&optional pos limit)
   "Return the position of the start of the list sexp containing POS,
@@ -700,7 +780,7 @@ or nil if no such position exists.  The point is used if POS is left out.
 
 A limit for the search may be given.  The start position is assumed to
 be after it."
-  `(c-safe-scan-lists ,(or pos `(point)) -1 1 ,limit))
+  `(c-safe-scan-lists ,(or pos '(point)) -1 1 ,limit))
 
 (defmacro c-down-list-forward (&optional pos limit)
   "Return the first position inside the first list sexp after POS,
@@ -708,7 +788,7 @@ or nil if no such position exists.  The point is used if POS is left out.
 
 A limit for the search may be given.  The start position is assumed to
 be before it."
-  `(c-safe-scan-lists ,(or pos `(point)) 1 -1 ,limit))
+  `(c-safe-scan-lists ,(or pos '(point)) 1 -1 ,limit))
 
 (defmacro c-down-list-backward (&optional pos limit)
   "Return the last position inside the last list sexp before POS,
@@ -716,7 +796,7 @@ or nil if no such position exists.  The point is used if POS is left out.
 
 A limit for the search may be given.  The start position is assumed to
 be after it."
-  `(c-safe-scan-lists ,(or pos `(point)) -1 -1 ,limit))
+  `(c-safe-scan-lists ,(or pos '(point)) -1 -1 ,limit))
 
 (defmacro c-go-up-list-forward (&optional pos limit)
   "Move the point to the first position after the list sexp containing POS,
@@ -877,7 +957,7 @@ be after it."
   ;; c-beginning-of-statement-1.
   ;; Languages which don't have EOL terminated statements always return NIL
   ;; (they _know_ there's no vsemi ;-).
-  `(if c-vsemi-status-unknown-p-fn (funcall c-vsemi-status-unknown-p-fn)))
+  '(if c-vsemi-status-unknown-p-fn (funcall c-vsemi-status-unknown-p-fn)))
 
 
 (defmacro c-benign-error (format &rest args)
@@ -967,6 +1047,15 @@ MODE is either a mode symbol or a list of mode symbols."
 ;; properties set on a single character and that never spread to any
 ;; other characters.
 
+(defmacro c-put-syn-tab (pos value)
+  ;; Set both the syntax-table and the c-fl-syn-tab text properties at POS to
+  ;; VALUE (which should not be nil).
+  `(let ((-pos- ,pos)
+	 (-value- ,value))
+     (c-put-char-property -pos- 'syntax-table -value-)
+     (c-put-char-property -pos- 'c-fl-syn-tab -value-)
+     (c-truncate-lit-pos-cache -pos-)))
+
 (eval-and-compile
   ;; Constant used at compile time to decide whether or not to use
   ;; XEmacs extents.  Check all the extent functions we'll use since
@@ -1037,6 +1126,9 @@ MODE is either a mode symbol or a list of mode symbols."
     ;; In Emacs 21 we got the `rear-nonsticky' property covered
     ;; by `text-property-default-nonsticky'.
     `(let ((-pos- ,pos))
+       ,@(when (and (fboundp 'syntax-ppss)
+		    (eq `,property 'syntax-table))
+	   `((setq c-syntax-table-hwm (min c-syntax-table-hwm -pos-))))
        (put-text-property -pos- (1+ -pos-) ',property ,value))))
 
 (defmacro c-get-char-property (pos property)
@@ -1082,11 +1174,35 @@ MODE is either a mode symbol or a list of mode symbols."
 	 ;; In Emacs 21 we got the `rear-nonsticky' property covered
 	 ;; by `text-property-default-nonsticky'.
 	 `(let ((pos ,pos))
+	    ,@(when (and (fboundp 'syntax-ppss)
+			 (eq `,property 'syntax-table))
+		    `((setq c-syntax-table-hwm (min c-syntax-table-hwm pos))))
 	    (remove-text-properties pos (1+ pos)
 				    '(,property nil))))
 	(t
 	 ;; Emacs < 21.
 	 `(c-clear-char-property-fun ,pos ',property))))
+
+(defmacro c-clear-syn-tab (pos)
+  ;; Remove both the 'syntax-table and `c-fl-syn-tab properties at POS.
+  `(let ((-pos- ,pos))
+     (c-clear-char-property -pos- 'syntax-table)
+     (c-clear-char-property -pos- 'c-fl-syn-tab)
+     (c-truncate-lit-pos-cache -pos-)))
+
+(defmacro c-min-property-position (from to property)
+  ;; Return the first position in the range [FROM to) where the text property
+  ;; PROPERTY is set, or `most-positive-fixnum' if there is no such position.
+  ;; PROPERTY should be a quoted constant.
+  `(let ((-from- ,from) (-to- ,to) pos)
+     (cond
+      ((and (< -from- -to-)
+	    (get-text-property -from- ,property))
+       -from-)
+      ((< (setq pos (next-single-property-change -from- ,property nil -to-))
+	  -to-)
+       pos)
+      (most-positive-fixnum))))
 
 (defmacro c-clear-char-properties (from to property)
   ;; Remove all the occurrences of the given property in the given
@@ -1106,7 +1222,21 @@ MODE is either a mode symbol or a list of mode symbols."
 		      (delete-extent ext))
 		    nil ,from ,to nil nil ',property)
     ;; Emacs.
-    `(remove-text-properties ,from ,to '(,property nil))))
+    (if (and (fboundp 'syntax-ppss)
+	     (eq `,property 'syntax-table))
+	`(let ((-from- ,from) (-to- ,to))
+	   (setq c-syntax-table-hwm
+		 (min c-syntax-table-hwm
+		      (c-min-property-position -from- -to- ',property)))
+	   (remove-text-properties -from- -to- '(,property nil)))
+      `(remove-text-properties ,from ,to '(,property nil)))))
+
+(defmacro c-clear-syn-tab-properties (from to)
+  ;; Remove all occurrences of the `syntax-table' and `c-fl-syn-tab' text
+  ;; properties between FROM and TO.
+  `(let ((-from- ,from) (-to- ,to))
+     (c-clear-char-properties -from- -to- 'syntax-table)
+     (c-clear-char-properties -from- -to- 'c-fl-syn-tab)))
 
 (defmacro c-search-forward-char-property (property value &optional limit)
   "Search forward for a text-property PROPERTY having value VALUE.
@@ -1124,7 +1254,7 @@ nil; point is then left undefined."
 		    place ,property nil ,(or limit '(point-max)))))
      (when (< place ,(or limit '(point-max)))
        (goto-char place)
-       (search-forward-regexp ".")	; to set the match-data.
+       (search-forward-regexp "\\(\n\\|.\\)")	; to set the match-data.
        (point))))
 
 (defmacro c-search-backward-char-property (property value &optional limit)
@@ -1148,7 +1278,7 @@ point is then left undefined."
 		    place ,property nil ,(or limit '(point-min)))))
      (when (> place ,(or limit '(point-min)))
        (goto-char place)
-       (search-backward-regexp ".")	; to set the match-data.
+       (search-backward-regexp "\\(\n\\|.\\)")	; to set the match-data.
        (point))))
 
 (defun c-clear-char-property-with-value-function (from to property value)
@@ -1165,8 +1295,10 @@ been put there by c-put-char-property.  POINT remains unchanged."
 	       (not (equal (get-text-property place property) value)))
 	    (setq place (c-next-single-property-change place property nil to)))
 	  (< place to))
+      (when (and (fboundp 'syntax-ppss) (eq property 'syntax-table))
+	(setq c-syntax-table-hwm (min c-syntax-table-hwm place)))
       (setq end-place (c-next-single-property-change place property nil to))
-      (remove-text-properties place end-place (cons property nil))
+      (remove-text-properties place end-place (list property nil))
       ;; Do we have to do anything with stickiness here?
       (setq place end-place))))
 
@@ -1196,7 +1328,7 @@ Leave point just after the character, and set the match data on
 this character, and return point.  If the search fails, return
 nil; point is then left undefined."
   `(let ((char-skip (concat "^" (char-to-string ,char)))
-	 (-limit- ,limit)
+	 (-limit- (or ,limit (point-max)))
 	 (-value- ,value))
      (while
 	 (and
@@ -1205,7 +1337,53 @@ nil; point is then left undefined."
 	  (not (equal (c-get-char-property (point) ,property) -value-)))
        (forward-char))
      (when (< (point) -limit-)
-       (search-forward-regexp ".")	; to set the match-data.
+       (search-forward-regexp "\\(\n\\|.\\)")	; to set the match-data.
+       (point))))
+
+(defmacro c-search-backward-char-property-with-value-on-char
+    (property value char &optional limit)
+  "Search backward for a text-property PROPERTY having value VALUE on a
+character with value CHAR.
+LIMIT bounds the search.  The value comparison is done with `equal'.
+PROPERTY must be a constant.
+
+Leave point just before the character, and set the match data on
+this character, and return point.  If the search fails, return
+nil; point is then left undefined."
+  `(let ((char-skip (concat "^" (char-to-string ,char)))
+	 (-limit- (or ,limit (point-min)))
+	 (-value- ,value))
+     (while
+	 (and
+	  (progn (skip-chars-backward char-skip -limit-)
+		 (> (point) -limit-))
+	  (not (equal (c-get-char-property (1- (point)) ,property) -value-)))
+       (backward-char))
+     (when (> (point) -limit-)
+       (search-backward-regexp "\\(\n\\|.\\)")	; to set the match-data.
+       (point))))
+
+(defmacro c-search-forward-char-property-without-value-on-char
+    (property value char &optional limit)
+  "Search forward for a character CHAR without text property PROPERTY having
+a value CHAR.
+LIMIT bounds the search.  The value comparison is done with `equal'.
+PROPERTY must be a constant.
+
+Leave point just after the character, and set the match data on
+this character, and return point.  If the search fails, return
+nil; point is then left undefined."
+  `(let ((char-skip (concat "^" (char-to-string ,char)))
+	 (-limit- (or ,limit (point-max)))
+	 (-value- ,value))
+     (while
+	 (and
+	  (progn (skip-chars-forward char-skip -limit-)
+		 (< (point) -limit-))
+	  (equal (c-get-char-property (point) ,property) -value-))
+       (forward-char))
+     (when (< (point) -limit-)
+       (search-forward-regexp "\\(\n\\|.\\)")	; to set the match-data.
        (point))))
 
 (defun c-clear-char-property-with-value-on-char-function (from to property
@@ -1214,9 +1392,10 @@ nil; point is then left undefined."
 characters with value CHAR from the region [FROM, TO), as tested
 by `equal'.  These properties are assumed to be over individual
 characters, having been put there by c-put-char-property.  POINT
-remains unchanged."
+remains unchanged.  Return the position of the first removed
+property, or nil."
   (let ((place from)
-	)
+	first)
     (while			  ; loop round occurrences of (PROPERTY VALUE)
 	(progn
 	  (while	   ; loop round changes in PROPERTY till we find VALUE
@@ -1225,29 +1404,38 @@ remains unchanged."
 	       (not (equal (get-text-property place property) value)))
 	    (setq place (c-next-single-property-change place property nil to)))
 	  (< place to))
-      (if (eq (char-after place) char)
-	  (remove-text-properties place (1+ place) (cons property nil)))
+      (when (eq (char-after place) char)
+	(remove-text-properties place (1+ place) (list property nil))
+	(or first
+	    (progn (setq first place)
+		   (when (eq property 'syntax-table)
+		     (setq c-syntax-table-hwm (min c-syntax-table-hwm place))))))
       ;; Do we have to do anything with stickiness here?
-      (setq place (1+ place)))))
+      (setq place (1+ place)))
+    first))
 
 (defmacro c-clear-char-property-with-value-on-char (from to property value char)
   "Remove all text-properties PROPERTY with value VALUE on
 characters with value CHAR from the region [FROM, TO), as tested
 by `equal'.  These properties are assumed to be over individual
 characters, having been put there by c-put-char-property.  POINT
-remains unchanged."
+remains unchanged.  Return the position of the first removed
+property, or nil."
   (if c-use-extents
       ;; XEmacs
       `(let ((-property- ,property)
-	     (-char- ,char))
+	     (-char- ,char)
+	     (first (1+ (point-max))))
 	 (map-extents (lambda (ext val)
-			(if (and (equal (extent-property ext -property-) val)
-				 (eq (char-after
-				      (extent-start-position ext))
-				     -char-))
-			    (delete-extent ext)))
-		      nil ,from ,to ,value nil -property-))
-    ;; Gnu Emacs
+			(when (and (equal (extent-property ext -property-) val)
+				   (eq (char-after
+					(extent-start-position ext))
+				       -char-))
+			  (setq first (min first (extent-start-position ext)))
+			  (delete-extent ext)))
+		      nil ,from ,to ,value nil -property-)
+	 (and (<= first (point-max)) first))
+    ;; GNU Emacs
     `(c-clear-char-property-with-value-on-char-function ,from ,to ,property
 							,value ,char)))
 
@@ -1262,8 +1450,34 @@ with value CHAR in the region [FROM to)."
        (goto-char ,from)
        (while (progn (skip-chars-forward skip-string -to-)
 		     (< (point) -to-))
-	   (c-put-char-property (point) ,property ,value)
-	   (forward-char)))))
+	 ,@(when (and (fboundp 'syntax-ppss)
+		      (eq (eval property) 'syntax-table))
+	     `((setq c-syntax-table-hwm (min c-syntax-table-hwm (point)))))
+	 (c-put-char-property (point) ,property ,value)
+	 (forward-char)))))
+
+(defmacro c-with-extended-string-fences (beg end &rest body)
+  ;; If needed, extend the region with "mirrored" c-fl-syn-tab properties to
+  ;; contain the region (BEG END), then evaluate BODY.  If this mirrored
+  ;; region was initially empty, restore it afterwards.
+  `(let ((-beg- ,beg)
+	 (-end- ,end)
+	 )
+     (cond
+      ((null c-fl-syn-tab-region)
+       (unwind-protect
+	   (progn
+	     (c-restore-string-fences -beg- -end-)
+	     ,@body)
+	 (c-clear-string-fences)))
+      ((and (>= -beg- (car c-fl-syn-tab-region))
+	    (<= -end- (cdr c-fl-syn-tab-region)))
+       ,@body)
+      (t				; Crudely extend the mirrored region.
+       (setq -beg- (min -beg- (car c-fl-syn-tab-region))
+	     -end- (max -end- (cdr c-fl-syn-tab-region)))
+       (c-restore-string-fences -beg- -end-)
+       ,@body))))
 
 ;; Macros to put overlays (Emacs) or extents (XEmacs) on buffer text.
 ;; For our purposes, these are characterized by being possible to
@@ -1298,20 +1512,39 @@ with value CHAR in the region [FROM to)."
 ;(eval-after-load "edebug" ; 2006-07-09: def-edebug-spec is now in subr.el.
 ;  '(progn
 (def-edebug-spec cc-eval-when-compile (&rest def-form))
+(def-edebug-spec c-font-lock-flush t)
+(def-edebug-spec c--mapcan t)
+(def-edebug-spec c--set-difference (form form &rest [symbolp form]))
+(def-edebug-spec c--intersection (form form &rest [symbolp form]))
+(def-edebug-spec c--delete-duplicates (form &rest [symbolp form]))
 (def-edebug-spec c-point t)
+(def-edebug-spec c-is-escaped t)
+(def-edebug-spec c-will-be-escaped t)
+(def-edebug-spec c-next-single-property-change t)
+(def-edebug-spec c-delete-and-extract-region t)
 (def-edebug-spec c-set-region-active t)
 (def-edebug-spec c-set-keymap-parent t)
 (def-edebug-spec c-safe t)
+(def-edebug-spec c-int-to-char t)
+(def-edebug-spec c-characterp t)
 (def-edebug-spec c-save-buffer-state let*)
 (def-edebug-spec c-tentative-buffer-changes t)
 (def-edebug-spec c-forward-syntactic-ws t)
 (def-edebug-spec c-backward-syntactic-ws t)
 (def-edebug-spec c-forward-sexp t)
 (def-edebug-spec c-backward-sexp t)
+(def-edebug-spec c-safe-scan-lists t)
+(def-edebug-spec c-go-list-forward t)
+(def-edebug-spec c-go-list-backward t)
 (def-edebug-spec c-up-list-forward t)
 (def-edebug-spec c-up-list-backward t)
 (def-edebug-spec c-down-list-forward t)
 (def-edebug-spec c-down-list-backward t)
+(def-edebug-spec c-go-up-list-forward t)
+(def-edebug-spec c-go-up-list-backward t)
+(def-edebug-spec c-go-down-list-forward t)
+(def-edebug-spec c-go-down-list-backward t)
+(def-edebug-spec c-at-vsemi-p t)
 (def-edebug-spec c-add-syntax t)
 (def-edebug-spec c-add-class-syntax t)
 (def-edebug-spec c-benign-error t)
@@ -1319,15 +1552,34 @@ with value CHAR in the region [FROM to)."
 (def-edebug-spec c-skip-ws-forward t)
 (def-edebug-spec c-skip-ws-backward t)
 (def-edebug-spec c-major-mode-is t)
+(def-edebug-spec c-search-forward-char-property t)
+(def-edebug-spec c-search-backward-char-property t)
 (def-edebug-spec c-put-char-property t)
+(def-edebug-spec c-put-syn-tab t)
 (def-edebug-spec c-get-char-property t)
 (def-edebug-spec c-clear-char-property t)
+(def-edebug-spec c-clear-syn-tab t)
+;;(def-edebug-spec c-min-property-position nil) ; invoked only by macros
+(def-edebug-spec c-min-property-position t) ; Now invoked from functions (2019-07)
+(def-edebug-spec c-clear-char-property-with-value t)
 (def-edebug-spec c-clear-char-property-with-value-on-char t)
 (def-edebug-spec c-put-char-properties-on-char t)
 (def-edebug-spec c-clear-char-properties t)
+(def-edebug-spec c-clear-syn-tab-properties t)
+(def-edebug-spec c-with-extended-string-fences (form form body))
 (def-edebug-spec c-put-overlay t)
 (def-edebug-spec c-delete-overlay t)
-(def-edebug-spec c-self-bind-state-cache t);))
+(def-edebug-spec c-mark-<-as-paren t)
+(def-edebug-spec c-mark->-as-paren t)
+(def-edebug-spec c-unmark-<->-as-paren t)
+(def-edebug-spec c-with-<->-as-parens-suppressed (body))
+(def-edebug-spec c-self-bind-state-cache (body))
+(def-edebug-spec c-sc-scan-lists-no-category+1+1 t)
+(def-edebug-spec c-sc-scan-lists-no-category+1-1 t)
+(def-edebug-spec c-sc-scan-lists-no-category-1+1 t)
+(def-edebug-spec c-sc-scan-lists-no-category-1-1 t)
+(def-edebug-spec c-sc-scan-lists t)
+(def-edebug-spec c-sc-parse-partial-sexp t);))
 
 
 ;;; Functions.
@@ -1560,12 +1812,12 @@ with value CHAR in the region [FROM to)."
 (defmacro c-looking-at-non-alphnumspace ()
   "Are we looking at a character which isn't alphanumeric or space?"
   (if (memq 'gen-comment-delim c-emacs-features)
-      `(looking-at
-"\\([;#]\\|\\'\\|\\s(\\|\\s)\\|\\s\"\\|\\s\\\\|\\s$\\|\\s<\\|\\s>\\|\\s!\\)")
-    `(or (looking-at
-"\\([;#]\\|\\'\\|\\s(\\|\\s)\\|\\s\"\\|\\s\\\\|\\s$\\|\\s<\\|\\s>\\)"
-	 (let ((prop (c-get-char-property (point) 'syntax-table)))
-	   (eq prop '(14)))))))		; '(14) is generic comment delimiter.
+      '(looking-at
+	"\\([;#]\\|\\'\\|\\s(\\|\\s)\\|\\s\"\\|\\s\\\\|\\s$\\|\\s<\\|\\s>\\|\\s!\\)")
+    '(or (looking-at
+	  "\\([;#]\\|\\'\\|\\s(\\|\\s)\\|\\s\"\\|\\s\\\\|\\s$\\|\\s<\\|\\s>\\)"
+	  (let ((prop (c-get-char-property (point) 'syntax-table)))
+	    (eq prop '(14)))))))		; '(14) is generic comment delimiter.
 
 
 (defsubst c-intersect-lists (list alist)
@@ -1722,7 +1974,8 @@ when it's needed.  The default is the current language taken from
 				     t))
 			 (setq pos (cdr pos)))
 		       found))
-	      (setq pos list)
+	      (setq pos (copy-tree list)
+		    )
 	      (while pos
 		(if (string-match "\\w\\'" (car pos))
 		    (setcar pos (concat (car pos) unique)))
@@ -1775,10 +2028,10 @@ when it's needed.  The default is the current language taken from
 	      (t
 	       re)))
 
-    ;; Produce a regexp that matches nothing.
+    ;; Produce a regexp that doesn't match anything.
     (if adorn
-	"\\(\\<\\>\\)"
-      "\\<\\>")))
+	(concat "\\(" regexp-unmatchable "\\)")
+      regexp-unmatchable)))
 
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 
@@ -1789,7 +2042,7 @@ The returned string is of the type that can be used with
 non-nil, a caret is prepended to invert the set."
   ;; This function ought to be in the elisp core somewhere.
   (let ((str (if inverted "^" "")) char char2)
-    (setq chars (sort (append chars nil) `<))
+    (setq chars (sort (append chars nil) #'<))
     (while chars
       (setq char (pop chars))
       (if (memq char '(?\\ ?^ ?-))
@@ -1840,7 +2093,7 @@ non-nil, a caret is prepended to invert the set."
 	(setq entry (get-char-table ?a table)))
        ;; incompatible
        (t (error "CC Mode is incompatible with this version of Emacs")))
-      (setq list (cons (if (= (logand (lsh entry -16) 255) 255)
+      (setq list (cons (if (= (logand (ash entry -16) 255) 255)
 			   '8-bit
 			 '1-bit)
 		       list)))
@@ -2137,7 +2390,7 @@ VAL is not evaluated right away but rather when the value is requested
 with `c-lang-const'.  Thus it's possible to use `c-lang-const' inside
 VAL to refer to language constants that haven't been defined yet.
 However, if the definition of a language constant is in another file
-then that file must be loaded \(at compile time) before it's safe to
+then that file must be loaded (at compile time) before it's safe to
 reference the constant.
 
 The assignments in ARGS are processed in sequence like `setq', so

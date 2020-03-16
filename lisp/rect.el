@@ -1,8 +1,8 @@
 ;;; rect.el --- rectangle functions for GNU Emacs  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1985, 1999-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 1999-2020 Free Software Foundation, Inc.
 
-;; Maintainer: Didier Verna <didier@xemacs.org>
+;; Maintainer: Didier Verna <didier@didierverna.net>
 ;; Keywords: internal
 ;; Package: emacs
 
@@ -27,7 +27,7 @@
 ;; in the Emacs manual.
 
 ;; ### NOTE: this file was almost completely rewritten by Didier Verna
-;; <didier@xemacs.org> in July 1999.
+;; in July 1999.
 
 ;;; Code:
 
@@ -77,34 +77,35 @@ Point is at the end of the segment of this line within the rectangle."
   ;; At this stage, we don't know which of start/end is point/mark :-(
   ;; And in case start=end, it might still be that point and mark have
   ;; different crutches!
-  (let ((cw (window-parameter window 'rectangle--point-crutches)))
-    (cond
-     ((eq start (car cw))
-      (let ((sc (cdr cw))
-            (ec (if (eq end (car rectangle--mark-crutches))
-                    (cdr rectangle--mark-crutches)
-                  (if rectangle--mark-crutches
-                      (setq rectangle--mark-crutches nil))
-                  (goto-char end) (current-column))))
-        (if (eq start end) (cons (min sc ec) (max sc ec)) (cons sc ec))))
-     ((eq end (car cw))
-      (if (eq start (car rectangle--mark-crutches))
-          (cons (cdr rectangle--mark-crutches) (cdr cw))
+  (save-excursion
+    (let ((cw (window-parameter window 'rectangle--point-crutches)))
+      (cond
+       ((eq start (car cw))
+        (let ((sc (cdr cw))
+              (ec (if (eq end (car rectangle--mark-crutches))
+                      (cdr rectangle--mark-crutches)
+                    (if rectangle--mark-crutches
+                        (setq rectangle--mark-crutches nil))
+                    (goto-char end) (current-column))))
+          (if (eq start end) (cons (min sc ec) (max sc ec)) (cons sc ec))))
+       ((eq end (car cw))
+        (if (eq start (car rectangle--mark-crutches))
+            (cons (cdr rectangle--mark-crutches) (cdr cw))
+          (if rectangle--mark-crutches (setq rectangle--mark-crutches nil))
+          (cons (progn (goto-char start) (current-column)) (cdr cw))))
+       ((progn
+          (if cw (setf (window-parameter nil 'rectangle--point-crutches) nil))
+          (eq start (car rectangle--mark-crutches)))
+        (let ((sc (cdr rectangle--mark-crutches))
+              (ec (progn (goto-char end) (current-column))))
+          (if (eq start end) (cons (min sc ec) (max sc ec)) (cons sc ec))))
+       ((eq end (car rectangle--mark-crutches))
+        (cons (progn (goto-char start) (current-column))
+              (cdr rectangle--mark-crutches)))
+       (t
         (if rectangle--mark-crutches (setq rectangle--mark-crutches nil))
-        (cons (progn (goto-char start) (current-column)) (cdr cw))))
-     ((progn
-        (if cw (setf (window-parameter nil 'rectangle--point-crutches) nil))
-        (eq start (car rectangle--mark-crutches)))
-      (let ((sc (cdr rectangle--mark-crutches))
-            (ec (progn (goto-char end) (current-column))))
-        (if (eq start end) (cons (min sc ec) (max sc ec)) (cons sc ec))))
-     ((eq end (car rectangle--mark-crutches))
-      (cons (progn (goto-char start) (current-column))
-            (cdr rectangle--mark-crutches)))
-     (t
-      (if rectangle--mark-crutches (setq rectangle--mark-crutches nil))
-      (cons (progn (goto-char start) (current-column))
-            (progn (goto-char end) (current-column)))))))
+        (cons (progn (goto-char start) (current-column))
+              (progn (goto-char end) (current-column))))))))
 
 (defun rectangle--col-pos (col kind)
   (let ((c (move-to-column col)))
@@ -132,10 +133,14 @@ Point is at the end of the segment of this line within the rectangle."
 (defun rectangle--crutches ()
   (cons rectangle--mark-crutches
         (window-parameter nil 'rectangle--point-crutches)))
-(defun rectangle--reset-crutches ()
-  (kill-local-variable 'rectangle--mark-crutches)
+
+(defun rectangle--reset-point-crutches ()
   (if (window-parameter nil 'rectangle--point-crutches)
       (setf (window-parameter nil 'rectangle--point-crutches) nil)))
+
+(defun rectangle--reset-crutches ()
+  (kill-local-variable 'rectangle--mark-crutches)
+  (rectangle--reset-point-crutches))
 
 ;;; Rectangle operations.
 
@@ -166,6 +171,45 @@ The final point after the last operation will be returned."
             (and (zerop (forward-line 1)) (bolp)
                  (<= (point) endpt))))
       final-point)))
+
+(defun rectangle-position-as-coordinates (position)
+   "Return cons of the column and line values of POSITION.
+POSITION specifies a position of the current buffer.  The value
+returned has the form (COLUMN . LINE)."
+  (save-excursion
+    (goto-char position)
+    (let ((col (current-column))
+          (line (line-number-at-pos)))
+      (cons col line))))
+
+(defun rectangle-intersect-p (pos1 size1 pos2 size2)
+   "Return non-nil if two rectangles intersect.
+POS1 and POS2 specify the positions of the upper-left corners of
+the first and second rectangles as conses of the form (COLUMN . LINE).
+SIZE1 and SIZE2 specify the dimensions of the first and second
+rectangles, as conses of the form (WIDTH . HEIGHT)."
+  (let ((x1 (car pos1))
+        (y1 (cdr pos1))
+        (x2 (car pos2))
+        (y2 (cdr pos2))
+        (w1 (car size1))
+        (h1 (cdr size1))
+        (w2 (car size2))
+        (h2 (cdr size2)))
+    (not (or (<= (+ x1 w1) x2)
+             (<= (+ x2 w2) x1)
+             (<= (+ y1 h1) y2)
+             (<= (+ y2 h2) y1)))))
+
+(defun rectangle-dimensions (start end)
+  "Return the dimensions of the rectangle with corners at START
+and END. The returned value has the form of (WIDTH . HEIGHT)."
+  (save-excursion
+    (let* ((height (1+ (abs (- (line-number-at-pos end)
+                               (line-number-at-pos start)))))
+           (cols (rectangle--pos-cols start end))
+           (width (abs (- (cdr cols) (car cols)))))
+      (cons width height))))
 
 (defun delete-rectangle-line (startcol endcol fill)
   (when (= (move-to-column startcol (if fill t 'coerce)) startcol)
@@ -480,7 +524,8 @@ Called from a program, takes three args; START, END and STRING."
                (read-string (format "String rectangle (default %s): "
                                     (or (car string-rectangle-history) ""))
                             nil 'string-rectangle-history
-                            (car string-rectangle-history)))))))
+                            (car string-rectangle-history)
+                            'inherit-input-method))))))
   ;; If we undo this change, we want to have the point back where we
   ;; are now, and not after the first line in the rectangle (which is
   ;; the first line to be changed by the following command).
@@ -573,7 +618,7 @@ with a prefix argument, prompt for START-AT and FORMAT."
     (apply-on-rectangle 'rectangle-number-line-callback
 			start end format)))
 
-;;; New rectangle integration with kill-ring.
+;;; Rectangle integration with kill-ring.
 
 ;; FIXME: known problems with the new rectangle support:
 ;; - lots of commands handle the region without paying attention to its
@@ -604,6 +649,7 @@ with a prefix argument, prompt for START-AT and FORMAT."
 ;;;###autoload
 (define-minor-mode rectangle-mark-mode
   "Toggle the region as rectangular.
+
 Activates the region if needed.  Only lasts until the region is deactivated."
   nil nil nil
   (rectangle--reset-crutches)

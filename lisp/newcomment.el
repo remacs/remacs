@@ -1,9 +1,9 @@
 ;;; newcomment.el --- (un)comment regions of buffers -*- lexical-binding: t -*-
 
-;; Copyright (C) 1999-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
 ;; Author: code extracted from Emacs-20's simple.el
-;; Maintainer: Stefan Monnier <monnier@iro.umontreal.ca>
+;; Maintainer: Stefan Monnier <monnier@gnu.org>
 ;; Keywords: comment uncomment
 ;; Package: emacs
 
@@ -158,6 +158,14 @@ The function has no args.
 
 Applicable at least in modes for languages like fixed-format Fortran where
 comments always start in column zero.")
+
+(defvar-local comment-combine-change-calls t
+  "If non-nil (the default), use `combine-change-calls' around
+  calls of `comment-region-function' and
+  `uncomment-region-function'.  This Substitutes a single call to
+  each of the hooks `before-change-functions' and
+  `after-change-functions' in place of those hooks being called
+  for each individual buffer change.")
 
 (defvar comment-region-function 'comment-region-default
   "Function to comment a region.
@@ -319,11 +327,11 @@ behavior for explicit filling, you might as well use \\[newline-and-indent]."
 (defcustom comment-empty-lines nil
   "If nil, `comment-region' does not comment out empty lines.
 If t, it always comments out empty lines.
-If `eol' it only comments out empty lines if comments are
-terminated by the end of line (i.e. `comment-end' is empty)."
+If `eol', it only comments out empty lines if comments are
+terminated by the end of line (i.e., `comment-end' is empty)."
   :type '(choice (const :tag "Never" nil)
-	  (const :tag "Always" t)
-	  (const :tag "EOl-terminated" eol))
+                 (const :tag "Always" t)
+                 (const :tag "EOL-terminated" eol))
   :group 'comment)
 
 ;;;;
@@ -817,7 +825,9 @@ If STR already contains padding, the corresponding amount is
 ignored from `comment-padding'.
 N defaults to 0.
 If N is `re', a regexp is returned instead, that would match
-the string for any N."
+the string for any N.
+
+Ensure that `comment-normalize-vars' has been called before you use this."
   (setq n (or n 0))
   (when (and (stringp str) (string-match "\\S-" str))
     ;; Separate the actual string from any leading/trailing padding
@@ -852,8 +862,10 @@ It also adds N copies of the first non-whitespace chars of STR.
 If STR already contains padding, the corresponding amount is
 ignored from `comment-padding'.
 N defaults to 0.
-If N is `re', a regexp is returned instead, that would match
-  the string for any N."
+If N is `re', a regexp is returned instead, that would match the
+string for any N.
+
+Ensure that `comment-normalize-vars' has been called before you use this."
   (setq n (or n 0))
   (when (and (stringp str) (not (string= "" str)))
     ;; Only separate the left pad because we assume there is no right pad.
@@ -887,7 +899,7 @@ If N is `re', a regexp is returned instead, that would match
 (defun uncomment-region (beg end &optional arg)
   "Uncomment each line in the BEG .. END region.
 The numeric prefix ARG can specify a number of chars to remove from the
-comment markers."
+comment delimiters."
   (interactive "*r\nP")
   (comment-normalize-vars)
   (when (> beg end) (setq beg (prog1 end (setq end beg))))
@@ -898,10 +910,11 @@ comment markers."
     (save-excursion
       (funcall uncomment-region-function beg end arg))))
 
-(defun uncomment-region-default (beg end &optional arg)
+(defun uncomment-region-default-1 (beg end &optional arg)
   "Uncomment each line in the BEG .. END region.
 The numeric prefix ARG can specify a number of chars to remove from the
-comment markers."
+comment delimiters.
+This function is the default value of `uncomment-region-function'."
   (goto-char beg)
   (setq end (copy-marker end))
   (let* ((numarg (prefix-numeric-value arg))
@@ -992,8 +1005,25 @@ comment markers."
 		       (re-search-forward sre (line-end-position) t))
 		(replace-match "" t t nil (if (match-end 2) 2 1)))))
 	  ;; Go to the end for the next comment.
-	  (goto-char (point-max))))))
+	  (goto-char (point-max)))
+        ;; Remove any obtrusive spaces left preceding a tab at `spt'.
+        (when (and (eq (char-after spt) ?\t) (eq (char-before spt) ? )
+                   (> tab-width 0))
+          (save-excursion
+            (goto-char spt)
+            (let* ((fcol (current-column))
+                   (slim (- (point) (mod fcol tab-width))))
+              (delete-char (- (skip-chars-backward " " slim)))))))))
   (set-marker end nil))
+
+(defun uncomment-region-default (beg end &optional arg)
+  "Uncomment each line in the BEG .. END region.
+The numeric prefix ARG can specify a number of chars to remove from the
+comment markers."
+  (if comment-combine-change-calls
+      (combine-change-calls beg end (uncomment-region-default-1 beg end arg))
+    (uncomment-region-default-1 beg end arg)))
+
 
 (defun comment-make-bol-ws (len)
   "Make a white-space string of width LEN for use at BOL.
@@ -1191,7 +1221,7 @@ changed with `comment-style'."
     ;; FIXME: maybe we should call uncomment depending on ARG.
     (funcall comment-region-function beg end arg)))
 
-(defun comment-region-default (beg end &optional arg)
+(defun comment-region-default-1 (beg end &optional arg)
   (let* ((numarg (prefix-numeric-value arg))
 	 (style (cdr (assoc comment-style comment-styles)))
 	 (lines (nth 2 style))
@@ -1259,6 +1289,11 @@ changed with `comment-style'."
 	 block
 	 lines
 	 indent))))))
+
+(defun comment-region-default (beg end &optional arg)
+  (if comment-combine-change-calls
+      (combine-change-calls beg end (comment-region-default-1 beg end arg))
+    (comment-region-default-1 beg end arg)))
 
 ;;;###autoload
 (defun comment-box (beg end &optional arg)

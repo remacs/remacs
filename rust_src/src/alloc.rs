@@ -9,7 +9,7 @@ use crate::{
     remacs_sys::globals,
     remacs_sys::Lisp_Type::Lisp_Vectorlike,
     remacs_sys::{
-        allocate_misc, allocate_record, bool_vector_fill, bool_vector_set, bounded_number,
+        allocate_misc, allocate_record, bool_vector_fill, bool_vector_set, make_int,
         make_uninit_bool_vector, purecopy as c_purecopy, Lisp_Misc_Type,
     },
     remacs_sys::{EmacsInt, EmacsUint},
@@ -30,14 +30,13 @@ use crate::{
 pub fn memory_use_counts() -> Vec<LispObject> {
     unsafe {
         vec![
-            bounded_number(globals.cons_cells_consed),
-            bounded_number(globals.floats_consed),
-            bounded_number(globals.vector_cells_consed),
-            bounded_number(globals.symbols_consed),
-            bounded_number(globals.string_chars_consed),
-            bounded_number(globals.misc_objects_consed),
-            bounded_number(globals.intervals_consed),
-            bounded_number(globals.strings_consed),
+            make_int(globals.cons_cells_consed),
+            make_int(globals.floats_consed),
+            make_int(globals.vector_cells_consed),
+            make_int(globals.symbols_consed),
+            make_int(globals.string_chars_consed),
+            make_int(globals.intervals_consed),
+            make_int(globals.strings_consed),
         ]
     }
 }
@@ -121,8 +120,9 @@ pub fn make_marker() -> LispMarkerRef {
 
     // Set the properties of the marker to nothing
     marker.set_buffer(ptr::null_mut());
-    marker.set_charpos(0isize);
     marker.set_bytepos(0isize);
+    marker.set_charpos(0isize);
+    marker.set_next(ptr::null_mut());
     marker.set_insertion_type(false);
     marker.set_need_adjustment(false);
 

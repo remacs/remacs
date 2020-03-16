@@ -1,6 +1,6 @@
 ;;; comint.el --- general command interpreter in a window stuff -*- lexical-binding: t -*-
 
-;; Copyright (C) 1988, 1990, 1992-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1988, 1990, 1992-2020 Free Software Foundation, Inc.
 
 ;; Author: Olin Shivers <shivers@cs.cmu.edu>
 ;;	Simon Marshall <simon@gnu.org>
@@ -78,7 +78,7 @@
 ;;
 ;; Not bound by default in comint-mode (some are in shell mode)
 ;; comint-run				Run a program under comint-mode
-;; send-invisible			Read a line w/o echo, and send to proc
+;; comint-send-invisible		Read a line w/o echo, and send to proc
 ;; comint-dynamic-complete-filename	Complete filename at point.
 ;; comint-dynamic-list-filename-completions List completions in help buffer.
 ;; comint-replace-by-expanded-filename	Expand and complete filename at point;
@@ -263,6 +263,8 @@ See `comint-preinput-scroll-to-bottom'.  This variable is buffer-local."
 		 (const this))
   :group 'comint)
 
+(defvaralias 'comint-scroll-to-bottom-on-output 'comint-move-point-for-output)
+
 (defcustom comint-move-point-for-output nil
   "Controls whether interpreter output moves point to the end of the output.
 If nil, then output never moves point to the output.
@@ -294,8 +296,6 @@ end of the current logical (not visual) line after insertion."
   :type '(radio (const :tag "Stay after input" after-input)
                 (const :tag "Move to end of line" end-of-line))
   :group 'comint)
-
-(defvaralias 'comint-scroll-to-bottom-on-output 'comint-move-point-for-output)
 
 (defcustom comint-scroll-show-maximum-output t
   "Controls how to scroll due to interpreter output.
@@ -350,21 +350,23 @@ This variable is buffer-local."
 ;; Ubuntu's sudo prompts like `[sudo] password for user:'
 ;; Some implementations of passwd use "Password (again)" as the 2nd prompt.
 ;; Something called "perforce" uses "Enter password:".
-;; See M-x comint-testsuite--test-comint-password-prompt-regexp.
+;; OpenVPN prints a prompt like: "Enter Auth Password:".
+;; See ert test `comint-test-password-regexp'.
 (defcustom comint-password-prompt-regexp
   (concat
    "\\(^ *\\|"
    (regexp-opt
     '("Enter" "enter" "Enter same" "enter same" "Enter the" "enter the"
-      "Old" "old" "New" "new" "'s" "login"
+      "Enter Auth" "enter auth" "Old" "old" "New" "new" "'s" "login"
       "Kerberos" "CVS" "UNIX" " SMB" "LDAP" "PEM" "SUDO"
       "[sudo]" "Repeat" "Bad" "Retype")
     t)
-   " +\\)"
+   ;; Allow for user name to precede password equivalent (Bug#31075).
+   " +.*\\)"
    "\\(?:" (regexp-opt password-word-equivalents) "\\|Response\\)"
    "\\(?:\\(?:, try\\)? *again\\| (empty for no passphrase)\\| (again)\\)?"
    ;; "[[:alpha:]]" used to be "for", which fails to match non-English.
-   "\\(?: [[:alpha:]]+ .+\\)?[\\s  ]*[:：៖][\\s  ]*\\'")
+   "\\(?: [[:alpha:]]+ .+\\)?[[:blank:]]*[:：៖][[:blank:]]*\\'")
   "Regexp matching prompts for passwords in the inferior process.
 This is used by `comint-watch-for-password-prompt'."
   :version "27.1"
@@ -632,7 +634,7 @@ Input ring history expansion can be achieved with the commands
 Input ring expansion is controlled by the variable `comint-input-autoexpand',
 and addition is controlled by the variable `comint-input-ignoredups'.
 
-Commands with no default key bindings include `send-invisible',
+Commands with no default key bindings include `comint-send-invisible',
 `completion-at-point', `comint-dynamic-list-filename-completions', and
 `comint-magic-space'.
 
@@ -758,16 +760,24 @@ Returns the (possibly newly created) process buffer."
   (apply #'make-comint-in-buffer name nil program startfile switches))
 
 ;;;###autoload
-(defun comint-run (program)
-  "Run PROGRAM in a Comint buffer and switch to it.
+(defun comint-run (program &optional switches)
+  "Run PROGRAM in a Comint buffer and switch to that buffer.
+
+If SWITCHES are supplied, they are passed to PROGRAM.  With prefix argument
+\\[universal-argument] prompt for SWITCHES as well as PROGRAM.
+
 The buffer name is made by surrounding the file name of PROGRAM with `*'s.
 The file name is used to make a symbol name, such as `comint-sh-hook', and any
 hooks on this symbol are run in the buffer.
+
 See `make-comint' and `comint-exec'."
   (declare (interactive-only make-comint))
-  (interactive "sRun program: ")
+  (interactive
+   (list (read-string "Run program: ")
+         (and (consp current-prefix-arg)
+              (split-string-and-unquote (read-string "Switches: ")))))
   (let ((name (file-name-nondirectory program)))
-    (switch-to-buffer (make-comint name program))
+    (switch-to-buffer (apply #'make-comint name program nil switches))
     (run-hooks (intern-soft (concat "comint-" name "-hook")))))
 
 (defun comint-exec (buffer name command startfile switches)
@@ -961,7 +971,11 @@ See also `comint-input-ignoredups' and `comint-write-input-ring'."
 		;; to huge numbers.  Don't allocate a huge ring right
 		;; away; there might not be that much history.
 		(ring-size (min 1500 comint-input-ring-size))
-		(ring (make-ring ring-size)))
+		(ring (make-ring ring-size))
+                ;; Use possibly buffer-local values of these variables.
+                (ring-separator comint-input-ring-separator)
+                (history-ignore comint-input-history-ignore)
+                (ignoredups comint-input-ignoredups))
 	   (with-temp-buffer
              (insert-file-contents file)
              ;; Save restriction in case file is already visited...
@@ -969,19 +983,16 @@ See also `comint-input-ignoredups' and `comint-write-input-ring'."
              (goto-char (point-max))
              (let (start end history)
                (while (and (< count comint-input-ring-size)
-                           (re-search-backward comint-input-ring-separator
-                                               nil t)
+                           (re-search-backward ring-separator nil t)
                            (setq end (match-beginning 0)))
                  (setq start
-                       (if (re-search-backward comint-input-ring-separator
-                                               nil t)
+                       (if (re-search-backward ring-separator nil t)
                            (match-end 0)
                          (point-min)))
                  (setq history (buffer-substring start end))
                  (goto-char start)
-                 (when (and (not (string-match comint-input-history-ignore
-					       history))
-			    (or (null comint-input-ignoredups)
+                 (when (and (not (string-match history-ignore history))
+			    (or (null ignoredups)
 				(ring-empty-p ring)
 				(not (string-equal (ring-ref ring 0)
 						   history))))
@@ -1617,8 +1628,8 @@ Go to the history element by the absolute history position HIST-POS."
 (defun comint-within-quotes (beg end)
   "Return t if the number of quotes between BEG and END is odd.
 Quotes are single and double."
-  (let ((countsq (comint-how-many-region "\\(^\\|[^\\\\]\\)'" beg end))
-	(countdq (comint-how-many-region "\\(^\\|[^\\\\]\\)\"" beg end)))
+  (let ((countsq (comint-how-many-region "\\(^\\|[^\\]\\)'" beg end))
+	(countdq (comint-how-many-region "\\(^\\|[^\\]\\)\"" beg end)))
     (or (= (mod countsq 2) 1) (= (mod countdq 2) 1))))
 
 (defun comint-how-many-region (regexp beg end)
@@ -1683,11 +1694,13 @@ characters), and are not considered to be delimiters."
 (defun comint-arguments (string nth mth)
   "Return from STRING the NTH to MTH arguments.
 NTH and/or MTH can be nil, which means the last argument.
-Returned arguments are separated by single spaces.
-We assume whitespace separates arguments, except within quotes
-and except for a space or tab that immediately follows a backslash.
-Also, a run of one or more of a single character
-in `comint-delimiter-argument-list' is a separate argument.
+NTH and MTH can be negative to count from the end; -1 means
+the last argument.
+Returned arguments are separated by single spaces.  We assume
+whitespace separates arguments, except within quotes and except
+for a space or tab that immediately follows a backslash.  Also, a
+run of one or more of a single character in
+`comint-delimiter-argument-list' is a separate argument.
 Argument 0 is the command name."
   ;; The first line handles ordinary characters and backslash-sequences
   ;; (except with w32 msdos-like shells, where backslashes are valid).
@@ -1709,7 +1722,7 @@ Argument 0 is the command name."
 	 (count 0)
 	 beg str quotes)
     ;; Build a list of all the args until we have as many as we want.
-    (while (and (or (null mth) (<= count mth))
+    (while (and (or (null mth) (< mth 0) (<= count mth))
 		(string-match argpart string pos))
       ;; Apply the `literal' text property to backslash-escaped
       ;; characters, so that `comint-delim-arg' won't break them up.
@@ -1736,8 +1749,14 @@ Argument 0 is the command name."
 	      args (if quotes (cons str args)
 		     (nconc (comint-delim-arg str) args))))
     (setq count (length args))
-    (let ((n (or nth (1- count)))
-	  (m (if mth (1- (- count mth)) 0)))
+    (let ((n (cond
+              ((null nth) (1- count))
+              ((>= nth 0) nth)
+              (t          (+ count nth))))
+          (m (cond
+              ((null mth) 0)
+              ((>= mth 0) (1- (- count mth)))
+              (t          (1- (- mth))))))
       (mapconcat
        (function (lambda (a) a)) (nthcdr n (nreverse (nthcdr m args))) " "))))
 
@@ -2063,20 +2082,6 @@ Make backspaces delete the previous character."
 	    (goto-char (process-mark process))
 	    (set-marker comint-last-output-start (point))
 
-            ;; Try to skip repeated prompts, which can occur as a result of
-            ;; commands sent without inserting them in the buffer.
-            (let ((bol (save-excursion (forward-line 0) (point)))) ;No fields.
-              (when (and (not (bolp))
-                         (looking-back comint-prompt-regexp bol))
-                (let* ((prompt (buffer-substring bol (point)))
-                       (prompt-re (concat "\\`" (regexp-quote prompt))))
-                  (while (string-match prompt-re string)
-                    (setq string (substring string (match-end 0)))))))
-            (while (string-match (concat "\\(^" comint-prompt-regexp
-                                         "\\)\\1+")
-                                 string)
-              (setq string (replace-match "\\1" nil nil string)))
-
 	    ;; insert-before-markers is a bad thing. XXX
 	    ;; Luckily we don't have to use it any more, we use
 	    ;; window-point-insertion-type instead.
@@ -2239,7 +2244,7 @@ This function could be on `comint-output-filter-functions' or bound to a key."
 	(error nil))
       (while (re-search-forward "\r+$" pmark t)
 	(replace-match "" t t)))))
-(defalias 'shell-strip-ctrl-m 'comint-strip-ctrl-m)
+(define-obsolete-function-alias 'shell-strip-ctrl-m #'comint-strip-ctrl-m "27.1")
 
 (defun comint-show-maximum-output ()
   "Put the end of the buffer at the bottom of the window."
@@ -2255,14 +2260,16 @@ current line, if point is on an output field.
 If `comint-use-prompt-regexp' is non-nil, then return
 the current line with any initial string matching the regexp
 `comint-prompt-regexp' removed."
-  (let (bof)
+  (let (field-prop bof)
     (if (and (not comint-use-prompt-regexp)
              ;; Make sure we're in an input rather than output field.
-             (null (get-char-property (setq bof (field-beginning)) 'field)))
+             (not (setq field-prop (get-char-property
+                                    (setq bof (field-beginning)) 'field))))
 	(field-string-no-properties bof)
       (comint-bol)
       (buffer-substring-no-properties (point)
-				      (if comint-use-prompt-regexp
+                                      (if (or comint-use-prompt-regexp
+                                              (eq field-prop 'output))
 					  (line-end-position)
 					(field-end))))))
 
@@ -2347,9 +2354,16 @@ a buffer local variable."
 
 ;; These three functions are for entering text you don't want echoed or
 ;; saved -- typically passwords to ftp, telnet, or somesuch.
-;; Just enter m-x send-invisible and type in your line.
+;; Just enter m-x comint-send-invisible and type in your line.
 
-(defun send-invisible (&optional prompt)
+(defvar comint-password-function nil
+  "Abnormal hook run when prompted for a password.
+This function gets one argument, a string containing the prompt.
+It may return a string containing the password, or nil if normal
+password prompting should occur.")
+(make-variable-buffer-local 'comint-password-function)
+
+(defun comint-send-invisible (&optional prompt)
   "Read a string without echoing.
 Then send it to the process running in the current buffer.
 The string is sent using `comint-input-sender'.
@@ -2363,8 +2377,13 @@ Security bug: your string can still be temporarily recovered with
 	   (format "(In buffer %s) "
 		   (current-buffer)))))
     (if proc
-	(let ((str (read-passwd (concat prefix
-					(or prompt "Non-echoed text: ")))))
+	(let ((prefix-prompt (concat prefix
+				     (or prompt "Non-echoed text: ")))
+	      str)
+	  (when comint-password-function
+	    (setq str (funcall comint-password-function prefix-prompt)))
+	  (unless str
+	    (setq str (read-passwd prefix-prompt)))
 	  (if (stringp str)
 	      (progn
 		(comint-snapshot-last-prompt)
@@ -2372,18 +2391,24 @@ Security bug: your string can still be temporarily recovered with
 	    (message "Warning: text will be echoed")))
       (error "Buffer %s has no process" (current-buffer)))))
 
+(define-obsolete-function-alias 'send-invisible #'comint-send-invisible "27.1")
+
+(defvar comint--prompt-recursion-depth 0)
+
 (defun comint-watch-for-password-prompt (string)
   "Prompt in the minibuffer for password and send without echoing.
-This function uses `send-invisible' to read and send a password to the buffer's
-process if STRING contains a password prompt defined by
-`comint-password-prompt-regexp'.
+Looks for a match to `comint-password-prompt-regexp' in order
+to detect the need to (prompt and) send a password.
 
 This function could be in the list `comint-output-filter-functions'."
   (when (let ((case-fold-search t))
 	  (string-match comint-password-prompt-regexp string))
     (when (string-match "^[ \n\r\t\v\f\b\a]+" string)
       (setq string (replace-match "" t t string)))
-    (send-invisible string)))
+    (let ((comint--prompt-recursion-depth (1+ comint--prompt-recursion-depth)))
+      (if (> comint--prompt-recursion-depth 10)
+          (message "Password prompt recursion too deep")
+        (comint-send-invisible string)))))
 
 ;; Low-level process communication
 
@@ -2524,13 +2549,16 @@ Useful if you accidentally suspend the top-level process."
 
 (defun comint-skip-input ()
   "Skip all pending input, from last stuff output by interpreter to point.
-This means mark it as if it had been sent as input, without sending it."
+This means mark it as if it had been sent as input, without
+sending it.  The command keys used to trigger the command that
+called this function are inserted into the buffer."
   (let ((comint-input-sender 'ignore)
 	(comint-input-filter-functions nil))
     (comint-send-input t t))
   (end-of-line)
   (let ((pos (point))
-	(marker (process-mark (get-buffer-process (current-buffer)))))
+	(marker (process-mark (get-buffer-process (current-buffer))))
+        (inhibit-read-only t))
     (insert "  " (key-description (this-command-keys)))
     (if (= marker pos)
 	(set-marker marker (point)))))
@@ -2650,8 +2678,17 @@ text matching `comint-prompt-regexp'."
 (defvar-local comint-insert-previous-argument-last-start-pos nil)
 (defvar-local comint-insert-previous-argument-last-index nil)
 
-;; Needs fixing:
-;;  make comint-arguments understand negative indices as bash does
+(defcustom comint-insert-previous-argument-from-end nil
+  "If non-nil, `comint-insert-previous-argument' counts args from the end.
+If this variable is nil, the default, `comint-insert-previous-argument'
+counts the arguments from the beginning; if non-nil, it counts from
+the end instead.  This allows to emulate the behavior of `ESC-NUM ESC-.'
+in both Bash and zsh: in Bash, `number' counts from the
+beginning (variable is nil), while in zsh, it counts from the end."
+  :type 'boolean
+  :group 'comint
+  :version "27.1")
+
 (defun comint-insert-previous-argument (index)
   "Insert the INDEXth argument from the previous Comint command-line at point.
 Spaces are added at beginning and/or end of the inserted string if
@@ -2659,8 +2696,9 @@ necessary to ensure that it's separated from adjacent arguments.
 Interactively, if no prefix argument is given, the last argument is inserted.
 Repeated interactive invocations will cycle through the same argument
 from progressively earlier commands (using the value of INDEX specified
-with the first command).
-This command is like `M-.' in bash."
+with the first command).  Values of INDEX < 0 count from the end, so
+INDEX = -1 is the last argument.  This command is like `M-.' in
+Bash and zsh."
   (interactive "P")
   (unless (null index)
     (setq index (prefix-numeric-value index)))
@@ -2670,6 +2708,9 @@ This command is like `M-.' in bash."
 	 (setq index comint-insert-previous-argument-last-index))
 	(t
 	 ;; This is a non-repeat invocation, so initialize state.
+         (when (and index
+                    comint-insert-previous-argument-from-end)
+           (setq index (- index)))
 	 (setq comint-input-ring-index nil)
 	 (setq comint-insert-previous-argument-last-index index)
 	 (when (null comint-insert-previous-argument-last-start-pos)
@@ -2685,9 +2726,6 @@ This command is like `M-.' in bash."
   (set-marker comint-insert-previous-argument-last-start-pos (point))
   ;; Insert the argument.
   (let ((input-string (comint-previous-input-string 0)))
-    (when (string-match "[ \t\n]*&" input-string)
-      ;; strip terminating '&'
-      (setq input-string (substring input-string 0 (match-beginning 0))))
     (insert (comint-arguments input-string index index)))
   ;; Make next invocation return arg from previous input
   (setq comint-input-ring-index (1+ (or comint-input-ring-index 0)))
@@ -3067,7 +3105,7 @@ interpreter (e.g., the percent notation of cmd.exe on Windows)."
 	(let (env-var-name
 	      env-var-val)
 	  (save-match-data
-	    (while (string-match "%\\([^\\\\/]*\\)%" name)
+	    (while (string-match "%\\([^\\/]*\\)%" name)
 	      (setq env-var-name (match-string 1 name))
 	      (setq env-var-val (or (getenv env-var-name) ""))
 	      (setq name (replace-match env-var-val t t name))))))
@@ -3459,7 +3497,7 @@ the process mark is at the beginning of the accumulated input."
     (message "Process mark set")))
 
 
-;; Author:  Peter Breton <pbreton@cs.umb.edu>
+;; Author: Peter Breton <pbreton@cs.umb.edu>
 
 ;; This little add-on for comint is intended to make it easy to get
 ;; output from currently active comint buffers into another buffer,

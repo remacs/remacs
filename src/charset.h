@@ -1,5 +1,5 @@
 /* Header for charset handler.
-   Copyright (C) 2001-2018 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
      2005, 2006, 2007, 2008, 2009, 2010, 2011
      National Institute of Advanced Industrial Science and Technology (AIST)
@@ -248,6 +248,7 @@ extern Lisp_Object Vcharset_hash_table;
 
 /* Table of struct charset.  */
 extern struct charset *charset_table;
+extern int charset_table_size;
 
 #define CHARSET_FROM_ID(id) (charset_table + (id))
 
@@ -355,7 +356,7 @@ set_charset_attr (struct charset *charset, enum charset_attr_index idx,
 									\
     if (! SYMBOLP (x) || (idx = CHARSET_SYMBOL_HASH_INDEX (x)) < 0)	\
       wrong_type_argument (Qcharsetp, (x));				\
-    id = XINT (AREF (HASH_VALUE (XHASH_TABLE (Vcharset_hash_table), idx), \
+    id = XFIXNUM (AREF (HASH_VALUE (XHASH_TABLE (Vcharset_hash_table), idx), \
 		     charset_id));					\
   } while (false)
 
@@ -416,7 +417,7 @@ extern Lisp_Object Vchar_charset_set;
    : (charset)->method == CHARSET_METHOD_MAP				\
    ? (((charset)->code_linear_p						\
        && VECTORP (CHARSET_DECODER (charset)))				\
-      ? XINT (AREF (CHARSET_DECODER (charset),				\
+      ? XFIXNUM (AREF (CHARSET_DECODER (charset),				\
 		    (code) - (charset)->min_code))			\
       : decode_char ((charset), (code)))				\
    : decode_char ((charset), (code)))
@@ -447,7 +448,7 @@ extern Lisp_Object charset_work;
 	? (charset_work = CHAR_TABLE_REF (CHARSET_ENCODER (charset), c), \
 	   (NILP (charset_work)						\
 	    ? (charset)->invalid_code					\
-	    : (unsigned) XFASTINT (charset_work)))			\
+	    : (unsigned) XFIXNAT (charset_work)))			\
 	: encode_char (charset, c))					\
      : encode_char (charset, c))))
 
@@ -539,64 +540,6 @@ extern int string_xstring_p (Lisp_Object);
 extern void map_charset_chars (void (*) (Lisp_Object, Lisp_Object),
                                Lisp_Object, Lisp_Object,
                                struct charset *, unsigned, unsigned);
-
-typedef struct
-{
-  /* The current charset for which the following tables are setup.  */
-  struct charset *current;
-
-  /* 1 iff the following table is used for encoder.  */
-  short for_encoder;
-
-  /* When the following table is used for encoding, minimum and
-     maximum character of the current charset.  */
-  int min_char, max_char;
-
-  /* A Unicode character corresponding to the code index 0 (i.e. the
-     minimum code-point) of the current charset, or -1 if the code
-     index 0 is not a Unicode character.  This is checked when
-     table.encoder[CHAR] is zero.  */
-  int zero_index_char;
-
-  union {
-    /* Table mapping code-indices (not code-points) of the current
-       charset to Unicode characters.  If decoder[CHAR] is -1, CHAR
-       doesn't belong to the current charset.  */
-    int decoder[0x10000];
-    /* Table mapping Unicode characters to code-indices of the current
-       charset.  The first 0x10000 elements are for BMP (0..0xFFFF),
-       and the last 0x10000 are for SMP (0x10000..0x1FFFF) or SIP
-       (0x20000..0x2FFFF).  Note that there is no charset map that
-       uses both SMP and SIP.  */
-    unsigned short encoder[0x20000];
-  } table;
-} TempCharsetWork;
-
-extern TempCharsetWork *temp_charset_work;
-
-#define SET_TEMP_CHARSET_WORK_ENCODER(C, CODE)			\
-  do {								\
-    if ((CODE) == 0)						\
-      temp_charset_work->zero_index_char = (C);			\
-    else if ((C) < 0x20000)					\
-      temp_charset_work->table.encoder[(C)] = (CODE);		\
-    else							\
-      temp_charset_work->table.encoder[(C) - 0x10000] = (CODE);	\
-  } while (0)
-
-#define GET_TEMP_CHARSET_WORK_ENCODER(C)				  \
-  ((C) == temp_charset_work->zero_index_char ? 0			  \
-   : (C) < 0x20000 ? (temp_charset_work->table.encoder[(C)]		  \
-		      ? (int) temp_charset_work->table.encoder[(C)] : -1) \
-   : temp_charset_work->table.encoder[(C) - 0x10000]			  \
-   ? temp_charset_work->table.encoder[(C) - 0x10000] : -1)
-
-#define SET_TEMP_CHARSET_WORK_DECODER(C, CODE)	\
-  (temp_charset_work->table.decoder[(CODE)] = (C))
-
-#define GET_TEMP_CHARSET_WORK_DECODER(CODE)	\
-  (temp_charset_work->table.decoder[(CODE)])
-
 
 INLINE_HEADER_END
 

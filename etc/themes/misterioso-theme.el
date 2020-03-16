@@ -1,6 +1,6 @@
 ;;; misterioso-theme.el --- Custom face theme for Emacs
 
-;; Copyright (C) 2011-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
 ;; Author: Sebastian Hermida
 
@@ -45,7 +45,7 @@
    `(mode-line ((,class (:background "#212931" :foreground "#eeeeec"))))
    `(mode-line-inactive
      ((,class (:background "#878787" :foreground "#eeeeec"))))
-   `(header-line ((,class (:background "#e5e5e5" :foreground "#333333"))))
+   `(header-line ((,class (:background "#808080" :foreground "#333333"))))
    ;; Escape and prompt faces
    `(minibuffer-prompt ((,class (:foreground "#729fcf" :weight bold))))
    ;; Font lock faces
@@ -102,9 +102,5 @@
 			    "#34cae2" "#008b8b" "#00ede1" "#e1e1e0"]))
 
 (provide-theme 'misterioso)
-
-;; Local Variables:
-;; no-byte-compile: t
-;; End:
 
 ;;; misterioso-theme.el  ends here

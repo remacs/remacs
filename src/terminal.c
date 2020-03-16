@@ -1,5 +1,5 @@
 /* Functions related to terminal devices.
-   Copyright (C) 2005-2018 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
-
-#include <stdio.h>
 
 #include "lisp.h"
 #include "character.h"
@@ -79,6 +77,24 @@ ring_bell (struct frame *f)
     (*FRAME_TERMINAL (f)->ring_bell_hook) (f);
 }
 
+#ifdef IGNORE_RUST_PORT
+void
+update_begin (struct frame *f)
+{
+  if (FRAME_TERMINAL (f)->update_begin_hook)
+    (*FRAME_TERMINAL (f)->update_begin_hook) (f);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+void
+update_end (struct frame *f)
+{
+  if (FRAME_TERMINAL (f)->update_end_hook)
+    (*FRAME_TERMINAL (f)->update_end_hook) (f);
+}
+#endif /* IGNORE_RUST_PORT */
+
 /* Specify how many text lines, from the top of the window,
    should be affected by insert-lines and delete-lines operations.
    This, and those operations, are used only within an update
@@ -109,6 +125,126 @@ raw_cursor_to (struct frame *f, int row, int col)
   if (FRAME_TERMINAL (f)->raw_cursor_to_hook)
     (*FRAME_TERMINAL (f)->raw_cursor_to_hook) (f, row, col);
 }
+
+/* Erase operations.  */
+#ifdef IGNORE_RUST_PORT
+/* Clear from cursor to end of frame.  */
+void
+clear_to_end (struct frame *f)
+{
+  if (FRAME_TERMINAL (f)->clear_to_end_hook)
+    (*FRAME_TERMINAL (f)->clear_to_end_hook) (f);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Clear entire frame.  */
+
+void
+clear_frame (struct frame *f)
+{
+  if (FRAME_TERMINAL (f)->clear_frame_hook)
+    (*FRAME_TERMINAL (f)->clear_frame_hook) (f);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Clear from cursor to end of line.
+   Assume that the line is already clear starting at column first_unused_hpos.
+
+   Note that the cursor may be moved, on terminals lacking a `ce' string.  */
+
+void
+clear_end_of_line (struct frame *f, int first_unused_hpos)
+{
+  if (FRAME_TERMINAL (f)->clear_end_of_line_hook)
+    (*FRAME_TERMINAL (f)->clear_end_of_line_hook) (f, first_unused_hpos);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Output LEN glyphs starting at STRING at the nominal cursor position.
+   Advance the nominal cursor over the text.  */
+
+void
+write_glyphs (struct frame *f, struct glyph *string, int len)
+{
+  if (FRAME_TERMINAL (f)->write_glyphs_hook)
+    (*FRAME_TERMINAL (f)->write_glyphs_hook) (f, string, len);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Insert LEN glyphs from START at the nominal cursor position.
+
+   If start is zero, insert blanks instead of a string at start */
+
+void
+insert_glyphs (struct frame *f, struct glyph *start, int len)
+{
+  if (len <= 0)
+    return;
+
+  if (FRAME_TERMINAL (f)->insert_glyphs_hook)
+    (*FRAME_TERMINAL (f)->insert_glyphs_hook) (f, start, len);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Delete N glyphs at the nominal cursor position. */
+
+void
+delete_glyphs (struct frame *f, int n)
+{
+  if (FRAME_TERMINAL (f)->delete_glyphs_hook)
+    (*FRAME_TERMINAL (f)->delete_glyphs_hook) (f, n);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Insert N lines at vpos VPOS.  If N is negative, delete -N lines.  */
+
+void
+ins_del_lines (struct frame *f, int vpos, int n)
+{
+  if (FRAME_TERMINAL (f)->ins_del_lines_hook)
+    (*FRAME_TERMINAL (f)->ins_del_lines_hook) (f, vpos, n);
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Return the terminal object specified by TERMINAL.  TERMINAL may
+   be a terminal object, a frame, or nil for the terminal device of
+   the current frame.  If TERMINAL is neither from the above or the
+   resulting terminal object is deleted, return NULL.  */
+
+static struct terminal *
+decode_terminal (Lisp_Object terminal)
+{
+  struct terminal *t;
+
+  if (NILP (terminal))
+    terminal = selected_frame;
+  t = (TERMINALP (terminal)
+       ? XTERMINAL (terminal)
+       : FRAMEP (terminal) ? FRAME_TERMINAL (XFRAME (terminal)) : NULL);
+  return t && t->name ? t : NULL;
+}
+#endif /* IGNORE_RUST_PORT */
+
+#ifdef IGNORE_RUST_PORT
+/* Like above, but throw an error if TERMINAL is not valid or deleted.  */
+
+struct terminal *
+decode_live_terminal (Lisp_Object terminal)
+{
+  struct terminal *t = decode_terminal (terminal);
+
+  if (!t)
+    wrong_type_argument (Qterminal_live_p, terminal);
+  return t;
+}
+#endif /* IGNORE_RUST_PORT */
 
 /* Like decode_terminal, but ensure that the resulting terminal object refers
    to a text-based terminal device.  */
@@ -147,8 +283,8 @@ get_named_terminal (const char *name)
 static struct terminal *
 allocate_terminal (void)
 {
-  return ALLOCATE_ZEROED_PSEUDOVECTOR
-    (struct terminal, next_terminal, PVEC_TERMINAL);
+  return ALLOCATE_ZEROED_PSEUDOVECTOR (struct terminal, glyph_code_table,
+				       PVEC_TERMINAL);
 }
 
 /* Create a new terminal object of TYPE and add it to the terminal list.  RIF
@@ -197,7 +333,6 @@ create_terminal (enum output_method type, struct redisplay_interface *rif)
 void
 delete_terminal (struct terminal *terminal)
 {
-  struct terminal **tp;
   Lisp_Object tail, frame;
 
   /* Protect against recursive calls.  delete_frame calls the
@@ -217,6 +352,14 @@ delete_terminal (struct terminal *terminal)
           delete_frame (frame, Qnoelisp);
         }
     }
+
+  delete_terminal_internal (terminal);
+}
+
+void
+delete_terminal_internal (struct terminal *terminal)
+{
+  struct terminal **tp;
 
   for (tp = &terminal_list; *tp != terminal; tp = &(*tp)->next_terminal)
     if (! *tp)
@@ -343,6 +486,22 @@ DEFUN ("terminal-list", Fterminal_list, Sterminal_list, 0, 0, 0,
 
   return terminals;
 }
+
+#ifdef IGNORE_RUST_PORT
+DEFUN ("terminal-name", Fterminal_name, Sterminal_name, 0, 1, 0,
+       doc: /* Return the name of the terminal device TERMINAL.
+It is not guaranteed that the returned value is unique among opened devices.
+
+TERMINAL may be a terminal object, a frame, or nil (meaning the
+selected frame's terminal). */)
+  (Lisp_Object terminal)
+{
+  struct terminal *t = decode_live_terminal (terminal);
+
+  return t->name ? build_string (t->name) : Qnil;
+}
+#endif /* IGNORE_RUST_PORT */
+
 
 /* Set the value of terminal parameter PARAMETER in terminal D to VALUE.
    Return the previous value.  */
@@ -351,7 +510,7 @@ static Lisp_Object
 store_terminal_param (struct terminal *t, Lisp_Object parameter, Lisp_Object value)
 {
   Lisp_Object old_alist_elt = Fassq (parameter, t->param_alist);
-  if (EQ (old_alist_elt, Qnil))
+  if (NILP (old_alist_elt))
     {
       tset_param_alist (t, Fcons (Fcons (parameter, value), t->param_alist));
       return Qnil;
@@ -363,6 +522,7 @@ store_terminal_param (struct terminal *t, Lisp_Object parameter, Lisp_Object val
       return result;
     }
 }
+
 
 DEFUN ("terminal-parameters", Fterminal_parameters, Sterminal_parameters, 0, 1, 0,
        doc: /* Return the parameter-alist of terminal TERMINAL.
@@ -418,10 +578,10 @@ calculate_glyph_code_table (struct terminal *t)
       struct unimapdesc unimapdesc = { entry_ct, entries };
       if (ioctl (fd, GIO_UNIMAP, &unimapdesc) == 0)
 	{
-	  glyphtab = Fmake_char_table (Qnil, make_number (-1));
+	  glyphtab = Fmake_char_table (Qnil, make_fixnum (-1));
 	  for (int i = 0; i < unimapdesc.entry_ct; i++)
 	    char_table_set (glyphtab, entries[i].unicode,
-			    make_number (entries[i].fontpos));
+			    make_fixnum (entries[i].fontpos));
 	  break;
 	}
       if (errno != ENOMEM)
@@ -484,6 +644,7 @@ init_initial_terminal (void)
   initial_terminal->kboard = initial_kboard;
   initial_terminal->delete_terminal_hook = &delete_initial_terminal;
   initial_terminal->delete_frame_hook = &initial_free_frame_resources;
+  initial_terminal->defined_color_hook = &tty_defined_color; /* xfaces.c */
   /* Other hooks are NULL by default.  */
 
   return initial_terminal;
@@ -526,6 +687,9 @@ or some time later.  */);
   defsubr (&Sframe_terminal);
   defsubr (&Sterminal_live_p);
   defsubr (&Sterminal_list);
+#ifdef IGNORE_RUST_PORT
+  defsubr (&Sterminal_name);
+#endif /* IGNORE_RUST_PORT */
   defsubr (&Sterminal_parameters);
   defsubr (&Sterminal_parameter);
   defsubr (&Sset_terminal_parameter);

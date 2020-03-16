@@ -1,13 +1,12 @@
 ;;; hfy-cmap.el --- Fallback color name -> rgb mapping for `htmlfontify'
 
-;; Copyright (C) 2002-2003, 2009-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2002-2003, 2009-2020 Free Software Foundation, Inc.
 
 ;; Emacs Lisp Archive Entry
 ;; Package: htmlfontify
 ;; Filename: hfy-cmap.el
 ;; Keywords: color, rgb
 ;; Author: Vivek Dasmohapatra <vivek@etla.org>
-;; Maintainer: Vivek Dasmohapatra <vivek@etla.org>
 ;; Created: 2002-01-20
 ;; Description: fallback code for color name -> rgb mapping
 ;; URL: http://rtfm.etla.org/emacs/htmlfontify/
@@ -31,6 +30,10 @@
 ;;; Commentary:
 
 ;;; Code:
+
+(define-obsolete-variable-alias
+  'hfy-fallback-colour-map
+  'hfy-fallback-color-map "27.1")
 
 (defconst hfy-fallback-color-map
   '(("snow"                    65535 64250 64250)
@@ -785,14 +788,12 @@
     ("DarkRed"                 35723     0     0)
     ("light green"             37008 61166 37008)
     ("LightGreen"              37008 61166 37008)) )
-(define-obsolete-variable-alias
-  'hfy-fallback-colour-map
-  'hfy-fallback-color-map "27.1")
 
-(defvar hfy-rgb-txt-color-map nil)
 (define-obsolete-variable-alias
   'hfy-rgb-txt-colour-map
   'hfy-rgb-txt-color-map "27.1")
+
+(defvar hfy-rgb-txt-color-map nil)
 
 (defvar hfy-rgb-load-path
   (list "/etc/X11"

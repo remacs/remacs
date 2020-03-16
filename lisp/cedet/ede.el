@@ -1,6 +1,6 @@
 ;;; ede.el --- Emacs Development Environment gloss
 
-;; Copyright (C) 1998-2005, 2007-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1998-2005, 2007-2020 Free Software Foundation, Inc.
 
 ;; Author: Eric M. Ludlam <zappo@gnu.org>
 ;; Keywords: project, make
@@ -162,12 +162,12 @@ This object's class determines how to compile and debug from a buffer.")
 If `ede-object' is nil, then commands will operate on this object.")
 
 (defvar ede-constructing nil
-  "Non nil when constructing a project hierarchy.
+  "Non-nil when constructing a project hierarchy.
 If the project is being constructed from an autoload, then the
 value is the autoload object being used.")
 
 (defvar ede-deep-rescan nil
-  "Non nil means scan down a tree, otherwise rescans are top level only.
+  "Non-nil means scan down a tree, otherwise rescans are top level only.
 Do not set this to non-nil globally.  It is used internally.")
 
 
@@ -475,9 +475,6 @@ To be used in hook functions."
 
 (define-minor-mode ede-minor-mode
   "Toggle EDE (Emacs Development Environment) minor mode.
-With a prefix argument ARG, enable EDE minor mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-EDE minor mode if ARG is omitted or nil.
 
 If this file is contained, or could be contained in an EDE
 controlled project, then this mode is activated automatically
@@ -563,9 +560,6 @@ Sets buffer local variables for EDE."
 ;;;###autoload
 (define-minor-mode global-ede-mode
   "Toggle global EDE (Emacs Development Environment) mode.
-With a prefix argument ARG, enable global EDE mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 This global minor mode enables `ede-minor-mode' in all buffers in
 an EDE controlled project."
@@ -797,7 +791,7 @@ Optional argument NAME is the name to give this project."
 		 ))
 	 (inits (oref obj initializers)))
     ;; Force the name to match for new objects.
-    (eieio-object-set-name-string nobj (oref nobj name))
+    (setf (slot-value nobj 'object-name) (oref nobj name))
     ;; Handle init args.
     (while inits
       (eieio-oset nobj (car inits) (car (cdr inits)))

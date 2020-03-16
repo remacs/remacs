@@ -1,6 +1,6 @@
 /* emacs-module.h - GNU Emacs module API.
 
-Copyright (C) 2015-2018 Free Software Foundation, Inc.
+Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 This file is part of GNU Emacs.
 
@@ -17,15 +17,24 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
+/*
+This file defines the Emacs module API.  Please see the chapter
+`Dynamic Modules' in the GNU Emacs Lisp Reference Manual for
+information how to write modules and use this header file.
+*/
+
 #ifndef EMACS_MODULE_H
 #define EMACS_MODULE_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <time.h>
 
 #ifndef __cplusplus
 #include <stdbool.h>
 #endif
+
+#define EMACS_MAJOR_VERSION @emacs_major_version@
 
 #if defined __cplusplus && __cplusplus >= 201103L
 # define EMACS_NOEXCEPT noexcept
@@ -47,7 +56,7 @@ extern "C" {
 #endif
 
 /* Current environment.  */
-typedef struct emacs_env_26 emacs_env;
+typedef struct emacs_env_27 emacs_env;
 
 /* Opaque pointer representing an Emacs Lisp value.
    BEWARE: Do not assume NULL is a valid value!  */
@@ -83,6 +92,24 @@ enum emacs_funcall_exit
   emacs_funcall_exit_throw = 2
 };
 
+/* Possible return values for emacs_env.process_input.  */
+enum emacs_process_input_result
+{
+  /* Module code may continue  */
+  emacs_process_input_continue = 0,
+
+  /* Module code should return control to Emacs as soon as possible.  */
+  emacs_process_input_quit = 1
+};
+
+/* Define emacs_limb_t so that it is likely to match GMP's mp_limb_t.
+   This micro-optimization can help modules that use mpz_export and
+   mpz_import, which operate more efficiently on mp_limb_t.  It's OK
+   (if perhaps a bit slower) if the two types do not match, and
+   modules shouldn't rely on the two types matching.  */
+typedef size_t emacs_limb_t;
+#define EMACS_LIMB_MAX SIZE_MAX
+
 struct emacs_env_25
 {
 @module_env_snippet_25@
@@ -93,6 +120,15 @@ struct emacs_env_26
 @module_env_snippet_25@
 
 @module_env_snippet_26@
+};
+
+struct emacs_env_27
+{
+@module_env_snippet_25@
+
+@module_env_snippet_26@
+
+@module_env_snippet_27@
 };
 
 /* Every module should define a function as follows.  */

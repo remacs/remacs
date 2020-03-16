@@ -1,6 +1,6 @@
 ;;; easymenu.el --- support the easymenu interface for defining a menu  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1994, 1996, 1998-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1994, 1996, 1998-2020 Free Software Foundation, Inc.
 
 ;; Keywords: emulations
 ;; Author: Richard Stallman <rms@gnu.org>
@@ -70,6 +70,17 @@ pairs:
     ENABLE is an expression.  The menu is enabled for selection
     if the expression evaluates to a non-nil value.  `:enable' is
     an alias for `:active'.
+
+ :label FORM
+    FORM is an expression that is dynamically evaluated and whose
+    value serves as the menu's label (the default is the first
+    element of MENU).
+
+ :help HELP
+    HELP is a string, the help to display for the menu.
+    In a GUI this is a \"tooltip\" on the menu button.  (Though
+    in Lucid :help is not shown for the top-level menu bar, only
+    for sub-menus.)
 
 The rest of the elements in MENU are menu items.
 A menu item can be a vector of three elements:
@@ -172,17 +183,17 @@ This is expected to be bound to a mouse event."
     (when symbol
       (set symbol keymap)
       (defalias symbol
-	`(lambda (event) ,doc (interactive "@e")
+	(lambda (event) (:documentation doc) (interactive "@e")
 	   ;; FIXME: XEmacs uses popup-menu which calls the binding
 	   ;; while x-popup-menu only returns the selection.
 	   (x-popup-menu event
-			 (or (and (symbolp ,symbol)
+			 (or (and (symbolp symbol)
 				  (funcall
-				   (or (plist-get (get ,symbol 'menu-prop)
+				   (or (plist-get (get symbol 'menu-prop)
 						  :filter)
 				       'identity)
-				   (symbol-function ,symbol)))
-			     ,symbol)))))
+				   (symbol-function symbol)))
+			     symbol)))))
     (dolist (map (if (keymapp maps) (list maps) maps))
       (define-key map
         (vector 'menu-bar (easy-menu-intern (car menu)))
@@ -226,14 +237,14 @@ possibly preceded by keyword pairs as described in `easy-menu-define'."
       (let ((arg (cadr menu-items)))
         (setq menu-items (cddr menu-items))
         (pcase keyword
-          (`:filter
+          (:filter
            (setq filter (lambda (menu)
                           (easy-menu-filter-return (funcall arg menu)
                                                    menu-name))))
-          ((or `:enable `:active) (setq enable (or arg ''nil)))
-          (`:label (setq label arg))
-          (`:help (setq help arg))
-          ((or `:included `:visible) (setq visible (or arg ''nil))))))
+          ((or :enable :active) (setq enable (or arg ''nil)))
+          (:label (setq label arg))
+          (:help (setq help arg))
+          ((or :included :visible) (setq visible (or arg ''nil))))))
     (if (equal visible ''nil)
 	nil				; Invisible menu entry, return nil.
       (if (and visible (not (easy-menu-always-true-p visible)))
@@ -325,15 +336,15 @@ ITEM defines an item as in `easy-menu-define'."
 		(setq arg (aref item (1+ count)))
 		(setq count (+ 2 count))
 		(pcase keyword
-                  ((or `:included `:visible) (setq visible (or arg ''nil)))
-                  (`:key-sequence (setq cache arg cache-specified t))
-                  (`:keys (setq keys arg no-name nil))
-                  (`:label (setq label arg))
-                  ((or `:active `:enable) (setq active (or arg ''nil)))
-                  (`:help (setq prop (cons :help (cons arg prop))))
-                  (`:suffix (setq suffix arg))
-                  (`:style (setq style arg))
-                  (`:selected (setq selected (or arg ''nil)))))
+                  ((or :included :visible) (setq visible (or arg ''nil)))
+                  (:key-sequence (setq cache arg cache-specified t))
+                  (:keys (setq keys arg no-name nil))
+                  (:label (setq label arg))
+                  ((or :active :enable) (setq active (or arg ''nil)))
+                  (:help (setq prop (cons :help (cons arg prop))))
+                  (:suffix (setq suffix arg))
+                  (:style (setq style arg))
+                  (:selected (setq selected (or arg ''nil)))))
 	      (if suffix
 		  (setq label
 			(if (stringp suffix)
@@ -464,7 +475,7 @@ When non-nil, NOEXP indicates that CALLBACK cannot be an expression
                   ;; `functionp' is probably not needed.
                   (functionp callback) noexp)
               callback
-	    `(lambda () (interactive) ,callback)))
+	    (eval `(lambda () (interactive) ,callback) t)))
     command))
 
 ;;;###autoload

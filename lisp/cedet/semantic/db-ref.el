@@ -1,8 +1,8 @@
 ;;; semantic/db-ref.el --- Handle cross-db file references
 
-;;; Copyright (C) 2007-2018 Free Software Foundation, Inc.
+;;; Copyright (C) 2007-2020 Free Software Foundation, Inc.
 
-;; Author: Eric M. Ludlam <eric@siege-engine.com>
+;; Author: Eric M. Ludlam <zappo@gnu.org>
 
 ;; This file is part of GNU Emacs.
 
@@ -80,7 +80,7 @@ Abstract tables would be difficult to reference."
 
 (cl-defmethod semanticdb-check-references ((dbt semanticdb-table))
   "Check and cleanup references in the database DBT.
-Any reference to a file that cannot be found, or whos file no longer
+Any reference to a file that cannot be found, or whose file no longer
 refers to DBT will be removed."
   (let ((refs (oref dbt db-refs))
 	(myexpr (concat "\\<" (oref dbt file)))
@@ -88,7 +88,7 @@ refers to DBT will be removed."
     (while refs
       (let* ((ok t)
 	     (db (car refs))
-	     (f (when (semanticdb-table-child-p db)
+	     (f (when (cl-typep db 'semanticdb-table)
 		  (semanticdb-full-filename db)))
 	     )
 

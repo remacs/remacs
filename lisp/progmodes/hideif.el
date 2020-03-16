@@ -1,6 +1,6 @@
 ;;; hideif.el --- hides selected code within ifdef  -*- lexical-binding:t -*-
 
-;; Copyright (C) 1988, 1994, 2001-2018 Free Software Foundation, Inc.
+;; Copyright (C) 1988, 1994, 2001-2020 Free Software Foundation, Inc.
 
 ;; Author: Brian Marick
 ;;	Daniel LaLiberte <liberte@holonexus.org>
@@ -112,28 +112,23 @@
 
 (defcustom hide-ifdef-initially nil
   "Non-nil means call `hide-ifdefs' when Hide-Ifdef mode is first activated."
-  :type 'boolean
-  :group 'hide-ifdef)
+  :type 'boolean)
 
 (defcustom hide-ifdef-read-only nil
   "Set to non-nil if you want buffer to be read-only while hiding text."
-  :type 'boolean
-  :group 'hide-ifdef)
+  :type 'boolean)
 
 (defcustom hide-ifdef-lines nil
   "Non-nil means hide the #ifX, #else, and #endif lines."
-  :type 'boolean
-  :group 'hide-ifdef)
+  :type 'boolean)
 
 (defcustom hide-ifdef-shadow nil
   "Non-nil means shadow text instead of hiding it."
   :type 'boolean
-  :group 'hide-ifdef
   :version "23.1")
 
 (defface hide-ifdef-shadow '((t (:inherit shadow)))
   "Face for shadowing ifdef blocks."
-  :group 'hide-ifdef
   :version "23.1")
 
 (defcustom hide-ifdef-exclude-define-regexp nil
@@ -168,7 +163,6 @@ This behavior is generally undesirable.  If this option is non-nil, the outermos
   "C/C++ header file name patterns to determine if current buffer is a header.
 Effective only if `hide-ifdef-expand-reinclusion-protection' is t."
   :type 'string
-  :group 'hide-ifdef
   :version "25.1")
 
 (defvar hide-ifdef-mode-submap
@@ -196,8 +190,10 @@ Effective only if `hide-ifdef-expand-reinclusion-protection' is t."
     map)
   "Keymap used by `hide-ifdef-mode' under `hide-ifdef-mode-prefix-key'.")
 
-(defconst hide-ifdef-mode-prefix-key "\C-c@"
-  "Prefix key for all Hide-Ifdef mode commands.")
+(defcustom hide-ifdef-mode-prefix-key "\C-c@"
+  "Prefix key for all Hide-Ifdef mode commands."
+  :type 'key-sequence
+  :version "27.1")
 
 (defvar hide-ifdef-mode-map
   ;; Set up the mode's main map, which leads via the prefix key to the submap.
@@ -263,9 +259,6 @@ This backup prevents any accidental clearance of `hide-fidef-env' by
 ;;;###autoload
 (define-minor-mode hide-ifdef-mode
   "Toggle features to hide/show #ifdef blocks (Hide-Ifdef mode).
-With a prefix argument ARG, enable Hide-Ifdef mode if ARG is
-positive, and disable it otherwise.  If called from Lisp, enable
-the mode if ARG is omitted or nil.
 
 Hide-Ifdef mode is a buffer-local minor mode for use with C and
 C-like major modes.  When enabled, code within #ifdef constructs
@@ -543,7 +536,7 @@ that form should be displayed.")
 
 (defconst hif-token-regexp
   (concat (regexp-opt (mapcar 'car hif-token-alist))
-          "\\|0x[0-9a-fA-F]+\\.?[0-9a-fA-F]*"
+          "\\|0x[[:xdigit:]]+\\.?[[:xdigit:]]*"
           "\\|[0-9]+\\.?[0-9]*"  ;; decimal/octal
           "\\|\\w+"))
 
@@ -598,7 +591,7 @@ that form should be displayed.")
                    ;; 1. postfix 'l', 'll', 'ul' and 'ull'
                    ;; 2. floating number formats (like 1.23e4)
                    ;; 3. 098 is interpreted as octal conversion error
-                   (if (string-match "0x\\([0-9a-fA-F]+\\.?[0-9a-fA-F]*\\)"
+                   (if (string-match "0x\\([[:xdigit:]]+\\.?[[:xdigit:]]*\\)"
                                      token)
                        (hif-string-to-number (match-string 1 token) 16)) ;; hex
                    (if (string-match "\\`0[0-9]+\\(\\.[0-9]+\\)?\\'" token)
@@ -675,12 +668,7 @@ that form should be displayed.")
        result))
     (nreverse result)))
 
-(defun hif-flatten (l)
-  "Flatten a tree."
-  (apply #'nconc
-         (mapcar (lambda (x) (if (listp x)
-                                 (hif-flatten x)
-                               (list x))) l)))
+(define-obsolete-function-alias 'hif-flatten #'flatten-tree "27.1")
 
 (defun hif-expand-token-list (tokens &optional macroname expand_list)
   "Perform expansion on TOKENS till everything expanded.
@@ -751,7 +739,7 @@ detecting self-reference."
 
          expanded))
 
-      (hif-flatten (nreverse expanded)))))
+      (flatten-tree (nreverse expanded)))))
 
 (defun hif-parse-exp (token-list &optional macroname)
   "Parse the TOKEN-LIST.
@@ -1042,16 +1030,12 @@ preprocessing token"
 (defun hif-shiftleft (a b)
   (setq a (hif-mathify a))
   (setq b (hif-mathify b))
-  (if (< a 0)
-      (ash a b)
-    (lsh a b)))
+  (ash a b))
 
 (defun hif-shiftright (a b)
   (setq a (hif-mathify a))
   (setq b (hif-mathify b))
-  (if (< a 0)
-      (ash a (- b))
-    (lsh a (- b))))
+  (ash a (- b)))
 
 
 (defalias 'hif-multiply      (hif-mathify-binop *))
@@ -1173,7 +1157,7 @@ preprocessing token"
         (setq actual-parms (cdr actual-parms)))
 
       ;; Replacement completed, flatten the whole token list
-      (setq macro-body (hif-flatten macro-body))
+      (setq macro-body (flatten-tree macro-body))
 
       ;; Stringification and token concatenation happens here
       (hif-token-concatenation (hif-token-stringification macro-body)))))
@@ -1628,7 +1612,7 @@ not be expanded."
          ((integerp result)
           (if (or (= 0 result) (= 1 result))
               (message "%S <= `%s'" result exprstring)
-            (message "%S (0x%x) <= `%s'" result result exprstring)))
+            (message "%S (%#x) <= `%s'" result result exprstring)))
          ((null result) (message "%S <= `%s'" 'false exprstring))
          ((eq t result) (message "%S <= `%s'" 'true exprstring))
          (t (message "%S <= `%s'" result exprstring)))

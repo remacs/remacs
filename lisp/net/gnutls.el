@@ -1,6 +1,6 @@
 ;;; gnutls.el --- Support SSL/TLS connections through GnuTLS
 
-;; Copyright (C) 2010-2018 Free Software Foundation, Inc.
+;; Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
 ;; Author: Ted Zlatanov <tzz@lifelogs.com>
 ;; Keywords: comm, tls, ssl, encryption
@@ -36,6 +36,10 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'puny)
+
+(declare-function network-stream-certificate "network-stream"
+                  (host service parameters))
 
 (defgroup gnutls nil
   "Emacs interface to the GnuTLS library."
@@ -46,7 +50,15 @@
 (defcustom gnutls-algorithm-priority nil
   "If non-nil, this should be a TLS priority string.
 For instance, if you want to skip the \"dhe-rsa\" algorithm,
-set this variable to \"normal:-dhe-rsa\"."
+set this variable to \"normal:-dhe-rsa\".
+
+This variable can be useful for modifying low-level TLS
+connection parameters (for instance if you need to connect to a
+host that only accepts a specific algorithm).  However, in
+general, Emacs network security is handled by the Network
+Security Manager (NSM), and the default value of nil delegates
+the job of checking the connection security to the NSM.
+See Info node `(emacs) Network Security'."
   :group 'gnutls
   :type '(choice (const nil)
                  string))
@@ -61,9 +73,9 @@ If the value is a list, it should have the form
    ((HOST-REGEX FLAGS...) (HOST-REGEX FLAGS...) ...)
 
 where each HOST-REGEX is a regular expression to be matched
-against the hostname, and FLAGS is either t or a list of
-one or more verification flags.  The supported flags and the
-corresponding conditions to be tested are:
+against the hostname, on a first-match basis, and FLAGS is either
+t or a list of one or more verification flags.  The supported
+flags and the corresponding conditions to be tested are:
 
   :trustfiles -- certificate must be issued by a trusted authority.
   :hostname   -- hostname must match presented certificate's host name.
@@ -72,7 +84,13 @@ corresponding conditions to be tested are:
 If the condition test fails, an error will be signaled.
 
 If the value of this variable is t, every connection will be subjected
-to all of the tests described above."
+to all of the tests described above.
+
+The default value of this variable is nil, which means that no
+checks are performed at the gnutls level.  Instead the checks are
+performed via `open-network-stream' at a higher level by the
+Network Security Manager.  See Info node `(emacs) Network
+Security'."
   :group 'gnutls
   :version "24.4"
   :type '(choice
@@ -93,30 +111,50 @@ to all of the tests described above."
     "/usr/ssl/certs/ca-bundle.crt"           ; Cygwin
     "/usr/local/share/certs/ca-root-nss.crt" ; FreeBSD
     "/etc/ssl/cert.pem"                      ; macOS
+    "/etc/certs/ca-certificates.crt"         ; OpenIndiana
     )
   "List of CA bundle location filenames or a function returning said list.
+If a file path contains glob wildcards, they will be expanded.
 The files may be in PEM or DER format, as per the GnuTLS documentation.
 The files may not exist, in which case they will be ignored."
   :group 'gnutls
   :type '(choice (function :tag "Function to produce list of bundle filenames")
                  (repeat (file :tag "Bundle filename"))))
 
-;;;###autoload
-(defcustom gnutls-min-prime-bits 256
-  ;; Several mail servers send fewer bits than the GnuTLS default.
-  ;; Currently, 256 appears to be a reasonable choice (Bug#11267).
+(defcustom gnutls-min-prime-bits nil
   "Minimum number of prime bits accepted by GnuTLS for key exchange.
 During a Diffie-Hellman handshake, if the server sends a prime
 number with fewer than this number of bits, the handshake is
 rejected.  \(The smaller the prime number, the less secure the
 key exchange is against man-in-the-middle attacks.)
 
-A value of nil says to use the default GnuTLS value."
-  :type '(choice (const :tag "Use default value" nil)
-                 (integer :tag "Number of bits" 512))
-  :group 'gnutls)
+A value of nil says to use the default GnuTLS value.
 
-(defun open-gnutls-stream (name buffer host service &optional nowait)
+The default value of this variable is such that virtually any
+connection can be established, whether this connection can be
+considered cryptographically \"safe\" or not.  However, Emacs
+network security is handled at a higher level via
+`open-network-stream' and the Network Security Manager.  See Info
+node `(emacs) Network Security'."
+  :type '(choice (const :tag "Use default value" nil)
+                 (integer :tag "Number of bits" 2048))
+  :group 'gnutls
+  :version "27.1")
+
+(defcustom gnutls-crlfiles
+  '(
+    "/etc/grid-security/certificates/*.crl.pem"
+    )
+  "List of CRL file paths or a function returning said list.
+If a file path contains glob wildcards, they will be expanded.
+The files may be in PEM or DER format, as per the GnuTLS documentation.
+The files may not exist, in which case they will be ignored."
+  :group 'gnutls
+  :type '(choice (function :tag "Function to produce list of CRL filenames")
+                 (repeat (file :tag "CRL filename")))
+  :version "27.1")
+
+(defun open-gnutls-stream (name buffer host service &optional parameters)
   "Open a SSL/TLS connection for a service to a host.
 Returns a subprocess-object to represent the connection.
 Input and output work as for subprocesses; `delete-process' closes it.
@@ -127,12 +165,15 @@ BUFFER is the buffer (or `buffer-name') to associate with the process.
  a filter function to handle the output.
  BUFFER may be also nil, meaning that this process is not associated
  with any buffer
-Third arg is name of the host to connect to, or its IP address.
-Fourth arg SERVICE is name of the service desired, or an integer
+Third arg HOST is the name of the host to connect to, or its IP address.
+Fourth arg SERVICE is the name of the service desired, or an integer
 specifying a port number to connect to.
-Fifth arg NOWAIT (which is optional) means that the socket should
-be opened asynchronously.  The connection process will be
-returned to the caller before TLS negotiation has happened.
+Fifth arg PARAMETERS is an optional list of keyword/value pairs.
+Only :client-certificate and :nowait keywords are recognized, and
+have the same meaning as for `open-network-stream'.
+For historical reasons PARAMETERS can also be a symbol, which is
+interpreted the same as passing a list containing :nowait and the
+value of that symbol.
 
 Usage example:
 
@@ -146,20 +187,34 @@ This is a very simple wrapper around `gnutls-negotiate'.  See its
 documentation for the specific parameters you can use to open a
 GnuTLS connection, including specifying the credential type,
 trust and key files, and priority string."
-  (let ((process (open-network-stream
-                  name buffer host service
-                  :nowait nowait
-                  :tls-parameters
-                  (and nowait
-                       (cons 'gnutls-x509pki
-                             (gnutls-boot-parameters
-                              :type 'gnutls-x509pki
-                              :hostname host))))))
+  (let* ((parameters
+          (cond ((symbolp parameters)
+                 (list :nowait parameters))
+                ((not (cl-evenp (length parameters)))
+                 (error "Malformed keyword list"))
+                ((consp parameters)
+                 parameters)
+                (t
+                 (error "Unknown parameter type"))))
+         (cert (network-stream-certificate host service parameters))
+         (keylist (and cert (list cert)))
+         (nowait (plist-get parameters :nowait))
+         (process (open-network-stream
+                   name buffer host service
+                   :nowait nowait
+                   :tls-parameters
+                   (and nowait
+                        (cons 'gnutls-x509pki
+                              (gnutls-boot-parameters
+                               :type 'gnutls-x509pki
+                               :keylist keylist
+                               :hostname (puny-encode-domain host)))))))
     (if nowait
         process
       (gnutls-negotiate :process process
                         :type 'gnutls-x509pki
-                        :hostname host))))
+                        :keylist keylist
+                        :hostname (puny-encode-domain host)))))
 
 (define-error 'gnutls-error "GnuTLS error")
 
@@ -262,6 +317,7 @@ here's a recent version of the list.
 It must be omitted, a number, or nil; if omitted or nil it
 defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
   (let* ((trustfiles (or trustfiles (gnutls-trustfiles)))
+         (crlfiles (or crlfiles (gnutls-crlfiles)))
          (maybe-dumbfw (if (memq 'ClientHello\ Padding (gnutls-available-p))
                            ":%DUMBFW"
                          ""))
@@ -282,13 +338,9 @@ defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
                              t)
                             ;; if a list, look for hostname matches
                             ((listp gnutls-verify-error)
-                             (apply 'append
-                                    (mapcar
-                                     (lambda (check)
-                                       (when (string-match (nth 0 check)
-                                                           hostname)
-                                         (nth 1 check)))
-                                     gnutls-verify-error)))
+                             (cadr (cl-find-if #'(lambda (x)
+                                                   (string-match (car x) hostname))
+                                               gnutls-verify-error)))
                             ;; else it's nil
                             (t nil))))
          (min-prime-bits (or min-prime-bits gnutls-min-prime-bits)))
@@ -307,13 +359,18 @@ defaults to GNUTLS_VERIFY_ALLOW_X509_V1_CA_CRT."
                 :verify-error ,verify-error
                 :callbacks nil)))
 
+(defun gnutls--get-files (files)
+  (cl-loop for f in files
+           if f do (setq f (if (functionp f) (funcall f) f))
+           append (cl-delete-if-not #'file-exists-p (file-expand-wildcards f t))))
+
 (defun gnutls-trustfiles ()
   "Return a list of usable trustfiles."
-  (delq nil
-        (mapcar (lambda (f) (and f (file-exists-p f) f))
-                (if (functionp gnutls-trustfiles)
-                    (funcall gnutls-trustfiles)
-                  gnutls-trustfiles))))
+  (gnutls--get-files gnutls-trustfiles))
+
+(defun gnutls-crlfiles ()
+  "Return a list of usable CRL files."
+  (gnutls--get-files gnutls-crlfiles))
 
 (declare-function gnutls-error-string "gnutls.c" (error))
 
