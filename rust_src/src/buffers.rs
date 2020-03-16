@@ -4,6 +4,7 @@ use std::{self, iter, mem, ops, ptr, slice};
 
 use field_offset::FieldOffset;
 use libc::{self, c_char, c_uchar, c_void, ptrdiff_t};
+use num;
 
 use rand::{rngs::OsRng, Rng};
 
@@ -59,7 +60,6 @@ use crate::{
     strings::string_equal,
     textprop::get_text_property,
     threads::{c_specpdl_index, ThreadState},
-    util::clip_to_bounds,
     vectors::LispVectorlikeRef,
 };
 
@@ -1412,7 +1412,11 @@ fn get_truename_buffer_1(filename: LispSymbolOrString) -> LispObject {
 /// for positions far away from POS).
 #[lisp_fn]
 pub fn overlay_recenter(pos: LispNumber) {
-    let p = clip_to_bounds(isize::min_value(), pos.to_fixnum(), isize::max_value());
+    let p = num::clamp(
+        pos.to_fixnum() as isize,
+        isize::min_value(),
+        isize::max_value(),
+    );
     unsafe {
         recenter_overlay_lists(ThreadState::current_buffer_unchecked().as_mut(), p);
     }

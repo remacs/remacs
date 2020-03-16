@@ -3,6 +3,7 @@
 use std::{cmp, convert::TryFrom, fmt, ptr};
 
 use libc::c_int;
+use num;
 
 use remacs_macros::lisp_fn;
 
@@ -36,7 +37,6 @@ use crate::{
         Qwindow_live_p, Qwindow_valid_p, Qwindowp,
     },
     threads::{c_specpdl_index, ThreadState},
-    util::clip_to_bounds,
     vectors::LispVectorlikeRef,
 };
 
@@ -1653,8 +1653,8 @@ pub fn window_hscroll(window: LispWindowLiveOrSelected) -> EmacsInt {
     win.hscroll as EmacsInt
 }
 
-// Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
-// range, returning the new amount as a fixnum.
+/// Set W's horizontal scroll amount to HSCROLL clipped to a reasonable
+/// range, returning the new amount as a fixnum.
 #[no_mangle]
 pub extern "C" fn set_window_hscroll(mut w: LispWindowRef, hscroll: EmacsInt) -> EmacsInt {
     // Horizontal scrolling has problems with large scroll amounts.
@@ -1667,7 +1667,7 @@ pub extern "C" fn set_window_hscroll(mut w: LispWindowRef, hscroll: EmacsInt) ->
         Ok(mpf) => cmp::max(mpf, isize::max_value()),
         Err(_) => isize::max_value(),
     };
-    let new_hscroll = clip_to_bounds(0, hscroll, hscroll_max);
+    let new_hscroll = num::clamp(hscroll as isize, 0, hscroll_max);
 
     // Prevent redisplay shortcuts when changing the hscroll.
     if w.hscroll != new_hscroll {
