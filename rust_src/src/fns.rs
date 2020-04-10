@@ -2,8 +2,6 @@
 
 use std::{mem, ptr, slice};
 
-use libc;
-
 use remacs_macros::lisp_fn;
 
 use crate::{

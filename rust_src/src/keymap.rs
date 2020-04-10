@@ -1,6 +1,5 @@
 //! Keymap support
 
-use std;
 use std::ptr;
 
 use libc::c_void;

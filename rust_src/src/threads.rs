@@ -1,7 +1,5 @@
 //! Threading code.
 
-use libc;
-
 use remacs_macros::lisp_fn;
 
 use crate::{

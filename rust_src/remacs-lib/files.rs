@@ -1,5 +1,3 @@
-use errno;
-
 use std::ffi::{CStr, CString};
 use std::io;
 

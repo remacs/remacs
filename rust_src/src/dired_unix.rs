@@ -43,7 +43,7 @@ impl StringExt for String {
     }
     fn to_cstring(&self) -> *const c_char {
         let c_str = CString::new(self.as_str()).unwrap();
-        (c_str.as_ptr() as *const c_char)
+        c_str.as_ptr() as *const c_char
     }
     // Split-up absolute path to directory and file
     fn to_dir_f(&self) -> (String, String) {

@@ -1,11 +1,9 @@
 //! Lisp functions pertaining to editing.
 
-use std;
 use std::cmp::max;
 use std::ops::{Add, Sub};
 use std::ptr;
 
-use libc;
 use libc::{c_char, c_int, c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;

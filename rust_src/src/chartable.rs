@@ -1,7 +1,5 @@
 //! char table related functions
 
-use libc;
-
 use remacs_macros::lisp_fn;
 
 use crate::{

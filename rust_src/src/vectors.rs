@@ -765,8 +765,8 @@ pub fn recordp(object: LispObject) -> bool {
 
 lazy_static! {
     pub static ref HEADER_SIZE: usize =
-        { unsafe { offset_of!(crate::remacs_sys::Lisp_Vector, contents) } };
-    pub static ref WORD_SIZE: usize = { ::std::mem::size_of::<crate::lisp::LispObject>() };
+        unsafe { offset_of!(crate::remacs_sys::Lisp_Vector, contents) };
+    pub static ref WORD_SIZE: usize = ::std::mem::size_of::<crate::lisp::LispObject>();
 }
 
 include!(concat!(env!("OUT_DIR"), "/vectors_exports.rs"));

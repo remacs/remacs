@@ -1210,7 +1210,7 @@ pub fn window_list(
         error!("Window is on a different frame");
     }
 
-    unsafe { (window_list_1(w_obj, minibuf, f_obj)) }
+    unsafe { window_list_1(w_obj, minibuf, f_obj) }
 }
 
 /// Return a list of all live windows.
@@ -1249,7 +1249,7 @@ pub fn window_list_1_lisp(
     minibuf: LispObject,
     all_frames: LispObject,
 ) -> LispObject {
-    unsafe { (window_list_1(window, minibuf, all_frames)) }
+    unsafe { window_list_1(window, minibuf, all_frames) }
 }
 
 /// Return non-nil when WINDOW is dedicated to its buffer.

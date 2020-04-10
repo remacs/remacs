@@ -1,7 +1,5 @@
 //! Commands
 
-use libc;
-use std;
 use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
