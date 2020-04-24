@@ -570,8 +570,10 @@ impl LispWindowRef {
         }
     }
 
-    pub const fn iter(self) -> LispWindowIter {
-        LispWindowIter { current: self }
+    pub fn iter(self) -> LispWindowIter {
+        LispWindowIter {
+            current: Some(self),
+        }
     }
 }
 
@@ -641,19 +643,19 @@ impl LispObject {
 }
 
 pub struct LispWindowIter {
-    current: LispWindowRef,
+    current: Option<LispWindowRef>,
 }
 
 impl Iterator for LispWindowIter {
     type Item = LispWindowRef;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current.is_null() {
-            None
-        } else {
-            let window = self.current;
-            self.current = window.next.into();
-            Some(window)
+        match self.current {
+            None => None,
+            Some(window) => {
+                self.current = window.next.as_valid_window();
+                Some(window)
+            }
         }
     }
 }
