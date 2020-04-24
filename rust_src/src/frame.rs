@@ -697,15 +697,11 @@ pub fn frame_face_alist(frame: LispFrameLiveOrSelected) -> LispObject {
 
 /// Update the display_time slot of the buffers shown in WINDOW and all its descendants.
 fn make_frame_visible_1(window: LispWindowRef) {
-    if window.is_null() {
-        return;
-    }
     for win in window.iter() {
-        let contents: LispObject = win.contents.into();
-        if contents.is_window() {
-            make_frame_visible_1(contents.into());
+        if win.is_internal() {
+            make_frame_visible_1(win.contents.into());
         } else {
-            let mut buffer: LispBufferRef = contents.into();
+            let mut buffer: LispBufferRef = win.contents.into();
             buffer.set_display_time(current_time());
         }
     }
@@ -714,19 +710,19 @@ fn make_frame_visible_1(window: LispWindowRef) {
 /// Make the frame FRAME visible (assuming it is an X window).
 /// If omitted, FRAME defaults to the currently selected frame.
 #[lisp_fn(min = "0")]
-pub fn make_frame_visible(frame: LispObject) {
-    let frame_ref = if cfg!(feature = "window-system") {
-        let mut frame_ref: LispFrameRef = frame.into();
+pub fn make_frame_visible(frame: LispFrameLiveOrSelected) -> LispFrameRef {
+    let mut frame_ref: LispFrameRef = frame.into();
+
+    if cfg!(feature = "window-system") {
         if frame_ref.is_gui_window() {
             unsafe {
                 x_make_frame_visible(frame_ref.as_mut());
             }
         }
-        frame_ref
-    } else {
-        frame.into()
-    };
+    }
+
     make_frame_visible_1(frame_ref.root_window());
+    frame_ref.into()
 }
 
 /// Make the frame FRAME invisible.
