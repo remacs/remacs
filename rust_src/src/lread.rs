@@ -1,7 +1,6 @@
 //! Lisp parsing and input streams.
 
 use field_offset::FieldOffset;
-use libc;
 use std::ffi::CString;
 use std::ptr;
 

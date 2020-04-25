@@ -1,5 +1,4 @@
 //! obarray code
-use libc;
 
 use remacs_macros::lisp_fn;
 

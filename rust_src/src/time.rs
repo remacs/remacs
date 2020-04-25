@@ -381,7 +381,7 @@ pub unsafe extern "C" fn lisp_time_struct(
     let mut usec = LispObject::from_C(0);
     let mut psec = LispObject::from_C(0);
 
-    let len = { disassemble_lisp_time(specified_time, &mut high, &mut low, &mut usec, &mut psec) };
+    let len = disassemble_lisp_time(specified_time, &mut high, &mut low, &mut usec, &mut psec);
     if len == 0 {
         invalid_time();
     }

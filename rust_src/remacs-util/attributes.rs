@@ -3,7 +3,6 @@
 use std::fmt::Display;
 
 use darling::FromMetaItem;
-use syn;
 
 /// Arguments of the lisp_fn attribute.
 #[derive(FromMetaItem, Default)]

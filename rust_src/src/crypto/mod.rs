@@ -1,10 +1,8 @@
-use std;
 use std::slice;
 
 use libc::ptrdiff_t;
 
 use md5 as md5_crate;
-use sha1;
 use sha2::{Digest, Sha224, Sha256, Sha384, Sha512};
 
 use remacs_macros::lisp_fn;

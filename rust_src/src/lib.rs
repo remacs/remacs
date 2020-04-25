@@ -3,6 +3,8 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 // For us, there is nothing to document. Calling C code isn't going to be safe.
 #![allow(clippy::missing_safety_doc)]
+// This triggers for variable docstrings.
+#![allow(unused_doc_comments)]
 #![allow(non_upper_case_globals)]
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
@@ -16,7 +18,6 @@
 #![feature(const_fn_union)]
 #![feature(never_type)]
 #![feature(ptr_offset_from)]
-#![feature(slice_patterns)]
 #![feature(specialization)]
 #![feature(stmt_expr_attributes)]
 #![feature(untagged_unions)]

@@ -1,5 +1,4 @@
 //! Functions operating on process.
-use libc;
 
 use remacs_macros::lisp_fn;
 use std::convert::Into;

@@ -1,8 +1,6 @@
 //! Functions operating on float numbers.
 #![allow(clippy::float_cmp)]
 
-use libc;
-
 use std::mem;
 
 use remacs_macros::lisp_fn;
