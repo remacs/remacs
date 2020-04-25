@@ -581,7 +581,7 @@ pub unsafe extern "C" fn store_symval_forwarding(
                     prop = get(pred_sym, Qrange);
                     if let Some((min, max)) = prop.into() {
                         let args = [min, newval, max];
-                        if !newval.is_number() || leq(&args) {
+                        if !newval.is_number() || !leq(&args) {
                             wrong_range(min, max, newval);
                         }
                     } else if predicate.is_function() && call!(predicate, newval).is_nil() {
