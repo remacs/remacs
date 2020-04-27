@@ -146,5 +146,19 @@
   (should (= (string-to-number "1111" 2) 15))
   (should (= (string-to-number "FF" 16) 255)))
 
+(ert-deftest test-store_symval_forwarding ()
+  ;; store_symval_forwarding implements what happens when you set a
+  ;; variable, so if it gets broken too badly we won't even be able to
+  ;; run tests. However, some of the more obscure aspects can break
+  ;; without any obvious symptoms.
+  (with-temp-buffer
+    ;; scroll-up-aggressively and scroll-down-aggressively both have
+    ;; type 'fraction, so they must be between 0.0 and 1.0. Verify
+    ;; that this type check works.
+    (should-error (setq scroll-up-aggressively -1) :type 'error)
+    (should-error (setq scroll-up-aggressively ?a) :type 'error)
+    (setq scroll-up-aggressively 0.693147)
+    (should (= 0.693147 scroll-up-aggressively))))
+
 (provide 'data-tests)
 ;;; data-tests.el ends here
