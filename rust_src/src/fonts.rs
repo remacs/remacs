@@ -10,6 +10,7 @@ use crate::{
     frame::{LispFrameLiveOrSelected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    numbers::{check_range, LispNumberOrMarker},
     obarray::intern,
     remacs_sys::font_match_p as c_font_match_p,
     remacs_sys::font_property_index::FONT_TYPE_INDEX,
@@ -285,24 +286,15 @@ pub fn font_at_lisp(
             }
             pos
         }
-
-        _ => {
+        None => {
             if w.contents != cur_buf.into() {
                 error!("Specified window is not displaying the current buffer");
             }
-            position.as_number_coerce_marker_or_error();
-            let pos = EmacsInt::from(position) as isize;
+            let position = LispNumberOrMarker::from(position);
+            let pos = position.to_fixnum();
 
-            let begv = cur_buf.begv;
-            let zv = cur_buf.zv;
-            if !(begv <= pos && pos < zv) {
-                args_out_of_range!(
-                    position,
-                    LispObject::from(begv as EmacsInt),
-                    LispObject::from(zv as EmacsInt)
-                );
-            }
-            pos
+            check_range(pos, cur_buf.begv as EmacsInt, cur_buf.zv as EmacsInt);
+            pos as isize
         }
     };
     unsafe { font_at(-1, pos, ptr::null_mut(), w.as_mut(), string) }

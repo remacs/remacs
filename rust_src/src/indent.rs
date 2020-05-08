@@ -11,7 +11,7 @@ use crate::{
     lists::LispCons,
     marker::buf_charpos_to_bytepos,
     multibyte::Codepoint,
-    numbers::LispNumber,
+    numbers::{check_range, LispNumberOrMarker},
     remacs_sys::Qt,
     remacs_sys::{
         self, del_range, find_newline, position_indentation, sanitize_tab_width, scan_for_column,
@@ -228,9 +228,9 @@ pub fn indent_to(column: EmacsInt, minimum: Option<EmacsInt>) -> EmacsInt {
 /// visible section of the buffer, and pass LINE and COL as TOPOS.
 #[lisp_fn]
 pub fn compute_motion(
-    from: LispNumber,
+    from: LispNumberOrMarker,
     frompos: LispCons,
-    to: LispNumber,
+    to: LispNumberOrMarker,
     topos: LispObject,
     width: Option<EmacsInt>,
     offsets: LispObject,
@@ -271,12 +271,8 @@ pub fn compute_motion(
     let buffer = &mut ThreadState::current_buffer_unchecked();
     let begv = buffer.begv as EmacsInt;
     let zv = buffer.zv as EmacsInt;
-    if from.to_fixnum() < begv || from.to_fixnum() > zv {
-        args_out_of_range!(from, begv, zv);
-    }
-    if to.to_fixnum() < begv || to.to_fixnum() > zv {
-        args_out_of_range!(to, begv, zv);
-    }
+    check_range(from, begv, zv);
+    check_range(to, begv, zv);
 
     let pos = unsafe {
         *remacs_sys::compute_motion(

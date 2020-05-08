@@ -524,7 +524,7 @@ pub fn yes_or_no_p(prompt: LispStringRef) -> bool {
                     Fdiscard_input();
                     message1("Please answer yes or no.\0".as_ptr() as *const libc::c_char);
                 }
-                sleep_for(2.0, None);
+                sleep_for(LispNumber::Float(2.0), None);
             }
         }
     }

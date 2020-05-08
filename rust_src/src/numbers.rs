@@ -1,7 +1,6 @@
 //! Functions operating on numbers.
 
-use std::cmp;
-use std::sync::Mutex;
+use std::{cmp, sync::Mutex};
 
 use rand::{rngs::StdRng, FromEntropy, Rng, SeedableRng};
 
@@ -10,11 +9,12 @@ use remacs_macros::lisp_fn;
 use crate::{
     hashtable::LispHashTableRef,
     lisp::{LispObject, LispStructuralEqual},
+    marker::LispMarkerRef,
     remacs_sys::{
         equal_kind, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, Lisp_Type, EMACS_INT_MAX, INTMASK,
         USE_LSB_TAG,
     },
-    remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qwholenump},
+    remacs_sys::{Qinteger_or_marker_p, Qintegerp, Qnumber_or_marker_p, Qnumberp, Qwholenump},
 };
 
 lazy_static! {
@@ -147,13 +147,6 @@ impl LispObject {
     }
 }
 
-/// lisp_fn allows markers for LispNumber arguments
-#[derive(Clone, Copy)]
-pub enum LispNumber {
-    Fixnum(EmacsInt),
-    Float(EmacsDouble),
-}
-
 pub trait IsLispNatnum {
     fn check_natnum(self);
 }
@@ -184,15 +177,6 @@ pub fn check_range(num: impl Into<EmacsInt>, from: impl Into<EmacsInt>, to: impl
     }
 }
 
-impl LispNumber {
-    pub fn to_fixnum(&self) -> EmacsInt {
-        match *self {
-            LispNumber::Fixnum(v) => v,
-            LispNumber::Float(v) => v as EmacsInt,
-        }
-    }
-}
-
 impl LispStructuralEqual for EmacsInt {
     fn equal(
         &self,
@@ -205,29 +189,217 @@ impl LispStructuralEqual for EmacsInt {
     }
 }
 
-impl From<EmacsInt> for LispNumber {
+impl LispObject {
+    pub fn is_number(self) -> bool {
+        self.is_fixnum() || self.is_float()
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum LispNumberOrMarker {
+    Fixnum(EmacsInt),
+    Marker(LispMarkerRef),
+}
+
+impl LispNumberOrMarker {
+    pub fn to_fixnum(self) -> EmacsInt {
+        match self {
+            Self::Fixnum(n) => n,
+            Self::Marker(m) => m.charpos as EmacsInt,
+        }
+    }
+
+    pub fn is_marker(self) -> bool {
+        match self {
+            Self::Fixnum(_) => false,
+            Self::Marker(_) => true,
+        }
+    }
+
+    pub fn as_marker(self) -> Option<LispMarkerRef> {
+        match self {
+            Self::Fixnum(_) => None,
+            Self::Marker(m) => Some(m),
+        }
+    }
+}
+
+impl From<EmacsInt> for LispNumberOrMarker {
     fn from(n: EmacsInt) -> Self {
-        LispNumber::Fixnum(n)
+        Self::Fixnum(n)
+    }
+}
+
+impl From<LispMarkerRef> for LispNumberOrMarker {
+    fn from(m: LispMarkerRef) -> Self {
+        Self::Marker(m)
+    }
+}
+
+impl From<LispNumberOrMarker> for EmacsInt {
+    fn from(n_or_m: LispNumberOrMarker) -> Self {
+        match n_or_m {
+            LispNumberOrMarker::Fixnum(n) => n,
+            LispNumberOrMarker::Marker(m) => m.charpos as EmacsInt,
+        }
+    }
+}
+
+impl From<LispObject> for LispNumberOrMarker {
+    fn from(o: LispObject) -> Self {
+        Option::<Self>::from(o).unwrap_or_else(|| wrong_type!(Qinteger_or_marker_p, o))
+    }
+}
+
+impl From<LispObject> for Option<LispNumberOrMarker> {
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            None
+        } else if let Some(m) = o.as_marker() {
+            Some(LispNumberOrMarker::Marker(m))
+        } else if let Some(n) = o.as_fixnum() {
+            Some(LispNumberOrMarker::Fixnum(n))
+        } else {
+            wrong_type!(Qinteger_or_marker_p, o);
+        }
+    }
+}
+
+impl From<LispNumberOrMarker> for LispObject {
+    fn from(n_or_m: LispNumberOrMarker) -> Self {
+        match n_or_m {
+            LispNumberOrMarker::Fixnum(n) => LispObject::from_fixnum(n),
+            LispNumberOrMarker::Marker(m) => m.into(),
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum LispNumberOrFloatOrMarker {
+    Fixnum(EmacsInt),
+    Float(EmacsDouble),
+    Marker(LispMarkerRef),
+}
+
+impl LispNumberOrFloatOrMarker {
+    pub fn is_fixnum(self) -> bool {
+        match self {
+            Self::Float(_) => false,
+            _ => true,
+        }
+    }
+
+    pub fn to_fixnum(self) -> EmacsInt {
+        match self {
+            Self::Fixnum(n) => n,
+            Self::Float(f) => f as EmacsInt,
+            Self::Marker(m) => m.charpos as EmacsInt,
+        }
+    }
+
+    pub fn to_float(self) -> EmacsDouble {
+        match self {
+            Self::Fixnum(n) => n as EmacsDouble,
+            Self::Float(f) => f,
+            Self::Marker(m) => m.charpos as EmacsDouble,
+        }
+    }
+}
+
+impl From<LispObject> for LispNumberOrFloatOrMarker {
+    fn from(o: LispObject) -> Self {
+        Option::<Self>::from(o).unwrap_or_else(|| wrong_type!(Qnumber_or_marker_p, o))
+    }
+}
+
+impl From<LispObject> for Option<LispNumberOrFloatOrMarker> {
+    fn from(o: LispObject) -> Self {
+        if o.is_nil() {
+            return None;
+        }
+
+        let result = if let Some(f) = o.as_float() {
+            LispNumberOrFloatOrMarker::Float(f)
+        } else if let Some(m) = o.as_marker() {
+            LispNumberOrFloatOrMarker::Marker(m)
+        } else {
+            match o.as_fixnum() {
+                Some(n) => LispNumberOrFloatOrMarker::Fixnum(n),
+                None => wrong_type!(Qnumber_or_marker_p, o),
+            }
+        };
+
+        Some(result)
+    }
+}
+
+impl From<LispNumberOrFloatOrMarker> for LispObject {
+    fn from(n: LispNumberOrFloatOrMarker) -> Self {
+        match n {
+            LispNumberOrFloatOrMarker::Fixnum(v) => Self::from_fixnum(v),
+            LispNumberOrFloatOrMarker::Float(v) => Self::from_float(v),
+            LispNumberOrFloatOrMarker::Marker(m) => m.into(),
+        }
+    }
+}
+
+impl From<LispNumberOrFloatOrMarker> for EmacsInt {
+    fn from(n_or_f: LispNumberOrFloatOrMarker) -> Self {
+        n_or_f.to_fixnum()
+    }
+}
+
+impl From<LispNumberOrFloatOrMarker> for EmacsDouble {
+    fn from(n_or_f: LispNumberOrFloatOrMarker) -> Self {
+        n_or_f.to_float()
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum LispNumber {
+    Fixnum(EmacsInt),
+    Float(EmacsDouble),
+}
+
+impl LispNumber {
+    pub fn is_fixnum(self) -> bool {
+        match self {
+            Self::Fixnum(_) => true,
+            Self::Float(_) => false,
+        }
+    }
+
+    pub fn to_fixnum(self) -> EmacsInt {
+        match self {
+            Self::Fixnum(n) => n,
+            Self::Float(f) => f as EmacsInt,
+        }
+    }
+
+    pub fn to_float(self) -> EmacsDouble {
+        match self {
+            Self::Fixnum(n) => n as EmacsDouble,
+            Self::Float(f) => f,
+        }
     }
 }
 
 impl From<LispObject> for LispNumber {
     fn from(o: LispObject) -> Self {
-        o.as_number_coerce_marker()
-            .unwrap_or_else(|| wrong_type!(Qnumber_or_marker_p, o))
+        Option::<Self>::from(o).unwrap_or_else(|| wrong_type!(Qnumberp, o))
     }
 }
 
 impl From<LispObject> for Option<LispNumber> {
     fn from(o: LispObject) -> Self {
-        if let Some(n) = o.as_fixnum() {
-            Some(LispNumber::Fixnum(n))
+        if o.is_nil() {
+            None
         } else if let Some(f) = o.as_float() {
             Some(LispNumber::Float(f))
-        } else if let Some(m) = o.as_marker() {
-            Some(LispNumber::Fixnum(m.charpos_or_error() as EmacsInt))
+        } else if let Some(n) = o.as_fixnum() {
+            Some(LispNumber::Fixnum(n))
         } else {
-            None
+            wrong_type!(Qnumberp, o);
         }
     }
 }
@@ -235,35 +407,27 @@ impl From<LispObject> for Option<LispNumber> {
 impl From<LispNumber> for LispObject {
     fn from(n: LispNumber) -> Self {
         match n {
-            LispNumber::Fixnum(v) => v.into(),
+            LispNumber::Fixnum(v) => Self::from_fixnum(v),
             LispNumber::Float(v) => Self::from_float(v),
         }
     }
 }
 
-impl LispObject {
-    pub fn is_number(self) -> bool {
-        self.is_fixnum() || self.is_float()
-    }
-
-    /*
-    pub fn as_number_or_error(self) -> LispNumber {
-        if let Some(n) = self.as_fixnum() {
-            LispNumber::Fixnum(n)
-        } else if let Some(f) = self.as_float() {
-            LispNumber::Float(f)
-        } else {
-            wrong_type!(Qnumberp, self)
+impl From<LispNumber> for EmacsInt {
+    fn from(n_or_f: LispNumber) -> Self {
+        match n_or_f {
+            LispNumber::Fixnum(n) => n,
+            LispNumber::Float(f) => f as EmacsInt,
         }
     }
-    */
+}
 
-    pub fn as_number_coerce_marker(self) -> Option<LispNumber> {
-        self.into()
-    }
-
-    pub fn as_number_coerce_marker_or_error(self) -> LispNumber {
-        self.into()
+impl From<LispNumber> for EmacsDouble {
+    fn from(n_or_f: LispNumber) -> Self {
+        match n_or_f {
+            LispNumber::Fixnum(n) => n as EmacsDouble,
+            LispNumber::Float(f) => f,
+        }
     }
 }
 

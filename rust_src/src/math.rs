@@ -1,19 +1,26 @@
 //! Functions doing math on numbers.
 #![allow(clippy::float_cmp)]
 
-use crate::remacs_sys::{EmacsInt, Qnumberp};
 use remacs_macros::lisp_fn;
 
-use crate::{floatfns, lisp::LispObject, numbers::LispNumber};
+use crate::{
+    floatfns,
+    lisp::LispObject,
+    numbers::{LispNumber, LispNumberOrFloatOrMarker},
+    remacs_sys::EmacsInt,
+};
 
 /// Return X modulo Y.
 /// The result falls between zero (inclusive) and Y (exclusive).
 /// Both X and Y must be numbers or markers.
 /// (fn X Y)
 #[lisp_fn(name = "mod", c_name = "mod")]
-pub fn lisp_mod(x: LispNumber, y: LispNumber) -> LispObject {
+pub fn lisp_mod(
+    x: LispNumberOrFloatOrMarker,
+    y: LispNumberOrFloatOrMarker,
+) -> LispNumberOrFloatOrMarker {
     match (x, y) {
-        (LispNumber::Fixnum(mut i1), LispNumber::Fixnum(i2)) => {
+        (LispNumberOrFloatOrMarker::Fixnum(mut i1), LispNumberOrFloatOrMarker::Fixnum(i2)) => {
             if i2 == 0 {
                 arith_error!();
             }
@@ -25,15 +32,11 @@ pub fn lisp_mod(x: LispNumber, y: LispNumber) -> LispObject {
                 i1 += i2;
             }
 
-            i1.into()
+            LispNumberOrFloatOrMarker::Fixnum(i1)
         }
-        (LispNumber::Fixnum(i1), LispNumber::Float(f2)) => {
-            floatfns::fmod_float(i1 as f64, f2).into()
+        (n1, n2) => {
+            LispNumberOrFloatOrMarker::Float(floatfns::fmod_float(n1.to_float(), n2.to_float()))
         }
-        (LispNumber::Float(f1), LispNumber::Fixnum(i2)) => {
-            floatfns::fmod_float(f1, i2 as f64).into()
-        }
-        (LispNumber::Float(f1), LispNumber::Float(f2)) => floatfns::fmod_float(f1, f2).into(),
     }
 }
 
@@ -74,11 +77,12 @@ fn arith_driver(code: ArithOp, args: &[LispObject]) -> LispObject {
             ok_accum = accum;
         }
 
-        match val.as_number_coerce_marker_or_error() {
-            LispNumber::Float(_) => {
+        match LispNumberOrFloatOrMarker::from(val) {
+            LispNumberOrFloatOrMarker::Float(_) => {
                 return floatfns::float_arith_driver(ok_accum as f64, ok_args, code, args).into();
             }
-            LispNumber::Fixnum(next) => {
+            num => {
+                let next = num.to_fixnum();
                 match code {
                     ArithOp::Add => {
                         if accum.checked_add(next).is_none() {
@@ -239,13 +243,10 @@ pub fn min(args: &[LispObject]) -> LispObject {
 
 /// Return the absolute value of ARG.
 #[lisp_fn]
-pub fn abs(arg: LispObject) -> LispObject {
-    if let Some(f) = arg.as_float() {
-        LispObject::from_float(f.abs())
-    } else if let Some(n) = arg.as_fixnum() {
-        LispObject::from(n.abs())
-    } else {
-        wrong_type!(Qnumberp, arg);
+pub fn abs(arg: LispNumber) -> LispNumber {
+    match arg {
+        LispNumber::Float(f) => LispNumber::Float(f.abs()),
+        LispNumber::Fixnum(n) => LispNumber::Fixnum(n.abs()),
     }
 }
 
@@ -261,6 +262,14 @@ pub enum ArithComparison {
 }
 
 pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithComparison) -> bool {
+    arithcompare_1(obj1.into(), obj2.into(), comparison)
+}
+
+pub fn arithcompare_1(
+    obj1: LispNumberOrFloatOrMarker,
+    obj2: LispNumberOrFloatOrMarker,
+    comparison: ArithComparison,
+) -> bool {
     // If either arg is floating point, set F1 and F2 to the 'double'
     // approximations of the two arguments, and set FNEQ if floating-point
     // comparison reports that F1 is not equal to F2, possibly because F1
@@ -268,17 +277,18 @@ pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithCompari
     // ties if the floating-point comparison is either not done or reports
     // equality.
 
-    let (i1, i2, f1, f2) = match (
-        obj1.as_number_coerce_marker_or_error(),
-        obj2.as_number_coerce_marker_or_error(),
-    ) {
-        (LispNumber::Fixnum(n1), LispNumber::Fixnum(n2)) => (n1, n2, 0., 0.),
-        (LispNumber::Fixnum(n1), LispNumber::Float(n2)) => {
+    let (i1, i2, f1, f2) = match (obj1, obj2) {
+        (LispNumberOrFloatOrMarker::Float(n1), LispNumberOrFloatOrMarker::Float(n2)) => {
+            (0, 0, n1, n2)
+        }
+        (n1, LispNumberOrFloatOrMarker::Float(n2)) => {
             // Compare an integer NUM1 to a float NUM2.  This is the
             // converse of comparing float to integer (see below).
-            (n1, n1 as f64 as EmacsInt, n1 as f64, n2)
+            let num = n1.to_fixnum();
+            (num, num as f64 as EmacsInt, num as f64, n2)
         }
-        (LispNumber::Float(n1), LispNumber::Fixnum(n2)) => {
+        (LispNumberOrFloatOrMarker::Float(n1), n2) => {
+            let num = n2.to_fixnum();
             // Compare a float NUM1 to an integer NUM2 by converting the
             // integer I2 (i.e., NUM2) to the double F2 (a conversion that
             // can round on some platforms, if I2 is large enough), and then
@@ -287,9 +297,12 @@ pub fn arithcompare(obj1: LispObject, obj2: LispObject, comparison: ArithCompari
             // floating-point comparison reports a tie, NUM1 = F1 = F2 = I1
             // (exactly) so I1 - I2 = NUM1 - NUM2 (exactly), so comparing I1
             // to I2 will break the tie correctly.
-            (n2 as f64 as EmacsInt, n2, n1, n2 as f64)
+            (num as f64 as EmacsInt, num, n1, num as f64)
         }
-        (LispNumber::Float(n1), LispNumber::Float(n2)) => (0, 0, n1, n2),
+        (n1, n2) => {
+            // Remaining cases are either fixnums or markers which can be treated as fixnums.
+            (n1.to_fixnum(), n2.to_fixnum(), 0., 0.)
+        }
     };
     let fneq = f1 != f2;
 
@@ -369,14 +382,14 @@ pub fn geq(args: &[LispObject]) -> bool {
 
 /// Return t if first arg is not equal to second arg.  Both must be numbers or markers.
 #[lisp_fn(name = "/=")]
-pub fn neq(num1: LispObject, num2: LispObject) -> bool {
-    arithcompare(num1, num2, ArithComparison::Notequal)
+pub fn neq(num1: LispNumberOrFloatOrMarker, num2: LispNumberOrFloatOrMarker) -> bool {
+    arithcompare_1(num1, num2, ArithComparison::Notequal)
 }
 
 /// Return remainder of X divided by Y.
 /// Both must be integers or markers.
 #[lisp_fn(name = "%")]
-pub fn rem(x: LispNumber, y: LispNumber) -> EmacsInt {
+pub fn rem(x: LispNumberOrFloatOrMarker, y: LispNumberOrFloatOrMarker) -> EmacsInt {
     let x = x.to_fixnum();
     let y = y.to_fixnum();
 
@@ -390,20 +403,20 @@ pub fn rem(x: LispNumber, y: LispNumber) -> EmacsInt {
 /// Return NUMBER plus one.  NUMBER may be a number or a marker.
 /// Markers are converted to integers.
 #[lisp_fn(name = "1+")]
-pub fn add1(number: LispNumber) -> LispNumber {
+pub fn add1(number: LispNumberOrFloatOrMarker) -> LispNumberOrFloatOrMarker {
     match number {
-        LispNumber::Fixnum(num) => LispNumber::Fixnum(num + 1),
-        LispNumber::Float(num) => LispNumber::Float(num + 1.0),
+        LispNumberOrFloatOrMarker::Float(num) => LispNumberOrFloatOrMarker::Float(num + 1.0),
+        num => LispNumberOrFloatOrMarker::Fixnum(num.to_fixnum() + 1),
     }
 }
 
 /// Return NUMBER minus one.  NUMBER may be a number or a marker.
 /// Markers are converted to integers.
 #[lisp_fn(name = "1-")]
-pub fn sub1(number: LispNumber) -> LispNumber {
+pub fn sub1(number: LispNumberOrFloatOrMarker) -> LispNumberOrFloatOrMarker {
     match number {
-        LispNumber::Fixnum(num) => LispNumber::Fixnum(num - 1),
-        LispNumber::Float(num) => LispNumber::Float(num - 1.0),
+        LispNumberOrFloatOrMarker::Float(num) => LispNumberOrFloatOrMarker::Float(num - 1.0),
+        num => LispNumberOrFloatOrMarker::Fixnum(num.to_fixnum() - 1),
     }
 }
 

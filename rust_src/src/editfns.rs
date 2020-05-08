@@ -16,10 +16,10 @@ use crate::{
     fns::copy_sequence,
     indent::invalidate_current_column,
     lisp::LispObject,
-    marker::{marker_position_lisp, point_marker, set_point_from_marker},
+    marker::{marker_position_lisp, point_marker, set_point_from_marker_rust},
     multibyte::MAX_MULTIBYTE_LENGTH,
     multibyte::{multibyte_char_at, Codepoint, LispStringRef},
-    numbers::{check_range, LispNumber},
+    numbers::{check_range, LispNumberOrMarker},
     remacs_sys::EmacsInt,
     remacs_sys::{
         buffer_overflow, build_string, chars_in_text, current_message, del_range, del_range_1,
@@ -179,24 +179,25 @@ pub fn point_max() -> EmacsInt {
 ///
 /// The return value is POSITION.
 #[lisp_fn(intspec = "NGoto char: ")]
-pub fn goto_char(position: LispObject) -> LispObject {
-    if position.is_marker() {
-        set_point_from_marker(position);
-    } else if let Some(num) = position.as_fixnum() {
-        let cur_buf = ThreadState::current_buffer_unchecked();
-        let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
-        let bytepos = cur_buf.charpos_to_bytepos(pos);
-        unsafe { set_point_both(pos, bytepos) };
-    } else {
-        wrong_type!(Qinteger_or_marker_p, position)
-    };
+pub fn goto_char(position: LispNumberOrMarker) -> LispNumberOrMarker {
+    match position {
+        LispNumberOrMarker::Marker(m) => {
+            set_point_from_marker_rust(m);
+        }
+        LispNumberOrMarker::Fixnum(num) => {
+            let cur_buf = ThreadState::current_buffer_unchecked();
+            let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
+            let bytepos = cur_buf.charpos_to_bytepos(pos);
+            unsafe { set_point_both(pos, bytepos) };
+        }
+    }
     position
 }
 
 /// Return the byte position for character position POSITION.
 /// If POSITION is out of range, the value is nil.
 #[lisp_fn]
-pub fn position_bytes(position: LispNumber) -> Option<EmacsInt> {
+pub fn position_bytes(position: LispNumberOrMarker) -> Option<EmacsInt> {
     let pos = position.to_fixnum() as ptrdiff_t;
     let cur_buf = ThreadState::current_buffer_unchecked();
 
@@ -491,8 +492,8 @@ pub fn line_beginning_position(n: Option<EmacsInt>) -> EmacsInt {
 
     // Return END constrained to the current input field.
     constrain_to_field(
-        Some(LispNumber::Fixnum(charpos as EmacsInt)),
-        LispNumber::Fixnum(point() as EmacsInt),
+        Some((charpos as EmacsInt).into()),
+        (point() as EmacsInt).into(),
         n != 1,
         true,
         Qnil,
@@ -532,8 +533,8 @@ pub fn line_end_position(n: Option<EmacsInt>) -> EmacsInt {
 
     // Return END constrained to the current input field.
     constrain_to_field(
-        Some(LispNumber::Fixnum(end_pos as EmacsInt)),
-        LispNumber::Fixnum(orig),
+        Some((end_pos as EmacsInt).into()),
+        orig.into(),
         n != 1,
         true,
         Qnil,
@@ -549,7 +550,7 @@ pub fn line_end_position(n: Option<EmacsInt>) -> EmacsInt {
 /// is before LIMIT, then LIMIT will be returned instead.
 #[lisp_fn(min = "0")]
 pub fn field_beginning(
-    pos: Option<LispNumber>,
+    pos: Option<LispNumberOrMarker>,
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
@@ -567,7 +568,7 @@ pub fn field_beginning(
 /// is after LIMIT, then LIMIT will be returned instead.
 #[lisp_fn(min = "0")]
 pub fn field_end(
-    pos: Option<LispNumber>,
+    pos: Option<LispNumberOrMarker>,
     escape_from_edge: bool,
     limit: Option<EmacsInt>,
 ) -> EmacsInt {
@@ -605,8 +606,8 @@ pub fn field_end(
 /// Field boundaries are not noticed if `inhibit-field-text-motion' is non-nil.
 #[lisp_fn(min = "2")]
 pub fn constrain_to_field(
-    new_pos: Option<LispNumber>,
-    old_pos: LispNumber,
+    new_pos: Option<LispNumberOrMarker>,
+    old_pos: LispNumberOrMarker,
     escape_from_edge: bool,
     only_in_line: bool,
     inhibit_capture_property: LispObject,
@@ -630,11 +631,11 @@ pub fn constrain_to_field(
     if unsafe { globals.Vinhibit_field_text_motion.is_nil() }
         && new_pos != old_pos
         && (get_char_property(
-            new_pos.into (),
+            new_pos.into(),
             Qfield,
             Qnil).is_not_nil()
             || get_char_property(
-                old_pos.into (),
+                old_pos.into(),
                 Qfield,
                 Qnil).is_not_nil()
             // To recognize field boundaries, we must also look at the
@@ -643,7 +644,7 @@ pub fn constrain_to_field(
             // fields (like comint prompts).
             || (new_pos > begv
                 && get_char_property(
-                    prev_new.into (),
+                    prev_new.into(),
                     Qfield,
                     Qnil).is_not_nil())
             || (old_pos > begv
@@ -654,13 +655,13 @@ pub fn constrain_to_field(
             // `get_pos_property' as well.
             || (unsafe {
                 Fget_pos_property(
-                    LispObject::from(old_pos),
+                    old_pos.into(),
                     inhibit_capture_property,
                     Qnil).is_nil()
             }
                 && (old_pos <= begv
                     || get_char_property(
-                        old_pos.into (),
+                        old_pos.into(),
                         inhibit_capture_property,
                         Qnil).is_nil()
                     || get_char_property(
@@ -670,7 +671,7 @@ pub fn constrain_to_field(
     // It is possible that NEW_POS is not within the same field as
     // OLD_POS; try to move NEW_POS so that it is.
     {
-        let tmp: LispNumber = old_pos.into();
+        let tmp: LispNumberOrMarker = old_pos.into();
         let field_bound = if fwd {
             field_end(Some(tmp), escape_from_edge, Some(new_pos))
         } else {
@@ -834,14 +835,14 @@ pub fn emacs_pid() -> LispObject {
 #[lisp_fn(min = "1")]
 pub fn insert_buffer_substring(
     buffer: LispBufferOrName,
-    beg: Option<LispNumber>,
-    end: Option<LispNumber>,
+    start: Option<LispNumberOrMarker>,
+    end: Option<LispNumberOrMarker>,
 ) {
     let mut buf_ref = LispBufferRef::from(buffer)
         .as_live()
         .unwrap_or_else(|| error!("Selecting deleted buffer"));
 
-    let mut b = beg.map_or(buf_ref.begv, |n| n.to_fixnum() as isize);
+    let mut b = start.map_or(buf_ref.begv, |n| n.to_fixnum() as isize);
     let mut e = end.map_or(buf_ref.zv, |n| n.to_fixnum() as isize);
 
     if b > e {
@@ -849,7 +850,7 @@ pub fn insert_buffer_substring(
     }
 
     if !(buf_ref.begv <= b && e <= buf_ref.zv) {
-        args_out_of_range!(beg, end);
+        args_out_of_range!(start, end);
     }
 
     let mut cur_buf = ThreadState::current_buffer_unchecked();
@@ -1186,7 +1187,7 @@ pub fn save_restriction(body: LispObject) -> LispObject {
 // finding the beginning and ending of the "merged" field.
 
 pub fn find_field(
-    pos: Option<LispNumber>,
+    pos: Option<LispNumberOrMarker>,
     merge_at_boundary: bool,
     beg_limit: Option<EmacsInt>,
     end_limit: Option<EmacsInt>,
@@ -1297,7 +1298,7 @@ pub fn find_field(
 /// A field is a region of text with the same `field' property.
 /// If POS is nil, the value of point is used for POS.
 #[lisp_fn(min = "0")]
-pub fn delete_field(pos: Option<LispNumber>) {
+pub fn delete_field(pos: Option<LispNumberOrMarker>) {
     let (beg, end) = find_field(pos, false, None, None);
     if beg != end {
         unsafe { del_range(beg, end) };
@@ -1308,7 +1309,7 @@ pub fn delete_field(pos: Option<LispNumber>) {
 /// A field is a region of text with the same `field' property.
 /// If POS is nil, the value of point is used for POS.
 #[lisp_fn(min = "0")]
-pub fn field_string(pos: Option<LispNumber>) -> LispObject {
+pub fn field_string(pos: Option<LispNumberOrMarker>) -> LispObject {
     let (beg, end) = find_field(pos, false, None, None);
     unsafe { make_buffer_string(beg, end, true) }
 }
@@ -1317,7 +1318,7 @@ pub fn field_string(pos: Option<LispNumber>) -> LispObject {
 /// A field is a region of text with the same `field' property.
 /// If POS is nil, the value of point is used for POS.
 #[lisp_fn(min = "0")]
-pub fn field_string_no_properties(pos: Option<LispNumber>) -> LispObject {
+pub fn field_string_no_properties(pos: Option<LispNumberOrMarker>) -> LispObject {
     let (beg, end) = find_field(pos, false, None, None);
     unsafe { make_buffer_string(beg, end, false) }
 }

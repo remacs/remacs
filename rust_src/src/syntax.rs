@@ -7,7 +7,7 @@ use crate::{
     editfns::constrain_to_field,
     fns::copy_sequence,
     lisp::LispObject,
-    numbers::LispNumber,
+    numbers::LispNumberOrMarker,
     remacs_sys::Fset_char_table_parent,
     remacs_sys::{
         buffer_defaults, scan_lists, scan_words, set_char_table_defalt, set_point, skip_chars,
@@ -147,8 +147,8 @@ pub fn forward_word(arg: Option<EmacsInt>) -> bool {
     };
     // Avoid jumping out of an input field.
     val = constrain_to_field(
-        Some(LispNumber::Fixnum(val as EmacsInt)),
-        LispNumber::Fixnum(point as EmacsInt),
+        Some(LispNumberOrMarker::Fixnum(val as EmacsInt)),
+        LispNumberOrMarker::Fixnum(point as EmacsInt),
         false,
         false,
         Qnil,
