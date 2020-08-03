@@ -854,31 +854,30 @@ pub unsafe extern "C" fn str_to_multibyte(
 /// Same as `MULTIBYTE_LENGTH` macro in C.
 #[allow(clippy::if_same_then_else)]
 fn multibyte_length(slice: &[c_uchar], allow_encoded_raw: bool) -> Option<usize> {
-    let len = slice.len();
-    if len < 1 {
-        None
-    } else if slice[0] & 0x80 == 0 {
-        Some(1)
-    } else if len < 2 || slice[1] & 0xC0 != 0x80 {
-        None
-    } else if !allow_encoded_raw && slice[0] & 0xFE == 0xC0 {
-        None
-    } else if slice[0] & 0xE0 == 0xC0 {
-        Some(2)
-    } else if len < 3 || slice[2] & 0xC0 != 0x80 {
-        None
-    } else if slice[0] & 0xF0 == 0xE0 {
-        Some(3)
-    } else if len < 4 || slice[3] & 0xC0 != 0x80 {
-        None
-    } else if slice[0] & 0xF8 == 0xF0 {
-        Some(4)
-    } else if len < 5 || slice[4] & 0xC0 != 0x80 {
-        None
-    } else if slice[0] == 0xF8 && slice[1] & 0xF0 == 0x80 {
-        Some(5)
-    } else {
-        None
+    // The bits a byte "starts" with are the most significant ones in these comments
+    match slice {
+        // true if a starts with 0
+        &[a] if a & 0x80 == 0 => Some(1),
+        // true if a starts with 110, and b starts with 10. If byte8 encoding is not allowed, a is
+        // not allowed to start with 1100 000
+        &[a, b]
+            if allow_encoded_raw || a & 0xFE != 0xC0 && a & 0xE0 == 0xC0 && b & 0xC0 == 0x80 =>
+        {
+            Some(2)
+        }
+        // true if a starts with 1110, b and c starts with 10
+        &[a, b, c] if a & 0xF0 == 0xE0 && (b & 0xC0) | (c & 0xC0) == 0x80 => Some(3),
+        // true if a starts with 11110, b, c, and d start with 10
+        &[a, b, c, d] if a & 0xF8 == 0xF0 && (b & 0xC0) | (c & 0xC0) | (d & 0xC0) == 0x80 => {
+            Some(4)
+        }
+        // a is 1111 1000, b starts with 1000, c, d, and e start with 10
+        &[a, b, c, d, e, ..]
+            if a == 0xF8 && b & 0xF0 == 0x80 && (c & 0xC0) | (d & 0xC0) | (e & 0xC0) == 0x80 =>
+        {
+            Some(5)
+        }
+        _ => None,
     }
 }
 
