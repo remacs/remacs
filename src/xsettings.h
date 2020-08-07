@@ -28,5 +28,9 @@ extern void xsettings_initialize (struct x_display_info *);
 extern void xft_settings_event (struct x_display_info *, const XEvent *);
 extern const char *xsettings_get_system_font (void);
 
+extern char *current_mono_font;
+extern char *current_font;
+extern Lisp_Object current_tool_bar_style;
+
 
 #endif /* XSETTINGS_H */

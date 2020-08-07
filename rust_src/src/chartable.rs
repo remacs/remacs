@@ -1,7 +1,5 @@
 //! char table related functions
 
-use libc;
-
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -58,7 +56,7 @@ impl From<LispObject> for Option<LispCharTableRef> {
 
 impl From<LispCharTableRef> for LispObject {
     fn from(ct: LispCharTableRef) -> Self {
-        LispObject::tag_ptr(ct, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(ct, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -264,13 +262,13 @@ impl LispStructuralEqual for LispSubCharTableAsciiRef {
 
 impl From<LispSubCharTableAsciiRef> for LispObject {
     fn from(s: LispSubCharTableAsciiRef) -> Self {
-        LispObject::tag_ptr(s.0, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(s.0, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
 impl From<LispSubCharTableRef> for LispObject {
     fn from(s: LispSubCharTableRef) -> Self {
-        LispObject::tag_ptr(s, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(s, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
@@ -333,7 +331,7 @@ impl LispStructuralEqual for LispSubCharTableRef {
     }
 }
 
-fn is_ascii(c: isize) -> bool {
+const fn is_ascii(c: isize) -> bool {
     c < 128
 }
 

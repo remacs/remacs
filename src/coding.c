@@ -8511,26 +8511,6 @@ DEFUN ("read-non-nil-coding-system", Fread_non_nil_coding_system,
   return (Fintern (val, Qnil));
 }
 
-DEFUN ("read-coding-system", Fread_coding_system, Sread_coding_system, 1, 2, 0,
-       doc: /* Read a coding system from the minibuffer, prompting with string PROMPT.
-If the user enters null input, return second argument DEFAULT-CODING-SYSTEM.
-Ignores case when completing coding systems (all Emacs coding systems
-are lower-case).  */)
-  (Lisp_Object prompt, Lisp_Object default_coding_system)
-{
-  Lisp_Object val;
-  ptrdiff_t count = SPECPDL_INDEX ();
-
-  if (SYMBOLP (default_coding_system))
-    default_coding_system = SYMBOL_NAME (default_coding_system);
-  specbind (Qcompletion_ignore_case, Qt);
-  val = Fcompleting_read (prompt, Vcoding_system_alist, Qnil,
-			  Qt, Qnil, Qcoding_system_history,
-			  default_coding_system, Qnil);
-  unbind_to (count, Qnil);
-  return (SCHARS (val) == 0 ? Qnil : Fintern (val, Qnil));
-}
-
 
 /* Detect how the bytes at SRC of length SRC_BYTES are encoded.  If
    HIGHEST, return the coding system of the highest
@@ -9522,47 +9502,6 @@ encode_file_name (Lisp_Object fname)
 #endif
 }
 
-DEFUN ("decode-coding-string", Fdecode_coding_string, Sdecode_coding_string,
-       2, 4, 0,
-       doc: /* Decode STRING which is encoded in CODING-SYSTEM, and return the result.
-
-Optional third arg NOCOPY non-nil means it is OK to return STRING itself
-if the decoding operation is trivial.
-
-Optional fourth arg BUFFER non-nil means that the decoded text is
-inserted in that buffer after point (point does not move).  In this
-case, the return value is the length of the decoded text.
-
-This function sets `last-coding-system-used' to the precise coding system
-used (which may be different from CODING-SYSTEM if CODING-SYSTEM is
-not fully specified.)  */)
-  (Lisp_Object string, Lisp_Object coding_system, Lisp_Object nocopy, Lisp_Object buffer)
-{
-  return code_convert_string (string, coding_system, buffer,
-			      0, ! NILP (nocopy), 0);
-}
-
-DEFUN ("encode-coding-string", Fencode_coding_string, Sencode_coding_string,
-       2, 4, 0,
-       doc: /* Encode STRING to CODING-SYSTEM, and return the result.
-
-Optional third arg NOCOPY non-nil means it is OK to return STRING
-itself if the encoding operation is trivial.
-
-Optional fourth arg BUFFER non-nil means that the encoded text is
-inserted in that buffer after point (point does not move).  In this
-case, the return value is the length of the encoded text.
-
-This function sets `last-coding-system-used' to the precise coding system
-used (which may be different from CODING-SYSTEM if CODING-SYSTEM is
-not fully specified.)  */)
-  (Lisp_Object string, Lisp_Object coding_system, Lisp_Object nocopy, Lisp_Object buffer)
-{
-  return code_convert_string (string, coding_system, buffer,
-			      1, ! NILP (nocopy), 0);
-}
-
-
 DEFUN ("decode-sjis-char", Fdecode_sjis_char, Sdecode_sjis_char, 1, 1, 0,
        doc: /* Decode a Japanese character which has CODE in shift_jis encoding.
 Return the corresponding character.  */)
@@ -10920,7 +10859,6 @@ syms_of_coding (void)
      symbol as a coding system.  */
   DEFSYM (Qcoding_system_define_form, "coding-system-define-form");
 
-  defsubr (&Sread_coding_system);
   defsubr (&Sread_non_nil_coding_system);
   defsubr (&Sdetect_coding_region);
   defsubr (&Sdetect_coding_string);
@@ -10929,8 +10867,6 @@ syms_of_coding (void)
   defsubr (&Scheck_coding_systems_region);
   defsubr (&Sdecode_coding_region);
   defsubr (&Sencode_coding_region);
-  defsubr (&Sdecode_coding_string);
-  defsubr (&Sencode_coding_string);
   defsubr (&Sdecode_sjis_char);
   defsubr (&Sencode_sjis_char);
   defsubr (&Sdecode_big5_char);

@@ -501,6 +501,12 @@ extern char const DEV_TTY[];
 Lisp_Object
 make_lispy_position (struct frame *f, Lisp_Object x, Lisp_Object y, Time t);
 
+Lisp_Object
+read_key_sequence_vs (Lisp_Object prompt, Lisp_Object continue_echo,
+		      Lisp_Object dont_downcase_last,
+		      Lisp_Object can_return_switch_frame,
+		      Lisp_Object cmd_loop, bool allow_string);
+
 INLINE_HEADER_END
 
 #endif /* EMACS_KEYBOARD_H */

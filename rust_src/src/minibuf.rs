@@ -9,9 +9,9 @@ use crate::{
     eval, fns,
     keymap::get_keymap,
     lisp::LispObject,
-    lists::{car_safe, cdr_safe, memq},
+    lists::{car_safe, cdr_safe, memq, LispCons},
     multibyte::LispStringRef,
-    obarray::{intern, lisp_intern},
+    obarray::{intern, intern_lisp},
     remacs_sys::{
         globals, Qbuffer_name_history, Qcommandp, Qcompletion_ignore_case, Qcustom_variable_p,
         Qfield, Qminibuffer_completion_table, Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
@@ -86,7 +86,7 @@ pub fn minibuffer_prompt_end() -> EmacsInt {
 
     let end = field_end(Some(beg.into()), false, None);
     let buffer_end = buffer.zv as EmacsInt;
-    if end == buffer_end && get_char_property(beg, Qfield, Qnil).is_nil() {
+    if end == buffer_end && get_char_property(beg.into(), Qfield, Qnil).is_nil() {
         beg
     } else {
         end
@@ -373,7 +373,7 @@ pub fn read_command_or_variable(
     if name.is_nil() {
         name
     } else {
-        lisp_intern(name.into(), None)
+        intern_lisp(name.into(), None)
     }
 }
 
@@ -471,7 +471,7 @@ pub fn read_buffer(
             if let Some(mut string) = prompt {
                 let data = string.as_slice();
                 let mut len = string.len_bytes() as usize;
-                if len >= 2 && &data[len - 2..len] == &[b':', b' '] {
+                if len >= 2 && data[len - 2..len] == [b':', b' '] {
                     len -= 2;
                 } else if len >= 1 && (data[len - 1] == b':' || data[len - 1] == b' ') {
                     len -= 1;
@@ -491,7 +491,7 @@ pub fn read_buffer(
             prompt = editfns::format(&mut [
                 format,
                 prompt.into(),
-                def.as_cons().map_or(def, |d| d.car()),
+                def.as_cons().map_or(def, LispCons::car),
             ])
             .into();
         }

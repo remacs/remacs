@@ -54,7 +54,6 @@ static bool foreach_window_1 (struct window *,
 static bool window_resize_check (struct window *, bool);
 static void window_resize_apply (struct window *, bool);
 static void select_window_1 (Lisp_Object, bool);
-static void run_window_configuration_change_hook (struct frame *);
 
 static struct window *set_window_margins (struct window *, Lisp_Object,
 					  Lisp_Object);
@@ -429,36 +428,6 @@ vertical combination.  */)
   return WINDOW_HORIZONTAL_COMBINATION_P (w) ? w->contents : Qnil;
 }
 
-DEFUN ("window-pixel-width-before-size-change",
-       Fwindow_pixel_width_before_size_change,
-       Swindow_pixel_width_before_size_change, 0, 1, 0,
-       doc: /* Return pixel width of window WINDOW before last size changes.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value is the pixel width of WINDOW at the last time
-`window-size-change-functions' was run.  It's zero if WINDOW was made
-after that.  */)
-  (Lisp_Object window)
-{
-  return (make_number
-	  (decode_valid_window (window)->pixel_width_before_size_change));
-}
-
-DEFUN ("window-pixel-height-before-size-change",
-       Fwindow_pixel_height_before_size_change,
-       Swindow_pixel_height_before_size_change, 0, 1, 0,
-       doc: /* Return pixel height of window WINDOW before last size changes.
-WINDOW must be a valid window and defaults to the selected one.
-
-The return value is the pixel height of WINDOW at the last time
-`window-size-change-functions' was run.  It's zero if WINDOW was made
-after that.  */)
-  (Lisp_Object window)
-{
-  return (make_number
-	  (decode_valid_window (window)->pixel_height_before_size_change));
-}
-
 DEFUN ("window-mode-line-height", Fwindow_mode_line_height,
        Swindow_mode_line_height, 0, 1, 0,
        doc: /* Return the height in pixels of WINDOW's mode-line.
@@ -493,24 +462,6 @@ WINDOW must be a live window and defaults to the selected one.  */)
   (Lisp_Object window)
 {
   return (make_number (WINDOW_BOTTOM_DIVIDER_WIDTH (decode_live_window (window))));
-}
-
-DEFUN ("window-scroll-bar-width", Fwindow_scroll_bar_width,
-       Swindow_scroll_bar_width, 0, 1, 0,
-       doc: /* Return the width in pixels of WINDOW's vertical scrollbar.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return (make_number (WINDOW_SCROLL_BAR_AREA_WIDTH (decode_live_window (window))));
-}
-
-DEFUN ("window-scroll-bar-height", Fwindow_scroll_bar_height,
-       Swindow_scroll_bar_height, 0, 1, 0,
-       doc: /* Return the height in pixels of WINDOW's horizontal scrollbar.
-WINDOW must be a live window and defaults to the selected one.  */)
-  (Lisp_Object window)
-{
-  return (make_number (WINDOW_SCROLL_BAR_AREA_HEIGHT (decode_live_window (window))));
 }
 
 /* Test if the character at column X, row Y is within window W.
@@ -2241,7 +2192,7 @@ select_frame_norecord (Lisp_Object frame)
     Fselect_frame (frame, Qt);
 }
 
-static void
+void
 run_window_configuration_change_hook (struct frame *f)
 {
   ptrdiff_t count = SPECPDL_INDEX ();
@@ -2289,16 +2240,6 @@ run_window_configuration_change_hook (struct frame *f)
 
   run_funs (global_wcch);
   unbind_to (count, Qnil);
-}
-
-DEFUN ("run-window-configuration-change-hook", Frun_window_configuration_change_hook,
-       Srun_window_configuration_change_hook, 0, 1, 0,
-       doc: /* Run `window-configuration-change-hook' for FRAME.
-If FRAME is omitted or nil, it defaults to the selected frame.  */)
-  (Lisp_Object frame)
-{
-  run_window_configuration_change_hook (decode_live_frame (frame));
-  return Qnil;
 }
 
 DEFUN ("run-window-scroll-functions", Frun_window_scroll_functions,
@@ -3765,29 +3706,6 @@ mark_window_cursors_off (struct window *w)
 
       w = NILP (w->next) ? 0 : XWINDOW (w->next);
     }
-}
-
-/* Return number of lines of text (not counting mode lines) in W.  */
-
-int
-window_internal_height (struct window *w)
-{
-  int ht = w->total_lines;
-
-  if (!MINI_WINDOW_P (w))
-    {
-      if (!NILP (w->parent)
-	  || WINDOWP (w->contents)
-	  || !NILP (w->next)
-	  || !NILP (w->prev)
-	  || window_wants_mode_line (w))
-	--ht;
-
-      if (window_wants_header_line (w))
-	--ht;
-    }
-
-  return ht;
 }
 
 
@@ -6007,6 +5925,8 @@ init_window (void)
   Vwindow_list = Qnil;
 }
 
+extern void rust_syms_of_window(void);
+
 void
 syms_of_window (void)
 {
@@ -6017,7 +5937,6 @@ syms_of_window (void)
   Fput (Qscroll_up, Qscroll_command, Qt);
   Fput (Qscroll_down, Qscroll_command, Qt);
 
-  DEFSYM (Qwindow_configuration_change_hook, "window-configuration-change-hook");
   DEFSYM (Qwindowp, "windowp");
   DEFSYM (Qwindow_configuration_p, "window-configuration-p");
   DEFSYM (Qwindow_live_p, "window-live-p");
@@ -6102,13 +6021,7 @@ on their symbols to be controlled by this variable.  */);
   Vwindow_point_insertion_type = Qnil;
   DEFSYM (Qwindow_point_insertion_type, "window_point_insertion_type");
 
-  DEFVAR_LISP ("window-configuration-change-hook",
-	       Vwindow_configuration_change_hook,
-	       doc: /* Functions to call when window configuration changes.
-The buffer-local value is run once per window, with the relevant window
-selected; while the global value is run only once for the modified frame,
-with the relevant frame selected.  */);
-  Vwindow_configuration_change_hook = Qnil;
+  rust_syms_of_window();
 
   DEFVAR_LISP ("window-size-change-functions", Vwindow_size_change_functions,
     doc: /* Functions called during redisplay, if window sizes have changed.
@@ -6233,8 +6146,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Spos_visible_in_window_p);
   defsubr (&Swindow_line_height);
   defsubr (&Swindow_left_child);
-  defsubr (&Swindow_pixel_width_before_size_change);
-  defsubr (&Swindow_pixel_height_before_size_change);
   defsubr (&Sset_window_new_pixel);
   defsubr (&Sset_window_new_normal);
   defsubr (&Swindow_resize_apply);
@@ -6243,8 +6154,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Swindow_header_line_height);
   defsubr (&Swindow_right_divider_width);
   defsubr (&Swindow_bottom_divider_width);
-  defsubr (&Swindow_scroll_bar_width);
-  defsubr (&Swindow_scroll_bar_height);
   defsubr (&Scoordinates_in_window_p);
   defsubr (&Swindow_at);
   defsubr (&Swindow_end);
@@ -6255,7 +6164,6 @@ displayed after a scrolling operation to be somewhat inaccurate.  */);
   defsubr (&Sdelete_window_internal);
   defsubr (&Sresize_mini_window_internal);
   defsubr (&Sset_window_buffer);
-  defsubr (&Srun_window_configuration_change_hook);
   defsubr (&Srun_window_scroll_functions);
   defsubr (&Sforce_window_update);
   defsubr (&Ssplit_window_internal);

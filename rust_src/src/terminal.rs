@@ -1,6 +1,6 @@
 //! Functions related to terminal devices.
 
-use std::{mem, ptr};
+use std::ptr;
 
 use libc::{c_int, c_void};
 
@@ -8,8 +8,8 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     dispnew::LispGlyphRef,
-    frames::Fselected_frame,
-    frames::LispFrameRef,
+    frame::Fselected_frame,
+    frame::LispFrameRef,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::build_string,
     remacs_sys::{pvec_type, Lisp_Terminal},
@@ -36,7 +36,7 @@ impl LispTerminalRef {
 impl LispVectorlikeRef {
     pub fn as_terminal(self) -> Option<LispTerminalRef> {
         if self.is_pseudovector(pvec_type::PVEC_TERMINAL) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -82,7 +82,7 @@ impl From<LispObject> for Option<LispLiveTerminal> {
 
 impl From<LispObject> for LispLiveTerminal {
     fn from(obj: LispObject) -> Self {
-        let value: Option<LispLiveTerminal> = obj.into();
+        let value: Option<Self> = obj.into();
         value.unwrap_or_else(|| wrong_type!(Qterminal_live_p, obj))
     }
 }

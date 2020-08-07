@@ -48,10 +48,10 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include <X11/Xft/Xft.h>
 #endif
 
-static char *current_mono_font;
-static char *current_font;
+char *current_mono_font;
+char *current_font;
 static struct x_display_info *first_dpyinfo;
-static Lisp_Object current_tool_bar_style;
+Lisp_Object current_tool_bar_style;
 
 /* Store a config changed event in to the event queue.  */
 
@@ -973,41 +973,6 @@ xsettings_get_system_font (void)
   return current_mono_font;
 }
 
-DEFUN ("font-get-system-normal-font", Ffont_get_system_normal_font,
-       Sfont_get_system_normal_font,
-       0, 0, 0,
-       doc: /* Get the system default application font. */)
-  (void)
-{
-  return current_font ? build_string (current_font) : Qnil;
-}
-
-DEFUN ("font-get-system-font", Ffont_get_system_font, Sfont_get_system_font,
-       0, 0, 0,
-       doc: /* Get the system default fixed width font. */)
-  (void)
-{
-  return current_mono_font ? build_string (current_mono_font) : Qnil;
-}
-
-DEFUN ("tool-bar-get-system-style", Ftool_bar_get_system_style,
-       Stool_bar_get_system_style, 0, 0, 0,
-       doc: /* Get the system tool bar style.
-If no system tool bar style is known, return `tool-bar-style' if set to a
-known style.  Otherwise return image.  */)
-  (void)
-{
-  if (EQ (Vtool_bar_style, Qimage)
-      || EQ (Vtool_bar_style, Qtext)
-      || EQ (Vtool_bar_style, Qboth)
-      || EQ (Vtool_bar_style, Qboth_horiz)
-      || EQ (Vtool_bar_style, Qtext_image_horiz))
-    return Vtool_bar_style;
-  if (!NILP (current_tool_bar_style))
-    return current_tool_bar_style;
-  return Qimage;
-}
-
 void
 syms_of_xsettings (void)
 {
@@ -1024,8 +989,6 @@ syms_of_xsettings (void)
   DEFSYM (Qmonospace_font_name, "monospace-font-name");
   DEFSYM (Qfont_name, "font-name");
   DEFSYM (Qfont_render, "font-render");
-  defsubr (&Sfont_get_system_font);
-  defsubr (&Sfont_get_system_normal_font);
 
   DEFVAR_BOOL ("font-use-system-font", use_system_font,
     doc: /* Non-nil means to apply the system defined font dynamically.
@@ -1047,7 +1010,6 @@ If this variable is nil, Emacs ignores system font changes.  */);
 
   current_tool_bar_style = Qnil;
   DEFSYM (Qtool_bar_style, "tool-bar-style");
-  defsubr (&Stool_bar_get_system_style);
 
   Fprovide (intern_c_string ("dynamic-setting"), Qnil);
 }

@@ -1,9 +1,5 @@
 //! Threading code.
 
-use std::mem;
-
-use libc;
-
 use remacs_macros::lisp_fn;
 
 use crate::{
@@ -22,7 +18,7 @@ pub struct ThreadState {}
 
 impl ThreadState {
     pub fn current_buffer_unchecked() -> LispBufferRef {
-        unsafe { mem::transmute((*current_thread_pointer).m_current_buffer) }
+        unsafe { (*current_thread_pointer).m_current_buffer.into() }
     }
 
     pub fn current_buffer() -> Option<LispBufferRef> {
@@ -32,7 +28,7 @@ impl ThreadState {
     }
 
     pub fn current_thread() -> ThreadStateRef {
-        unsafe { mem::transmute(current_thread_pointer) }
+        unsafe { current_thread_pointer.into() }
     }
 }
 
@@ -54,7 +50,7 @@ impl From<LispObject> for ThreadStateRef {
 
 impl From<ThreadStateRef> for LispObject {
     fn from(t: ThreadStateRef) -> Self {
-        LispObject::tag_ptr(t, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(t, Lisp_Type::Lisp_Vectorlike)
     }
 }
 

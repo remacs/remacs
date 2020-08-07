@@ -10,8 +10,8 @@ use crate::{
     buffers::{set_buffer, LispBufferRef},
     editfns::{goto_char, point},
     eval::unbind_to,
-    fns::nreverse,
-    frames::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
+    fns::{copy_alist, nreverse},
+    frame::{LispFrameLiveOrSelected, LispFrameOrSelected, LispFrameRef},
     interactive::InteractiveNumericPrefix,
     lisp::{ExternalPtr, LispObject},
     lists::{assq, setcdr},
@@ -20,10 +20,10 @@ use crate::{
     remacs_sys::face_id::HEADER_LINE_FACE_ID,
     remacs_sys::globals,
     remacs_sys::glyph_row_area::TEXT_AREA,
-    remacs_sys::Fcopy_alist,
     remacs_sys::{
         apply_window_adjustment, estimate_mode_line_height, minibuf_level,
         minibuf_selected_window as current_minibuf_window, noninteractive, record_unwind_protect,
+        run_window_configuration_change_hook as run_window_conf_change_hook,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
         update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
@@ -101,7 +101,7 @@ impl LispWindowRef {
             matrix_mode_line_height
         } else {
             let mut frame = self.get_frame();
-            let window: LispWindowRef = selected_window().into();
+            let window: Self = selected_window().into();
             let mode_line_height = unsafe {
                 estimate_mode_line_height(frame.as_mut(), CURRENT_MODE_LINE_FACE_ID(window))
             };
@@ -129,6 +129,8 @@ impl LispWindowRef {
         self.contents.is_window()
     }
 
+    // Equivalent to MINI_WINDOW_P
+    /// True if the the window is a minibuffer.
     pub fn is_minibuffer(self) -> bool {
         self.mini()
     }
@@ -241,6 +243,26 @@ impl LispWindowRef {
         } else {
             cmp::max(width / self.get_frame().column_width, 0)
         }
+    }
+
+    /// Return number of lines of text (not counting mode lines) in the window.
+    pub fn internal_height(self) -> i32 {
+        let mut lines = self.total_lines;
+        if !self.is_minibuffer() {
+            if self.parent.is_not_nil()
+                || self.contents.is_window()
+                || self.next.is_not_nil()
+                || self.prev.is_not_nil()
+                || self.wants_mode_line()
+            {
+                lines -= 1;
+            }
+
+            if self.wants_header_line() {
+                lines -= 1;
+            }
+        }
+        lines
     }
 
     /// The frame x-position at which the text (or left fringe) in
@@ -473,10 +495,10 @@ impl LispWindowRef {
 
     /// Width of the bottom divider of the window
     pub fn right_divider_width(self) -> i32 {
-        if !self.is_rightmost() {
-            self.get_frame().right_divider_width
-        } else {
+        if self.is_rightmost() {
             0
+        } else {
+            self.get_frame().right_divider_width
         }
     }
 
@@ -730,8 +752,29 @@ pub extern "C" fn window_body_width(window: *mut Lisp_Window, pixelwise: bool) -
 }
 
 #[no_mangle]
+pub extern "C" fn window_internal_height(w: LispWindowRef) -> i32 {
+    w.internal_height()
+}
+
+#[no_mangle]
 pub extern "C" fn decode_any_window(window: LispObject) -> LispWindowRef {
     LispWindowOrSelected::from(window).into()
+}
+
+/// Return the width in pixels of WINDOW's vertical scrollbar.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_scroll_bar_width(window: LispWindowLiveOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
+    win.scroll_bar_area_width()
+}
+
+/// Return the height in pixels of WINDOW's horizontal scrollbar.
+/// WINDOW must be a live window and defaults to the selected one.
+#[lisp_fn(min = "0")]
+pub fn window_scroll_bar_height(window: LispWindowLiveOrSelected) -> i32 {
+    let win: LispWindowRef = window.into();
+    win.scroll_bar_area_height()
 }
 
 /// Return the normal height of window WINDOW.
@@ -758,10 +801,10 @@ pub extern "C" fn decode_any_window(window: LispObject) -> LispWindowRef {
 #[lisp_fn(min = "0")]
 pub fn window_normal_size(window: LispWindowValidOrSelected, horizontal: bool) -> EmacsDouble {
     let win: LispWindowRef = window.into();
-    let frac = if !horizontal {
-        win.normal_lines
-    } else {
+    let frac = if horizontal {
         win.normal_cols
+    } else {
+        win.normal_lines
     };
     EmacsDouble::from(frac)
 }
@@ -1167,7 +1210,7 @@ pub fn window_list(
         error!("Window is on a different frame");
     }
 
-    unsafe { (window_list_1(w_obj, minibuf, f_obj)) }
+    unsafe { window_list_1(w_obj, minibuf, f_obj) }
 }
 
 /// Return a list of all live windows.
@@ -1206,7 +1249,7 @@ pub fn window_list_1_lisp(
     minibuf: LispObject,
     all_frames: LispObject,
 ) -> LispObject {
-    unsafe { (window_list_1(window, minibuf, all_frames)) }
+    unsafe { window_list_1(window, minibuf, all_frames) }
 }
 
 /// Return non-nil when WINDOW is dedicated to its buffer.
@@ -1701,7 +1744,7 @@ pub fn window_top_line(window: LispWindowValidOrSelected) -> EmacsInt {
 #[lisp_fn(min = "0")]
 pub fn window_parameters(window: LispWindowValidOrSelected) -> LispObject {
     let win: LispWindowRef = window.into();
-    unsafe { Fcopy_alist(win.window_parameters) }
+    copy_alist(win.window_parameters)
 }
 
 /// Return WINDOW's redisplay end trigger value.
@@ -1741,9 +1784,9 @@ pub fn set_window_redisplay_end_trigger(
 /// means that if a line at the bottom of the text area is only partially
 /// visible, that line is not counted.
 #[lisp_fn(min = "0")]
-pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
+pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> i32 {
     let window: LispWindowRef = window.into();
-    window.body_height(pixelwise).into()
+    window.body_height(pixelwise)
 }
 
 /// Return the width of WINDOW's text area.
@@ -1760,9 +1803,9 @@ pub fn window_body_height(window: LispWindowLiveOrSelected, pixelwise: bool) -> 
 /// Note that the returned value includes the column reserved for the
 /// continuation glyph.
 #[lisp_fn(name = "window-body-width", c_name = "window_body_width", min = "0")]
-pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool) -> EmacsInt {
+pub fn window_body_width_lisp(window: LispWindowLiveOrSelected, pixelwise: bool) -> i32 {
     let window: LispWindowRef = window.into();
-    window.body_width(pixelwise).into()
+    window.body_width(pixelwise)
 }
 
 /// Return pixel dimensions of WINDOW's lines.
@@ -1959,12 +2002,58 @@ pub fn set_window_fringes_lisp(
     let updated_window =
         unsafe { set_window_fringes(window.as_mut(), left_width, right_width, outside_margins) };
 
-    if !updated_window.is_null() {
+    if updated_window.is_null() {
+        false
+    } else {
         unsafe { apply_window_adjustment(updated_window) };
         true
-    } else {
-        false
     }
 }
 
+/// Return pixel width of window WINDOW before last size changes.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value is the pixel width of WINDOW at the last time
+/// `window-size-change-functions' was run.  It's zero if WINDOW was made
+/// after that.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_width_before_size_change(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.pixel_width_before_size_change
+}
+
+/// Return pixel height of window WINDOW before last size changes.
+/// WINDOW must be a valid window and defaults to the selected one.
+///
+/// The return value is the pixel height of WINDOW at the last time
+/// `window-size-change-functions' was run.  It's zero if WINDOW was made
+/// after that.
+#[lisp_fn(min = "0")]
+pub fn window_pixel_height_before_size_change(window: LispWindowValidOrSelected) -> i32 {
+    let window: LispWindowRef = window.into();
+    window.pixel_height_before_size_change
+}
+
 include!(concat!(env!("OUT_DIR"), "/windows_exports.rs"));
+
+/// Run `window-configuration-change-hook' for FRAME.
+/// If FRAME is omitted or nil, it defaults to the selected frame.
+#[lisp_fn(min = "0")]
+pub fn run_window_configuration_change_hook(frame: LispFrameLiveOrSelected) {
+    let mut frame_ref: LispFrameRef = frame.into();
+    unsafe { run_window_conf_change_hook(frame_ref.as_mut()) };
+}
+
+#[rustfmt::skip]
+def_lisp_sym!(Qwindow_configuration_change_hook, "window-configuration-change-hook");
+
+#[no_mangle]
+#[allow(unused_doc_comments)]
+extern "C" fn rust_syms_of_window() {
+    /// Functions to call when window configuration changes.
+    /// The buffer-local value is run once per window, with the relevant window
+    /// selected; while the global value is run only once for the modified frame,
+    /// with the relevant frame selected.
+    #[rustfmt::skip]
+    defvar_lisp!(Vwindow_configuration_change_hook, "window-configuration-change-hook", Qnil);
+}

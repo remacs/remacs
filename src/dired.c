@@ -1058,23 +1058,6 @@ filemode_string (Lisp_Object filename)
 }
 #endif /* !WINDOWSNT */
 
-DEFUN ("system-groups", Fsystem_groups, Ssystem_groups, 0, 0, 0,
-       doc: /* Return a list of user group names currently registered in the system.
-The value may be nil if not supported on this platform.  */)
-     (void)
-{
-  Lisp_Object groups = Qnil;
-#if defined HAVE_GETGRENT && defined HAVE_ENDGRENT
-  struct group *gr;
-
-  while ((gr = getgrent ()))
-    groups = Fcons (DECODE_SYSTEM (build_string (gr->gr_name)), groups);
-
-  endgrent ();
-#endif
-  return groups;
-}
-
 void
 syms_of_dired (void)
 {
@@ -1089,7 +1072,6 @@ syms_of_dired (void)
 
   defsubr (&Sfile_name_completion);
   defsubr (&Sfile_name_all_completions);
-  defsubr (&Ssystem_groups);
 
   DEFVAR_LISP ("completion-ignored-extensions", Vcompletion_ignored_extensions,
 	       doc: /* Completion ignores file names ending in any string in this list.

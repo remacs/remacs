@@ -24,3 +24,12 @@
       (forward-word 2)
       (should (looking-back "forward-word"))
       (should (eq (forward-word 1) nil)))))
+
+(ert-deftest test-scan-sexps ()
+  (with-temp-buffer
+    (insert "test scan-sexps")
+    (should (eq (scan-sexps 0 2) 16))
+    (should (eq (scan-sexps 16 -2) 1))
+    (should (eq (scan-sexps 0 3) nil))
+    (insert "(+ 1")
+    (should-error (scan-sexps 0 3))))

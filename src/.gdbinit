@@ -97,9 +97,9 @@ end
 define pp
   set $tmp = $arg0
   set $output_debug = print_output_debug_flag
-  set print_output_debug_flag = 0
+  call set_output_debug_flag (0)
   call safe_debug_print ($tmp)
-  set print_output_debug_flag = $output_debug
+  call set_output_debug_flag ($output_debug)
 end
 document pp
 Print the argument as an emacs s-expression

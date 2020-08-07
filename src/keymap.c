@@ -74,6 +74,10 @@ Lisp_Object control_x_map;	/* The keymap used for globally bound
 				   bindings when spaces are not encouraged
 				   in the minibuf.  */
 
+/* Apropos - finding all symbols whose names match a regexp.		*/
+Lisp_Object apropos_predicate;
+Lisp_Object apropos_accumulate;
+
 /* Alist of elements like (DEL . "\d").  */
 static Lisp_Object exclude_keys;
 
@@ -1191,15 +1195,6 @@ bindings; see the description of `lookup-key' for more details about this.  */)
   return Flist (j, maps);
 }
 
-DEFUN ("current-minor-mode-maps", Fcurrent_minor_mode_maps, Scurrent_minor_mode_maps, 0, 0, 0,
-       doc: /* Return a list of keymaps for the minor modes of the current buffer.  */)
-  (void)
-{
-  Lisp_Object *maps;
-  int nmaps = current_minor_maps (0, &maps);
-
-  return Flist (nmaps, maps);
-}
 
 /* Help functions for describing and documenting keymaps.		*/
 
@@ -2920,11 +2915,8 @@ describe_vector (Lisp_Object vector, Lisp_Object prefix, Lisp_Object args,
     }
 }
 
-/* Apropos - finding all symbols whose names match a regexp.		*/
-static Lisp_Object apropos_predicate;
-static Lisp_Object apropos_accumulate;
 
-static void
+void
 apropos_accum (Lisp_Object symbol, Lisp_Object string)
 {
   register Lisp_Object tem;
@@ -2936,24 +2928,6 @@ apropos_accum (Lisp_Object symbol, Lisp_Object string)
     apropos_accumulate = Fcons (symbol, apropos_accumulate);
 }
 
-DEFUN ("apropos-internal", Fapropos_internal, Sapropos_internal, 1, 2, 0,
-       doc: /* Show all symbols whose names contain match for REGEXP.
-If optional 2nd arg PREDICATE is non-nil, (funcall PREDICATE SYMBOL) is done
-for each symbol and a symbol is mentioned only if that returns non-nil.
-Return list of symbols found.  */)
-  (Lisp_Object regexp, Lisp_Object predicate)
-{
-  Lisp_Object tem;
-  CHECK_STRING (regexp);
-  apropos_predicate = predicate;
-  apropos_accumulate = Qnil;
-  map_obarray (Vobarray, apropos_accum, regexp);
-  tem = Fsort (apropos_accumulate, Qstring_lessp);
-  apropos_accumulate = Qnil;
-  apropos_predicate = Qnil;
-  return tem;
-}
-
 void
 syms_of_keymap (void)
 {
@@ -3074,7 +3048,6 @@ be preferred.  */);
   defsubr (&Scommand_remapping);
   defsubr (&Sminor_mode_key_binding);
   defsubr (&Sdefine_key);
-  defsubr (&Scurrent_minor_mode_maps);
   defsubr (&Scurrent_active_maps);
   defsubr (&Saccessible_keymaps);
   defsubr (&Skey_description);
@@ -3082,7 +3055,6 @@ be preferred.  */);
   defsubr (&Stext_char_description);
   defsubr (&Swhere_is_internal);
   defsubr (&Sdescribe_buffer_bindings);
-  defsubr (&Sapropos_internal);
 }
 
 void

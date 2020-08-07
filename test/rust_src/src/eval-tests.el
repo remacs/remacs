@@ -284,6 +284,25 @@
   (should (eq (catch 'found (dolist (n '(1 2 3)) (throw 'found n))) 1))
   (should (eq (catch 'found (dolist (n '(1 (error "Should not be evaluated"))) (throw 'found n))) 1)))
 
+(ert-deftest eval-tests--defvar()
+
+  ;; Success cases, variables with global binding
+  (should (eq (defvar 1) 1))
+  (should (eq (defvar defvar-test-1) 'defvar-test-1))
+  (should (and
+           (eq (defvar defvar-test-2 "test") 'defvar-test-2)
+           (equal defvar-test-2 "test")))
+  (should (and
+           (eq (defvar defvar-test-3 "test" "doctest") 'defvar-test-3)
+           (equal defvar-test-3 "test")
+           (equal (documentation-property 'defvar-test-3 'variable-documentation) "doctest")
+           ))
+
+  ;; Error cases
+  (should-error (defvar) :type 'wrong-number-of-arguments)
+  (should-error (defvar var val doc error) :type 'error)
+  (should-error (defvar 1 1) :type 'wrong-type-argument))
+
 ;; Local Variables:
 ;; byte-compile-warnings: (not lexical free-vars unresolved)
 ;; End:

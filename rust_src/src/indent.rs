@@ -8,18 +8,19 @@ use crate::{
     buffers::{point_byte, point_min_byte},
     editfns::{insert_char, point, point_min},
     lisp::LispObject,
+    lists::LispCons,
+    marker::buf_charpos_to_bytepos,
     multibyte::Codepoint,
-    remacs_sys::globals,
-    remacs_sys::EmacsUint,
+    numbers::LispNumber,
+    remacs_sys::Qt,
     remacs_sys::{
-        self, find_newline, position_indentation, sanitize_tab_width, scan_for_column, set_point,
-        EmacsInt,
+        self, del_range, find_newline, position_indentation, sanitize_tab_width, scan_for_column,
+        set_point, set_point_both,
     },
-    remacs_sys::{del_range, Qt},
-    remacs_sys::{
-        last_known_column, last_known_column_modified, last_known_column_point, set_point_both,
-    },
+    remacs_sys::{globals, last_known_column, last_known_column_modified, last_known_column_point},
+    remacs_sys::{EmacsInt, EmacsUint},
     threads::ThreadState,
+    windows::{LispWindowLiveOrSelected, LispWindowRef},
 };
 
 /// Return the indentation of the current line.  This is the
@@ -102,11 +103,15 @@ pub fn move_to_column(column: EmacsUint, force: LispObject) -> EmacsUint {
         let pos_byte = buffer.dec_pos(buffer.pt_byte);
         let c = buffer.fetch_char(pos_byte);
 
-        if c == '\t' as i32 && prev_col < goal {
+        if c == '\t' && prev_col < goal {
             unsafe {
                 // Insert spaces in front of the tab
                 set_point_both(buffer.pt - 1, buffer.pt_byte - 1);
-                insert_char(' ' as Codepoint, Some((goal - prev_col) as EmacsInt), true);
+                insert_char(
+                    Codepoint::from(' '),
+                    Some((goal - prev_col) as EmacsInt),
+                    true,
+                );
 
                 // Delete the tab and indent to COL
                 del_range(buffer.pt, buffer.pt + 1);
@@ -162,13 +167,13 @@ pub fn indent_to(column: EmacsInt, minimum: Option<EmacsInt>) -> EmacsInt {
     if unsafe { globals.indent_tabs_mode } {
         let n = mincol / tab_width - fromcol / tab_width;
         if n != 0 {
-            insert_char('\t' as Codepoint, Some(n), true);
+            insert_char(Codepoint::from('\t'), Some(n), true);
             fromcol = (mincol / tab_width) * tab_width;
         }
     }
 
     let missing = mincol - fromcol;
-    insert_char(' ' as Codepoint, Some(missing), true);
+    insert_char(Codepoint::from(' '), Some(missing), true);
 
     unsafe {
         last_known_column = mincol as isize;
@@ -177,6 +182,126 @@ pub fn indent_to(column: EmacsInt, minimum: Option<EmacsInt>) -> EmacsInt {
     }
 
     mincol
+}
+
+/// Scan through the current buffer, calculating screen position.
+/// Scan the current buffer forward from offset FROM, assuming it is
+/// at position FROMPOS--a cons of the form (HPOS . VPOS)-- to
+/// position TO or position TOPOS--another cons of the form (HPOS
+/// . VPOS)-- and return the ending buffer position and screen
+/// location.
+///
+/// If TOPOS is nil, the actual width and height of the window's text
+/// area are used.
+///
+/// There are three additional arguments:
+///
+/// WIDTH is the number of columns available to display text; this
+/// affects handling of continuation lines.  A value of nil
+/// corresponds to the actual number of available text columns.
+///
+/// OFFSETS is either nil or a cons cell (HSCROLL . TAB-OFFSET).
+/// HSCROLL is the number of columns not being displayed at the left
+/// margin; this is usually taken from a window's hscroll member.
+/// TAB-OFFSET is the number of columns of the first tab that aren't
+/// being displayed, perhaps because the line was continued within it.
+/// If OFFSETS is nil, HSCROLL and TAB-OFFSET are assumed to be zero.
+///
+/// WINDOW is the window to operate on.  It is used to choose the
+/// display table; if it is showing the current buffer, it is used
+/// also for deciding which overlay properties apply.  Note that
+/// `compute-motion' always operates on the current buffer.
+///
+/// The value is a list of five elements:
+///   (POS HPOS VPOS PREVHPOS CONTIN)
+/// POS is the buffer position where the scan stopped.
+/// VPOS is the vertical position where the scan stopped.
+/// HPOS is the horizontal position where the scan stopped.
+///
+/// PREVHPOS is the horizontal position one character back from POS.
+/// CONTIN is t if a line was continued after (or within) the previous character.
+///
+/// For example, to find the buffer position of column COL of line
+/// LINE of a certain window, pass the window's starting location as
+/// FROM and the window's upper-left coordinates as FROMPOS.  Pass the
+/// buffer's (point-max) as TO, to limit the scan to the end of the
+/// visible section of the buffer, and pass LINE and COL as TOPOS.
+#[lisp_fn]
+pub fn compute_motion(
+    from: LispNumber,
+    frompos: LispCons,
+    to: LispNumber,
+    topos: LispObject,
+    width: Option<EmacsInt>,
+    offsets: LispObject,
+    window: LispWindowLiveOrSelected,
+) -> LispObject {
+    let from_hpos = frompos.car().into();
+    let from_vpos = frompos.cdr().into();
+
+    let mut win: LispWindowRef = window.into();
+    let window_width = EmacsInt::from(win.body_width(false))
+        - if cfg!(feature = "window-system") && win.get_frame().is_gui_window() {
+            0
+        } else {
+            1
+        };
+
+    let (to_hpos, to_vpos) = if topos.is_nil() {
+        (window_width, EmacsInt::from(win.internal_height()))
+    } else {
+        let (hpos, vpos) = topos.into();
+        (hpos.into(), vpos.into())
+    };
+    let arg_width = width.unwrap_or(-1);
+    let (hscroll, tab_offset) = if offsets.is_nil() {
+        (0, 0)
+    } else {
+        let (hpos, vpos) = offsets.into();
+        (hpos.into(), vpos.into())
+    };
+    if !(0 <= hscroll
+        && hscroll <= isize::max_value() as EmacsInt
+        && 0 <= tab_offset
+        && tab_offset <= EmacsInt::from(libc::INT_MAX))
+    {
+        args_out_of_range!(hscroll, tab_offset);
+    }
+
+    let buffer = &mut ThreadState::current_buffer_unchecked();
+    let begv = buffer.begv as EmacsInt;
+    let zv = buffer.zv as EmacsInt;
+    if from.to_fixnum() < begv || from.to_fixnum() > zv {
+        args_out_of_range!(from, begv, zv);
+    }
+    if to.to_fixnum() < begv || to.to_fixnum() > zv {
+        args_out_of_range!(to, begv, zv);
+    }
+
+    let pos = unsafe {
+        *remacs_sys::compute_motion(
+            from.to_fixnum() as isize,
+            buf_charpos_to_bytepos(buffer.as_mut(), from.to_fixnum() as isize),
+            from_vpos,
+            from_hpos,
+            false,
+            to.to_fixnum() as isize,
+            to_vpos,
+            to_hpos,
+            arg_width,
+            hscroll as isize,
+            tab_offset as i32,
+            win.as_mut(),
+        )
+    };
+
+    list!(
+        pos.bufpos,
+        pos.hpos,
+        pos.vpos,
+        pos.prevhpos,
+        (pos.contin != 0)
+    )
 }
 
 include!(concat!(env!("OUT_DIR"), "/indent_exports.rs"));

@@ -1,4 +1,4 @@
-use syn;
+use quote::quote;
 
 type Result<T> = ::std::result::Result<T, &'static str>;
 
@@ -60,7 +60,7 @@ pub fn parse(item: &syn::Item) -> Result<Function> {
             Ok(Function {
                 name: ident.clone(),
                 fntype: parse_function_type(&decl)?,
-                args: args,
+                args,
             })
         }
         _ => Err("`lisp_fn` attribute can only be used on functions"),

@@ -32,7 +32,7 @@ impl LispCaseTable {
         (extras[0], extras[1], extras[2])
     }
 
-    pub fn from_char_table(table: LispCharTableRef) -> Self {
+    pub const fn from_char_table(table: LispCharTableRef) -> Self {
         Self(table)
     }
 

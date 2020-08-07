@@ -1,6 +1,5 @@
 //! Keymap support
 
-use std;
 use std::ptr;
 
 use libc::c_void;
@@ -8,6 +7,7 @@ use libc::c_void;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    alloc::purecopy,
     buffers::current_buffer,
     data::{aref, fset, indirect_function, set},
     eval::{autoload_do_load, unbind_to},
@@ -16,28 +16,31 @@ use crate::{
     keyboard,
     keyboard::lucid_event_type_list_p,
     lisp::LispObject,
-    lists::{nth, setcdr},
+    lists::{nth, setcdr, Flist},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
+    multibyte::LispStringRef,
     obarray::intern,
     remacs_sys::{
-        access_keymap, copy_keymap_item, describe_vector, make_save_funcptr_ptr_obj,
-        map_char_table, map_keymap_call, map_keymap_char_table_item, map_keymap_function_t,
-        map_keymap_item, maybe_quit, specbind,
+        access_keymap, apropos_accum, apropos_accumulate, apropos_predicate, copy_keymap_item,
+        current_minor_maps, describe_vector, make_save_funcptr_ptr_obj, map_char_table,
+        map_keymap_call, map_keymap_char_table_item, map_keymap_function_t, map_keymap_item,
+        map_obarray, maybe_quit, specbind,
     },
     remacs_sys::{char_bits, current_global_map as _current_global_map, globals, EmacsInt},
     remacs_sys::{
-        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table, Fpurecopy,
+        Fcommand_remapping, Fcurrent_active_maps, Fevent_convert_list, Fmake_char_table,
         Fset_char_table_range, Fterpri,
     },
     remacs_sys::{
-        Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qt,
+        Qautoload, Qkeymap, Qkeymapp, Qmouse_click, Qnil, Qstandard_output, Qstring_lessp, Qt,
         Qvector_or_char_table_p,
     },
     symbols::LispSymbolRef,
     threads::{c_specpdl_index, ThreadState},
+    vectors::sort,
 };
 
-pub fn Ctl(c: char) -> i32 {
+pub const fn Ctl(c: char) -> i32 {
     (c as i32) & 0x1f
 }
 
@@ -567,7 +570,7 @@ pub fn define_prefix_command(
 pub fn make_sparse_keymap(string: LispObject) -> LispObject {
     if string.is_not_nil() {
         let s = if unsafe { globals.Vpurify_flag }.is_not_nil() {
-            unsafe { Fpurecopy(string) }
+            purecopy(string)
         } else {
             string
         };
@@ -710,7 +713,7 @@ pub fn key_binding(
 ) -> LispObject {
     if key.is_vector() && position.is_nil() {
         let key = key.force_vector();
-        if key.len() == 0 {
+        if key.is_empty() {
             return Qnil;
         }
 
@@ -752,4 +755,34 @@ pub fn key_binding(
     value
 }
 
+/// Show all symbols whose names contain match for REGEXP.
+/// If optional 2nd arg PREDICATE is non-nil, (funcall PREDICATE SYMBOL) is done
+/// for each symbol and a symbol is mentioned only if that returns non-nil.
+/// Return list of symbols found.
+#[lisp_fn(min = "1")]
+pub fn apropos_internal(regexp: LispStringRef, predicate: LispObject) -> LispObject {
+    unsafe {
+        apropos_predicate = predicate;
+        apropos_accumulate = Qnil;
+        map_obarray(globals.Vobarray, Some(apropos_accum), regexp.into());
+        let tem = sort(apropos_accumulate, Qstring_lessp);
+        apropos_accumulate = Qnil;
+        apropos_predicate = Qnil;
+        tem
+    }
+}
+
+/// Return a list of keymaps for the minor modes of the current buffer.
+#[lisp_fn]
+pub fn current_minor_mode_maps() -> LispObject {
+    // maps is initialized to null to silence the borrow checker. If this is
+    // not done then it will not compile since maps is not initialized
+    let mut maps: *mut LispObject = ptr::null_mut();
+    unsafe {
+        let num_of_maps = current_minor_maps(ptr::null_mut(), &mut maps);
+        // Invoking the Fname_of_fn form makes more sense here, as
+        // current_minor_maps returns a length and pointer
+        Flist(num_of_maps, maps)
+    }
+}
 include!(concat!(env!("OUT_DIR"), "/keymap_exports.rs"));

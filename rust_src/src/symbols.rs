@@ -14,11 +14,12 @@ use crate::{
         as_buffer_objfwd, do_symval_forwarding, indirect_function, is_buffer_objfwd,
         is_kboard_objfwd, set, store_symval_forwarding,
     },
-    frames::selected_frame,
+    frame::selected_frame,
     hashtable::LispHashTableRef,
-    lisp::{ExternalPtr, LispObject, LispStructuralEqual},
+    lisp::{ExternalPtr, LispObject, LispStructuralEqual, SpecbindingRef},
     lists::LispCons,
     multibyte::LispStringRef,
+    remacs_sys::specbind_tag,
     remacs_sys::Fframe_terminal,
     remacs_sys::{equal_kind, lispsym, EmacsInt, Lisp_Symbol, Lisp_Type, USE_LSB_TAG},
     remacs_sys::{
@@ -27,6 +28,7 @@ use crate::{
         symbol_interned, symbol_redirect, symbol_trapped_write,
     },
     remacs_sys::{Qcyclic_variable_indirection, Qnil, Qsymbolp, Qunbound},
+    threads::ThreadState,
 };
 
 pub type LispSymbolRef = ExternalPtr<Lisp_Symbol>;
@@ -62,6 +64,11 @@ impl LispSymbolRef {
         s.interned() == symbol_interned::SYMBOL_INTERNED_IN_INITIAL_OBARRAY as u32
     }
 
+    pub fn set_uninterned(&mut self) {
+        let s = unsafe { self.u.s.as_mut() };
+        s.set_interned(symbol_interned::SYMBOL_UNINTERNED);
+    }
+
     pub fn is_alias(self) -> bool {
         let s = unsafe { self.u.s.as_ref() };
         s.redirect() == symbol_redirect::SYMBOL_VARALIAS
@@ -84,7 +91,7 @@ impl LispSymbolRef {
     pub unsafe fn get_alias(self) -> Self {
         debug_assert!(self.is_alias());
         let s = self.u.s.as_ref();
-        LispSymbolRef::new(s.val.alias)
+        Self::new(s.val.alias)
     }
 
     pub fn get_declared_special(self) -> bool {
@@ -183,8 +190,23 @@ impl LispSymbolRef {
         s.val.fwd = fwd;
     }
 
-    pub fn iter(self) -> LispSymbolIter {
+    pub const fn iter(self) -> LispSymbolIter {
         LispSymbolIter { current: self }
+    }
+
+    pub fn get_next(self) -> Option<Self> {
+        // `iter().next()` returns the _current_ symbol: we want
+        // another `next()` on the iterator to really get the next
+        // symbol. we use `nth(1)` as a shortcut here.
+        self.iter().nth(1)
+    }
+
+    pub fn set_next(mut self, next: Option<Self>) {
+        let mut s = unsafe { self.u.s.as_mut() };
+        s.next = match next {
+            Some(sym) => sym.as_ptr() as *mut Lisp_Symbol,
+            None => ptr::null_mut(),
+        };
     }
 
     /// Set up SYMBOL to refer to its global binding.  This makes it safe
@@ -212,6 +234,36 @@ impl LispSymbolRef {
         blv.where_ = Qnil;
         blv.set_found(false);
     }
+
+    pub fn default_toplevel_binding_rust(self) -> SpecbindingRef {
+        let current_thread = ThreadState::current_thread();
+        let specpdl = SpecbindingRef::new(current_thread.m_specpdl);
+
+        let mut binding = SpecbindingRef::new(std::ptr::null_mut());
+        let mut pdl = SpecbindingRef::new(current_thread.m_specpdl_ptr);
+
+        while pdl > specpdl {
+            unsafe {
+                pdl.ptr_sub(1);
+            }
+            match pdl.kind() {
+                specbind_tag::SPECPDL_LET_DEFAULT | specbind_tag::SPECPDL_LET => {
+                    if pdl.symbol() == self {
+                        binding = pdl
+                    }
+                }
+                specbind_tag::SPECPDL_UNWIND
+                | specbind_tag::SPECPDL_UNWIND_PTR
+                | specbind_tag::SPECPDL_UNWIND_INT
+                | specbind_tag::SPECPDL_UNWIND_VOID
+                | specbind_tag::SPECPDL_BACKTRACE
+                | specbind_tag::SPECPDL_LET_LOCAL => {}
+                _ => panic!("Incorrect specpdl kind"),
+            }
+        }
+
+        binding
+    }
 }
 
 impl LispStructuralEqual for LispSymbolRef {
@@ -222,7 +274,7 @@ impl LispStructuralEqual for LispSymbolRef {
         _depth: i32,
         _ht: &mut LispHashTableRef,
     ) -> bool {
-        LispObject::from(*self).eq(LispObject::from(other))
+        LispObject::from(*self).eq(other)
     }
 }
 
@@ -494,12 +546,6 @@ pub fn local_variable_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) 
 /// If the current binding is global (the default), the value is nil.
 #[lisp_fn]
 pub fn variable_binding_locus(mut symbol: LispSymbolRef) -> LispObject {
-    // Make sure the current binding is actually swapped in.
-    unsafe {
-        symbol.find_value();
-    }
-    symbol = symbol.get_indirect_variable();
-
     fn localized_handler(sym: LispSymbolRef) -> LispObject {
         // For a local variable, record both the symbol and which
         // buffer's or frame's value we are saving.
@@ -514,16 +560,22 @@ pub fn variable_binding_locus(mut symbol: LispSymbolRef) -> LispObject {
         }
     }
 
+    // Make sure the current binding is actually swapped in.
+    unsafe {
+        symbol.find_value();
+    }
+    symbol = symbol.get_indirect_variable();
+
     match symbol.get_redirect() {
         symbol_redirect::SYMBOL_PLAINVAL => Qnil,
         symbol_redirect::SYMBOL_FORWARDED => unsafe {
             let fwd = symbol.get_fwd();
             if is_kboard_objfwd(fwd) {
                 Fframe_terminal(selected_frame().into())
-            } else if !is_buffer_objfwd(fwd) {
-                Qnil
-            } else {
+            } else if is_buffer_objfwd(fwd) {
                 localized_handler(symbol)
+            } else {
+                Qnil
             }
         },
         symbol_redirect::SYMBOL_LOCALIZED => localized_handler(symbol),

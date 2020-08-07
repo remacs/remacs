@@ -1266,20 +1266,6 @@ markers).  If OBJECT is a string, START and END are 0-based indices into it.  */
   return Qnil;
 }
 
-DEFUN ("set-text-properties", Fset_text_properties,
-       Sset_text_properties, 3, 4, 0,
-       doc: /* Completely replace properties of text from START to END.
-The third argument PROPERTIES is the new property list.
-If the optional fourth argument OBJECT is a buffer (or nil, which means
-the current buffer), START and END are buffer positions (integers or
-markers).  If OBJECT is a string, START and END are 0-based indices into it.
-If PROPERTIES is nil, the effect is to remove all properties from
-the designated part of OBJECT.  */)
-  (Lisp_Object start, Lisp_Object end, Lisp_Object properties, Lisp_Object object)
-{
-  return set_text_properties (start, end, properties, object, Qt);
-}
-
 
 DEFUN ("add-face-text-property", Fadd_face_text_property,
        Sadd_face_text_property, 3, 5, 0,
@@ -2353,7 +2339,6 @@ inherits it if NONSTICKINESS is nil.  The `front-sticky' and
   defsubr (&Sprevious_single_property_change);
   defsubr (&Sadd_text_properties);
   defsubr (&Sput_text_property);
-  defsubr (&Sset_text_properties);
   defsubr (&Sadd_face_text_property);
   defsubr (&Sremove_text_properties);
   defsubr (&Sremove_list_of_text_properties);

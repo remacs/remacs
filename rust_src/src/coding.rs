@@ -4,6 +4,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     data::aref,
+    eval::unbind_to,
     hashtable::{
         gethash,
         HashLookupResult::{Found, Missing},
@@ -11,12 +12,19 @@ use crate::{
     },
     lisp::LispObject,
     lists::{get, put},
+    minibuf::completing_read,
     multibyte::LispStringRef,
-    remacs_sys::encode_file_name as c_encode_file_name,
+    obarray::intern_lisp,
     remacs_sys::{
-        safe_eval, Qcoding_system_define_form, Qcoding_system_error, Qcoding_system_p, Qnil,
-        Qno_conversion, Vcoding_system_hash_table,
+        code_convert_string as c_code_convert_string, code_convert_string_norecord,
+        encode_file_name as c_encode_file_name, globals, specbind,
     },
+    remacs_sys::{
+        safe_eval, Qcoding_system_define_form, Qcoding_system_error, Qcoding_system_history,
+        Qcoding_system_p, Qcompletion_ignore_case, Qnil, Qno_conversion, Qt, Qutf_8,
+        Vcoding_system_hash_table,
+    },
+    threads::c_specpdl_index,
 };
 
 /// Return the spec vector of CODING_SYSTEM_SYMBOL.
@@ -96,6 +104,111 @@ pub fn coding_system_aliases(coding_system: LispObject) -> LispObject {
 /// Wrapper for encode_file_name (NOT PORTED)
 pub fn encode_file_name(fname: LispStringRef) -> LispStringRef {
     unsafe { c_encode_file_name(fname.into()) }.into()
+}
+
+/// Implements DECODE_SYSTEM macro
+/// Decode the string `input_string` using the specified coding system
+/// for system functions, if any.
+pub fn decode_system(input_string: LispStringRef) -> LispStringRef {
+    let local_coding_system: LispObject = unsafe { globals.Vlocale_coding_system };
+    if local_coding_system.is_nil() {
+        input_string
+    } else {
+        unsafe { code_convert_string_norecord(input_string.into(), Qutf_8, true).into() }
+    }
+}
+
+/// Decode STRING which is encoded in CODING-SYSTEM, and return the result.
+/// Optional third arg NOCOPY non-nil means it is OK to return STRING
+/// itself if the decoding operation is trivial.
+/// Optional fourth arg BUFFER non-nil means that the decoded text is inserted in that buffer after point (point does not move). In this case, the return value is the length of the decoded text.
+/// This function sets `last-coding-system-used` to the precise coding system
+/// used (which may be different from CODING-SYSTEM if CODING-SYSTEM is not fully specified.)
+#[lisp_fn(min = "1")]
+pub fn decode_coding_string(
+    string: LispObject,
+    coding_system: LispObject,
+    nocopy: LispObject,
+    buffer: LispObject,
+) -> LispObject {
+    code_convert_string(
+        string,
+        coding_system,
+        buffer,
+        false,
+        nocopy.is_not_nil(),
+        false,
+    )
+}
+
+/// Encode STRING to CODING-SYSTEM, and return the result.
+/// Optional third arg NOCOPY non-nil means it is OK to return STRING
+/// itself if the encoding operation is trivial.
+/// Optional fourth arg BUFFER non-nil means that the encoded text is inserted in that buffer after point (point does not move). In this case, the return value is the length of the encoded text.
+/// This function sets `last-coding-system-used` to the precise coding system
+/// used (which may be different from CODING-SYSTEM if CODING-SYSTEM is not fully specified.)
+#[lisp_fn(min = "1")]
+pub fn encode_coding_string(
+    string: LispObject,
+    coding_system: LispObject,
+    nocopy: LispObject,
+    buffer: LispObject,
+) -> LispObject {
+    code_convert_string(
+        string,
+        coding_system,
+        buffer,
+        true,
+        nocopy.is_not_nil(),
+        false,
+    )
+}
+
+// Wrapper for code_convert_string (NOT PORTED)
+pub fn code_convert_string(
+    string: LispObject,
+    coding_system: LispObject,
+    dst_object: LispObject,
+    encodep: bool,
+    nocopy: bool,
+    norecord: bool,
+) -> LispObject {
+    unsafe { c_code_convert_string(string, coding_system, dst_object, encodep, nocopy, norecord) }
+}
+
+/// Read a coding system from the minibuffer, prompting with string PROMPT.
+/// If the user enters null input, return second argument DEFAULT-CODING-SYSTEM.
+/// Ignores case when completing coding systems (all Emacs coding systems
+/// are lower-case).
+#[lisp_fn(min = "1")]
+pub fn read_coding_system(prompt: LispObject, mut default_coding_system: LispObject) -> LispObject {
+    let count = c_specpdl_index();
+
+    if let Some(s) = default_coding_system.as_symbol() {
+        default_coding_system = s.symbol_name();
+    }
+
+    unsafe {
+        specbind(Qcompletion_ignore_case, Qt);
+    }
+    let val = completing_read(
+        prompt,
+        unsafe { globals.Vcoding_system_alist },
+        Qnil,
+        Qt,
+        Qnil,
+        Qcoding_system_history,
+        default_coding_system,
+        Qnil,
+    );
+    unbind_to(count, Qnil);
+
+    let tem: LispStringRef = val.into();
+    if tem.is_empty() {
+        Qnil
+    } else {
+        intern_lisp(tem, None)
+    }
 }
 
 include!(concat!(env!("OUT_DIR"), "/coding_exports.rs"));

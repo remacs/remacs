@@ -39,3 +39,7 @@ pub fn get_users() -> LispObject {
     unames.push(get_user_real_login_name());
     list(&mut unames)
 }
+
+pub fn get_groups() -> LispObject {
+    Qnil
+}

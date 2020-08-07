@@ -764,34 +764,6 @@ unlock_buffer (struct buffer *buffer)
     unlock_file (BVAR (buffer, file_truename));
 }
 
-DEFUN ("file-locked-p", Ffile_locked_p, Sfile_locked_p, 1, 1, 0,
-       doc: /* Return a value indicating whether FILENAME is locked.
-The value is nil if the FILENAME is not locked,
-t if it is locked by you, else a string saying which user has locked it.  */)
-  (Lisp_Object filename)
-{
-  Lisp_Object ret;
-  char *lfname;
-  int owner;
-  lock_info_type locker;
-  USE_SAFE_ALLOCA;
-
-  filename = Fexpand_file_name (filename, Qnil);
-
-  MAKE_LOCK_NAME (lfname, filename);
-
-  owner = current_lock_owner (&locker, lfname);
-  if (owner <= 0)
-    ret = Qnil;
-  else if (owner == 2)
-    ret = Qt;
-  else
-    ret = make_string (locker.user, locker.at - locker.user);
-
-  SAFE_FREE ();
-  return ret;
-}
-
 void
 syms_of_filelock (void)
 {
@@ -802,6 +774,4 @@ syms_of_filelock (void)
   DEFVAR_BOOL ("create-lockfiles", create_lockfiles,
 	       doc: /* Non-nil means use lockfiles to avoid editing collisions.  */);
   create_lockfiles = 1;
-
-  defsubr (&Sfile_locked_p);
 }

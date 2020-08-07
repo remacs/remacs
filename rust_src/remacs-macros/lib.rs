@@ -1,15 +1,16 @@
 #![recursion_limit = "128"]
 
-#[macro_use]
 extern crate lazy_static;
 extern crate proc_macro;
-#[macro_use]
+extern crate proc_macro2;
 extern crate quote;
 extern crate regex;
 extern crate remacs_util;
 extern crate syn;
 
+use lazy_static::lazy_static;
 use proc_macro::TokenStream;
+use quote::quote;
 use regex::Regex;
 
 mod function;
@@ -27,9 +28,9 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         Err(e) => panic!("Invalid lisp_fn attribute: {}", e),
     };
 
-    let mut cargs = quote::Tokens::new();
-    let mut rargs = quote::Tokens::new();
-    let mut body = quote::Tokens::new();
+    let mut cargs = proc_macro2::TokenStream::new();
+    let mut rargs = proc_macro2::TokenStream::new();
+    let mut body = proc_macro2::TokenStream::new();
     let max_args = function.args.len() as i16;
     let intspec = if let Some(intspec) = lisp_fn_args.intspec {
         let cbyte_intspec = CByteLiteral(intspec.as_str());
@@ -42,10 +43,10 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
         function::LispFnType::Normal(_) => {
             for ident in function.args {
                 let arg = quote! { #ident: crate::lisp::LispObject, };
-                cargs.append_all(arg);
+                cargs.extend(arg);
 
                 let arg = quote! { (#ident).into(), };
-                rargs.append_all(arg);
+                rargs.extend(arg);
             }
         }
         function::LispFnType::Many => {
@@ -53,7 +54,7 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                 nargs: libc::ptrdiff_t,
                 args: *mut crate::lisp::LispObject,
             };
-            cargs.append_all(args);
+            cargs.extend(args);
 
             let b = quote! {
                 let args = unsafe {
@@ -61,10 +62,10 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
                         args, nargs as usize)
                 };
             };
-            body.append_all(b);
+            body.extend(b);
 
             let arg = quote! { unsafe { std::mem::transmute(args) } };
-            rargs.append_all(arg);
+            rargs.extend(arg);
         }
     }
 
@@ -167,21 +168,22 @@ pub fn lisp_fn(attr_ts: TokenStream, fn_ts: TokenStream) -> TokenStream {
 struct CByteLiteral<'a>(&'a str);
 
 impl<'a> quote::ToTokens for CByteLiteral<'a> {
-    fn to_tokens(&self, tokens: &mut quote::Tokens) {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         lazy_static! {
             static ref RE: Regex = Regex::new(r#"["\\]"#).unwrap();
         }
         let s = RE.replace_all(self.0, |caps: &regex::Captures| {
             format!("\\x{:x}", u32::from(caps[0].chars().next().unwrap()))
         });
-        tokens.append_all(
-            (syn::parse_str::<syn::Expr>(&format!(r#"b"{}\0""#, s)))
-                .unwrap()
-                .into_tokens(),
-        );
+        let identifier = format!(r#"b"{}\0""#, s);
+        let expr = syn::parse_str::<syn::Expr>(&identifier).unwrap();
+        tokens.extend(quote! { #expr });
     }
 }
 
 fn concat_idents(lhs: &str, rhs: &str) -> syn::Ident {
-    syn::Ident::from(format!("{}{}", lhs, rhs))
+    syn::Ident::new(
+        format!("{}{}", lhs, rhs).as_str(),
+        quote::__rt::Span::call_site(),
+    )
 }

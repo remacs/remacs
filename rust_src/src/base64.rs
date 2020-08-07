@@ -10,7 +10,7 @@ use crate::{
     base64_crate,
     buffers::validate_region_rust,
     lisp::LispObject,
-    multibyte::{multibyte_char_at, raw_byte_from_codepoint, LispStringRef, MAX_5_BYTE_CHAR},
+    multibyte::{multibyte_char_at, LispStringRef},
     remacs_sys::EmacsInt,
     remacs_sys::{
         del_range_both, del_range_byte, insert, insert_1_both, make_unibyte_string, move_gap_both,
@@ -29,10 +29,10 @@ fn base64_encode_1(bytes: &[u8], line_break: bool, multibyte: bool) -> Result<St
         let mut i = 0;
         while i < bytes.len() {
             let (cp, len) = multibyte_char_at(&bytes[i..]);
-            if cp > MAX_5_BYTE_CHAR {
-                input.push(raw_byte_from_codepoint(cp));
-            } else if cp < 256 {
-                input.push(cp as c_uchar);
+            if cp.is_byte8() {
+                input.push(cp.to_byte8_unchecked());
+            } else if cp.is_single_byte() {
+                input.push(cp.val() as c_uchar);
             } else {
                 return Err(());
             }

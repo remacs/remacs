@@ -1,13 +1,16 @@
 //! Storage allocation and gc
 
 use remacs_macros::lisp_fn;
+use std::ptr;
 
 use crate::{
     lisp::{ExternalPtr, LispObject},
+    marker::LispMarkerRef,
     remacs_sys::globals,
     remacs_sys::Lisp_Type::Lisp_Vectorlike,
     remacs_sys::{
-        allocate_record, bool_vector_fill, bool_vector_set, bounded_number, make_uninit_bool_vector,
+        allocate_misc, allocate_record, bool_vector_fill, bool_vector_set, bounded_number,
+        make_uninit_bool_vector, purecopy as c_purecopy, Lisp_Misc_Type,
     },
     remacs_sys::{EmacsInt, EmacsUint},
 };
@@ -93,6 +96,37 @@ pub fn record(args: &mut [LispObject]) -> LispObject {
             .copy_from_slice(args);
         LispObject::tag_ptr(ExternalPtr::new(ptr), Lisp_Vectorlike)
     }
+}
+
+/// Make a copy of object OBJ in pure storage.
+/// Recursively copies contents of vectors and cons cells.
+/// Does not copy symbols.  Copies strings without text properties.
+#[lisp_fn]
+pub fn purecopy(obj: LispObject) -> LispObject {
+    #![allow(clippy::if_same_then_else)]
+    if unsafe { globals.Vpurify_flag.is_nil() } {
+        obj
+    } else if obj.is_marker() || obj.is_overlay() || obj.is_symbol() {
+        // Can't purify those.
+        obj
+    } else {
+        unsafe { c_purecopy(obj) }
+    }
+}
+
+/// Return a newly allocated marker which does not point to any place.
+#[lisp_fn]
+pub fn make_marker() -> LispMarkerRef {
+    let mut marker = unsafe { allocate_misc(Lisp_Misc_Type::Lisp_Misc_Marker) }.force_marker();
+
+    // Set the properties of the marker to nothing
+    marker.set_buffer(ptr::null_mut());
+    marker.set_charpos(0isize);
+    marker.set_bytepos(0isize);
+    marker.set_insertion_type(false);
+    marker.set_need_adjustment(false);
+
+    marker
 }
 
 include!(concat!(env!("OUT_DIR"), "/alloc_exports.rs"));

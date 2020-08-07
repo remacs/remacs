@@ -759,12 +759,6 @@ If STRING is multibyte and contains a character of charset
   return string;
 }
 
-/* Check that ARRAY can have a valid subarray [FROM..TO),
-   given that its size is SIZE.
-   If FROM is nil, use 0; if TO is nil, use SIZE.
-   Count negative values backwards from the end.
-   Set *IFROM and *ITO to the two indexes used.  */
-
 DEFUN ("substring", Fsubstring, Ssubstring, 1, 3, 0,
        doc: /* Return a new string whose contents are a substring of STRING.
 The returned string consists of the characters between index FROM

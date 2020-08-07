@@ -14,16 +14,16 @@ use crate::{
     buffers::LispBufferRef,
     chartable::{LispCharTableRef, LispSubCharTableAsciiRef, LispSubCharTableRef},
     data::aref,
-    frames::LispFrameRef,
+    frame::LispFrameRef,
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispObject, LispStructuralEqual, LispSubrRef},
     lists::{inorder, nth, sort_list},
     multibyte::MAX_CHAR,
     process::LispProcessRef,
     remacs_sys::{
-        equal_kind, pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Char_Table, Lisp_Type, Lisp_Vector,
-        Lisp_Vectorlike, Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD,
-        BOOL_VECTOR_BITS_PER_CHAR, PSEUDOVECTOR_FLAG,
+        equal_kind, pvec_type, EmacsInt, Lisp_Bool_Vector, Lisp_Type, Lisp_Vector, Lisp_Vectorlike,
+        Lisp_Vectorlike_With_Slots, More_Lisp_Bits, BITS_PER_BITS_WORD, BOOL_VECTOR_BITS_PER_CHAR,
+        PSEUDOVECTOR_FLAG,
     },
     remacs_sys::{Qarrayp, Qsequencep, Qvectorp},
     threads::ThreadStateRef,
@@ -127,7 +127,7 @@ impl Debug for LispVectorlikeRef {
                 write!(f, "[")?;
                 match v.as_slice() {
                     [] => {}
-                    [first, rest..] => {
+                    [first, rest @ ..] => {
                         write!(f, "{:?}", first)?;
                         for elt in rest {
                             write!(f, " {:?}", elt)?;
@@ -153,14 +153,14 @@ impl LispVectorlikeRef {
 
     pub fn as_vector(self) -> Option<LispVectorRef> {
         if self.is_vector() {
-            Some(unsafe { mem::transmute::<_, LispVectorRef>(self) })
+            Some(self.cast())
         } else {
             None
         }
     }
 
     pub unsafe fn as_vector_unchecked(self) -> LispVectorRef {
-        mem::transmute::<_, LispVectorRef>(self)
+        self.cast()
     }
 
     pub fn pseudovector_type(self) -> pvec_type {
@@ -188,7 +188,7 @@ impl LispVectorlikeRef {
 
     pub fn as_bool_vector(self) -> Option<LispBoolVecRef> {
         if self.is_pseudovector(pvec_type::PVEC_BOOL_VECTOR) {
-            Some(unsafe { mem::transmute::<_, LispBoolVecRef>(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -196,7 +196,7 @@ impl LispVectorlikeRef {
 
     pub fn as_buffer(self) -> Option<LispBufferRef> {
         if self.is_pseudovector(pvec_type::PVEC_BUFFER) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -204,7 +204,7 @@ impl LispVectorlikeRef {
 
     pub fn as_subr(self) -> Option<LispSubrRef> {
         if self.is_pseudovector(pvec_type::PVEC_SUBR) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -212,7 +212,7 @@ impl LispVectorlikeRef {
 
     pub fn as_window(self) -> Option<LispWindowRef> {
         if self.is_pseudovector(pvec_type::PVEC_WINDOW) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -220,7 +220,7 @@ impl LispVectorlikeRef {
 
     pub fn as_window_configuration(self) -> Option<SaveWindowDataRef> {
         if self.is_pseudovector(pvec_type::PVEC_WINDOW_CONFIGURATION) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -228,7 +228,7 @@ impl LispVectorlikeRef {
 
     pub fn as_frame(self) -> Option<LispFrameRef> {
         if self.is_pseudovector(pvec_type::PVEC_FRAME) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -236,7 +236,7 @@ impl LispVectorlikeRef {
 
     pub fn as_process(self) -> Option<LispProcessRef> {
         if self.is_pseudovector(pvec_type::PVEC_PROCESS) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -244,15 +244,15 @@ impl LispVectorlikeRef {
 
     pub fn as_thread(self) -> Option<ThreadStateRef> {
         if self.is_pseudovector(pvec_type::PVEC_THREAD) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
     }
 
-    pub fn as_char_table(mut self) -> Option<LispCharTableRef> {
+    pub fn as_char_table(self) -> Option<LispCharTableRef> {
         if self.is_pseudovector(pvec_type::PVEC_CHAR_TABLE) {
-            Some(LispCharTableRef::new(self.as_mut() as *mut Lisp_Char_Table))
+            Some(self.cast())
         } else {
             None
         }
@@ -260,7 +260,7 @@ impl LispVectorlikeRef {
 
     pub fn as_sub_char_table(self) -> Option<LispSubCharTableRef> {
         if self.is_pseudovector(pvec_type::PVEC_SUB_CHAR_TABLE) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -276,7 +276,7 @@ impl LispVectorlikeRef {
 
     pub fn as_compiled(self) -> Option<LispVectorlikeSlotsRef> {
         if self.is_pseudovector(pvec_type::PVEC_COMPILED) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -284,7 +284,7 @@ impl LispVectorlikeRef {
 
     pub fn as_record(self) -> Option<LispVectorlikeSlotsRef> {
         if self.is_pseudovector(pvec_type::PVEC_RECORD) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -292,7 +292,7 @@ impl LispVectorlikeRef {
 
     pub fn as_font(self) -> Option<LispVectorlikeSlotsRef> {
         if self.is_pseudovector(pvec_type::PVEC_FONT) {
-            Some(unsafe { mem::transmute(self) })
+            Some(self.cast())
         } else {
             None
         }
@@ -349,13 +349,17 @@ macro_rules! impl_vectorlike_ref {
     ($type:ident, $itertype:ident, $size_mask:expr) => {
         impl From<$type> for LispObject {
             fn from(v: $type) -> Self {
-                LispObject::tag_ptr(v, Lisp_Type::Lisp_Vectorlike)
+                Self::tag_ptr(v, Lisp_Type::Lisp_Vectorlike)
             }
         }
 
         impl $type {
             pub fn len(self) -> usize {
                 (unsafe { self.header.size } & ($size_mask as isize)) as usize
+            }
+
+            pub fn is_empty(self) -> bool {
+                self.len() == 0
             }
 
             pub fn as_slice(&self) -> &[LispObject] {
@@ -467,13 +471,17 @@ More_Lisp_Bits::PSEUDOVECTOR_SIZE_MASK as isize }
 
 impl From<LispBoolVecRef> for LispObject {
     fn from(b: LispBoolVecRef) -> Self {
-        LispObject::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
+        Self::tag_ptr(b, Lisp_Type::Lisp_Vectorlike)
     }
 }
 
 impl LispBoolVecRef {
     pub fn len(self) -> usize {
         self.size as usize
+    }
+
+    pub fn is_empty(self) -> bool {
+        self.len() == 0
     }
 
     pub fn len_bytes(self) -> usize {
@@ -637,7 +645,7 @@ pub fn length(sequence: LispObject) -> usize {
 /// Return element of SEQUENCE at index N.
 #[lisp_fn]
 pub fn elt(sequence: LispObject, n: EmacsInt) -> LispObject {
-    if sequence.is_cons() || sequence.is_nil() {
+    if sequence.is_list() {
         nth(n, sequence)
     } else if sequence.is_array() {
         aref(sequence, n)
@@ -757,8 +765,8 @@ pub fn recordp(object: LispObject) -> bool {
 
 lazy_static! {
     pub static ref HEADER_SIZE: usize =
-        { unsafe { offset_of!(crate::remacs_sys::Lisp_Vector, contents) } };
-    pub static ref WORD_SIZE: usize = { ::std::mem::size_of::<crate::lisp::LispObject>() };
+        unsafe { offset_of!(crate::remacs_sys::Lisp_Vector, contents) };
+    pub static ref WORD_SIZE: usize = ::std::mem::size_of::<crate::lisp::LispObject>();
 }
 
 include!(concat!(env!("OUT_DIR"), "/vectors_exports.rs"));

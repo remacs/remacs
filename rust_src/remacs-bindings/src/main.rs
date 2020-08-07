@@ -275,9 +275,6 @@ fn run_bindgen(path: &str) {
                 .blacklist_item("current_timespec")
                 .blacklist_item("timex")
                 .blacklist_item("clock_adjtime")
-                // bindgen fails to generate this one correctly; it's hard
-                // https://github.com/rust-lang-nursery/rust-bindgen/issues/1318
-                .blacklist_item("max_align_t")
                 // by default we want C enums to be converted into a Rust module with constants in it
                 .default_enum_style(bindgen::EnumVariation::ModuleConsts)
                 // enums with only one variant are better as simple constants
