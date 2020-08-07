@@ -8,7 +8,7 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     alloc::record,
-    casefiddle::downcase,
+    casefiddle::{downcase, upcase},
     dispnew::{ding, sleep_for},
     eval::{record_unwind_protect, un_autoload, unbind_to},
     lisp::LispObject,
@@ -549,17 +549,17 @@ pub fn compare_strings(
         index1 = i1;
         index2 = i2;
 
-        let to_lowercase = |c: Codepoint| -> LispStringRef {
+        let to_uppercase = |c: Codepoint| -> LispStringRef {
             let mut bytes = [0u8; 5];
             let len = write_codepoint(&mut bytes, c) as isize;
             let string = unsafe { make_multibyte_string(&bytes as *const u8 as *const i8, 1, len) };
-            downcase(string).force_string()
+            upcase(string).force_string()
         };
 
         if c1 == c2 {
             continue;
         }
-        if ignore_case && to_lowercase(c1).as_slice() == to_lowercase(c2).as_slice() {
+        if ignore_case && to_uppercase(c1).as_slice() == to_uppercase(c2).as_slice() {
             continue;
         }
         if c1 < c2 {
