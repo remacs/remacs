@@ -163,6 +163,11 @@ extern "C" fn update_window_end(
         unsafe { x_draw_vertical_border(window.as_mut()) }
     }
     unsafe { unblock_input() };
+
+    let frame: LispFrameRef = window.get_frame();
+    let mut output: OutputRef = unsafe { frame.output_data.wr.into() };
+
+    output.flush();
 }
 
 extern "C" fn flush_display(f: *mut Lisp_Frame) {
