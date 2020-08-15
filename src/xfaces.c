@@ -933,6 +933,10 @@ defined_color (struct frame *f, const char *color_name, XColor *color_def,
   else if (FRAME_NS_P (f))
     return ns_defined_color (f, color_name, color_def, alloc, true);
 #endif
+#ifdef USE_WEBRENDER
+  else if (FRAME_WR_P (f))
+    return wr_defined_color (f, color_name, color_def, alloc);
+#endif
   else
     emacs_abort ();
 }

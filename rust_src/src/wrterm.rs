@@ -74,14 +74,14 @@ pub extern "C" fn wr_get_baseline_offset(output: OutputRef) -> i32 {
     unimplemented!();
 }
 
-#[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn wr_defined_color(
-    frame: LispFrameRef,
-    color_name: *const libc::c_char,
-    color_def: XColor,
+    _frame: LispFrameRef,
+    _color_name: *mut libc::c_char,
+    _color_def: *mut XColor,
+    _alloc_p: bool,
 ) -> bool {
-    unimplemented!();
+    false
 }
 
 #[allow(unused_variables)]
@@ -422,7 +422,8 @@ pub fn x_open_connection(
 /// Internal function called by `display-color-p', which see.
 #[lisp_fn(min = "0")]
 pub fn xw_display_color_p(_terminal: LispObject) -> bool {
-    unimplemented!();
+    // webrender support color display
+    true
 }
 
 /// Return t if the X display supports shades of gray.
@@ -432,7 +433,8 @@ pub fn xw_display_color_p(_terminal: LispObject) -> bool {
 /// If omitted or nil, that stands for the selected frame's display.
 #[lisp_fn(min = "0")]
 pub fn x_display_grayscale_p(_terminal: LispObject) -> bool {
-    unimplemented!();
+    // webrender support shades of gray
+    true
 }
 
 fn syms_of_wrfont() {
