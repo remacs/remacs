@@ -118,6 +118,24 @@ impl LispFrameRef {
         }
     }
 
+    pub fn top_margin_height(self) -> i32 {
+        self.menu_bar_height + self.tool_bar_height
+    }
+
+    pub fn pixel_to_text_width(self, width: i32) -> i32 {
+        width
+            - self.scroll_bar_area_width()
+            - self.total_fringe_width()
+            - 2 * self.internal_border_width()
+    }
+
+    pub fn pixel_to_text_height(self, height: i32) -> i32 {
+        height
+            - self.top_margin_height()
+            - self.horizontal_scroll_bar_height()
+            - 2 * self.internal_border_width()
+    }
+
     pub fn get_param(self, prop: LispObject) -> LispObject {
         match assq(prop, self.param_alist).as_cons() {
             Some(cons) => cons.cdr(),

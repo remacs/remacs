@@ -13,11 +13,12 @@ use crate::{
     remacs_sys::globals,
     remacs_sys::resource_types::{RES_TYPE_NUMBER, RES_TYPE_STRING, RES_TYPE_SYMBOL},
     remacs_sys::{
-        block_input, fontset_from_font, hashtest_eql, init_frame_faces, make_hash_table,
-        register_font_driver, unblock_input, x_get_arg, Display, Fcons, Fcopy_alist, Fprovide,
-        Pixmap, Qbackground_color, Qfont, Qfont_backend, Qforeground_color, Qminibuffer, Qname,
-        Qnil, Qparent_id, Qt, Qterminal, Qunbound, Qwr, Qx, Vframe_list, WRImage, Window, XColor,
-        XrmDatabase, DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
+        adjust_frame_size, block_input, fontset_from_font, hashtest_eql, init_frame_faces,
+        make_hash_table, register_font_driver, unblock_input, x_get_arg, Display, Fcons,
+        Fcopy_alist, Fprovide, Pixmap, Qbackground_color, Qfont, Qfont_backend, Qforeground_color,
+        Qminibuffer, Qname, Qnil, Qparent_id, Qt, Qterminal, Qunbound, Qwr, Qx, Qx_create_frame_1,
+        Qx_create_frame_2, Vframe_list, WRImage, Window, XColor, XrmDatabase, DEFAULT_REHASH_SIZE,
+        DEFAULT_REHASH_THRESHOLD,
     },
     webrender_backend::{
         font::{FontRef, FONT_DRIVER},
@@ -187,7 +188,7 @@ pub extern "C" fn x_set_offset(frame: LispFrameRef, xoff: i32, yoff: i32, change
 
 #[no_mangle]
 pub extern "C" fn x_new_font(
-    frame: LispFrameRef,
+    mut frame: LispFrameRef,
     font_object: LispObject,
     fontset: i32,
 ) -> LispObject {
@@ -207,6 +208,8 @@ pub extern "C" fn x_new_font(
     }
 
     output.font = font.into();
+
+    frame.line_height = unsafe { (*font).height };
 
     font_object
 }
@@ -409,6 +412,40 @@ pub fn x_create_frame(parms: LispObject) -> LispFrameRef {
         "Background",
         RES_TYPE_STRING,
     );
+
+    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+
+    let output_size = output.get_inner_size();
+
+    frame.pixel_width = output_size.width as i32;
+    frame.pixel_height = output_size.height as i32;
+
+    frame.text_width = frame.pixel_to_text_width(output_size.width as i32);
+    frame.text_height = frame.pixel_to_text_height(output_size.height as i32);
+
+    frame.set_can_x_set_window_size(true);
+
+    unsafe {
+        adjust_frame_size(
+            frame.as_mut(),
+            frame.text_width,
+            frame.text_height,
+            5,
+            true,
+            Qx_create_frame_1,
+        )
+    }
+
+    unsafe {
+        adjust_frame_size(
+            frame.as_mut(),
+            frame.text_width,
+            frame.text_height,
+            0,
+            true,
+            Qx_create_frame_2,
+        )
+    }
 
     unsafe { init_frame_faces(frame.as_mut()) };
 

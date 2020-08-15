@@ -1458,6 +1458,7 @@ name = "remacs"
 version = "0.1.0"
 dependencies = [
  "alloc_unexecmacosx",
+ "app_units",
  "base64 0.10.1",
  "cfg-if",
  "clippy",

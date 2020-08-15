@@ -44,7 +44,7 @@ typedef int Cursor;
 typedef int RGB_PIXEL_COLOR;
 
 #define No_Cursor (0)
-#define XChar2b wchar_t
+#define XChar2b uint16_t
 
 /* Windows equivalent of XImage.  */
 typedef struct _WRImage
