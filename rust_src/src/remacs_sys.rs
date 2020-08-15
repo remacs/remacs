@@ -168,3 +168,15 @@ pub struct Lisp_Vectorlike_With_Slots {
 //extern "C" {
 //    pub fn staticpro(arg1: *const Lisp_Object);
 //}
+
+impl Clone for hash_table_test {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name,
+            user_hash_function: self.user_hash_function,
+            user_cmp_function: self.user_cmp_function,
+            cmpfn: self.cmpfn,
+            hashfn: self.hashfn,
+        }
+    }
+}
