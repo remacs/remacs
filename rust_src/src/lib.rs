@@ -128,6 +128,7 @@ mod util;
 mod vectors;
 mod window_configuration;
 mod windows;
+#[cfg(feature = "window-system-webrender")]
 mod wrterm;
 mod xdisp;
 mod xfaces;
@@ -135,6 +136,7 @@ mod xml;
 #[cfg(feature = "window-system-x11")]
 mod xsettings;
 
+#[cfg(feature = "window-system-webrender")]
 pub use crate::wrterm::{tip_frame, wr_display_list};
 
 #[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
