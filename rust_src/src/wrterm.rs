@@ -764,6 +764,48 @@ pub fn x_display_monitor_attributes_list(terminal: LispObject) -> LispObject {
     }
 }
 
+/// Assert an X selection of type SELECTION and value VALUE.
+/// SELECTION is a symbol, typically `PRIMARY', `SECONDARY', or `CLIPBOARD'.
+/// \(Those are literal upper-case symbol names, since that's what X expects.)
+/// VALUE is typically a string, or a cons of two markers, but may be
+/// anything that the functions on `selection-converter-alist' know about.
+///
+/// FRAME should be a frame that should own the selection.  If omitted or
+/// nil, it defaults to the selected frame.
+///
+/// On Nextstep, FRAME is unused.
+#[lisp_fn(min = "2")]
+pub fn x_own_selection_internal(
+    _selection: LispObject,
+    _value: LispObject,
+    _frame: LispObject,
+) -> LispObject {
+    Qnil
+}
+
+/// Return text selected from some X window.
+/// SELECTION-SYMBOL is typically `PRIMARY', `SECONDARY', or `CLIPBOARD'.
+/// \(Those are literal upper-case symbol names, since that's what X expects.)
+/// TARGET-TYPE is the type of data desired, typically `STRING'.
+///
+/// TIME-STAMP is the time to use in the XConvertSelection call for foreign
+/// selections.  If omitted, defaults to the time for the last event.
+///
+/// TERMINAL should be a terminal object or a frame specifying the X
+/// server to query.  If omitted or nil, that stands for the selected
+/// frame's display, or the first available X display.
+///
+/// On Nextstep, TIME-STAMP and TERMINAL are unused.
+#[lisp_fn(min = "2")]
+pub fn x_get_selection_internal(
+    _selection_symbol: LispObject,
+    _target_type: LispObject,
+    _time_stamp: LispObject,
+    _terminal: LispObject,
+) -> LispObject {
+    Qnil
+}
+
 fn syms_of_wrfont() {
     unsafe {
         register_font_driver(FONT_DRIVER.clone().as_mut(), ptr::null_mut());
