@@ -138,9 +138,17 @@ pub extern "C" fn x_implicitly_set_name(
     arg: LispObject,
     oldval: LispObject,
 ) {
-    if frame.name.is_nil() {
-        frame.name = arg;
+    if frame.name.eq(arg) {
+        return;
     }
+
+    frame.name = arg;
+
+    let title = format!("{}", arg.force_string());
+
+    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+
+    output.set_title(&title);
 }
 
 #[allow(unused_variables)]

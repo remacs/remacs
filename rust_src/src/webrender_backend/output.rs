@@ -375,6 +375,10 @@ impl Output {
         self.window.set_maximized(true);
     }
 
+    pub fn set_title(&self, title: &str) {
+        self.window.set_title(title);
+    }
+
     pub fn set_display_info(&mut self, mut dpyinfo: DisplayInfoRef) {
         self.output.display_info = dpyinfo.as_mut();
     }
