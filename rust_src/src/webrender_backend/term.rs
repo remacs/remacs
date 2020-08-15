@@ -6,7 +6,9 @@ use webrender::api::*;
 
 use super::{
     color::{color_to_pixel, lookup_color_by_name_or_hex, pixel_to_color},
+    cursor::{draw_bar_cursor, draw_filled_cursor, draw_hollow_box_cursor},
     display_info::{DisplayInfo, DisplayInfoRef},
+    event::create_emacs_event,
     glyph::GlyphStringRef,
     output::OutputRef,
 };
@@ -18,17 +20,18 @@ use crate::{
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::{
         allocate_kboard, create_terminal, current_kboard, draw_fringe_bitmap_params,
-        draw_window_fringes, face_id, frame_parm_handler, glyph_row, glyph_row_area::ANY_AREA,
-        glyph_string, initial_kboard, input_event, output_method, redisplay_interface, run,
-        terminal, xlispstrdup, Fcons, Lisp_Frame, Lisp_Window, Qbackground_color, Qnil, Qwr,
-        Vframe_list, KBOARD,
+        draw_window_fringes, face_id, frame_parm_handler, glyph_row, glyph_row_area, glyph_string,
+        initial_kboard, input_event, output_method, redisplay_interface, run, terminal,
+        text_cursor_kinds, xlispstrdup, Fcons, Lisp_Frame, Lisp_Window, Qbackground_color, Qnil,
+        Qwr, Vframe_list, KBOARD,
     },
     remacs_sys::{
-        block_input, kbd_buffer_store_event_hold, unblock_input, update_face_from_frame_parameter,
-        window_box, x_clear_end_of_line, x_clear_window_mouse_face, x_draw_right_divider,
-        x_draw_vertical_border, x_fix_overlapping_area, x_get_glyph_overhangs, x_produce_glyphs,
+        block_input, display_and_set_cursor, kbd_buffer_store_event_hold, unblock_input,
+        update_face_from_frame_parameter, window_box, x_clear_end_of_line,
+        x_clear_window_mouse_face, x_draw_right_divider, x_draw_vertical_border,
+        x_fix_overlapping_area, x_get_glyph_overhangs, x_produce_glyphs,
         x_set_bottom_divider_width, x_set_font, x_set_font_backend, x_set_left_fringe,
-        x_set_right_divider_width, x_set_right_fringe, x_write_glyphs,
+        x_set_right_divider_width, x_set_right_fringe, x_update_cursor, x_write_glyphs,
     },
     windows::LispWindowRef,
 };
@@ -61,7 +64,7 @@ fn get_frame_parm_handlers() -> [frame_parm_handler; 45] {
         Some(set_background_color),
         None,
         None,
-        None,
+        Some(set_cursor_color),
         None,
         Some(x_set_font),
         None,
@@ -131,7 +134,7 @@ lazy_static! {
             draw_glyph_string: Some(draw_glyph_string),
             define_frame_cursor: None,
             clear_frame_area: Some(clear_frame_area),
-            draw_window_cursor: None,
+            draw_window_cursor: Some(draw_window_cursor),
             draw_vertical_window_border: Some(draw_vertical_window_border),
             draw_window_divider: Some(draw_window_divider),
             shift_glyphs_for_insert: None,
@@ -148,7 +151,7 @@ extern "C" fn update_window_begin(w: *mut Lisp_Window) {}
 
 extern "C" fn update_window_end(
     window: *mut Lisp_Window,
-    _cursor_no_p: bool,
+    cursor_no_p: bool,
     _mouse_face_overwritten_p: bool,
 ) {
     let mut window: LispWindowRef = window.into();
@@ -158,10 +161,25 @@ extern "C" fn update_window_end(
     }
 
     unsafe { block_input() };
-    if window.right_divider_width() > 0 {
-        unsafe { x_draw_right_divider(window.as_mut()) }
-    } else {
-        unsafe { x_draw_vertical_border(window.as_mut()) }
+    if cursor_no_p {
+        unsafe {
+            display_and_set_cursor(
+                window.as_mut(),
+                true,
+                window.output_cursor.hpos,
+                window.output_cursor.vpos,
+                window.output_cursor.x,
+                window.output_cursor.y,
+            )
+        };
+    }
+
+    if unsafe { draw_window_fringes(window.as_mut(), true) } {
+        if window.right_divider_width() > 0 {
+            unsafe { x_draw_right_divider(window.as_mut()) }
+        } else {
+            unsafe { x_draw_vertical_border(window.as_mut()) }
+        }
     }
     unsafe { unblock_input() };
 
@@ -204,6 +222,65 @@ extern "C" fn draw_fringe_bitmap(
     let output: OutputRef = unsafe { frame.output_data.wr.into() };
 
     output.canvas().draw_fringe_bitmap(row, p);
+}
+
+extern "C" fn set_cursor_color(f: *mut Lisp_Frame, arg: LispObject, _old_val: LispObject) {
+    let frame: LispFrameRef = f.into();
+
+    let color_str = format!("{}", arg.force_string());
+    let color = lookup_color_by_name_or_hex(&color_str);
+
+    if let Some(color) = color {
+        let mut output: OutputRef = unsafe { frame.output_data.wr.into() };
+        output.cursor_color = color;
+    }
+
+    if frame.is_visible() {
+        unsafe { x_update_cursor(f, false) };
+        unsafe { x_update_cursor(f, true) };
+    }
+}
+
+extern "C" fn draw_window_cursor(
+    window: *mut Lisp_Window,
+    row: *mut glyph_row,
+    _x: i32,
+    _y: i32,
+    cursor_type: text_cursor_kinds::Type,
+    cursor_width: i32,
+    on_p: bool,
+    _active_p: bool,
+) {
+    let mut window: LispWindowRef = window.into();
+
+    if !on_p {
+        return;
+    }
+
+    window.phys_cursor_type = cursor_type;
+    window.set_phys_cursor_on_p(true);
+
+    match cursor_type {
+        text_cursor_kinds::FILLED_BOX_CURSOR => {
+            draw_filled_cursor(window, row);
+        }
+
+        text_cursor_kinds::HOLLOW_BOX_CURSOR => {
+            draw_hollow_box_cursor(window, row);
+        }
+
+        text_cursor_kinds::BAR_CURSOR => {
+            draw_bar_cursor(window, row, cursor_width, false);
+        }
+        text_cursor_kinds::HBAR_CURSOR => {
+            draw_bar_cursor(window, row, cursor_width, true);
+        }
+
+        text_cursor_kinds::NO_CURSOR => {
+            window.phys_cursor_width = 0;
+        }
+        _ => panic!("invalid cursor type"),
+    }
 }
 
 extern "C" fn draw_window_divider(window: *mut Lisp_Window, x0: i32, x1: i32, y0: i32, y1: i32) {
@@ -299,7 +376,14 @@ extern "C" fn scroll_run(w: *mut Lisp_Window, run: *mut run) {
         let mut width: i32 = 0;
         let mut height: i32 = 0;
 
-        window_box(w, ANY_AREA, &mut x, &mut y, &mut width, &mut height);
+        window_box(
+            w,
+            glyph_row_area::ANY_AREA,
+            &mut x,
+            &mut y,
+            &mut width,
+            &mut height,
+        );
         (x, y, width, height)
     };
 
@@ -372,6 +456,38 @@ extern "C" fn read_input_event(terminal: *mut terminal, hold_quit: *mut input_ev
             }
             ElementState::Released => dpyinfo.keyboard_processor.key_released(),
         },
+
+        Event::WindowEvent {
+            event: WindowEvent::Focused(is_focused),
+            ..
+        } => {
+            let mut dpyinfo: DisplayInfoRef = unsafe { terminal.display_info.wr }.into();
+
+            let mut top_frame = top_frame.as_frame().unwrap();
+
+            let focus_frame = if !top_frame.focus_frame.eq(Qnil) {
+                top_frame.focus_frame.as_frame().unwrap().as_mut()
+            } else {
+                top_frame.as_mut()
+            };
+
+            dpyinfo.x_highlight_frame = if is_focused {
+                focus_frame
+            } else {
+                ptr::null_mut()
+            };
+
+            let event_type = if is_focused {
+                crate::remacs_sys::event_kind::FOCUS_IN_EVENT
+            } else {
+                crate::remacs_sys::event_kind::FOCUS_OUT_EVENT
+            };
+
+            let mut event = create_emacs_event(event_type, top_frame.into());
+
+            unsafe { kbd_buffer_store_event_hold(&mut event, hold_quit) };
+            count += 1;
+        }
 
         _ => {}
     });

@@ -493,6 +493,11 @@ pub fn x_create_frame(parms: LispObject) -> LispFrameRef {
     /* Now consider the frame official.  */
     unsafe { Vframe_list = Fcons(frame.into(), Vframe_list) };
 
+    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+    let mut dpyinfo = output.display_info();
+
+    dpyinfo.x_highlight_frame = frame.as_mut();
+
     frame
 }
 

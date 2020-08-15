@@ -52,6 +52,8 @@ pub struct Output {
     pub display_list_builder: Option<DisplayListBuilder>,
 
     pub background_color: ColorF,
+    pub cursor_color: ColorF,
+    pub cursor_foreground_color: ColorF,
 
     window: Window,
 
@@ -84,6 +86,8 @@ impl Output {
             document_id,
             display_list_builder: None,
             background_color: ColorF::WHITE,
+            cursor_color: ColorF::BLACK,
+            cursor_foreground_color: ColorF::WHITE,
             window,
             event_loop_proxy,
             color_bits,
@@ -189,6 +193,10 @@ impl Output {
                     }
                     | Event::WindowEvent {
                         event: WindowEvent::ModifiersChanged(_),
+                        ..
+                    }
+                    | Event::WindowEvent {
+                        event: WindowEvent::Focused(_),
                         ..
                     } => {
                         event_tx.send(e.to_static().unwrap()).unwrap();

@@ -26,8 +26,8 @@ use crate::{
         run_window_configuration_change_hook as run_window_conf_change_hook,
         save_excursion_restore, save_excursion_save, select_window,
         selected_window as current_window, set_buffer_internal, set_window_fringes,
-        update_mode_lines, window_list_1, window_menu_bar_p, window_scroll, window_tool_bar_p,
-        windows_or_buffers_changed, wset_redisplay,
+        update_mode_lines, window_box_left, window_list_1, window_menu_bar_p, window_scroll,
+        window_tool_bar_p, windows_or_buffers_changed, wset_redisplay,
     },
     remacs_sys::{face_id, glyph_matrix, glyph_row, pvec_type, vertical_scroll_bar_type},
     remacs_sys::{EmacsDouble, EmacsInt, Lisp_Type, Lisp_Window},
@@ -307,6 +307,11 @@ impl LispWindowRef {
     /// Convert window relative pixel Y to frame pixel coordinates.
     pub fn frame_pixel_y(self, y: i32) -> i32 {
         y + self.top_edge_y()
+    }
+
+    /// Convert window text relative pixel X to frame pixel coordinates.
+    pub fn text_to_frame_pixel_x(mut self, x: i32) -> i32 {
+        x + unsafe { window_box_left(self.as_mut(), TEXT_AREA) }
     }
 
     pub fn contents_as_buffer(self) -> LispBufferRef {

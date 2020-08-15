@@ -1,7 +1,11 @@
 use libc;
 use std::ptr;
 
-use crate::{frame::LispFrameRef, lisp::ExternalPtr, remacs_sys::wr_display_info};
+use crate::{
+    frame::LispFrameRef,
+    lisp::ExternalPtr,
+    remacs_sys::{wr_display_info, XGCValues},
+};
 
 use super::{keyboard::KeyboardProcessor, output::OutputRef, term::TerminalRef};
 
@@ -12,6 +16,8 @@ pub struct DisplayInfoInner {
     pub output: OutputRef,
 
     pub keyboard_processor: KeyboardProcessor,
+
+    pub scratch_cursor_gc: Box<XGCValues>,
 }
 
 impl Default for DisplayInfoInner {
@@ -21,6 +27,11 @@ impl Default for DisplayInfoInner {
             focus_frame: LispFrameRef::new(ptr::null_mut()),
             output: OutputRef::new(ptr::null_mut()),
             keyboard_processor: KeyboardProcessor::new(),
+            scratch_cursor_gc: Box::new(XGCValues {
+                foreground: 0,
+                background: 0,
+                font: ptr::null_mut(),
+            }),
         }
     }
 }

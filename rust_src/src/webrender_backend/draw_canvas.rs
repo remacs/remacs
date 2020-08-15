@@ -1,12 +1,16 @@
 use webrender::{self, api::units::*, api::*};
 
 use super::{
-    color::pixel_to_color, font::WRFontRef, glyph::GlyphStringRef, output::OutputRef,
+    color::{color_to_pixel, pixel_to_color},
+    display_info::DisplayInfoRef,
+    font::WRFontRef,
+    glyph::GlyphStringRef,
+    output::OutputRef,
     util::HandyDandyRectBuilder,
 };
 
 use crate::remacs_sys::{
-    draw_fringe_bitmap_params, face, face_underline_type, glyph_row, glyph_type,
+    draw_fringe_bitmap_params, draw_glyphs_face, face, face_underline_type, glyph_row, glyph_type,
     prepare_face_for_display,
 };
 
@@ -28,9 +32,54 @@ impl DrawCanvas {
     pub fn draw_glyph_string(&mut self, mut s: GlyphStringRef) {
         unsafe { prepare_face_for_display(s.f, s.face) };
 
-        let face = unsafe { &*s.face };
-        s.gc = face.gc;
-        s.set_stippled_p(face.stipple != 0);
+        match s.hl {
+            draw_glyphs_face::DRAW_NORMAL_TEXT
+            | draw_glyphs_face::DRAW_INVERSE_VIDEO
+            | draw_glyphs_face::DRAW_MOUSE_FACE
+            | draw_glyphs_face::DRAW_IMAGE_RAISED
+            | draw_glyphs_face::DRAW_IMAGE_SUNKEN => {
+                let face = unsafe { &*s.face };
+                s.gc = face.gc;
+                s.set_stippled_p(face.stipple != 0);
+            }
+
+            draw_glyphs_face::DRAW_CURSOR => {
+                let face = unsafe { &*s.face };
+                let output: OutputRef = unsafe { (*s.f).output_data.wr.into() };
+                let dpyinfo: DisplayInfoRef = output.output.display_info.into();
+
+                let mut foreground = face.background;
+                let mut background = color_to_pixel(output.cursor_color);
+
+                // If the glyph would be invisible, try a different foreground.
+                if foreground == background {
+                    foreground = face.foreground;
+                }
+
+                if foreground == background {
+                    foreground = color_to_pixel(output.cursor_foreground_color);
+                }
+
+                if foreground == background {
+                    foreground = face.foreground;
+                }
+
+                // Make sure the cursor is distinct from text in this face.
+                if foreground == face.foreground && background == face.background {
+                    foreground = face.background;
+                    background = face.foreground;
+                }
+
+                let gc = &mut dpyinfo.get_inner().scratch_cursor_gc;
+                gc.foreground = foreground;
+                gc.background = background;
+                s.gc = gc.as_mut();
+
+                s.set_stippled_p(false);
+            }
+
+            _ => panic!("invalid draw_glyphs_face"),
+        }
 
         let type_ = s.first_glyph().type_();
 
@@ -343,6 +392,52 @@ impl DrawCanvas {
                 AlphaType::PremultipliedAlpha,
                 image_key,
                 ColorF::WHITE,
+            );
+        });
+    }
+
+    pub fn draw_hollow_box_cursor(&mut self, x: i32, y: i32, width: i32, height: i32) {
+        let cursor_color = self.output.cursor_color;
+
+        let border_widths = LayoutSideOffsets::new_all_same(1.0);
+
+        let border_side = BorderSide {
+            color: cursor_color,
+            style: BorderStyle::Solid,
+        };
+
+        let border_details = BorderDetails::Normal(NormalBorder {
+            top: border_side,
+            right: border_side,
+            bottom: border_side,
+            left: border_side,
+            radius: BorderRadius::uniform(0.0),
+            do_aa: true,
+        });
+
+        let bounds = (x, y).by(width, height);
+
+        self.output.display(|builder, space_and_clip| {
+            builder.push_border(
+                &CommonItemProperties::new(bounds, space_and_clip),
+                bounds,
+                border_widths,
+                border_details,
+            );
+        });
+    }
+
+    pub fn draw_bar_cursor(&mut self, face: &face, x: i32, y: i32, width: i32, height: i32) {
+        let cursor_color = if pixel_to_color(face.background) == self.output.cursor_color {
+            pixel_to_color(face.foreground)
+        } else {
+            self.output.cursor_color
+        };
+
+        self.output.display(|builder, space_and_clip| {
+            builder.push_rect(
+                &CommonItemProperties::new((x, y).by(width, height), space_and_clip),
+                cursor_color,
             );
         });
     }
