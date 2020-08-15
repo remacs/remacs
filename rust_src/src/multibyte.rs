@@ -696,17 +696,11 @@ pub enum LispSymbolOrString {
 
 impl LispSymbolOrString {
     pub fn is_string(self) -> bool {
-        match self {
-            LispSymbolOrString::String(_) => true,
-            _ => false,
-        }
+        matches!(self, LispSymbolOrString::String(_))
     }
 
     pub fn is_symbol(self) -> bool {
-        match self {
-            LispSymbolOrString::Symbol(_) => true,
-            _ => false,
-        }
+        matches!(self, LispSymbolOrString::Symbol(_))
     }
 }
 

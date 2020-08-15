@@ -45,10 +45,10 @@ impl LispFrameRef {
 
     /// Replaces FRAME_WINDOW_P
     pub fn is_gui_window(self) -> bool {
-        match self.output_method() {
-            output_method::output_initial | output_method::output_termcap => false,
-            _ => true,
-        }
+        !matches!(
+            self.output_method(),
+            output_method::output_initial | output_method::output_termcap
+        )
     }
 
     // Pixel-width of internal border lines.
@@ -235,7 +235,7 @@ pub fn window_frame_live_or_selected(object: LispObject) -> LispFrameRef {
 /// When the object is a window the provided `window_action` is called.
 pub fn window_frame_live_or_selected_with_action(
     mut object: LispObject,
-    mut window_action: impl FnMut(LispWindowRef) -> (),
+    mut window_action: impl FnMut(LispWindowRef),
 ) -> LispFrameRef {
     if object.is_nil() {
         object = selected_window();
