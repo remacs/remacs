@@ -8,13 +8,13 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     fonts::LispFontRef,
-    frame::LispFrameRef,
+    frame::{window_frame_live_or_selected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
     remacs_sys::globals,
     remacs_sys::resource_types::{RES_TYPE_NUMBER, RES_TYPE_STRING, RES_TYPE_SYMBOL},
     remacs_sys::{
         adjust_frame_size, block_input, fontset_from_font, hashtest_eql, init_frame_faces,
-        make_hash_table, register_font_driver, unblock_input, x_get_arg, Display, Fcons,
+        make_hash_table, register_font_driver, unblock_input, x_get_arg, Display, EmacsInt, Fcons,
         Fcopy_alist, Fprovide, Pixmap, Qbackground_color, Qfont, Qfont_backend, Qforeground_color,
         Qminibuffer, Qname, Qnil, Qparent_id, Qt, Qterminal, Qunbound, Qwr, Qx, Qx_create_frame_1,
         Qx_create_frame_2, Vframe_list, WRImage, Window, XColor, XrmDatabase, DEFAULT_REHASH_SIZE,
@@ -536,6 +536,54 @@ pub fn x_change_window_property(
 ) -> LispObject {
     value
 }
+
+/// Return the number of color cells of the X display TERMINAL.
+/// The optional argument TERMINAL specifies which display to ask about.
+/// TERMINAL should be a terminal object, a frame or a display name (a string).
+/// If omitted or nil, that stands for the selected frame's display.
+#[lisp_fn(min = "0")]
+pub fn x_display_color_cells(obj: LispObject) -> EmacsInt {
+    // FIXME: terminal object or display name (a string) is not implemented
+    let frame = window_frame_live_or_selected(obj);
+
+    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+
+    let mut color_bits = output.get_color_bits();
+
+    // Truncate color_bits to 24 to avoid integer overflow.
+    // Some displays says 32, but only 24 bits are actually significant.
+    // There are only very few and rare video cards that have more than
+    // 24 significant bits.  Also 24 bits is more than 16 million colors,
+    // it "should be enough for everyone".
+    if color_bits > 24 {
+        color_bits = 24;
+    }
+
+    (2 as EmacsInt).pow(color_bits as u32)
+}
+
+/// Return the number of bitplanes of the X display TERMINAL.
+/// The optional argument TERMINAL specifies which display to ask about.
+/// TERMINAL should be a terminal object, a frame or a display name (a string).
+/// If omitted or nil, that stands for the selected frame's display.
+/// \(On MS Windows, this function does not accept terminal objects.)
+#[lisp_fn(min = "0")]
+pub fn x_display_planes(obj: LispObject) -> EmacsInt {
+    // FIXME: terminal object or display name (a string) is not implemented
+    let frame = window_frame_live_or_selected(obj);
+
+    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+
+    let color_bits = output.get_color_bits();
+
+    color_bits as EmacsInt
+}
+
+/// Send the size hints for frame FRAME to the window manager.
+/// If FRAME is omitted or nil, use the selected frame.
+/// Signal error if FRAME is not an X frame.
+#[lisp_fn(min = "0")]
+pub fn x_wm_set_size_hint(_frame: LispObject) {}
 
 fn syms_of_wrfont() {
     unsafe {
