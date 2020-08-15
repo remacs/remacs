@@ -227,6 +227,7 @@ pub extern "C" fn x_new_font(
     output.font = font.into();
 
     frame.line_height = unsafe { (*font).height };
+    frame.column_width = unsafe { (*font).average_width };
 
     font_object
 }
