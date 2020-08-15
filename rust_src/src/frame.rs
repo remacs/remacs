@@ -1,6 +1,7 @@
 //! Generic frame functions.
 
 use libc::c_int;
+use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
 
@@ -11,10 +12,11 @@ use crate::{
     remacs_sys::Vframe_list,
     remacs_sys::{
         candidate_frame, check_minibuf_window, delete_frame as c_delete_frame, frame_dimension,
-        other_frames, output_method, windows_or_buffers_changed,
+        other_frames, output_method, windows_or_buffers_changed, x_default_parameter,
     },
     remacs_sys::{
-        minibuf_window, pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type,
+        minibuf_window, pvec_type, resource_types, selected_frame as current_frame, Lisp_Frame,
+        Lisp_Type,
     },
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qwr, Qx},
     vectors::LispVectorlikeRef,
@@ -121,6 +123,23 @@ impl LispFrameRef {
             Some(cons) => cons.cdr(),
             None => Qnil,
         }
+    }
+
+    pub fn x_default_parameter(
+        mut self,
+        alist: LispObject,
+        prop: LispObject,
+        default: LispObject,
+        xprop: &str,
+        xclass: &str,
+        res_type: resource_types::Type,
+    ) {
+        let xprop = CString::new(xprop).unwrap().as_ptr();
+        let xclass = CString::new(xclass).unwrap().as_ptr();
+
+        unsafe {
+            x_default_parameter(self.as_mut(), alist, prop, default, xprop, xclass, res_type);
+        };
     }
 }
 
