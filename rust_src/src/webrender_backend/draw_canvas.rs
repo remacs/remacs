@@ -230,4 +230,58 @@ impl DrawCanvas {
             );
         });
     }
+
+    pub fn draw_window_divider(
+        &mut self,
+        color: u64,
+        color_first: u64,
+        color_last: u64,
+        x0: i32,
+        x1: i32,
+        y0: i32,
+        y1: i32,
+    ) {
+        self.output.display(|builder, space_and_clip| {
+            if (y1 - y0 > x1 - x0) && (x1 - x0 >= 3) {
+                // A vertical divider, at least three pixels wide: Draw first and
+                // last pixels differently.
+
+                builder.push_rect(
+                    &CommonItemProperties::new((x0, y0).to(x0 + 1, y1), space_and_clip),
+                    pixel_to_color(color_first),
+                );
+                builder.push_rect(
+                    &CommonItemProperties::new((x0 + 1, y0).to(x1 - 1, y1), space_and_clip),
+                    pixel_to_color(color),
+                );
+                builder.push_rect(
+                    &CommonItemProperties::new((x1 - 1, y0).to(x1, y1), space_and_clip),
+                    pixel_to_color(color_last),
+                );
+            } else if (x1 - x0 > y1 - y0) && (y1 - y0 >= 3) {
+                // A horizontal divider, at least three pixels high: Draw first and
+                // last pixels differently.
+                builder.push_rect(
+                    &CommonItemProperties::new((x0, y0).to(x1, 1), space_and_clip),
+                    pixel_to_color(color_first),
+                );
+                builder.push_rect(
+                    &CommonItemProperties::new((x0, y0 + 1).to(x1, y1 - 1), space_and_clip),
+                    pixel_to_color(color),
+                );
+                builder.push_rect(
+                    &CommonItemProperties::new((x0, y1 - 1).to(x1, y1), space_and_clip),
+                    pixel_to_color(color_last),
+                );
+            } else {
+                // In any other case do not draw the first and last pixels
+                // differently.
+                let visible_rect = (x0, y0).to(x1, y1);
+                builder.push_rect(
+                    &CommonItemProperties::new(visible_rect, space_and_clip),
+                    pixel_to_color(color),
+                );
+            }
+        });
+    }
 }
