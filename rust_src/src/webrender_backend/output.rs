@@ -1,8 +1,7 @@
 use std::{
     cell::RefCell,
-    ffi::CString,
     rc::Rc,
-    sync::mpsc::{channel, sync_channel, Receiver, SyncSender},
+    sync::mpsc::{sync_channel, SyncSender},
     thread::JoinHandle,
 };
 
@@ -27,6 +26,7 @@ use webrender::{self, api::units::*, api::*};
 
 use crate::{lisp::ExternalPtr, remacs_sys::wr_output};
 
+use super::channel::{selectable_channel, SelectableReceiver};
 use super::display_info::DisplayInfoRef;
 use super::font::FontRef;
 use super::texture::TextureResourceManager;
@@ -61,22 +61,13 @@ pub struct Output {
     event_loop_proxy: EventLoopProxy<EmacsGUIEvent>,
     color_bits: u8,
 
-    pub keyboard_fd: i32,
-    event_rx: Receiver<GUIEvent>,
+    event_rx: SelectableReceiver<GUIEvent>,
 }
 
 impl Output {
     pub fn new() -> Self {
-        let (
-            api,
-            window,
-            document_id,
-            loop_thread,
-            event_loop_proxy,
-            color_bits,
-            event_rx,
-            keyboard_fd,
-        ) = Self::create_webrender_window();
+        let (api, window, document_id, loop_thread, event_loop_proxy, color_bits, event_rx) =
+            Self::create_webrender_window();
 
         Self {
             output: wr_output::default(),
@@ -92,7 +83,6 @@ impl Output {
             window,
             event_loop_proxy,
             color_bits,
-            keyboard_fd,
             event_rx,
         }
     }
@@ -104,18 +94,11 @@ impl Output {
         JoinHandle<()>,
         EventLoopProxy<EmacsGUIEvent>,
         u8,
-        std::sync::mpsc::Receiver<GUIEvent>,
-        i32,
+        SelectableReceiver<GUIEvent>,
     ) {
         let (webrender_tx, webrender_rx) = sync_channel(1);
 
-        let (event_tx, event_rx) = channel::<GUIEvent>();
-        let mut pipes: [i32; 2] = [-1, -1];
-        unsafe {
-            libc::pipe(&mut pipes[0]);
-            libc::fcntl(pipes[0], libc::F_SETFL, libc::O_NONBLOCK);
-            libc::fcntl(pipes[1], libc::F_SETFL, libc::O_NONBLOCK)
-        };
+        let (event_tx, event_rx) = selectable_channel::<GUIEvent>();
 
         let window_loop_thread = std::thread::spawn(move || {
             let events_loop = glutin::event_loop::EventLoop::new_any_thread();
@@ -236,14 +219,6 @@ impl Output {
                         current_context.swap_buffers().ok();
 
                         event_tx.send(e.to_static().unwrap()).unwrap();
-
-                        unsafe {
-                            libc::write(
-                                pipes[1],
-                                CString::new("0").unwrap().as_ptr() as *const libc::c_void,
-                                2,
-                            )
-                        };
                     }
 
                     Event::WindowEvent {
@@ -263,13 +238,6 @@ impl Output {
                         ..
                     } => {
                         event_tx.send(e.to_static().unwrap()).unwrap();
-                        unsafe {
-                            libc::write(
-                                pipes[1],
-                                CString::new("0").unwrap().as_ptr() as *const libc::c_void,
-                                2,
-                            )
-                        };
                     }
                     Event::UserEvent(EmacsGUIEvent::Flush(sender)) => {
                         renderer.update();
@@ -309,7 +277,6 @@ impl Output {
             event_loop_proxy,
             color_bits,
             event_rx,
-            pipes[0],
         )
     }
 
@@ -529,18 +496,13 @@ impl Output {
     where
         F: FnMut(GUIEvent),
     {
-        let mut buffer: [i32; 10] = Default::default();
-
-        let _ = unsafe {
-            libc::read(
-                self.keyboard_fd,
-                &mut buffer[0] as *mut _ as *mut libc::c_void,
-                10,
-            )
-        };
-        for e in self.event_rx.try_iter() {
+        for e in self.event_rx.poll() {
             f(e);
         }
+    }
+
+    pub fn get_keyboard_fd(&self) -> i32 {
+        self.event_rx.get_raw_fd()
     }
 }
 

@@ -33,7 +33,7 @@ pub fn create_frame(
     let mut output = Box::new(Output::new());
     output.set_display_info(dpyinfo);
 
-    unsafe { add_keyboard_wait_descriptor(output.keyboard_fd) };
+    unsafe { add_keyboard_wait_descriptor(output.get_keyboard_fd()) };
 
     // Remeber to destory the Output object when frame destoried.
     let output = Box::into_raw(output);

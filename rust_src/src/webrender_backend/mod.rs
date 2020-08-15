@@ -6,6 +6,7 @@ pub mod keyboard;
 pub mod output;
 pub mod term;
 
+mod channel;
 mod cursor;
 mod draw_canvas;
 mod event;
