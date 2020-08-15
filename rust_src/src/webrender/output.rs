@@ -4,10 +4,12 @@ use std::ptr;
 use crate::{lisp::ExternalPtr, remacs_sys::wr_output};
 
 use super::display_info::DisplayInfoRef;
+use super::font::FontRef;
 
 #[derive(Default)]
 pub struct OutputInner {
     pub display_info: DisplayInfoRef,
+    pub font: FontRef,
 }
 
 pub type OutputInnerRef = ExternalPtr<OutputInner>;

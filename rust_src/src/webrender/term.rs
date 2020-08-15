@@ -5,8 +5,9 @@ use super::display_info::{DisplayInfo, DisplayInfoRef};
 use crate::{
     lisp::{ExternalPtr, LispObject},
     remacs_sys::{
-        allocate_kboard, create_terminal, current_kboard, initial_kboard, output_method, terminal,
-        xlispstrdup, Fcons, Qnil, Qwr, KBOARD,
+        allocate_kboard, create_terminal, current_kboard, frame_parm_handler, initial_kboard,
+        output_method, redisplay_interface, terminal, x_set_font, x_set_font_backend, xlispstrdup,
+        Fcons, Qnil, Qwr, KBOARD,
     },
 };
 
@@ -26,8 +27,107 @@ impl KboardRef {
     }
 }
 
+type RedisplayInterfaceRef = ExternalPtr<redisplay_interface>;
+unsafe impl Sync for RedisplayInterfaceRef {}
+
+fn get_frame_parm_handlers() -> [frame_parm_handler; 45] {
+    // Keep this list in the same order as frame_parms in frame.c.
+    // Use None for unsupported frame parameters.
+    let handlers: [frame_parm_handler; 45] = [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some(x_set_font),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some(x_set_font_backend),
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ];
+
+    handlers
+}
+
+lazy_static! {
+    static ref REDISPLAY_INTERFACE: RedisplayInterfaceRef = {
+        let frame_parm_handlers = Box::new(get_frame_parm_handlers());
+
+        let interface = Box::new(redisplay_interface {
+            frame_parm_handlers: (Box::into_raw(frame_parm_handlers)) as *mut Option<_>,
+            produce_glyphs: None,
+            write_glyphs: None,
+            insert_glyphs: None,
+            clear_end_of_line: None,
+            scroll_run_hook: None,
+            after_update_window_line_hook: None,
+            update_window_begin_hook: None,
+            update_window_end_hook: None,
+            flush_display: None,
+            clear_window_mouse_face: None,
+            get_glyph_overhangs: None,
+            fix_overlapping_area: None,
+            draw_fringe_bitmap: None,
+            define_fringe_bitmap: None,
+            destroy_fringe_bitmap: None,
+            compute_glyph_string_overhangs: None,
+            draw_glyph_string: None,
+            define_frame_cursor: None,
+            clear_frame_area: None,
+            draw_window_cursor: None,
+            draw_vertical_window_border: None,
+            draw_window_divider: None,
+            shift_glyphs_for_insert: None,
+            show_hourglass: None,
+            hide_hourglass: None,
+        });
+
+        RedisplayInterfaceRef::new(Box::into_raw(interface))
+    };
+}
+
 fn wr_create_terminal(mut dpyinfo: DisplayInfoRef) -> TerminalRef {
-    let terminal_ptr = unsafe { create_terminal(output_method::output_wr, ptr::null_mut()) };
+    let terminal_ptr = unsafe {
+        create_terminal(
+            output_method::output_wr,
+            REDISPLAY_INTERFACE.clone().as_mut(),
+        )
+    };
     let mut terminal = TerminalRef::new(terminal_ptr);
 
     // Link terminal and dpyinfo together

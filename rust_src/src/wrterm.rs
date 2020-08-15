@@ -12,12 +12,17 @@ use crate::{
     remacs_sys::globals,
     remacs_sys::resource_types::{RES_TYPE_NUMBER, RES_TYPE_STRING, RES_TYPE_SYMBOL},
     remacs_sys::{
-        block_input, font, hashtest_eql, make_hash_table, unblock_input, x_get_arg, Display,
-        Fcopy_alist, Fprovide, Pixmap, Qminibuffer, Qname, Qnil, Qparent_id, Qt, Qterminal,
-        Qunbound, Qwr, Qx, WRImage, Window, XColor, XrmDatabase, DEFAULT_REHASH_SIZE,
-        DEFAULT_REHASH_THRESHOLD,
+        block_input, hashtest_eql, make_hash_table, register_font_driver, unblock_input,
+        x_default_parameter, x_get_arg, Display, Fcopy_alist, Fprovide, Pixmap, Qfont,
+        Qfont_backend, Qminibuffer, Qname, Qnil, Qparent_id, Qt, Qterminal, Qunbound, Qwr, Qx,
+        WRImage, Window, XColor, XrmDatabase, DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
     },
-    webrender::{frame::create_frame, output::OutputRef, term::wr_term_init},
+    webrender::{
+        font::{FontRef, FONT_DRIVER},
+        frame::create_frame,
+        output::OutputRef,
+        term::wr_term_init,
+    },
 };
 
 pub use crate::webrender::display_info::{DisplayInfo, DisplayInfoRef};
@@ -39,8 +44,8 @@ pub extern "C" fn wr_get_fontset(output: OutputRef) -> i32 {
 
 #[allow(unused_variables)]
 #[no_mangle]
-pub extern "C" fn wr_get_font(output: OutputRef) -> *const font {
-    unimplemented!();
+pub extern "C" fn wr_get_font(output: OutputRef) -> FontRef {
+    output.get_inner().font
 }
 
 #[allow(unused_variables)]
@@ -52,7 +57,7 @@ pub extern "C" fn wr_get_window_desc(output: OutputRef) -> Window {
 #[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn wr_get_display_info(output: OutputRef) -> DisplayInfoRef {
-    unimplemented!();
+    output.get_inner().display_info
 }
 
 #[allow(unused_variables)]
@@ -327,7 +332,36 @@ pub fn x_create_frame(parms: LispObject) -> LispFrameRef {
         )
     };
 
-    let frame = create_frame(display, dpyinfo, tem, kb.into());
+    let mut frame = create_frame(display, dpyinfo, tem, kb.into());
+
+    unsafe {
+        register_font_driver(FONT_DRIVER.clone().as_mut(), frame.as_mut());
+    };
+
+    unsafe {
+        x_default_parameter(
+            frame.as_mut(),
+            parms,
+            Qfont_backend,
+            Qnil,
+            CString::new("fontBackend").unwrap().as_ptr(),
+            CString::new("FontBackend").unwrap().as_ptr(),
+            RES_TYPE_STRING,
+        );
+    };
+
+    unsafe {
+        x_default_parameter(
+            frame.as_mut(),
+            parms,
+            Qfont,
+            "Mono".into(),
+            CString::new("font").unwrap().as_ptr(),
+            CString::new("Font").unwrap().as_ptr(),
+            RES_TYPE_STRING,
+        );
+    };
+
     frame
 }
 
