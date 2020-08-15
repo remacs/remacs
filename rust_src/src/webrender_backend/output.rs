@@ -1,11 +1,16 @@
-use std::{rc::Rc, sync::mpsc::sync_channel, thread::JoinHandle};
+use std::{
+    ffi::CString,
+    rc::Rc,
+    sync::mpsc::{channel, sync_channel, Receiver},
+    thread::JoinHandle,
+};
 
 use font_kit::handle::Handle as FontHandle;
 use gleam::gl::{self, Gl};
 use glutin::{
     self,
     dpi::{LogicalSize, PhysicalPosition},
-    event::Event,
+    event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoopProxy},
     monitor::MonitorHandle,
     window::Window,
@@ -42,11 +47,15 @@ pub struct Output {
     window: Window,
 
     color_bits: u8,
+
+    pub keyboard_fd: i32,
+    event_rx: Receiver<Event<'static, ()>>,
 }
 
 impl Output {
     pub fn new() -> Self {
-        let (api, document_id, window, loop_thread, color_bits) = Self::create_webrender_window();
+        let (api, window, document_id, loop_thread, color_bits, event_rx, keyboard_fd) =
+            Self::create_webrender_window();
 
         Self {
             output: wr_output::default(),
@@ -59,11 +68,29 @@ impl Output {
             background_color: ColorF::WHITE,
             window,
             color_bits,
+            keyboard_fd,
+            event_rx,
         }
     }
 
-    fn create_webrender_window() -> (RenderApi, DocumentId, Window, JoinHandle<()>, u8) {
+    fn create_webrender_window() -> (
+        RenderApi,
+        Window,
+        DocumentId,
+        JoinHandle<()>,
+        u8,
+        std::sync::mpsc::Receiver<Event<'static, ()>>,
+        i32,
+    ) {
         let (webrender_tx, webrender_rx) = sync_channel(1);
+
+        let (event_tx, event_rx) = channel::<Event<()>>();
+        let mut pipes: [i32; 2] = [-1, -1];
+        unsafe {
+            libc::pipe(&mut pipes[0]);
+            libc::fcntl(pipes[0], libc::F_SETFL, libc::O_NONBLOCK);
+            libc::fcntl(pipes[1], libc::F_SETFL, libc::O_NONBLOCK)
+        };
 
         let window_loop_thread = std::thread::spawn(move || {
             let events_loop = glutin::event_loop::EventLoop::new_any_thread();
@@ -122,6 +149,27 @@ impl Output {
                 *control_flow = ControlFlow::Wait;
 
                 match e {
+                    Event::WindowEvent {
+                        event: WindowEvent::KeyboardInput { .. },
+                        ..
+                    }
+                    | Event::WindowEvent {
+                        event: WindowEvent::ReceivedCharacter(_),
+                        ..
+                    }
+                    | Event::WindowEvent {
+                        event: WindowEvent::ModifiersChanged(_),
+                        ..
+                    } => {
+                        event_tx.send(e.to_static().unwrap()).unwrap();
+                        unsafe {
+                            libc::write(
+                                pipes[1],
+                                CString::new("0").unwrap().as_ptr() as *const libc::c_void,
+                                2,
+                            )
+                        };
+                    }
                     Event::UserEvent(_) => {
                         renderer.update();
                         renderer.render(device_size).unwrap();
@@ -141,7 +189,15 @@ impl Output {
         txn.set_root_pipeline(pipeline_id);
         api.send_transaction(document_id, txn);
 
-        (api, document_id, window, window_loop_thread, color_bits)
+        (
+            api,
+            window,
+            document_id,
+            window_loop_thread,
+            color_bits,
+            event_rx,
+            pipes[0],
+        )
     }
 
     fn get_gl_api(window_context: &ContextWrapper<PossiblyCurrent, ()>) -> Rc<dyn Gl> {
@@ -294,6 +350,23 @@ impl Output {
 
     pub fn get_position(&self) -> Option<PhysicalPosition<i32>> {
         self.window.outer_position().ok()
+    }
+    pub fn poll_events<F>(&mut self, mut f: F)
+    where
+        F: FnMut(Event<()>),
+    {
+        let mut buffer: [i32; 10] = Default::default();
+
+        let _ = unsafe {
+            libc::read(
+                self.keyboard_fd,
+                &mut buffer[0] as *mut _ as *mut libc::c_void,
+                10,
+            )
+        };
+        for e in self.event_rx.try_iter() {
+            f(e);
+        }
     }
 }
 

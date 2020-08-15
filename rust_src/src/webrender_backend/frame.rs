@@ -2,8 +2,8 @@ use crate::{
     frame::LispFrameRef,
     lisp::LispObject,
     remacs_sys::{
-        make_frame, make_frame_without_minibuffer, make_minibuffer_frame, output_method, wr_output,
-        Qnil, Qnone, Qonly,
+        add_keyboard_wait_descriptor, make_frame, make_frame_without_minibuffer,
+        make_minibuffer_frame, output_method, wr_output, Qnil, Qnone, Qonly,
     },
 };
 
@@ -32,6 +32,8 @@ pub fn create_frame(
 
     let mut output = Box::new(Output::new());
     output.set_display_info(dpyinfo);
+
+    unsafe { add_keyboard_wait_descriptor(output.keyboard_fd) };
 
     // Remeber to destory the Output object when frame destoried.
     let output = Box::into_raw(output);
