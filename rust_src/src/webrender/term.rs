@@ -6,8 +6,11 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     remacs_sys::{
         allocate_kboard, create_terminal, current_kboard, frame_parm_handler, initial_kboard,
-        output_method, redisplay_interface, terminal, x_set_font, x_set_font_backend, xlispstrdup,
-        Fcons, Qnil, Qwr, KBOARD,
+        output_method, redisplay_interface, terminal, xlispstrdup, Fcons, Qnil, Qwr, KBOARD,
+    },
+    remacs_sys::{
+        x_clear_end_of_line, x_clear_window_mouse_face, x_fix_overlapping_area,
+        x_get_glyph_overhangs, x_produce_glyphs, x_set_font, x_set_font_backend, x_write_glyphs,
     },
 };
 
@@ -90,18 +93,18 @@ lazy_static! {
 
         let interface = Box::new(redisplay_interface {
             frame_parm_handlers: (Box::into_raw(frame_parm_handlers)) as *mut Option<_>,
-            produce_glyphs: None,
-            write_glyphs: None,
+            produce_glyphs: Some(x_produce_glyphs),
+            write_glyphs: Some(x_write_glyphs),
             insert_glyphs: None,
-            clear_end_of_line: None,
+            clear_end_of_line: Some(x_clear_end_of_line),
             scroll_run_hook: None,
             after_update_window_line_hook: None,
             update_window_begin_hook: None,
             update_window_end_hook: None,
             flush_display: None,
-            clear_window_mouse_face: None,
-            get_glyph_overhangs: None,
-            fix_overlapping_area: None,
+            clear_window_mouse_face: Some(x_clear_window_mouse_face),
+            get_glyph_overhangs: Some(x_get_glyph_overhangs),
+            fix_overlapping_area: Some(x_fix_overlapping_area),
             draw_fringe_bitmap: None,
             define_fringe_bitmap: None,
             destroy_fringe_bitmap: None,
