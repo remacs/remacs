@@ -106,14 +106,14 @@ typedef struct ns_bitmap_record Bitmap_Record;
 #ifdef USE_WEBRENDER
 typedef struct wr_bitmap_record Bitmap_Record;
 
-#define GET_PIXEL(ximg, x, y) XGetPixel (ximg, x, y)
+#define GET_PIXEL(ximg, x, y) wr_get_pixel(ximg, x, y)
 #define NO_PIXMAP 0
 
 #define PIX_MASK_RETAIN	0
 #define PIX_MASK_DRAW	1
 
 #define x_defined_color(f, name, color_def, alloc) \
-  wr_defined_color (f, name, color_def, alloc, 0)
+  wr_defined_color (f, name, color_def, alloc)
 #endif /* WITH_WEBRENDER */
 
 
@@ -1209,6 +1209,11 @@ four_corners_best (XImagePtr_or_DC ximg, int *corners,
 
 #define Free_Pixmap(display, pixmap) \
   ns_release_object (pixmap)
+
+#elif defined (USE_WEBRENDER)
+
+#define Free_Pixmap(display, pixmap) \
+  wr_free_pixmap (display, pixmap)
 
 #else
 
@@ -2765,6 +2770,9 @@ Create_Pixmap_From_Bitmap_Data (struct frame *f, struct image *img, char *data,
 
 #elif defined (HAVE_NS)
   img->pixmap = ns_image_from_XBM (data, img->width, img->height, fg, bg);
+
+#elif defined (USE_WEBRENDER)
+  /* TODO: add pixmap from bitmap logic. */
 
 #else
   img->pixmap =
@@ -4671,6 +4679,8 @@ x_to_xcolors (struct frame *f, struct image *img, bool rgb_p)
       if (rgb_p)
 	x_query_colors (f, row, img->width);
 
+#elif defined (USE_WEBRENDER)
+      /* TODO: add logic */
 #else
 
       for (x = 0; x < img->width; ++x, ++p)

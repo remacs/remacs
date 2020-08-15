@@ -81,7 +81,8 @@ struct wr_display_info
   int last_mouse_motion_y;
 };
 
-extern struct wr_display_info *x_display_list;
+extern struct wr_display_info *wr_display_list;
+#define x_display_list wr_display_list
 
 struct wr_output
 {
@@ -123,6 +124,9 @@ extern struct font *wr_get_font(wr_output* output);
 extern wr_display_info *wr_get_display_info(wr_output* output);
 extern Display *wr_get_display(wr_display_info* output);
 extern Screen wr_get_screen(wr_display_info* output);
+extern bool wr_defined_color (struct frame *, const char *, XColor *, bool);
+extern int wr_get_baseline_offset(wr_output* output);
+extern int wr_get_pixel(WRImage *ximg, int x, int y);
 
 /* This is the `Display *' which frame F is on.  */
 #define FRAME_X_DISPLAY(f) (wr_get_display(FRAME_DISPLAY_INFO (f)))
@@ -132,6 +136,8 @@ extern Screen wr_get_screen(wr_display_info* output);
 
 /* Return the X output data for frame F.  */
 #define FRAME_X_OUTPUT(f) ((f)->output_data.wr)
+
+#define FRAME_BASELINE_OFFSET(f) (wr_get_baseline_offset(FRAME_X_OUTPUT (f)))
 
 /* This is the `Screen *' which frame F is on.  */
 #define FRAME_X_SCREEN(f) (wr_get_display_info(FRAME_X_OUTPUT (f)))

@@ -16,7 +16,7 @@ use crate::{
     remacs_sys::{
         minibuf_window, pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type,
     },
-    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
+    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qwr, Qx},
     vectors::LispVectorlikeRef,
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
@@ -285,6 +285,7 @@ fn framep_1(frame: LispFrameRef) -> LispObject {
         output_method::output_w32 => Qw32,
         output_method::output_msdos_raw => Qpc,
         output_method::output_ns => Qns,
+        output_method::output_wr => Qwr,
     }
 }
 
