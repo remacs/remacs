@@ -4,8 +4,6 @@ use libc;
 use std::ffi::CString;
 use std::ptr;
 
-use remacs_macros::lisp_fn;
-
 use crate::{
     fonts::LispFontRef,
     frame::LispFrameRef,
@@ -14,10 +12,10 @@ use crate::{
     remacs_sys::resource_types::{RES_TYPE_NUMBER, RES_TYPE_STRING, RES_TYPE_SYMBOL},
     remacs_sys::{
         block_input, fontset_from_font, hashtest_eql, init_frame_faces, make_hash_table,
-        register_font_driver, unblock_input, x_get_arg, Display, Fcopy_alist, Fprovide, Pixmap,
-        Qbackground_color, Qfont, Qfont_backend, Qforeground_color, Qminibuffer, Qname, Qnil,
-        Qparent_id, Qt, Qterminal, Qunbound, Qwr, Qx, WRImage, Window, XColor, XrmDatabase,
-        DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
+        register_font_driver, unblock_input, x_get_arg, Display, Fcons, Fcopy_alist, Fprovide,
+        Pixmap, Qbackground_color, Qfont, Qfont_backend, Qforeground_color, Qminibuffer, Qname,
+        Qnil, Qparent_id, Qt, Qterminal, Qunbound, Qwr, Qx, Vframe_list, WRImage, Window, XColor,
+        XrmDatabase, DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
     },
     webrender::{
         font::{FontRef, FONT_DRIVER},
@@ -26,6 +24,7 @@ use crate::{
         term::wr_term_init,
     },
 };
+use remacs_macros::lisp_fn;
 
 pub use crate::webrender::display_info::{DisplayInfo, DisplayInfoRef};
 
@@ -213,15 +212,21 @@ pub extern "C" fn x_new_font(
 // finishes with it.
 #[allow(unused_variables)]
 #[no_mangle]
-pub extern "C" fn x_make_frame_visible(f: LispFrameRef) {}
+pub extern "C" fn x_make_frame_visible(mut f: LispFrameRef) {
+    f.set_visible(true as u32);
+}
 
 #[allow(unused_variables)]
 #[no_mangle]
-pub extern "C" fn x_make_frame_invisible(f: LispFrameRef) {}
+pub extern "C" fn x_make_frame_invisible(mut f: LispFrameRef) {
+    f.set_visible(false as u32);
+}
 
 #[allow(unused_variables)]
 #[no_mangle]
-pub extern "C" fn x_iconify_frame(f: LispFrameRef) {}
+pub extern "C" fn x_iconify_frame(mut f: LispFrameRef) {
+    f.set_iconified(true);
+}
 
 // Set the pixel height of the tool bar of frame F to HEIGHT.
 #[no_mangle]
@@ -393,6 +398,9 @@ pub fn x_create_frame(parms: LispObject) -> LispFrameRef {
 
     unsafe { init_frame_faces(frame.as_mut()) };
 
+    /* Now consider the frame official.  */
+    unsafe { Vframe_list = Fcons(frame.into(), Vframe_list) };
+
     frame
 }
 
@@ -441,6 +449,41 @@ pub fn x_display_grayscale_p(_terminal: LispObject) -> bool {
 #[lisp_fn(min = "1")]
 pub fn xw_color_values(_color: LispObject, _frame: Option<LispFrameRef>) -> LispObject {
     Qnil
+}
+
+/// Request that dnd events are made for ClientMessages with ATOM.
+/// ATOM can be a symbol or a string.  The ATOM is interned on the display that
+/// FRAME is on.  If FRAME is nil, the selected frame is used.
+#[lisp_fn(min = "1")]
+pub fn x_register_dnd_atom(_atom: LispObject, _frame: LispObject) -> LispObject {
+    Qnil
+}
+
+/// Change window property PROP to VALUE on the X window of FRAME.
+/// PROP must be a string.  VALUE may be a string or a list of conses,
+/// numbers and/or strings.  If an element in the list is a string, it is
+/// converted to an atom and the value of the atom is used.  If an element
+/// is a cons, it is converted to a 32 bit number where the car is the 16
+/// top bits and the cdr is the lower 16 bits.
+///
+/// FRAME nil or omitted means use the selected frame.
+/// If TYPE is given and non-nil, it is the name of the type of VALUE.
+/// If TYPE is not given or nil, the type is STRING.
+/// FORMAT gives the size in bits of each element if VALUE is a list.
+/// It must be one of 8, 16 or 32.
+/// If VALUE is a string or FORMAT is nil or not given, FORMAT defaults to 8.
+/// If OUTER-P is non-nil, the property is changed for the outer X window of
+/// FRAME.  Default is to change on the edit X window.
+#[lisp_fn(min = "2")]
+pub fn x_change_window_property(
+    _prop: LispObject,
+    value: LispObject,
+    _frame: LispObject,
+    _type: LispObject,
+    _format: LispObject,
+    _outer_p: LispObject,
+) -> LispObject {
+    value
 }
 
 fn syms_of_wrfont() {
