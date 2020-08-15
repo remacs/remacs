@@ -23,9 +23,6 @@ struct wr_display_info
   /* Dots per inch of the screen.  */
   double resx, resy;
 
-  /* The Screen this connection is connected to.  */
-  Screen *screen;
-
   /* Number of planes on this screen.  */
   int n_planes;
 
@@ -82,9 +79,6 @@ struct wr_display_info
      This is a position on last_mouse_motion_frame.  */
   int last_mouse_motion_x;
   int last_mouse_motion_y;
-
-  /* This says how to access this display in Xlib.  */
-  Display *display;
 };
 
 extern struct wr_display_info *x_display_list;
@@ -118,27 +112,34 @@ struct wr_output
   /* This is the Emacs structure for the X display this frame is on.  */
   struct wr_display_info *display_info;
 
-  /* Default ASCII font of this frame.  */
-  struct font *font;
-
 };
 
+typedef struct wr_output wr_output;
+typedef struct wr_display_info wr_display_info;
 
+extern Window wr_get_window_desc(wr_output* output);
+extern int wr_get_fontset(wr_output* output);
+extern struct font *wr_get_font(wr_output* output);
+extern wr_display_info *wr_get_display_info(wr_output* output);
+extern Display *wr_get_display(wr_display_info* output);
+extern Screen wr_get_screen(wr_display_info* output);
 
 /* This is the `Display *' which frame F is on.  */
-#define FRAME_X_DISPLAY(f) (FRAME_DISPLAY_INFO (f)->display)
+#define FRAME_X_DISPLAY(f) (wr_get_display(FRAME_DISPLAY_INFO (f)))
 
 /* This gives the x_display_info structure for the display F is on.  */
-#define FRAME_DISPLAY_INFO(f) (FRAME_X_OUTPUT (f)->display_info)
+#define FRAME_DISPLAY_INFO(f) (wr_get_display_info(FRAME_X_OUTPUT (f)))
 
 /* Return the X output data for frame F.  */
 #define FRAME_X_OUTPUT(f) ((f)->output_data.wr)
 
-#define FRAME_FONT(f) (FRAME_X_OUTPUT (f)->font)
-
 /* This is the `Screen *' which frame F is on.  */
-#define FRAME_X_SCREEN(f) (FRAME_DISPLAY_INFO (f)->screen)
+#define FRAME_X_SCREEN(f) (wr_get_display_info(FRAME_X_OUTPUT (f)))
 
+/* Return the X window used for displaying data in frame F.  */
+#define FRAME_X_WINDOW(f)  (wr_get_window_desc(FRAME_X_OUTPUT (f)))
 
+#define FRAME_FONTSET(f) (wr_get_fontset(FRAME_X_OUTPUT (f)))
+#define FRAME_FONT(f) (wr_get_font(FRAME_X_OUTPUT (f)))
 
 #endif // __WRTERM_H_
