@@ -1343,7 +1343,7 @@ struct glyph_string
   bool_bf padding_p : 1;
 
   /* The GC to use for drawing this glyph string.  */
-#if defined (HAVE_X_WINDOWS)
+#if defined (HAVE_X_WINDOWS) || (USE_WEBRENDER)
   GC gc;
 #endif
 #if defined (HAVE_NTGUI)

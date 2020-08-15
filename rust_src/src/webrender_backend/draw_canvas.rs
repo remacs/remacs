@@ -1,10 +1,11 @@
 use webrender::{self, api::units::*, api::*};
 
 use super::{
-    font::WRFontRef, glyph::GlyphStringRef, output::OutputRef, util::HandyDandyRectBuilder,
+    color::pixel_to_color, font::WRFontRef, glyph::GlyphStringRef, output::OutputRef,
+    util::HandyDandyRectBuilder,
 };
 
-use crate::remacs_sys::glyph_type;
+use crate::remacs_sys::{glyph_type, prepare_face_for_display};
 
 impl OutputRef {
     pub fn canvas(self) -> DrawCanvas {
@@ -21,7 +22,13 @@ impl DrawCanvas {
         DrawCanvas { output }
     }
 
-    pub fn draw_glyph_string(&mut self, s: GlyphStringRef) {
+    pub fn draw_glyph_string(&mut self, mut s: GlyphStringRef) {
+        unsafe { prepare_face_for_display(s.f, s.face) };
+
+        let face = unsafe { &*s.face };
+        s.gc = face.gc;
+        s.set_stippled_p(face.stipple != 0);
+
         let type_ = s.first_glyph().type_();
 
         match type_ {
@@ -44,6 +51,8 @@ impl DrawCanvas {
         let text_count = to - from;
 
         let font_width = s.width as f32 / (text_count) as f32;
+
+        let gc = s.gc;
 
         self.output.display(|builder, api, txn, space_and_clip| {
             let glyph_indices: Vec<u32> =
@@ -77,13 +86,29 @@ impl DrawCanvas {
             let text_bounds = (x, y).by(s.width as i32, s.height as i32);
             let layout = CommonItemProperties::new(text_bounds, space_and_clip);
 
+            let face = s.face;
+
+            // draw background
+            if !s.background_filled_p() {
+                let background_bounds = (x, y).by(s.background_width as i32, s.height as i32);
+
+                let background_color = pixel_to_color(unsafe { (*gc).background } as u64);
+
+                builder.push_rect(
+                    &CommonItemProperties::new(background_bounds, space_and_clip),
+                    background_color,
+                );
+            }
+
+            // draw foreground
             if !glyph_instances.is_empty() {
+                let foreground_color = pixel_to_color(unsafe { (*gc).foreground });
                 builder.push_text(
                     &layout,
                     layout.clip_rect,
                     &glyph_instances,
                     font_instance_key,
-                    ColorF::new(0.0, 0.0, 0.0, 1.0),
+                    foreground_color,
                     None,
                 );
             }

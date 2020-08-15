@@ -21,6 +21,7 @@ use crate::{
         DEFAULT_REHASH_THRESHOLD,
     },
     webrender_backend::{
+        color::{color_to_xcolor, lookup_color_by_name_or_hex},
         font::{FontRef, FONT_DRIVER},
         frame::create_frame,
         output::OutputRef,
@@ -75,11 +76,27 @@ pub extern "C" fn wr_get_baseline_offset(output: OutputRef) -> i32 {
 #[no_mangle]
 pub extern "C" fn wr_defined_color(
     _frame: LispFrameRef,
-    _color_name: *mut libc::c_char,
-    _color_def: *mut XColor,
+    color_name: *mut libc::c_char,
+    color_def: *mut XColor,
     _alloc_p: bool,
 ) -> bool {
-    false
+    let c_color = unsafe { CString::from_raw(color_name) };
+
+    let color = c_color
+        .to_str()
+        .ok()
+        .and_then(|color| lookup_color_by_name_or_hex(color));
+
+    // throw back the c pointer
+    c_color.into_raw();
+
+    match color {
+        Some(c) => {
+            color_to_xcolor(c, color_def);
+            true
+        }
+        _ => false,
+    }
 }
 
 #[allow(unused_variables)]
