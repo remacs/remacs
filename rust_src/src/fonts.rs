@@ -134,6 +134,8 @@ impl LispFontObjectRef {
                 let mut display_info = &mut *(*_frame.output_data.ns).display_info;
                 #[cfg(feature = "window-system-w32")]
                 let mut display_info = &mut *(*_frame.output_data.w32).display_info;
+                #[cfg(feature = "window-system-webrender")]
+                let mut display_info = &mut *(*_frame.output_data.wr).display_info;
                 debug_assert!(display_info.n_fonts > 0);
                 display_info.n_fonts -= 1;
             }
@@ -370,6 +372,8 @@ pub fn frame_font_cache(_frame: LispFrameLiveOrSelected) -> LispObject {
                 let display_info = (*frame.output_data.ns).display_info;
                 #[cfg(feature = "window-system-w32")]
                 let display_info = (*frame.output_data.w32).display_info;
+                #[cfg(feature = "window-system-webrender")]
+                let display_info = (*frame.output_data.wr).display_info;
                 (*display_info).name_list_element
             }
         } else {

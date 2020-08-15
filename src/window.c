@@ -1434,8 +1434,10 @@ candidate_window_p (Lisp_Object window, Lisp_Object owindow,
 			`visible'.  I'd argue it should be at least
 			something like `iconified', but don't know how to do
 			that yet.  --Stef  */
-		     || (FRAME_X_P (f) && f->output_data.x->asked_for_visible
-			 && !f->output_data.x->has_been_visible)
+		     || (FRAME_X_P (f) && FRAME_X_OUTPUT (f)->asked_for_visible
+		         && !FRAME_X_OUTPUT (f)->has_been_visible)
+
+
 #endif
 		     )
 	&& (FRAME_TERMINAL (XFRAME (w->frame))

@@ -73,6 +73,13 @@ typedef Pixmap XImagePtr;
 typedef XImagePtr XImagePtr_or_DC;
 #endif
 
+#ifdef USE_WEBRENDER
+#include "wrgui.h"
+typedef struct wr_display_info Display_Info;
+typedef Pixmap XImagePtr;
+typedef XImagePtr XImagePtr_or_DC;
+#endif
+
 #ifdef HAVE_WINDOW_SYSTEM
 # include <time.h>
 # include "fontset.h"

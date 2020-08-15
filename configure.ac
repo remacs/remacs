@@ -399,6 +399,10 @@ otherwise for the first of 'inotify', 'kqueue' or 'gfile' that is usable.])
 OPTION_DEFAULT_OFF([xwidgets],
   [enable use of some gtk widgets in Emacs buffers (requires gtk3)])
 
+OPTION_DEFAULT_OFF([webrender],
+  [enable use of webrender(written in Rust) as GUI backend on
+multiple platforms(Linux, Windows and MacOS) (experimental)])
+
 ## For the times when you want to build Emacs but don't have
 ## a suitable makeinfo, and can live without the manuals.
 dnl https://lists.gnu.org/r/emacs-devel/2008-04/msg01844.html
@@ -2133,6 +2137,11 @@ if test "${HAVE_W32}" = "yes"; then
   with_xft=no
 fi
 
+
+if test "${with_webrender}" = "yes"; then
+  window_system=webrender
+fi
+
 ## $window_system is now set to the window system we will
 ## ultimately use.
 
@@ -2168,6 +2177,9 @@ dnl use the toolkit if we have gtk, or X11R5 or newer.
   ;;
   w32 )
     term_header=w32term.h
+  ;;
+  webrender )
+    term_header=wrterm.h
   ;;
 esac
 
@@ -4946,9 +4958,16 @@ if test "${HAVE_X_WINDOWS}" = "yes" ; then
   fi
   AC_SUBST(FONT_OBJ)
 fi
+
+if test "${window_system}" = "webrender" ; then
+  AC_DEFINE(USE_WEBRENDER, 1,
+	    [Define to 1 if you want to use the webrender.])
+fi
+
 AC_SUBST(XMENU_OBJ)
 AC_SUBST(XOBJ)
 AC_SUBST(FONT_OBJ)
+
 
 WIDGET_OBJ=
 MOTIF_LIBW=
@@ -5360,6 +5379,7 @@ AS_ECHO(["  Does Emacs use -lXpm?                                   ${HAVE_XPM}
   Does Emacs have dynamic modules support?                ${HAVE_MODULES}
   Does Emacs support Xwidgets (requires gtk3)?            ${HAVE_XWIDGETS}
   Does Emacs have threading support in lisp?              ${threads_enabled}
+  Does Emacs use webrender?                               ${with_webrender}
 "])
 
 if test -n "${EMACSDATA}"; then
@@ -5488,6 +5508,9 @@ case "$window_system" in
     ;;
     w32)
         CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-w32\", "
+    ;;
+    webrender)
+        CARGO_DEFAULT_FEATURES="${CARGO_DEFAULT_FEATURES}\"window-system-webrender\", "
     ;;
 esac
 AC_SUBST(CARGO_DEFAULT_FEATURES)
