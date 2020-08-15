@@ -20,13 +20,14 @@ use crate::{
     lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::{
         allocate_kboard, create_terminal, current_kboard, draw_fringe_bitmap_params,
-        draw_window_fringes, face_id, frame_parm_handler, glyph_row, glyph_row_area, glyph_string,
-        initial_kboard, input_event, output_method, redisplay_interface, run, terminal,
-        text_cursor_kinds, xlispstrdup, Fcons, Lisp_Frame, Lisp_Window, Qbackground_color, Qnil,
-        Qwr, Vframe_list, KBOARD,
+        draw_window_fringes, face_id, frame_parm_handler, fullscreen_type, glyph_row,
+        glyph_row_area, glyph_string, initial_kboard, input_event, output_method,
+        redisplay_interface, run, terminal, text_cursor_kinds, xlispstrdup, Fcons, Lisp_Frame,
+        Lisp_Window, Qbackground_color, Qfullscreen, Qmaximized, Qnil, Qwr, Vframe_list, KBOARD,
     },
     remacs_sys::{
-        block_input, display_and_set_cursor, kbd_buffer_store_event_hold, unblock_input,
+        block_input, change_frame_size, display_and_set_cursor, do_pending_window_change,
+        kbd_buffer_store_event_hold, store_frame_param, unblock_input,
         update_face_from_frame_parameter, window_box, x_clear_end_of_line,
         x_clear_window_mouse_face, x_draw_right_divider, x_draw_vertical_border,
         x_fix_overlapping_area, x_get_glyph_overhangs, x_produce_glyphs,
@@ -495,10 +496,45 @@ extern "C" fn read_input_event(terminal: *mut terminal, hold_quit: *mut input_ev
             count += 1;
         }
 
+        Event::WindowEvent {
+            event: WindowEvent::Resized(size),
+            ..
+        } => {
+            let mut frame: LispFrameRef = top_frame.into();
+            unsafe {
+                change_frame_size(
+                    frame.as_mut(),
+                    size.width as i32,
+                    size.height as i32 - frame.menu_bar_height,
+                    false,
+                    true,
+                    false,
+                    true,
+                );
+
+                do_pending_window_change(false);
+            }
+        }
+
         _ => {}
     });
 
     count
+}
+
+extern "C" fn fullscreen(f: *mut Lisp_Frame) {
+    let frame: LispFrameRef = f.into();
+
+    if !frame.is_visible() {
+        return;
+    }
+
+    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+    if frame.want_fullscreen() == fullscreen_type::FULLSCREEN_MAXIMIZED {
+        output.maximize();
+
+        unsafe { store_frame_param(f, Qfullscreen, Qmaximized) };
+    }
 }
 
 fn wr_create_terminal(mut dpyinfo: DisplayInfoRef) -> TerminalRef {
@@ -519,6 +555,7 @@ fn wr_create_terminal(mut dpyinfo: DisplayInfoRef) -> TerminalRef {
     // Other hooks are NULL by default.
     terminal.clear_frame_hook = Some(clear_frame);
     terminal.read_socket_hook = Some(read_input_event);
+    terminal.fullscreen_hook = Some(fullscreen);
 
     terminal
 }
