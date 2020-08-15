@@ -621,6 +621,20 @@ pub fn x_display_planes(obj: LispObject) -> EmacsInt {
 #[lisp_fn(min = "0")]
 pub fn x_wm_set_size_hint(_frame: LispObject) {}
 
+/// Return the visual class of the X display TERMINAL.
+/// The value is one of the symbols `static-gray', `gray-scale',
+/// `static-color', `pseudo-color', `true-color', or `direct-color'.
+/// \(On MS Windows, the second and last result above are not possible.)
+///
+/// The optional argument TERMINAL specifies which display to ask about.
+/// TERMINAL should a terminal object, a frame or a display name (a string).
+/// If omitted or nil, that stands for the selected frame's display.
+/// \(On MS Windows, this function does not accept terminal objects.)
+#[lisp_fn(min = "0")]
+pub fn x_display_visual_class(_terminal: LispObject) -> LispObject {
+    new_unibyte_string!("true-color")
+}
+
 fn syms_of_wrfont() {
     unsafe {
         register_font_driver(FONT_DRIVER.clone().as_mut(), ptr::null_mut());
