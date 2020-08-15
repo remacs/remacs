@@ -3,7 +3,7 @@
 use std::cmp;
 use std::sync::Mutex;
 
-use rand::{rngs::StdRng, FromEntropy, Rng, SeedableRng};
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
 use remacs_macros::lisp_fn;
 
