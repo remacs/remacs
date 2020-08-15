@@ -30,9 +30,10 @@ use crate::{lisp::ExternalPtr, remacs_sys::wr_output};
 use super::display_info::DisplayInfoRef;
 use super::font::FontRef;
 use super::texture::TextureResourceManager;
+use super::util::HandyDandyRectBuilder;
 
 pub enum EmacsGUIEvent {
-    Flush(SyncSender<()>),
+    Flush(SyncSender<ImageKey>),
     ReadBytes(DeviceIntRect, SyncSender<ImageKey>),
 }
 
@@ -177,6 +178,44 @@ impl Output {
             events_loop.run(move |e, _, control_flow| {
                 *control_flow = ControlFlow::Wait;
 
+                let copy_framebuffer_to_texture =
+                    |device_rect: DeviceIntRect,
+                     sender: SyncSender<ImageKey>,
+                     renderer: &webrender::Renderer| {
+                        let mut fb_rect =
+                            FramebufferIntRect::from_untyped(&device_rect.to_untyped());
+
+                        if !renderer.device.surface_origin_is_top_left() {
+                            fb_rect.origin.y =
+                                device_size.height - fb_rect.origin.y - fb_rect.size.height;
+                        }
+
+                        let need_flip = !renderer.device.surface_origin_is_top_left();
+
+                        let (image_key, texture_id) = texture_resources.borrow_mut().new_image(
+                            document_id,
+                            fb_rect.size,
+                            need_flip,
+                        );
+
+                        sender.send(image_key).unwrap();
+
+                        gl.bind_texture(gl::TEXTURE_2D, texture_id);
+
+                        gl.copy_tex_sub_image_2d(
+                            gl::TEXTURE_2D,
+                            0,
+                            0,
+                            0,
+                            fb_rect.origin.x,
+                            fb_rect.origin.y,
+                            fb_rect.size.width,
+                            fb_rect.size.height,
+                        );
+
+                        gl.bind_texture(gl::TEXTURE_2D, 0);
+                    };
+
                 match e {
                     Event::WindowEvent {
                         event: WindowEvent::Resized(size),
@@ -232,7 +271,7 @@ impl Output {
                             )
                         };
                     }
-                    Event::UserEvent(EmacsGUIEvent::Flush(s)) => {
+                    Event::UserEvent(EmacsGUIEvent::Flush(sender)) => {
                         renderer.update();
                         renderer.render(device_size).unwrap();
                         let _ = renderer.flush_pipeline_info();
@@ -240,41 +279,14 @@ impl Output {
 
                         texture_resources.borrow_mut().clear();
 
-                        s.send(()).unwrap();
+                        copy_framebuffer_to_texture(
+                            DeviceIntRect::from_size(device_size),
+                            sender,
+                            &renderer,
+                        );
                     }
                     Event::UserEvent(EmacsGUIEvent::ReadBytes(device_rect, sender)) => {
-                        let mut fb_rect =
-                            FramebufferIntRect::from_untyped(&device_rect.to_untyped());
-
-                        if !renderer.device.surface_origin_is_top_left() {
-                            fb_rect.origin.y =
-                                device_size.height - fb_rect.origin.y - fb_rect.size.height;
-                        }
-
-                        let need_flip = !renderer.device.surface_origin_is_top_left();
-
-                        let (image_key, texture_id) = texture_resources.borrow_mut().new_image(
-                            document_id,
-                            fb_rect.size,
-                            need_flip,
-                        );
-
-                        sender.send(image_key).unwrap();
-
-                        gl.bind_texture(gl::TEXTURE_2D, texture_id);
-
-                        gl.copy_tex_sub_image_2d(
-                            gl::TEXTURE_2D,
-                            0,
-                            0,
-                            0,
-                            fb_rect.origin.x,
-                            fb_rect.origin.y,
-                            fb_rect.size.width,
-                            fb_rect.size.height,
-                        );
-
-                        gl.bind_texture(gl::TEXTURE_2D, 0);
+                        copy_framebuffer_to_texture(device_rect, sender, &renderer);
                     }
                     _ => {}
                 };
@@ -327,6 +339,30 @@ impl Output {
         (device_size, layout_size)
     }
 
+    fn new_builder(&mut self, image: Option<(ImageKey, LayoutRect)>) -> DisplayListBuilder {
+        let pipeline_id = PipelineId(0, 0);
+
+        let (_, layout_size) = Self::get_size(&self.window);
+        let mut builder = DisplayListBuilder::new(pipeline_id, layout_size);
+
+        if let Some((image_key, image_rect)) = image {
+            let space_and_clip = SpaceAndClipInfo::root_scroll(pipeline_id);
+
+            let bounds = (0, 0).by(layout_size.width as i32, layout_size.height as i32);
+
+            builder.push_image(
+                &CommonItemProperties::new(bounds, space_and_clip),
+                image_rect,
+                ImageRendering::Auto,
+                AlphaType::PremultipliedAlpha,
+                image_key,
+                ColorF::WHITE,
+            );
+        }
+
+        builder
+    }
+
     pub fn show_window(&self) {
         self.window.set_visible(true);
     }
@@ -361,13 +397,13 @@ impl Output {
     where
         F: Fn(&mut DisplayListBuilder, SpaceAndClipInfo),
     {
-        let pipeline_id = PipelineId(0, 0);
         if self.display_list_builder.is_none() {
-            let (_, layout_size) = Self::get_size(&self.window);
-            let builder = DisplayListBuilder::new(pipeline_id, layout_size);
+            let builder = self.new_builder(None);
 
             self.display_list_builder = Some(builder);
         }
+
+        let pipeline_id = PipelineId(0, 0);
 
         if let Some(builder) = &mut self.display_list_builder {
             let space_and_clip = SpaceAndClipInfo::root_scroll(pipeline_id);
@@ -399,7 +435,12 @@ impl Output {
                 .event_loop_proxy
                 .send_event(EmacsGUIEvent::Flush(sender));
 
-            receiver.recv().unwrap()
+            let pre_frame_image_key = receiver.recv().unwrap();
+
+            self.display_list_builder = Some(self.new_builder(Some((
+                pre_frame_image_key,
+                LayoutRect::from_size(layout_size),
+            ))));
         }
     }
 
