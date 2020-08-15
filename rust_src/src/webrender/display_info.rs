@@ -1,13 +1,22 @@
 use libc;
 use std::ptr;
 
-use crate::{lisp::ExternalPtr, remacs_sys::wr_display_info};
+use crate::{frame::LispFrameRef, lisp::ExternalPtr, remacs_sys::wr_display_info};
 
 use super::term::TerminalRef;
 
-#[derive(Default)]
 pub struct DisplayInfoInner {
     pub terminal: TerminalRef,
+    pub focus_frame: LispFrameRef,
+}
+
+impl Default for DisplayInfoInner {
+    fn default() -> Self {
+        DisplayInfoInner {
+            terminal: TerminalRef::default(),
+            focus_frame: LispFrameRef::new(ptr::null_mut()),
+        }
+    }
 }
 
 pub type DisplayInfoInnerRef = ExternalPtr<DisplayInfoInner>;

@@ -7,7 +7,11 @@ use crate::{
     },
 };
 
-use super::{display_info::DisplayInfoRef, term::KboardRef};
+use super::{
+    display_info::DisplayInfoRef,
+    output::{Output, OutputRef},
+    term::KboardRef,
+};
 
 pub fn create_frame(
     display: LispObject,
@@ -29,6 +33,13 @@ pub fn create_frame(
 
     frame.terminal = dpyinfo.get_inner().terminal.as_mut();
     frame.set_output_method(output_method::output_wr);
+
+    // Remeber to destory the Output object when frame destoried.
+    let output = Box::new(Output::new());
+    let mut output = OutputRef::new(Box::into_raw(output));
+    frame.output_data.wr = output.as_mut();
+
+    output.get_inner().display_info = dpyinfo;
 
     frame
 }

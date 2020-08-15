@@ -153,10 +153,17 @@ pub extern "C" fn x_focus_frame(frame: LispFrameRef, noactivate: bool) {
 // FRAME is used only to get a handle on the X display.  We don't pass the
 // display info directly because we're called from frame.c, which doesn't
 // know about that structure.
-#[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn x_get_focus_frame(frame: LispFrameRef) -> LispObject {
-    unimplemented!();
+    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+    let dpyinfo = output.get_inner().display_info;
+
+    let focus_frame = dpyinfo.get_inner().focus_frame;
+
+    match focus_frame.is_null() {
+        true => Qnil,
+        false => focus_frame.into(),
+    }
 }
 
 #[allow(unused_variables)]
