@@ -1,14 +1,30 @@
 use std::ptr;
 
-use super::{DisplayInfo, DisplayInfoRef, KboardRef, TerminalRef};
+use super::display_info::{DisplayInfo, DisplayInfoRef};
 
 use crate::{
-    lisp::LispObject,
+    lisp::{ExternalPtr, LispObject},
     remacs_sys::{
-        allocate_kboard, create_terminal, current_kboard, initial_kboard, output_method,
-        xlispstrdup, Fcons, Qnil, Qwr,
+        allocate_kboard, create_terminal, current_kboard, initial_kboard, output_method, terminal,
+        xlispstrdup, Fcons, Qnil, Qwr, KBOARD,
     },
 };
+
+pub type TerminalRef = ExternalPtr<terminal>;
+
+impl Default for TerminalRef {
+    fn default() -> Self {
+        Self::new(ptr::null_mut())
+    }
+}
+
+pub type KboardRef = ExternalPtr<KBOARD>;
+
+impl KboardRef {
+    pub fn add_ref(&mut self) {
+        (*self).reference_count = (*self).reference_count + 1;
+    }
+}
 
 fn wr_create_terminal(mut dpyinfo: DisplayInfoRef) -> TerminalRef {
     let terminal_ptr = unsafe { create_terminal(output_method::output_wr, ptr::null_mut()) };

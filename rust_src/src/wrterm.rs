@@ -12,16 +12,16 @@ use crate::{
     remacs_sys::globals,
     remacs_sys::resource_types::{RES_TYPE_NUMBER, RES_TYPE_STRING, RES_TYPE_SYMBOL},
     remacs_sys::{
-        block_input, font, hashtest_eql, make_frame, make_frame_without_minibuffer,
-        make_hash_table, make_minibuffer_frame, output_method, unblock_input, wr_output, x_get_arg,
-        Display, Fcopy_alist, Fprovide, Pixmap, Qminibuffer, Qname, Qnil, Qnone, Qonly, Qparent_id,
-        Qt, Qterminal, Qunbound, Qwr, Qx, WRImage, Window, XColor, XrmDatabase,
-        DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
+        block_input, font, hashtest_eql, make_hash_table, unblock_input, wr_output, x_get_arg,
+        Display, Fcopy_alist, Fprovide, Pixmap, Qminibuffer, Qname, Qnil, Qparent_id, Qt,
+        Qterminal, Qunbound, Qwr, Qx, WRImage, Window, XColor, XrmDatabase, DEFAULT_REHASH_SIZE,
+        DEFAULT_REHASH_THRESHOLD,
     },
+    webrender::frame::create_frame,
     webrender::term::wr_term_init,
 };
 
-pub use crate::webrender::{DisplayInfo, DisplayInfoRef};
+pub use crate::webrender::display_info::{DisplayInfo, DisplayInfoRef};
 
 pub type OutputRef = ExternalPtr<wr_output>;
 pub type DisplayRef = ExternalPtr<Display>;
@@ -322,21 +322,7 @@ pub fn x_create_frame(parms: LispObject) -> LispFrameRef {
         )
     };
 
-    let frame = if tem.eq(Qnone) || tem.is_nil() {
-        unsafe { make_frame_without_minibuffer(Qnil, kb, display) }
-    } else if tem.eq(Qonly) {
-        unsafe { make_minibuffer_frame() }
-    } else if tem.is_window() {
-        unsafe { make_frame_without_minibuffer(tem, kb, display) }
-    } else {
-        unsafe { make_frame(true) }
-    };
-    let mut frame = LispFrameRef::new(frame);
-
-    frame.terminal = dpyinfo.get_inner().terminal.as_mut();
-
-    frame.set_output_method(output_method::output_wr);
-
+    let frame = create_frame(display, dpyinfo, tem, kb.into());
     frame
 }
 
