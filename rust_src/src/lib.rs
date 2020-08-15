@@ -126,6 +126,8 @@ mod threads;
 mod time;
 mod util;
 mod vectors;
+#[cfg(feature = "window-system-webrender")]
+mod webrender;
 mod window_configuration;
 mod windows;
 #[cfg(feature = "window-system-webrender")]

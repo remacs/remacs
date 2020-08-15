@@ -79,6 +79,9 @@ struct wr_display_info
      This is a position on last_mouse_motion_frame.  */
   int last_mouse_motion_x;
   int last_mouse_motion_y;
+
+  /* Inner perporty in Rust */
+  void *inner;
 };
 
 extern struct wr_display_info *wr_display_list;
