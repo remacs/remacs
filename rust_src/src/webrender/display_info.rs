@@ -41,3 +41,9 @@ impl Drop for DisplayInfo {
 
 pub type DisplayInfoRef = ExternalPtr<DisplayInfo>;
 unsafe impl Sync for DisplayInfoRef {}
+
+impl Default for DisplayInfoRef {
+    fn default() -> Self {
+        Self::new(ptr::null_mut())
+    }
+}

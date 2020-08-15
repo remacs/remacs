@@ -240,6 +240,7 @@ fn run_bindgen(path: &str) {
                 .generate_inline_functions(true)
                 .derive_default(true)
                 .ctypes_prefix("::libc")
+                .no_copy("wr_output")
                 // we define these ourselves, for various reasons
                 .blacklist_item("Lisp_Object")
                 .blacklist_item("emacs_globals")
