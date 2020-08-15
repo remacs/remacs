@@ -4,20 +4,24 @@ use libc;
 use std::ffi::CString;
 use std::ptr;
 
+use glutin::monitor::MonitorHandle;
+
 use remacs_macros::lisp_fn;
 
 use crate::{
     fonts::LispFontRef,
     frame::{window_frame_live_or_selected, LispFrameRef},
     lisp::{ExternalPtr, LispObject},
+    lists::{LispConsCircularChecks, LispConsEndChecks},
     remacs_sys::globals,
     remacs_sys::resource_types::{RES_TYPE_NUMBER, RES_TYPE_STRING, RES_TYPE_SYMBOL},
     remacs_sys::{
         adjust_frame_size, block_input, fontset_from_font, hashtest_eql, init_frame_faces,
-        make_hash_table, register_font_driver, unblock_input, x_get_arg, Display, EmacsInt, Fcons,
-        Fcopy_alist, Fprovide, Pixmap, Qbackground_color, Qfont, Qfont_backend, Qforeground_color,
-        Qleft_fringe, Qminibuffer, Qname, Qnil, Qparent_id, Qright_fringe, Qt, Qterminal, Qunbound,
-        Qwr, Qx, Qx_create_frame_1, Qx_create_frame_2, Vframe_list, WRImage, Window, XColor,
+        make_hash_table, make_monitor_attribute_list, register_font_driver, unblock_input,
+        x_get_arg, Display, EmacsInt, Fcons, Fcopy_alist, Fmake_vector, Fprovide, MonitorInfo,
+        Pixmap, Qbackground_color, Qfont, Qfont_backend, Qforeground_color, Qleft_fringe,
+        Qminibuffer, Qname, Qnil, Qparent_id, Qright_fringe, Qt, Qterminal, Qunbound, Qwr, Qx,
+        Qx_create_frame_1, Qx_create_frame_2, Vframe_list, WRImage, Window, XColor, XRectangle,
         XrmDatabase, DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
     },
     webrender_backend::{
@@ -199,9 +203,7 @@ pub extern "C" fn x_get_focus_frame(frame: LispFrameRef) -> LispObject {
 
 #[allow(unused_variables)]
 #[no_mangle]
-pub extern "C" fn x_set_offset(frame: LispFrameRef, xoff: i32, yoff: i32, change_gravity: i32) {
-    unimplemented!();
-}
+pub extern "C" fn x_set_offset(frame: LispFrameRef, xoff: i32, yoff: i32, change_gravity: i32) {}
 
 #[no_mangle]
 pub extern "C" fn x_new_font(
@@ -633,6 +635,125 @@ pub fn x_wm_set_size_hint(_frame: LispObject) {}
 #[lisp_fn(min = "0")]
 pub fn x_display_visual_class(_terminal: LispObject) -> LispObject {
     new_unibyte_string!("true-color")
+}
+
+pub fn webrender_monitor_to_emacs_monitor(m: MonitorHandle) -> (MonitorInfo, Option<CString>) {
+    let dpi_factor = m.scale_factor();
+
+    let physical_pos = m.position();
+    let physical_size = m.size();
+
+    let logical_pos = physical_pos.to_logical::<i32>(dpi_factor);
+    let logical_size = physical_size.to_logical::<u32>(dpi_factor);
+
+    let geom = XRectangle {
+        x: logical_pos.x,
+        y: logical_pos.y,
+        width: logical_size.width,
+        height: logical_size.height,
+    };
+
+    let physical_size: (u32, u32) = physical_size.into();
+
+    let name = m.name().and_then(|s| CString::new(s).ok());
+
+    let name_c_ptr = name
+        .as_ref()
+        .map(|s| s.as_ptr())
+        .unwrap_or_else(|| ptr::null_mut());
+
+    let monitor_info = MonitorInfo {
+        geom,
+        work: geom,
+        mm_width: physical_size.0 as i32,
+        mm_height: physical_size.1 as i32,
+        name: name_c_ptr as *mut i8,
+    };
+
+    (monitor_info, name)
+}
+
+/// Return a list of physical monitor attributes on the X display TERMINAL.
+///
+/// The optional argument TERMINAL specifies which display to ask about.
+/// TERMINAL should be a terminal object, a frame or a display name (a string).
+/// If omitted or nil, that stands for the selected frame's display.
+///
+/// In addition to the standard attribute keys listed in
+/// `display-monitor-attributes-list', the following keys are contained in
+/// the attributes:
+///
+/// source -- String describing the source from which multi-monitor
+/// information is obtained, one of \"Gdk\", \"XRandr\",
+/// \"Xinerama\", or \"fallback\"
+///
+/// Internal use only, use `display-monitor-attributes-list' instead.
+#[lisp_fn(min = "0")]
+pub fn x_display_monitor_attributes_list(terminal: LispObject) -> LispObject {
+    let dpyinfo = check_x_display_info(terminal);
+
+    let output = dpyinfo.get_inner().output;
+
+    let monitors: Vec<_> = output.get_available_monitors().collect();
+    let primary_monitor = output.get_primary_monitor();
+
+    let mut primary_monitor_index = 0;
+
+    for (i, m) in monitors.iter().enumerate() {
+        if m.name() == primary_monitor.name() {
+            primary_monitor_index = i;
+            break;
+        }
+    }
+
+    let emacs_monitor_infos: Vec<_> = monitors
+        .iter()
+        .map(|m| webrender_monitor_to_emacs_monitor(m.clone()))
+        .collect();
+
+    let mut emacs_monitors: Vec<_> = emacs_monitor_infos.iter().map(|(m, _)| m.clone()).collect();
+
+    let n_monitors = monitors.len();
+    let mut monitor_frames = unsafe { Fmake_vector(n_monitors.into(), Qnil).as_vector_unchecked() };
+
+    for_each_frame!(f => {
+        let frame: LispFrameRef = f.into();
+        let output: OutputRef = unsafe { frame.output_data.wr.into() };
+
+        let output_pos = output.get_position().unwrap();
+
+        let mut window_at_monitor_index = 0;
+
+        for (i, m) in monitors.iter().enumerate() {
+
+            let monitor_pos = m.position();
+            let monitor_size = m.size();
+
+            if (output_pos.x - monitor_pos.x) < monitor_size.width as i32
+                && (output_pos.y - monitor_pos.y) < monitor_size.height as i32
+            {
+                window_at_monitor_index = i;
+                break;
+            }
+        }
+
+        monitor_frames.set(window_at_monitor_index, unsafe {
+            Fcons(frame.into(), monitor_frames.get(window_at_monitor_index))
+        });
+
+    });
+
+    let source = CString::new("fallback").unwrap();
+
+    unsafe {
+        make_monitor_attribute_list(
+            emacs_monitors.as_mut_ptr(),
+            n_monitors as i32,
+            primary_monitor_index as i32,
+            monitor_frames.into(),
+            source.as_ptr(),
+        )
+    }
 }
 
 fn syms_of_wrfont() {

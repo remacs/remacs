@@ -3,11 +3,13 @@ use std::ptr;
 
 use crate::{frame::LispFrameRef, lisp::ExternalPtr, remacs_sys::wr_display_info};
 
-use super::term::TerminalRef;
+use super::{output::OutputRef, term::TerminalRef};
 
 pub struct DisplayInfoInner {
     pub terminal: TerminalRef,
     pub focus_frame: LispFrameRef,
+
+    pub output: OutputRef,
 }
 
 impl Default for DisplayInfoInner {
@@ -15,6 +17,7 @@ impl Default for DisplayInfoInner {
         DisplayInfoInner {
             terminal: TerminalRef::default(),
             focus_frame: LispFrameRef::new(ptr::null_mut()),
+            output: OutputRef::new(ptr::null_mut()),
         }
     }
 }

@@ -37,5 +37,7 @@ pub fn create_frame(
     let output = Box::into_raw(output);
     frame.output_data.wr = output as *mut wr_output;
 
+    dpyinfo.get_inner().output = unsafe { frame.output_data.wr.into() };
+
     frame
 }
