@@ -10,6 +10,7 @@ use super::font::FontRef;
 pub struct OutputInner {
     pub display_info: DisplayInfoRef,
     pub font: FontRef,
+    pub fontset: i32,
 }
 
 pub type OutputInnerRef = ExternalPtr<OutputInner>;

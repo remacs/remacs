@@ -11,8 +11,8 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
-    remacs_sys::font_match_p as c_font_match_p,
     remacs_sys::font_property_index::FONT_TYPE_INDEX,
+    remacs_sys::{font, font_match_p as c_font_match_p},
     remacs_sys::{font_add_log, font_at, font_list_entities, font_sort_entities},
     remacs_sys::{
         pvec_type, Lisp_Font_Object, Lisp_Font_Spec, Lisp_Type, FONT_ENTITY_MAX, FONT_OBJECT_MAX,
@@ -45,6 +45,10 @@ impl LispFontRef {
 
     pub fn is_font_object(&self) -> bool {
         self.0.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
+    }
+
+    pub fn as_font_mut(&mut self) -> *mut font {
+        self.0.as_mut() as *mut font
     }
 }
 

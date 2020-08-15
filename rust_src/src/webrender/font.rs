@@ -1,9 +1,16 @@
 use std::ptr;
 
+use font_kit::{family_name::FamilyName, properties::Properties, source::SystemSource};
+
 use crate::{
     frame::LispFrameRef,
     lisp::{ExternalPtr, LispObject},
-    remacs_sys::{font, font_driver, font_metrics, frame, glyph_string, Qwr},
+    multibyte::LispStringRef,
+    remacs_sys::{
+        font, font_driver, font_make_entity, font_make_object, font_metrics, font_property_index,
+        frame, glyph_string, Fcons, Fmake_symbol, Qnil, Qwr,
+    },
+    symbols::LispSymbolRef,
 };
 
 use super::output::OutputRef;
@@ -39,7 +46,53 @@ lazy_static! {
     };
 }
 
-#[allow(unused_variables)]
+/// A newtype for objects we know are font_spec.
+#[derive(Clone, Copy)]
+pub struct LispFontLike(LispObject);
+
+impl LispFontLike {
+    fn aref(&self, index: font_property_index::Type) -> LispObject {
+        let vl = self.0.as_vectorlike().unwrap();
+        let v = unsafe { vl.as_vector_unchecked() };
+        unsafe { v.get_unchecked(index as usize) }
+    }
+
+    fn get_family(&self) -> Option<FamilyName> {
+        let tem = self.aref(font_property_index::FONT_FAMILY_INDEX);
+
+        if tem.is_nil() {
+            None
+        } else {
+            let symbol_or_string = tem.as_symbol_or_string();
+            let string: LispStringRef = symbol_or_string.into();
+            match string.to_string().as_ref() {
+                "Serif" => Some(FamilyName::Serif),
+                "Sans Serif" => Some(FamilyName::SansSerif),
+                "Monospace" => Some(FamilyName::Monospace),
+                "Cursive" => Some(FamilyName::Cursive),
+                "Fantasy" => Some(FamilyName::Fantasy),
+                f => Some(FamilyName::Title(f.to_string())),
+            }
+        }
+    }
+
+    fn aset(&self, index: font_property_index::Type, val: LispObject) {
+        let vl = self.0.as_vectorlike().unwrap();
+        let mut v = unsafe { vl.as_vector_unchecked() };
+        unsafe { v.set_unchecked(index as usize, val) };
+    }
+
+    fn as_lisp_object(self) -> LispObject {
+        self.0
+    }
+}
+
+impl From<LispObject> for LispFontLike {
+    fn from(v: LispObject) -> LispFontLike {
+        LispFontLike(v)
+    }
+}
+
 extern "C" fn get_cache(f: *mut frame) -> LispObject {
     let frame = LispFrameRef::new(f);
     let output: OutputRef = unsafe { frame.output_data.wr.into() };
@@ -61,14 +114,47 @@ extern "C" fn draw(
     unimplemented!();
 }
 
-#[allow(unused_variables)]
 extern "C" fn list(frame: *mut frame, font_spec: LispObject) -> LispObject {
-    unimplemented!();
+    // FIXME: implment the real list in future
+    match_(frame, font_spec)
 }
 
-#[allow(unused_variables)]
-extern "C" fn match_(f: *mut frame, spec: LispObject) -> LispObject {
-    unimplemented!();
+extern "C" fn match_(_f: *mut frame, spec: LispObject) -> LispObject {
+    let font_spec = LispFontLike(spec);
+    let family = font_spec.get_family();
+
+    let font = family
+        .and_then(|f| {
+            SystemSource::new()
+                .select_best_match(&[f], &Properties::new())
+                .ok()
+        })
+        .and_then(|h| h.load().ok());
+
+    match font {
+        Some(f) => {
+            let entity: LispFontLike = unsafe { font_make_entity() }.into();
+
+            // set type
+            entity.aset(font_property_index::FONT_TYPE_INDEX, Qwr);
+
+            let family_name: &str = &f.family_name();
+            // set family
+            entity.aset(font_property_index::FONT_FAMILY_INDEX, unsafe {
+                Fmake_symbol(LispObject::from(family_name))
+            });
+
+            let full_name: &str = &f.full_name();
+            // set name
+            entity.aset(
+                font_property_index::FONT_NAME_INDEX,
+                LispObject::from(full_name),
+            );
+
+            unsafe { Fcons(entity.as_lisp_object(), Qnil) }
+        }
+        None => Qnil,
+    }
 }
 
 #[allow(unused_variables)]
@@ -76,9 +162,44 @@ extern "C" fn list_family(f: *mut frame) -> LispObject {
     unimplemented!();
 }
 
-#[allow(unused_variables)]
-extern "C" fn open(f: *mut frame, font_entity: LispObject, pixel_size: i32) -> LispObject {
-    unimplemented!();
+struct WRFont {
+    _font: font,
+    _i: i32,
+}
+
+extern "C" fn open(_f: *mut frame, font_entity: LispObject, pixel_size: i32) -> LispObject {
+    let font_entity: LispFontLike = font_entity.into();
+
+    let font_object: LispFontLike = unsafe {
+        font_make_object(
+            vecsize!(WRFont) as i32,
+            font_entity.as_lisp_object(),
+            pixel_size,
+        )
+    }
+    .into();
+
+    // set type
+    font_object.aset(font_property_index::FONT_TYPE_INDEX, Qwr);
+
+    // set name
+    font_object.aset(
+        font_property_index::FONT_NAME_INDEX,
+        LispSymbolRef::from(font_entity.aref(font_property_index::FONT_FAMILY_INDEX)).symbol_name(),
+    );
+
+    let font = font_object
+        .as_lisp_object()
+        .as_font()
+        .unwrap()
+        .as_font_mut();
+
+    unsafe {
+        (*font).average_width = 1;
+        (*font).height = 1;
+    }
+
+    font_object.as_lisp_object()
 }
 
 #[allow(unused_variables)]

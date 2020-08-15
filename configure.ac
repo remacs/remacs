@@ -4962,6 +4962,10 @@ fi
 if test "${window_system}" = "webrender" ; then
   AC_DEFINE(USE_WEBRENDER, 1,
 	    [Define to 1 if you want to use the webrender.])
+
+  EMACS_CHECK_MODULES([FONTCONFIG], [fontconfig >= 2.2.0])
+  test "$HAVE_FONTCONFIG" = "no" && AC_MSG_ERROR(webrender requires libfontconfig)
+
 fi
 
 AC_SUBST(XMENU_OBJ)

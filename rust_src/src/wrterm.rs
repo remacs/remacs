@@ -7,15 +7,16 @@ use std::ptr;
 use remacs_macros::lisp_fn;
 
 use crate::{
+    fonts::LispFontRef,
     frame::LispFrameRef,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::globals,
     remacs_sys::resource_types::{RES_TYPE_NUMBER, RES_TYPE_STRING, RES_TYPE_SYMBOL},
     remacs_sys::{
-        block_input, hashtest_eql, make_hash_table, register_font_driver, unblock_input,
-        x_default_parameter, x_get_arg, Display, Fcopy_alist, Fprovide, Pixmap, Qfont,
-        Qfont_backend, Qminibuffer, Qname, Qnil, Qparent_id, Qt, Qterminal, Qunbound, Qwr, Qx,
-        WRImage, Window, XColor, XrmDatabase, DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
+        block_input, fontset_from_font, hashtest_eql, make_hash_table, register_font_driver,
+        unblock_input, x_default_parameter, x_get_arg, Display, Fcopy_alist, Fprovide, Pixmap,
+        Qfont, Qfont_backend, Qminibuffer, Qname, Qnil, Qparent_id, Qt, Qterminal, Qunbound, Qwr,
+        Qx, WRImage, Window, XColor, XrmDatabase, DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
     },
     webrender::{
         font::{FontRef, FONT_DRIVER},
@@ -39,7 +40,7 @@ pub static mut wr_display_list: DisplayInfoRef = DisplayInfoRef::new(ptr::null_m
 #[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn wr_get_fontset(output: OutputRef) -> i32 {
-    unimplemented!();
+    output.get_inner().fontset
 }
 
 #[allow(unused_variables)]
@@ -177,14 +178,30 @@ pub extern "C" fn x_set_offset(frame: LispFrameRef, xoff: i32, yoff: i32, change
     unimplemented!();
 }
 
-#[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn x_new_font(
     frame: LispFrameRef,
     font_object: LispObject,
     fontset: i32,
 ) -> LispObject {
-    unimplemented!();
+    let font = LispFontRef::from_vectorlike(font_object.as_vectorlike().unwrap()).as_font_mut();
+    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+
+    let fontset = if fontset < 0 {
+        unsafe { fontset_from_font(font_object) }
+    } else {
+        fontset
+    };
+
+    output.get_inner().fontset = fontset;
+
+    if output.get_inner().font == font.into() {
+        return font_object;
+    }
+
+    output.get_inner().font = font.into();
+
+    font_object
 }
 // This tries to wait until the frame is really visible, depending on
 // the value of Vx_wait_for_event_timeout.
@@ -355,7 +372,7 @@ pub fn x_create_frame(parms: LispObject) -> LispFrameRef {
             frame.as_mut(),
             parms,
             Qfont,
-            "Mono".into(),
+            "Monospace".into(),
             CString::new("font").unwrap().as_ptr(),
             CString::new("Font").unwrap().as_ptr(),
             RES_TYPE_STRING,
@@ -404,6 +421,12 @@ pub fn x_display_grayscale_p(_terminal: LispObject) -> bool {
     unimplemented!();
 }
 
+fn syms_of_wrfont() {
+    unsafe {
+        register_font_driver(FONT_DRIVER.clone().as_mut(), ptr::null_mut());
+    }
+}
+
 #[no_mangle]
 #[allow(unused_doc_comments)]
 pub extern "C" fn syms_of_wrterm() {
@@ -437,6 +460,8 @@ pub extern "C" fn syms_of_wrterm() {
     /// With MS Windows or Nextstep, the value is t.
     #[rustfmt::skip]
     defvar_lisp!(Vx_toolkit_scroll_bars, "x-toolkit-scroll-bars", Qt);
+
+    syms_of_wrfont();
 }
 
 include!(concat!(env!("OUT_DIR"), "/wrterm_exports.rs"));
