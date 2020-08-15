@@ -53,7 +53,7 @@ pub extern "C" fn wr_get_font(output: OutputRef) -> FontRef {
 #[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn wr_get_window_desc(output: OutputRef) -> Window {
-    unimplemented!();
+    0
 }
 
 #[allow(unused_variables)]
@@ -71,7 +71,7 @@ pub extern "C" fn wr_get_display(display_info: DisplayInfoRef) -> DisplayRef {
 #[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn wr_get_baseline_offset(output: OutputRef) -> i32 {
-    unimplemented!();
+    0
 }
 
 #[no_mangle]
