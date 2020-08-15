@@ -40,7 +40,6 @@ impl DrawCanvas {
 
     fn draw_char_glyph_string(&mut self, s: GlyphStringRef) {
         let font: WRFontRef = s.font.into();
-        let font_key = font.font_key;
 
         let x_start = s.x;
         let y_start = s.y + (font.font.ascent + (s.height - font.font.height) / 2);
@@ -48,37 +47,42 @@ impl DrawCanvas {
         let from = 0 as usize;
         let to = s.nchars as usize;
 
-        let text_count = to - from;
-
-        let font_width = s.width as f32 / (text_count) as f32;
-
         let gc = s.gc;
 
-        self.output.display(|builder, api, txn, space_and_clip| {
+        self.output.display(|builder, space_and_clip| {
             let glyph_indices: Vec<u32> =
                 s.get_chars()[from..to].iter().map(|c| *c as u32).collect();
 
-            let font_instance_key = api.generate_font_instance_key();
+            let glyph_dimensions = font.get_glyph_dimensions(glyph_indices.clone());
 
-            let glyph_instances = glyph_indices
-                .into_iter()
-                .enumerate()
-                .map(|(i, index)| GlyphInstance {
+            let mut glyph_instances: Vec<GlyphInstance> = vec![];
+
+            for (i, index) in glyph_indices.into_iter().enumerate() {
+                let previous_char_width = if i == 0 {
+                    0.0
+                } else {
+                    let dimension = glyph_dimensions[i - 1];
+                    match dimension {
+                        Some(d) => d.advance,
+                        None => 0.0,
+                    }
+                };
+
+                let previous_char_start = if i == 0 {
+                    x_start as f32
+                } else {
+                    glyph_instances[i - 1].point.x
+                };
+
+                let start = previous_char_start + previous_char_width;
+
+                let glyph_instance = GlyphInstance {
                     index,
-                    point: LayoutPoint::new(x_start as f32 + font_width * i as f32, y_start as f32),
-                })
-                .collect::<Vec<_>>();
+                    point: LayoutPoint::new(start, y_start as f32),
+                };
 
-            let pixel_size = unsafe { (*s.font).pixel_size };
-
-            txn.add_font_instance(
-                font_instance_key,
-                font_key,
-                app_units::Au::from_px(pixel_size),
-                None,
-                None,
-                vec![],
-            );
+                glyph_instances.push(glyph_instance);
+            }
 
             let x = s.x;
             let y = s.y;
@@ -107,7 +111,7 @@ impl DrawCanvas {
                     &layout,
                     layout.clip_rect,
                     &glyph_instances,
-                    font_instance_key,
+                    font.font_instance_key,
                     foreground_color,
                     None,
                 );

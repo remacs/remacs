@@ -28,7 +28,6 @@ pub struct Output {
     pub document_id: DocumentId,
 
     pub display_list_builder: Option<DisplayListBuilder>,
-    pub current_txn: Option<Transaction>,
 }
 
 impl Output {
@@ -46,7 +45,6 @@ impl Output {
             events_loop,
             document_id,
             display_list_builder: None,
-            current_txn: None,
         }
     }
 
@@ -155,7 +153,7 @@ impl Output {
 
     pub fn display<F>(&mut self, f: F)
     where
-        F: Fn(&mut DisplayListBuilder, &mut RenderApi, &mut Transaction, SpaceAndClipInfo),
+        F: Fn(&mut DisplayListBuilder, SpaceAndClipInfo),
     {
         let pipeline_id = PipelineId(0, 0);
         if self.display_list_builder.is_none() {
@@ -163,17 +161,13 @@ impl Output {
             let builder = DisplayListBuilder::new(pipeline_id, layout_size);
 
             self.display_list_builder = Some(builder);
-            self.current_txn = Some(Transaction::new());
         }
 
-        match (&mut self.display_list_builder, &mut self.current_txn) {
-            (Some(builder), Some(txn)) => {
-                let space_and_clip = SpaceAndClipInfo::root_scroll(pipeline_id);
+        if let Some(builder) = &mut self.display_list_builder {
+            let space_and_clip = SpaceAndClipInfo::root_scroll(pipeline_id);
 
-                f(builder, &mut self.render_api, txn, space_and_clip);
-            }
-            _ => {}
-        };
+            f(builder, space_and_clip);
+        }
     }
 
     pub fn flush(&mut self) {
@@ -183,25 +177,41 @@ impl Output {
         let epoch = Epoch(0);
 
         let builder = std::mem::replace(&mut self.display_list_builder, None);
-        let txn = std::mem::replace(&mut self.current_txn, None);
 
-        match (builder, txn) {
-            (Some(builder), Some(mut txn)) => {
-                txn.set_display_list(epoch, None, layout_size, builder.finalize(), true);
+        if let Some(builder) = builder {
+            let mut txn = Transaction::new();
 
-                txn.generate_frame();
+            txn.set_display_list(epoch, None, layout_size, builder.finalize(), true);
 
-                self.render_api.send_transaction(self.document_id, txn);
+            txn.generate_frame();
 
-                self.render_api.flush_scene_builder();
+            self.render_api.send_transaction(self.document_id, txn);
 
-                self.renderer.update();
-                self.renderer.render(device_size).unwrap();
-                let _ = self.renderer.flush_pipeline_info();
-                self.window_context.swap_buffers().ok();
-            }
-            _ => {}
+            self.render_api.flush_scene_builder();
+
+            self.renderer.update();
+            self.renderer.render(device_size).unwrap();
+            let _ = self.renderer.flush_pipeline_info();
+            self.window_context.swap_buffers().ok();
         }
+    }
+
+    pub fn add_font_instance(&self, font_key: FontKey, pixel_size: i32) -> FontInstanceKey {
+        let mut txn = Transaction::new();
+
+        let font_instance_key = self.render_api.generate_font_instance_key();
+
+        txn.add_font_instance(
+            font_instance_key,
+            font_key,
+            app_units::Au::from_px(pixel_size),
+            None,
+            None,
+            vec![],
+        );
+
+        self.render_api.send_transaction(self.document_id, txn);
+        font_instance_key
     }
 
     pub fn add_font(&self, font_handle: &FontHandle) -> FontKey {
@@ -228,6 +238,14 @@ impl Output {
 
     pub fn get_color_bits(&self) -> u8 {
         self.window_context.get_pixel_format().color_bits
+    }
+
+    pub fn get_glyph_dimensions(
+        &self,
+        font: FontInstanceKey,
+        glyph_indices: Vec<GlyphIndex>,
+    ) -> Vec<Option<GlyphDimensions>> {
+        self.render_api.get_glyph_dimensions(font, glyph_indices)
     }
 }
 
