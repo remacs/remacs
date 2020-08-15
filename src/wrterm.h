@@ -14,7 +14,7 @@ typedef int Screen;
 
 struct wr_display_info
 {
-  /* Chain of all w32_display_info structures.  */
+  /* Chain of all wr_display_info structures.  */
   struct wr_display_info *next;
 
   /* This is a cons cell of the form (NAME . FONT-LIST-CACHE).  */
