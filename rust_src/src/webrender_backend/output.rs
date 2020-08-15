@@ -1,7 +1,8 @@
 use std::{
+    cell::RefCell,
     ffi::CString,
     rc::Rc,
-    sync::mpsc::{channel, sync_channel, Receiver},
+    sync::mpsc::{channel, sync_channel, Receiver, SyncSender},
     thread::JoinHandle,
 };
 
@@ -28,6 +29,14 @@ use crate::{lisp::ExternalPtr, remacs_sys::wr_output};
 
 use super::display_info::DisplayInfoRef;
 use super::font::FontRef;
+use super::texture::TextureResourceManager;
+
+pub enum EmacsGUIEvent {
+    Flush(SyncSender<()>),
+    ReadBytes(DeviceIntRect, SyncSender<ImageKey>),
+}
+
+pub type GUIEvent = Event<'static, EmacsGUIEvent>;
 
 pub struct Output {
     // Extend `wr_output` struct defined in `wrterm.h`
@@ -46,16 +55,25 @@ pub struct Output {
 
     window: Window,
 
+    event_loop_proxy: EventLoopProxy<EmacsGUIEvent>,
     color_bits: u8,
 
     pub keyboard_fd: i32,
-    event_rx: Receiver<Event<'static, ()>>,
+    event_rx: Receiver<GUIEvent>,
 }
 
 impl Output {
     pub fn new() -> Self {
-        let (api, window, document_id, loop_thread, color_bits, event_rx, keyboard_fd) =
-            Self::create_webrender_window();
+        let (
+            api,
+            window,
+            document_id,
+            loop_thread,
+            event_loop_proxy,
+            color_bits,
+            event_rx,
+            keyboard_fd,
+        ) = Self::create_webrender_window();
 
         Self {
             output: wr_output::default(),
@@ -67,6 +85,7 @@ impl Output {
             display_list_builder: None,
             background_color: ColorF::WHITE,
             window,
+            event_loop_proxy,
             color_bits,
             keyboard_fd,
             event_rx,
@@ -78,13 +97,14 @@ impl Output {
         Window,
         DocumentId,
         JoinHandle<()>,
+        EventLoopProxy<EmacsGUIEvent>,
         u8,
-        std::sync::mpsc::Receiver<Event<'static, ()>>,
+        std::sync::mpsc::Receiver<GUIEvent>,
         i32,
     ) {
         let (webrender_tx, webrender_rx) = sync_channel(1);
 
-        let (event_tx, event_rx) = channel::<Event<()>>();
+        let (event_tx, event_rx) = channel::<GUIEvent>();
         let mut pipes: [i32; 2] = [-1, -1];
         unsafe {
             libc::pipe(&mut pipes[0]);
@@ -129,11 +149,21 @@ impl Output {
                 ..webrender::RendererOptions::default()
             };
 
-            let notifier = Box::new(Notifier::new(events_loop_proxy));
+            let notifier = Box::new(Notifier::new(events_loop_proxy.clone()));
 
             let (mut renderer, sender) =
                 webrender::Renderer::new(gl.clone(), notifier, webrender_opts, None, device_size)
                     .unwrap();
+
+            let texture_resources = Rc::new(RefCell::new(TextureResourceManager::new(
+                gl.clone(),
+                sender.create_api(),
+            )));
+
+            let external_image_handler =
+                texture_resources.borrow_mut().new_external_image_handler();
+
+            renderer.set_external_image_handler(external_image_handler);
 
             let api = sender.create_api();
 
@@ -142,7 +172,7 @@ impl Output {
             let color_bits = current_context.get_pixel_format().color_bits;
 
             webrender_tx
-                .send((sender.create_api(), window, document_id, color_bits))
+                .send((api, window, document_id, color_bits, events_loop_proxy))
                 .unwrap();
 
             events_loop.run(move |e, _, control_flow| {
@@ -170,18 +200,56 @@ impl Output {
                             )
                         };
                     }
-                    Event::UserEvent(_) => {
+                    Event::UserEvent(EmacsGUIEvent::Flush(s)) => {
                         renderer.update();
                         renderer.render(device_size).unwrap();
                         let _ = renderer.flush_pipeline_info();
                         current_context.swap_buffers().ok();
+
+                        texture_resources.borrow_mut().clear();
+
+                        s.send(()).unwrap();
+                    }
+                    Event::UserEvent(EmacsGUIEvent::ReadBytes(device_rect, sender)) => {
+                        let mut fb_rect =
+                            FramebufferIntRect::from_untyped(&device_rect.to_untyped());
+
+                        if !renderer.device.surface_origin_is_top_left() {
+                            fb_rect.origin.y =
+                                device_size.height - fb_rect.origin.y - fb_rect.size.height;
+                        }
+
+                        let need_flip = !renderer.device.surface_origin_is_top_left();
+
+                        let (image_key, texture_id) = texture_resources.borrow_mut().new_image(
+                            document_id,
+                            fb_rect.size,
+                            need_flip,
+                        );
+
+                        sender.send(image_key).unwrap();
+
+                        gl.bind_texture(gl::TEXTURE_2D, texture_id);
+
+                        gl.copy_tex_sub_image_2d(
+                            gl::TEXTURE_2D,
+                            0,
+                            0,
+                            0,
+                            fb_rect.origin.x,
+                            fb_rect.origin.y,
+                            fb_rect.size.width,
+                            fb_rect.size.height,
+                        );
+
+                        gl.bind_texture(gl::TEXTURE_2D, 0);
                     }
                     _ => {}
                 };
             })
         });
 
-        let (api, window, document_id, color_bits) = webrender_rx.recv().unwrap();
+        let (api, window, document_id, color_bits, event_loop_proxy) = webrender_rx.recv().unwrap();
 
         let pipeline_id = PipelineId(0, 0);
 
@@ -194,6 +262,7 @@ impl Output {
             window,
             document_id,
             window_loop_thread,
+            event_loop_proxy,
             color_bits,
             event_rx,
             pipes[0],
@@ -281,7 +350,27 @@ impl Output {
             txn.generate_frame();
 
             self.render_api.send_transaction(self.document_id, txn);
+
+            self.render_api.flush_scene_builder();
+
+            let (sender, receiver) = sync_channel(1);
+
+            let _ = self
+                .event_loop_proxy
+                .send_event(EmacsGUIEvent::Flush(sender));
+
+            receiver.recv().unwrap()
         }
+    }
+
+    pub fn read_pixels_rgba8_into_image(&mut self, device_rect: DeviceIntRect) -> ImageKey {
+        let (texture_sender, texture_receiver) = sync_channel(1);
+
+        let _ = self
+            .event_loop_proxy
+            .send_event(EmacsGUIEvent::ReadBytes(device_rect, texture_sender));
+
+        texture_receiver.recv().unwrap()
     }
 
     pub fn clear_display_list_builder(&mut self) {
@@ -353,7 +442,7 @@ impl Output {
     }
     pub fn poll_events<F>(&mut self, mut f: F)
     where
-        F: FnMut(Event<()>),
+        F: FnMut(GUIEvent),
     {
         let mut buffer: [i32; 10] = Default::default();
 
@@ -379,11 +468,11 @@ impl From<*mut wr_output> for OutputRef {
 }
 
 struct Notifier {
-    event_loop_proxy: EventLoopProxy<()>,
+    event_loop_proxy: EventLoopProxy<EmacsGUIEvent>,
 }
 
 impl Notifier {
-    fn new(event_loop_proxy: EventLoopProxy<()>) -> Notifier {
+    fn new(event_loop_proxy: EventLoopProxy<EmacsGUIEvent>) -> Notifier {
         Notifier { event_loop_proxy }
     }
 }
@@ -395,9 +484,7 @@ impl RenderNotifier for Notifier {
         })
     }
 
-    fn wake_up(&self) {
-        let _ = self.event_loop_proxy.send_event(());
-    }
+    fn wake_up(&self) {}
 
     fn new_frame_ready(
         &self,
@@ -406,6 +493,5 @@ impl RenderNotifier for Notifier {
         _composite_needed: bool,
         _render_time: Option<u64>,
     ) {
-        self.wake_up();
     }
 }

@@ -295,4 +295,55 @@ impl DrawCanvas {
             );
         });
     }
+
+    pub fn scroll(
+        &mut self,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        from_y: i32,
+        to_y: i32,
+        scroll_height: i32,
+    ) {
+        let bottom_y = y + height;
+
+        let height = if to_y < from_y {
+            // Scrolling up.  Make sure we don't copy part of the mode
+            // line at the bottom.
+            if (from_y + scroll_height) > bottom_y {
+                bottom_y - from_y
+            } else {
+                scroll_height
+            }
+        } else {
+            // Scrolling down.  Make sure we don't copy over the mode line.
+            // at the bottom.
+            if (to_y + scroll_height) > bottom_y {
+                bottom_y - to_y
+            } else {
+                scroll_height
+            }
+        };
+
+        let copy_rect = DeviceIntRect::new(
+            DeviceIntPoint::new(x as i32, from_y as i32),
+            DeviceIntSize::new(width as i32, height as i32),
+        );
+
+        let image_key = self.output.read_pixels_rgba8_into_image(copy_rect);
+
+        self.output.display(|builder, space_and_clip| {
+            let bounds = (x, to_y).by(width, height);
+
+            builder.push_image(
+                &CommonItemProperties::new(bounds, space_and_clip),
+                bounds,
+                ImageRendering::Auto,
+                AlphaType::PremultipliedAlpha,
+                image_key,
+                ColorF::WHITE,
+            );
+        });
+    }
 }
