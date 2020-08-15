@@ -197,7 +197,13 @@ extern "C" fn flush_display(f: *mut Lisp_Frame) {
 }
 
 #[allow(unused_variables)]
-extern "C" fn after_update_window_line(w: *mut Lisp_Window, desired_row: *mut glyph_row) {}
+extern "C" fn after_update_window_line(w: *mut Lisp_Window, desired_row: *mut glyph_row) {
+    let window: LispWindowRef = w.into();
+
+    if !unsafe { (*desired_row).mode_line_p() } && !window.pseudo_window_p() {
+        unsafe { (*desired_row).set_redraw_fringe_bitmaps_p(true) };
+    }
+}
 
 #[allow(unused_variables)]
 extern "C" fn draw_glyph_string(s: *mut glyph_string) {
