@@ -85,7 +85,7 @@ impl DrawCanvas {
 
         match type_ {
             glyph_type::CHAR_GLYPH => self.draw_char_glyph_string(s),
-            glyph_type::STRETCH_GLYPH => self.draw_char_glyph_string(s),
+            glyph_type::STRETCH_GLYPH => self.draw_stretch_glyph_string(s),
             _ => {}
         }
     }
@@ -175,6 +175,24 @@ impl DrawCanvas {
                     None,
                 );
             }
+        });
+    }
+
+    fn draw_stretch_glyph_string(&mut self, s: GlyphStringRef) {
+        if s.background_filled_p() {
+            return;
+        }
+
+        let visible_height = unsafe { (*s.row).visible_height };
+
+        let background_bounds = (s.x, s.y).by(s.background_width as i32, visible_height);
+        let background_color = pixel_to_color(unsafe { (*s.gc).background } as u64);
+
+        self.output.display(|builder, space_and_clip| {
+            builder.push_rect(
+                &CommonItemProperties::new(background_bounds, space_and_clip),
+                background_color,
+            );
         });
     }
 
