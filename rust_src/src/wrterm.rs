@@ -64,7 +64,7 @@ pub extern "C" fn wr_get_display_info(output: OutputRef) -> DisplayInfoRef {
 #[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn wr_get_display(display_info: DisplayInfoRef) -> DisplayRef {
-    unimplemented!();
+    DisplayRef::new(ptr::null_mut())
 }
 
 #[allow(unused_variables)]
@@ -105,10 +105,19 @@ pub extern "C" fn x_get_keysym_name(keysym: i32) -> *mut libc::c_char {
 #[no_mangle]
 pub extern "C" fn x_clear_under_internal_border(frame: LispFrameRef) {}
 
+// This function should be called by Emacs redisplay code to set the
+// name; names set this way will never override names set by the user's
+// lisp code.
 #[allow(unused_variables)]
 #[no_mangle]
-pub extern "C" fn x_implicitly_set_name(frame: LispFrameRef, arg: LispObject, oldval: LispObject) {
-    unimplemented!();
+pub extern "C" fn x_implicitly_set_name(
+    mut frame: LispFrameRef,
+    arg: LispObject,
+    oldval: LispObject,
+) {
+    if frame.name.is_nil() {
+        frame.name = arg;
+    }
 }
 
 #[allow(unused_variables)]
