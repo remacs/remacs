@@ -284,4 +284,15 @@ impl DrawCanvas {
             }
         });
     }
+
+    pub fn clear_area(&mut self, clear_color: ColorF, x: i32, y: i32, width: i32, height: i32) {
+        let visible_rect = (x, y).by(width, height);
+
+        self.output.display(|builder, space_and_clip| {
+            builder.push_rect(
+                &CommonItemProperties::new(visible_rect, space_and_clip),
+                clear_color,
+            );
+        });
+    }
 }

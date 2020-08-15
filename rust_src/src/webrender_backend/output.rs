@@ -201,20 +201,14 @@ impl Output {
 
             self.renderer.update();
 
-            let gl = Self::get_gl_api(&self.window_context);
-
-            gl.clear_color(
-                self.background_color.r,
-                self.background_color.g,
-                self.background_color.b,
-                1.0,
-            );
-            gl.clear(self::gl::COLOR_BUFFER_BIT);
-
             self.renderer.render(device_size).unwrap();
             let _ = self.renderer.flush_pipeline_info();
             self.window_context.swap_buffers().ok();
         }
+    }
+
+    pub fn clear_display_list_builder(&mut self) {
+        let _ = std::mem::replace(&mut self.display_list_builder, None);
     }
 
     pub fn add_font_instance(&self, font_key: FontKey, pixel_size: i32) -> FontInstanceKey {
