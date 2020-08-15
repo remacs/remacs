@@ -113,7 +113,7 @@ typedef struct wr_bitmap_record Bitmap_Record;
 #define PIX_MASK_DRAW	1
 
 #define x_defined_color(f, name, color_def, alloc) \
-  ns_defined_color (f, name, color_def, alloc, 0)
+  wr_defined_color (f, name, color_def, alloc, 0)
 #endif /* WITH_WEBRENDER */
 
 
@@ -4948,6 +4948,7 @@ x_disable_image (struct frame *f, struct image *img)
     {
 #ifndef HAVE_NTGUI
 #ifndef HAVE_NS  /* TODO: NS support, however this not needed for toolbars */
+#ifndef USE_WEBRENDER
 
 #define MaskForeground(f)  WHITE_PIX_DEFAULT (f)
 
@@ -4973,6 +4974,7 @@ x_disable_image (struct frame *f, struct image *img)
 		     img->width - 1, 0);
 	  XFreeGC (dpy, gc);
 	}
+#endif /* !USE_WEBRENDER*/
 #endif /* !HAVE_NS */
 #else
       HDC hdc, bmpdc;
