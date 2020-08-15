@@ -437,6 +437,12 @@ pub fn x_display_grayscale_p(_terminal: LispObject) -> bool {
     true
 }
 
+/// Internal function called by `color-values', which see.
+#[lisp_fn(min = "1")]
+pub fn xw_color_values(_color: LispObject, _frame: Option<LispFrameRef>) -> LispObject {
+    Qnil
+}
+
 fn syms_of_wrfont() {
     unsafe {
         register_font_driver(FONT_DRIVER.clone().as_mut(), ptr::null_mut());
