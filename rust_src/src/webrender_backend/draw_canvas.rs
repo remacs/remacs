@@ -5,7 +5,10 @@ use super::{
     util::HandyDandyRectBuilder,
 };
 
-use crate::remacs_sys::{face, face_underline_type, glyph_type, prepare_face_for_display};
+use crate::remacs_sys::{
+    draw_fringe_bitmap_params, face, face_underline_type, glyph_row, glyph_type,
+    prepare_face_for_display,
+};
 
 impl OutputRef {
     pub fn canvas(self) -> DrawCanvas {
@@ -179,5 +182,26 @@ impl DrawCanvas {
             &underline_color,
             line_type,
         );
+    }
+
+    pub fn draw_fringe_bitmap(&mut self, _row: *mut glyph_row, p: *mut draw_fringe_bitmap_params) {
+        let pos_x = unsafe { (*p).bx };
+        let pos_y = unsafe { (*p).by };
+
+        let width = unsafe { (*p).nx };
+        let height = unsafe { (*p).ny };
+
+        let face = unsafe { (*p).face };
+
+        let visible_rect = (pos_x, pos_y).by(width, height);
+
+        let background_color = pixel_to_color(unsafe { (*face).background });
+
+        self.output.display(|builder, space_and_clip| {
+            builder.push_rect(
+                &CommonItemProperties::new(visible_rect, space_and_clip),
+                background_color,
+            );
+        });
     }
 }

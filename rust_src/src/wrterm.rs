@@ -16,9 +16,9 @@ use crate::{
         adjust_frame_size, block_input, fontset_from_font, hashtest_eql, init_frame_faces,
         make_hash_table, register_font_driver, unblock_input, x_get_arg, Display, EmacsInt, Fcons,
         Fcopy_alist, Fprovide, Pixmap, Qbackground_color, Qfont, Qfont_backend, Qforeground_color,
-        Qminibuffer, Qname, Qnil, Qparent_id, Qt, Qterminal, Qunbound, Qwr, Qx, Qx_create_frame_1,
-        Qx_create_frame_2, Vframe_list, WRImage, Window, XColor, XrmDatabase, DEFAULT_REHASH_SIZE,
-        DEFAULT_REHASH_THRESHOLD,
+        Qleft_fringe, Qminibuffer, Qname, Qnil, Qparent_id, Qright_fringe, Qt, Qterminal, Qunbound,
+        Qwr, Qx, Qx_create_frame_1, Qx_create_frame_2, Vframe_list, WRImage, Window, XColor,
+        XrmDatabase, DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
     },
     webrender_backend::{
         color::{color_to_xcolor, lookup_color_by_name_or_hex},
@@ -429,6 +429,24 @@ pub fn x_create_frame(parms: LispObject) -> LispFrameRef {
         "background",
         "Background",
         RES_TYPE_STRING,
+    );
+
+    frame.x_default_parameter(
+        parms,
+        Qleft_fringe,
+        Qnil,
+        "leftFringe",
+        "LeftFringe",
+        RES_TYPE_NUMBER,
+    );
+
+    frame.x_default_parameter(
+        parms,
+        Qright_fringe,
+        Qnil,
+        "rightFringe",
+        "RightFringe",
+        RES_TYPE_NUMBER,
     );
 
     let output: OutputRef = unsafe { frame.output_data.wr.into() };
