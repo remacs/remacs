@@ -87,14 +87,13 @@ impl DrawCanvas {
             let x = s.x;
             let y = s.y;
 
-            let text_bounds = (x, y).by(s.width as i32, s.height as i32);
-            let layout = CommonItemProperties::new(text_bounds, space_and_clip);
-
             let face = s.face;
+
+            let visible_height = unsafe { (*s.row).visible_height };
 
             // draw background
             if !s.background_filled_p() {
-                let background_bounds = (x, y).by(s.background_width as i32, s.height as i32);
+                let background_bounds = (x, y).by(s.background_width as i32, visible_height);
 
                 let background_color = pixel_to_color(unsafe { (*gc).background } as u64);
 
@@ -113,9 +112,11 @@ impl DrawCanvas {
 
             // draw foreground
             if !glyph_instances.is_empty() {
+                let visible_rect = (x, y).by(s.width as i32, visible_height);
+
                 builder.push_text(
-                    &layout,
-                    layout.clip_rect,
+                    &CommonItemProperties::new(visible_rect, space_and_clip),
+                    visible_rect,
                     &glyph_instances,
                     font.font_instance_key,
                     foreground_color,
@@ -166,9 +167,13 @@ impl DrawCanvas {
         let info =
             CommonItemProperties::new((x, position).by(s.width as i32, thickness), space_and_clip);
 
+        let visible_height = unsafe { (*s.row).visible_height };
+
+        let visible_rect = (x, y).by(s.width as i32, visible_height);
+
         builder.push_line(
             &info,
-            &info.clip_rect,
+            &visible_rect,
             1.0,
             LineOrientation::Horizontal,
             &underline_color,
