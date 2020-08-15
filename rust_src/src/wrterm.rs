@@ -15,8 +15,7 @@ use crate::{
     },
 };
 
-#[allow(dead_code)]
-pub struct DisplayInfoRef(*mut wr_display_info);
+pub type DisplayInfoRef = ExternalPtr<wr_display_info>;
 unsafe impl Sync for DisplayInfoRef {}
 
 pub type OutputRef = ExternalPtr<wr_output>;
@@ -27,7 +26,7 @@ pub type ImageRef = ExternalPtr<WRImage>;
 pub static tip_frame: LispObject = Qnil;
 
 #[no_mangle]
-pub static wr_display_list: DisplayInfoRef = DisplayInfoRef(ptr::null_mut());
+pub static wr_display_list: DisplayInfoRef = DisplayInfoRef::new(ptr::null_mut());
 
 #[allow(unused_variables)]
 #[no_mangle]
