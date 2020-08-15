@@ -15,8 +15,8 @@ use crate::{
         other_frames, output_method, windows_or_buffers_changed, x_default_parameter,
     },
     remacs_sys::{
-        minibuf_window, pvec_type, resource_types, selected_frame as current_frame, Lisp_Frame,
-        Lisp_Type,
+        face, face_id, minibuf_window, pvec_type, resource_types, selected_frame as current_frame,
+        Lisp_Frame, Lisp_Type,
     },
     remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qwr, Qx},
     vectors::LispVectorlikeRef,
@@ -134,6 +134,15 @@ impl LispFrameRef {
             - self.top_margin_height()
             - self.horizontal_scroll_bar_height()
             - 2 * self.internal_border_width()
+    }
+
+    pub fn face_from_id(self, id: face_id) -> Option<*mut face> {
+        let cache = self.face_cache;
+
+        let faces_map: &[*mut face] =
+            unsafe { std::slice::from_raw_parts_mut((*cache).faces_by_id, (*cache).used as usize) };
+
+        faces_map.get(id as usize).copied()
     }
 
     pub fn get_param(self, prop: LispObject) -> LispObject {

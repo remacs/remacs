@@ -11,14 +11,14 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     remacs_sys::{
         allocate_kboard, create_terminal, current_kboard, draw_fringe_bitmap_params,
-        draw_window_fringes, frame_parm_handler, glyph_row, glyph_string, initial_kboard,
+        draw_window_fringes, face_id, frame_parm_handler, glyph_row, glyph_string, initial_kboard,
         output_method, redisplay_interface, terminal, xlispstrdup, Fcons, Lisp_Frame, Lisp_Window,
         Qnil, Qwr, KBOARD,
     },
     remacs_sys::{
         block_input, unblock_input, x_clear_end_of_line, x_clear_window_mouse_face,
-        x_fix_overlapping_area, x_get_glyph_overhangs, x_produce_glyphs, x_set_font,
-        x_set_font_backend, x_set_left_fringe, x_set_right_fringe, x_write_glyphs,
+        x_draw_vertical_border, x_fix_overlapping_area, x_get_glyph_overhangs, x_produce_glyphs,
+        x_set_font, x_set_font_backend, x_set_left_fringe, x_set_right_fringe, x_write_glyphs,
     },
     windows::LispWindowRef,
 };
@@ -122,7 +122,7 @@ lazy_static! {
             define_frame_cursor: None,
             clear_frame_area: Some(clear_frame_area),
             draw_window_cursor: None,
-            draw_vertical_window_border: None,
+            draw_vertical_window_border: Some(draw_vertical_window_border),
             draw_window_divider: None,
             shift_glyphs_for_insert: None,
             show_hourglass: None,
@@ -148,7 +148,9 @@ extern "C" fn update_window_end(
     }
 
     unsafe { block_input() };
-    unsafe { draw_window_fringes(window.as_mut(), true) };
+    if unsafe { draw_window_fringes(window.as_mut(), true) } {
+        unsafe { x_draw_vertical_border(window.as_mut()) }
+    };
     unsafe { unblock_input() };
 }
 
@@ -185,6 +187,17 @@ extern "C" fn draw_fringe_bitmap(
     let output: OutputRef = unsafe { frame.output_data.wr.into() };
 
     output.canvas().draw_fringe_bitmap(row, p);
+}
+
+extern "C" fn draw_vertical_window_border(window: *mut Lisp_Window, x: i32, y0: i32, y1: i32) {
+    let window: LispWindowRef = window.into();
+    let frame: LispFrameRef = window.get_frame();
+
+    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+
+    let face = frame.face_from_id(face_id::VERTICAL_BORDER_FACE_ID);
+
+    output.canvas().draw_vertical_window_border(face, x, y0, y1);
 }
 
 #[allow(unused_variables)]

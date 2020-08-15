@@ -204,4 +204,30 @@ impl DrawCanvas {
             );
         });
     }
+
+    pub fn draw_vertical_window_border(
+        &mut self,
+        face: Option<*mut face>,
+        x: i32,
+        y0: i32,
+        y1: i32,
+    ) {
+        // Fix the border height
+        // Don't known why the height is short than expected.
+        let y1 = y1 + 1;
+
+        let visible_rect = (x, y0).by(1, y1 - y0);
+
+        let color = match face {
+            Some(f) => pixel_to_color(unsafe { (*f).foreground }),
+            None => ColorF::BLACK,
+        };
+
+        self.output.display(|builder, space_and_clip| {
+            builder.push_rect(
+                &CommonItemProperties::new(visible_rect, space_and_clip),
+                color,
+            );
+        });
+    }
 }
