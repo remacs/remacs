@@ -3,24 +3,19 @@
 
 #include "dispextern.h"
 
-struct x_bitmap_record
+struct wr_bitmap_record
 {
-  Pixmap pixmap;
-  bool have_mask;
-  Pixmap mask;
   char *file;
   int refcount;
-  /* Record some info about this pixmap.  */
   int height, width, depth;
 };
-
 
 typedef int Screen;
 
 struct wr_display_info
 {
   /* Chain of all w32_display_info structures.  */
-  struct w32_display_info *next;
+  struct wr_display_info *next;
 
   /* This is a cons cell of the form (NAME . FONT-LIST-CACHE).  */
   Lisp_Object name_list_element;
@@ -56,13 +51,13 @@ struct wr_display_info
      mouse-face.  */
   Mouse_HLInfo mouse_highlight;
 
-  /* The number of fonts actually stored in w32_font_table.
+  /* The number of fonts actually stored in wr_font_table.
      font_table[n] is used and valid if 0 <= n < n_fonts. 0 <=
      n_fonts <= font_table_size. and font_table[i].name != 0. */
   int n_fonts;
 
   /* Pointer to bitmap records.  */
-  struct x_bitmap_record *bitmaps;
+  struct wr_bitmap_record *bitmaps;
 
   /* Allocated size of bitmaps field.  */
   ptrdiff_t bitmaps_size;
@@ -74,8 +69,7 @@ struct wr_display_info
   /* The frame which currently has the visual highlight, and should get
      keyboard input (other sorts of input have the frame encoded in the
      event).  It points to the focus frame's selected window's
-     frame.  It differs from w32_focus_frame when we're using a global
-     minibuffer.  */
+     frame. */
   struct frame *x_highlight_frame;
 
   /* The frame where the mouse was last time we reported a mouse event.  */
@@ -89,14 +83,11 @@ struct wr_display_info
   int last_mouse_motion_x;
   int last_mouse_motion_y;
 
-
-  /* Bits and shifts to use to compose pixel values on TrueColor visuals.  */
-  int red_bits, blue_bits, green_bits;
-
   /* This says how to access this display in Xlib.  */
   Display *display;
 };
 
+extern struct wr_display_info *x_display_list;
 
 struct wr_output
 {
@@ -124,12 +115,6 @@ struct wr_output
   Cursor bottom_edge_cursor;
   Cursor bottom_left_corner_cursor;
 
-  /* True means tried already to make this frame visible.  */
-  bool asked_for_visible : 1;
-
-  /* True if this frame was ever previously visible.  */
-  bool has_been_visible : 1;
-
   /* This is the Emacs structure for the X display this frame is on.  */
   struct wr_display_info *display_info;
 
@@ -138,7 +123,6 @@ struct wr_output
 
 };
 
-extern struct x_display_info *x_display_list;
 
 
 /* This is the `Display *' which frame F is on.  */
@@ -156,11 +140,5 @@ extern struct x_display_info *x_display_list;
 #define FRAME_X_SCREEN(f) (FRAME_DISPLAY_INFO (f)->screen)
 
 
-struct wr_bitmap_record
-{
-  char *file;
-  int refcount;
-  int height, width, depth;
-};
 
 #endif // __WRTERM_H_
