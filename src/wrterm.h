@@ -115,9 +115,6 @@ struct wr_output
 
   /* This is the Emacs structure for the X display this frame is on.  */
   struct wr_display_info *display_info;
-
-  /* Inner perporty in Rust */
-  void *inner;
 };
 
 typedef struct wr_output wr_output;

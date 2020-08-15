@@ -96,7 +96,7 @@ extern "C" fn get_cache(f: *mut frame) -> LispObject {
     let frame = LispFrameRef::new(f);
     let output: OutputRef = unsafe { frame.output_data.wr.into() };
 
-    let dpyinfo = output.get_inner().display_info;
+    let dpyinfo = output.display_info();
 
     dpyinfo.name_list_element
 }
@@ -194,8 +194,10 @@ extern "C" fn open(_f: *mut frame, font_entity: LispObject, pixel_size: i32) -> 
         .as_font_mut();
 
     unsafe {
-        (*font).average_width = 1;
-        (*font).height = 1;
+        (*font).average_width = 10;
+        (*font).height = 10;
+        (*font).ascent = 10;
+        (*font).descent = 10;
     }
 
     unsafe {
@@ -218,4 +220,11 @@ extern "C" fn text_extents(
     nglyphs: i32,
     metrics: *mut font_metrics,
 ) {
+    unsafe {
+        (*metrics).lbearing = 10;
+        (*metrics).rbearing = 10;
+        (*metrics).width = 10;
+        (*metrics).ascent = 10;
+        (*metrics).descent = 10;
+    }
 }

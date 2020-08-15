@@ -32,6 +32,9 @@ rand = "0.7.3"
 sha1 = "0.6"
 sha2 = "0.8"
 systemstat = "0.1"
+glutin = { version = "0.24", optional = true }
+gleam = { version = "0.6", optional = true }
+webrender = { version = "0.61", optional = true }
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]
@@ -77,7 +80,7 @@ window-system-nextstep = []
 # Use the w32 window system
 window-system-w32 = []
 # Use the webrender window system
-window-system-webrender = ["font-kit"]
+window-system-webrender = ["font-kit", "webrender", "glutin", "gleam"]
 # Treat warnings as a build error on Travis.
 strict = []
 

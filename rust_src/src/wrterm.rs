@@ -4,6 +4,8 @@ use libc;
 use std::ffi::CString;
 use std::ptr;
 
+use remacs_macros::lisp_fn;
+
 use crate::{
     fonts::LispFontRef,
     frame::LispFrameRef,
@@ -17,16 +19,15 @@ use crate::{
         Qnil, Qparent_id, Qt, Qterminal, Qunbound, Qwr, Qx, Vframe_list, WRImage, Window, XColor,
         XrmDatabase, DEFAULT_REHASH_SIZE, DEFAULT_REHASH_THRESHOLD,
     },
-    webrender::{
+    webrender_backend::{
         font::{FontRef, FONT_DRIVER},
         frame::create_frame,
         output::OutputRef,
         term::wr_term_init,
     },
 };
-use remacs_macros::lisp_fn;
 
-pub use crate::webrender::display_info::{DisplayInfo, DisplayInfoRef};
+pub use crate::webrender_backend::display_info::{DisplayInfo, DisplayInfoRef};
 
 pub type DisplayRef = ExternalPtr<Display>;
 pub type ImageRef = ExternalPtr<WRImage>;
@@ -37,16 +38,14 @@ pub static tip_frame: LispObject = Qnil;
 #[no_mangle]
 pub static mut wr_display_list: DisplayInfoRef = DisplayInfoRef::new(ptr::null_mut());
 
-#[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn wr_get_fontset(output: OutputRef) -> i32 {
-    output.get_inner().fontset
+    output.fontset
 }
 
-#[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn wr_get_font(output: OutputRef) -> FontRef {
-    output.get_inner().font
+    output.font
 }
 
 #[allow(unused_variables)]
@@ -55,10 +54,9 @@ pub extern "C" fn wr_get_window_desc(output: OutputRef) -> Window {
     0
 }
 
-#[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn wr_get_display_info(output: OutputRef) -> DisplayInfoRef {
-    output.get_inner().display_info
+    output.display_info()
 }
 
 #[allow(unused_variables)]
@@ -171,7 +169,7 @@ pub extern "C" fn x_focus_frame(frame: LispFrameRef, noactivate: bool) {
 #[no_mangle]
 pub extern "C" fn x_get_focus_frame(frame: LispFrameRef) -> LispObject {
     let output: OutputRef = unsafe { frame.output_data.wr.into() };
-    let dpyinfo = output.get_inner().display_info;
+    let dpyinfo = output.display_info();
 
     let focus_frame = dpyinfo.get_inner().focus_frame;
 
@@ -194,7 +192,7 @@ pub extern "C" fn x_new_font(
     fontset: i32,
 ) -> LispObject {
     let font = LispFontRef::from_vectorlike(font_object.as_vectorlike().unwrap()).as_font_mut();
-    let output: OutputRef = unsafe { frame.output_data.wr.into() };
+    let mut output: OutputRef = unsafe { frame.output_data.wr.into() };
 
     let fontset = if fontset < 0 {
         unsafe { fontset_from_font(font_object) }
@@ -202,16 +200,17 @@ pub extern "C" fn x_new_font(
         fontset
     };
 
-    output.get_inner().fontset = fontset;
+    output.fontset = fontset;
 
-    if output.get_inner().font == font.into() {
+    if output.font == font.into() {
         return font_object;
     }
 
-    output.get_inner().font = font.into();
+    output.font = font.into();
 
     font_object
 }
+
 // This tries to wait until the frame is really visible, depending on
 // the value of Vx_wait_for_event_timeout.
 // However, if the window manager asks the user where to position
@@ -219,22 +218,28 @@ pub extern "C" fn x_new_font(
 // The frame will not actually be visible at that time,
 // but it will become visible later when the window manager
 // finishes with it.
-#[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn x_make_frame_visible(mut f: LispFrameRef) {
     f.set_visible(true as u32);
+
+    let output: OutputRef = unsafe { f.output_data.wr.into() };
+    output.show_window()
 }
 
-#[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn x_make_frame_invisible(mut f: LispFrameRef) {
     f.set_visible(false as u32);
+
+    let output: OutputRef = unsafe { f.output_data.wr.into() };
+    output.hide_window()
 }
 
-#[allow(unused_variables)]
 #[no_mangle]
 pub extern "C" fn x_iconify_frame(mut f: LispFrameRef) {
     f.set_iconified(true);
+
+    let output: OutputRef = unsafe { f.output_data.wr.into() };
+    output.hide_window()
 }
 
 // Set the pixel height of the tool bar of frame F to HEIGHT.

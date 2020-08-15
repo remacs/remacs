@@ -127,7 +127,7 @@ mod time;
 mod util;
 mod vectors;
 #[cfg(feature = "window-system-webrender")]
-mod webrender;
+mod webrender_backend;
 mod window_configuration;
 mod windows;
 #[cfg(feature = "window-system-webrender")]
