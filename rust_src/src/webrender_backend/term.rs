@@ -1,26 +1,30 @@
 use std::ptr;
 
+use webrender::api::*;
+
 use super::{
+    color::{color_to_pixel, lookup_color_by_name_or_hex},
     display_info::{DisplayInfo, DisplayInfoRef},
     glyph::GlyphStringRef,
     output::OutputRef,
 };
 
 use crate::{
+    dispnew::redraw_frame,
     frame::LispFrameRef,
     lisp::{ExternalPtr, LispObject},
     remacs_sys::{
         allocate_kboard, create_terminal, current_kboard, draw_fringe_bitmap_params,
         draw_window_fringes, face_id, frame_parm_handler, glyph_row, glyph_string, initial_kboard,
         output_method, redisplay_interface, terminal, xlispstrdup, Fcons, Lisp_Frame, Lisp_Window,
-        Qnil, Qwr, KBOARD,
+        Qbackground_color, Qnil, Qwr, KBOARD,
     },
     remacs_sys::{
-        block_input, unblock_input, x_clear_end_of_line, x_clear_window_mouse_face,
-        x_draw_right_divider, x_draw_vertical_border, x_fix_overlapping_area,
-        x_get_glyph_overhangs, x_produce_glyphs, x_set_bottom_divider_width, x_set_font,
-        x_set_font_backend, x_set_left_fringe, x_set_right_divider_width, x_set_right_fringe,
-        x_write_glyphs,
+        block_input, unblock_input, update_face_from_frame_parameter, x_clear_end_of_line,
+        x_clear_window_mouse_face, x_draw_right_divider, x_draw_vertical_border,
+        x_fix_overlapping_area, x_get_glyph_overhangs, x_produce_glyphs,
+        x_set_bottom_divider_width, x_set_font, x_set_font_backend, x_set_left_fringe,
+        x_set_right_divider_width, x_set_right_fringe, x_write_glyphs,
     },
     windows::LispWindowRef,
 };
@@ -50,7 +54,7 @@ fn get_frame_parm_handlers() -> [frame_parm_handler; 45] {
     let handlers: [frame_parm_handler; 45] = [
         None,
         None,
-        None,
+        Some(set_background_color),
         None,
         None,
         None,
@@ -236,6 +240,25 @@ extern "C" fn draw_vertical_window_border(window: *mut Lisp_Window, x: i32, y0: 
 
 #[allow(unused_variables)]
 extern "C" fn clear_frame_area(s: *mut Lisp_Frame, x: i32, y: i32, width: i32, height: i32) {}
+
+extern "C" fn set_background_color(f: *mut Lisp_Frame, arg: LispObject, _old_val: LispObject) {
+    let mut frame: LispFrameRef = f.into();
+    let mut output: OutputRef = unsafe { frame.output_data.wr.into() };
+
+    let color = lookup_color_by_name_or_hex(&format!("{}", arg.as_string().unwrap()))
+        .unwrap_or_else(|| ColorF::WHITE);
+
+    let pixel = color_to_pixel(color);
+
+    frame.background_pixel = pixel;
+    output.background_color = color;
+
+    unsafe { update_face_from_frame_parameter(frame.as_mut(), Qbackground_color, arg) };
+
+    if frame.is_visible() {
+        redraw_frame(frame);
+    }
+}
 
 fn wr_create_terminal(mut dpyinfo: DisplayInfoRef) -> TerminalRef {
     let terminal_ptr = unsafe {

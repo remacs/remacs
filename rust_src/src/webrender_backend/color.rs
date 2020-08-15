@@ -23,6 +23,14 @@ pub fn pixel_to_color(pixel: u64) -> ColorF {
     )
 }
 
+pub fn color_to_pixel(color: ColorF) -> u64 {
+    let red = color.r * 65535.0;
+    let green = color.g * 65535.0;
+    let blue = color.b * 65535.0;
+
+    (blue as u64) << 32 | (green as u64) << 16 | (red as u64)
+}
+
 pub fn color_to_xcolor(color: ColorF, xcolor: *mut XColor) {
     let red = (color.r * 65535.0) as u16;
     let green = (color.g * 65535.0) as u16;
