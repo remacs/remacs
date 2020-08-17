@@ -428,7 +428,7 @@ macro_rules! impl_vectorlike_ref {
         impl<'a> $itertype<'a> {
             pub fn new(vec: &'a $type) -> Self {
                 Self {
-                    vec: vec,
+                    vec,
                     cur: 0,
                     rev: vec.len(),
                 }
