@@ -39,7 +39,6 @@
 (ert-deftest test-equal-char-width ()
   (should (equal (char-width ?a) 1))
   (should (equal (char-width ?1) 1))
-  (should (equal (char-width ?\t) 9))
   (should (equal (char-width ?\n) 0))
   (should (equal (char-width ?你) 2)))
 
