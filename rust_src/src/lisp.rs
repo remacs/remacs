@@ -1,7 +1,7 @@
 //! This module contains Rust definitions whose C equivalents live in
 //! lisp.h.
 
-use std::convert::{From, Into};
+use std::convert::{From, Into, TryFrom};
 use std::ffi::CString;
 use std::fmt;
 use std::fmt::{Debug, Display, Error, Formatter};
@@ -26,7 +26,7 @@ use crate::{
         equal_kind, pvec_type, EmacsDouble, EmacsInt, EmacsUint, Lisp_Bits, USE_LSB_TAG, VALMASK,
     },
     remacs_sys::{specbinding, Lisp_Misc_Any, Lisp_Misc_Type, Lisp_Subr, Lisp_Type},
-    remacs_sys::{QCtest, Qautoload, Qeq, Qnil, Qsubrp, Qt},
+    remacs_sys::{QCtest, Qautoload, Qeq, Qnil, Qsubrp, Qt, Qcharacterp},
     remacs_sys::{Vbuffer_alist, Vprocess_alist},
     symbols::LispSymbolRef,
 };
@@ -348,6 +348,19 @@ where
 impl From<LispObject> for bool {
     fn from(o: LispObject) -> Self {
         o.is_not_nil()
+    }
+}
+
+impl From<LispObject> for char {
+    fn from(o: LispObject) -> Self {
+        if let Some(num) = o.as_fixnum() {
+            if let Ok(num_u32) = u32::try_from(num) {
+                if let Ok(ch) = char::try_from(num_u32) {
+                    return ch
+                }
+            }
+        }
+        wrong_type!(Qcharacterp, o)
     }
 }
 
