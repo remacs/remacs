@@ -32,8 +32,8 @@ pub const fn char_head_p(byte: c_uchar) -> bool {
 /// Tab is taken to occupy `tab-width' columns.
 /// usage: (char-width CHAR)
 #[lisp_fn(c_name = "char_width", name = "char-width")]
-pub fn char_width_lisp(ch: char) -> isize {
-    let width = unsafe { char_width(ch as i32, buffer_display_table()) };
+pub fn char_width_lisp(ch: Codepoint) -> isize {
+    let width = unsafe { char_width(ch.val() as i32, buffer_display_table()) };
     width
 }
 
