@@ -32,10 +32,9 @@ pub const fn char_head_p(byte: c_uchar) -> bool {
 /// Tab is taken to occupy `tab-width' columns.
 /// usage: (char-width CHAR)
 #[lisp_fn(c_name = "char_width", name = "char-width")]
-pub fn char_width_lisp(ch: LispObject) -> EmacsInt {
+pub fn char_width_lisp(ch: EmacsInt) -> EmacsInt {
     // CHECK_CHARACTER(ch);
-    let c: EmacsInt = ch.into();
-    let width: ptrdiff_t = unsafe { char_width(c as i32, buffer_display_table()) };
+    let width: isize = unsafe { char_width(ch as i32, buffer_display_table()) };
     width as EmacsInt
 }
 
