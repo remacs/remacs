@@ -280,33 +280,6 @@ string_escape_byte8 (Lisp_Object string)
   return val;
 }
 
-
-DEFUN ("string", Fstring, Sstring, 0, MANY, 0,
-       doc: /*
-Concatenate all the argument characters and make the result a string.
-usage: (string &rest CHARACTERS)  */)
-  (ptrdiff_t n, Lisp_Object *args)
-{
-  ptrdiff_t i;
-  int c;
-  unsigned char *buf, *p;
-  Lisp_Object str;
-  USE_SAFE_ALLOCA;
-
-  SAFE_NALLOCA (buf, MAX_MULTIBYTE_LENGTH, n);
-  p = buf;
-
-  for (i = 0; i < n; i++)
-    {
-      CHECK_CHARACTER (args[i]);
-      c = XINT (args[i]);
-      p += CHAR_STRING (c, p);
-    }
-
-  str = make_string_from_bytes ((char *) buf, n, p - buf);
-  SAFE_FREE ();
-  return str;
-}
 
 DEFUN ("unibyte-string", Funibyte_string, Sunibyte_string, 0, MANY, 0,
        doc: /* Concatenate all the argument bytes and make the result a unibyte string.
@@ -532,7 +505,6 @@ syms_of_character (void)
   Vchar_unify_table = Qnil;
 
   defsubr (&Schar_width);
-  defsubr (&Sstring);
   defsubr (&Sunibyte_string);
   defsubr (&Sget_byte);
 

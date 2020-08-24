@@ -6,8 +6,8 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::LispObject,
-    multibyte::{char_resolve_modifier_mask, Codepoint, MAX_CHAR},
-    remacs_sys::EmacsInt,
+    multibyte::{char_resolve_modifier_mask, Codepoint, MAX_CHAR, LispStringRef},
+    remacs_sys::{EmacsInt, Qstringp},
     threads::ThreadState,
 };
 
@@ -99,6 +99,23 @@ pub fn multibyte_char_to_unibyte(ch: Codepoint) -> EmacsInt {
 #[lisp_fn]
 pub fn char_resolve_modifiers(character: LispObject) -> EmacsInt {
     char_resolve_modifier_mask(character.into())
+}
+
+
+/// Concatenate all the argument characters and make the result a string.
+/// usage: (string &rest CHARACTERS)
+#[lisp_fn]
+pub fn string(_n: isize, args: LispObject) -> LispStringRef {
+    if args.is_vectorlike() {
+        let mut s: Vec<Codepoint> = vec!();
+        for ch in args.as_vector_or_error().iter() {
+            s.push(Codepoint::from(ch)) //u32
+        }
+        if let Some(st) = LispObject::from(s).as_string() {
+            return st
+        }
+    }
+    wrong_type!(Qstringp, args);
 }
 
 include!(concat!(env!("OUT_DIR"), "/character_exports.rs"));
