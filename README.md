@@ -139,7 +139,7 @@ more Emacs-y.
    IMPORTANT: Whenever the toolchain updates, you have to reinstall
    rustfmt manually.
 
-2. You will need a C compiler and toolchain. On Linux, you can do
+2. You will need Clang and a toolchain. On Linux, you can do
    something like:
 
         apt install build-essential automake clang libclang-dev
