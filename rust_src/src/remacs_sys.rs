@@ -89,6 +89,7 @@ extern "C" {
         depth: EmacsInt,
         sexpflag: bool,
     ) -> LispObject;
+    pub fn char_width (c: libc::c_int, dp: *mut Lisp_Char_Table) -> ptrdiff_t;
     pub fn read_minibuf(
         map: Lisp_Object,
         initial: Lisp_Object,

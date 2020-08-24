@@ -3,6 +3,7 @@
 use libc::{c_uchar, ptrdiff_t};
 
 use remacs_macros::lisp_fn;
+use crate::remacs_sys::{char_width, buffer_display_table};
 
 use crate::{
     lisp::LispObject,
@@ -24,6 +25,18 @@ impl LispObject {
 /// Same as the `CHAR_HEAD_P` macro.
 pub const fn char_head_p(byte: c_uchar) -> bool {
     (byte & 0xC0) != 0x80
+}
+
+/// Return width of CHAR when displayed in the current buffer.
+/// The width is measured by how many columns it occupies on the screen.
+/// Tab is taken to occupy `tab-width' columns.
+/// usage: (char-width CHAR)
+#[lisp_fn(c_name = "char_width", name = "char-width")]
+pub fn char_width_lisp(ch: LispObject) -> EmacsInt {
+    // CHECK_CHARACTER(ch);
+    let c: EmacsInt = ch.into();
+    let width: ptrdiff_t = unsafe { char_width(c as i32, buffer_display_table()) };
+    width as EmacsInt
 }
 
 /// Decrement the buffer byte position `POS_BYTE` of the current buffer
