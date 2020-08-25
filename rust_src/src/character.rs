@@ -6,8 +6,8 @@ use remacs_macros::lisp_fn;
 
 use crate::{
     lisp::LispObject,
-    multibyte::{char_resolve_modifier_mask, Codepoint, MAX_CHAR, LispStringRef},
-    remacs_sys::{EmacsInt, Qstringp},
+    multibyte::{char_resolve_modifier_mask, Codepoint, MAX_CHAR, MAX_MULTIBYTE_LENGTH},
+    remacs_sys::{EmacsInt, make_string_from_bytes},
     threads::ThreadState,
 };
 
@@ -101,21 +101,20 @@ pub fn char_resolve_modifiers(character: LispObject) -> EmacsInt {
     char_resolve_modifier_mask(character.into())
 }
 
-
 /// Concatenate all the argument characters and make the result a string.
 /// usage: (string &rest CHARACTERS)
 #[lisp_fn]
-pub fn string(_n: isize, args: LispObject) -> LispStringRef {
-    if args.is_vectorlike() {
-        let mut s: Vec<Codepoint> = vec!();
-        for ch in args.as_vector_or_error().iter() {
-            s.push(Codepoint::from(ch)) //u32
-        }
-        if let Some(st) = LispObject::from(s).as_string() {
-            return st
-        }
+pub fn string(args: &[LispObject]) -> LispObject {
+    let n = args.len() * MAX_MULTIBYTE_LENGTH;
+    let mut buffer = vec![0_u8; n];
+    let mut p = 0;
+
+    for ch in args {
+        let character = Codepoint::from(*ch);
+        p += character.write_to(&mut buffer[p..]);
     }
-    wrong_type!(Qstringp, args);
+
+    unsafe { make_string_from_bytes(buffer.as_ptr() as *const libc::c_char, 1, p as isize) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/character_exports.rs"));
