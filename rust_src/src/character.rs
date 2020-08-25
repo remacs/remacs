@@ -105,8 +105,8 @@ pub fn char_resolve_modifiers(character: LispObject) -> EmacsInt {
 /// usage: (string &rest CHARACTERS)
 #[lisp_fn]
 pub fn string(args: &[LispObject]) -> LispObject {
-    let n = args.len() * MAX_MULTIBYTE_LENGTH;
-    let mut buffer = vec![0_u8; n];
+    let n = args.len();
+    let mut buffer = vec![0_u8; n * MAX_MULTIBYTE_LENGTH];
     let mut p = 0;
 
     for ch in args {
@@ -114,7 +114,7 @@ pub fn string(args: &[LispObject]) -> LispObject {
         p += character.write_to(&mut buffer[p..]);
     }
 
-    unsafe { make_string_from_bytes(buffer.as_ptr() as *const libc::c_char, 1, p as isize) }
+    unsafe { make_string_from_bytes(buffer.as_ptr() as *const libc::c_char, n as isize, p as isize) }
 }
 
 include!(concat!(env!("OUT_DIR"), "/character_exports.rs"));
