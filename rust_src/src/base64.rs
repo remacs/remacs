@@ -88,7 +88,7 @@ fn base64_decode_1(encoded: &[u8], multibyte: bool) -> Result<(Vec<u8>, usize), 
                 Ok((decoded, len))
             }
         }
-        _ => Err(()),
+        Err(_) => Err(()),
     }
 }
 

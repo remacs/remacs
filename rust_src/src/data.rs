@@ -401,7 +401,7 @@ fn default_value(mut symbol: LispSymbolRef) -> LispObject {
             // For other variables, get the current value.
             do_symval_forwarding(valcontents)
         },
-        _ => panic!("Symbol type has no default value"),
+        symbol_redirect::SYMBOL_VARALIAS => panic!("Symbol type has no default value"),
     }
 }
 
