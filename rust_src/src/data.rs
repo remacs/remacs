@@ -833,7 +833,7 @@ pub fn string_to_number_lisp(mut string: LispStringRef, base: Option<EmacsInt>) 
     let b = match base {
         None => 10,
         Some(n) => {
-            if n < 2 || n > 16 {
+            if !(2..=16).contains(&n) {
                 args_out_of_range!(base, 2, 16)
             }
             n

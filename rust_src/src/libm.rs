@@ -3,7 +3,7 @@ use libc::c_int;
 mod sys {
     use libc::{c_double, c_int};
 
-    #[link_name = "m"]
+    #[link(name = "m")]
     extern "C" {
         pub fn frexp(n: c_double, value: &mut c_int) -> c_double;
         pub fn ldexp(x: c_double, n: c_int) -> c_double;

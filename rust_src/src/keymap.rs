@@ -252,9 +252,8 @@ pub fn set_keymap_parent(keymap: LispObject, parent: LispObject) -> LispObject {
             Some(cons) => {
                 if keymapp(list) {
                     break;
-                } else {
-                    prev = cons;
                 }
+                prev = cons;
             }
         }
     }
@@ -361,27 +360,27 @@ pub unsafe extern "C" fn map_keymap_internal(
         let binding = tail_cons.car();
         if binding.eq(Qkeymap) {
             break;
-        } else {
-            // An embedded parent.
-            if keymapp(binding) {
-                break;
-            }
+        }
 
-            if let Some((car, cdr)) = binding.into() {
-                map_keymap_item(fun, args, car, cdr, data);
-            } else if binding.is_vector() {
-                if let Some(binding_vec) = binding.as_vectorlike() {
-                    for c in 0..binding_vec.pseudovector_size() {
-                        map_keymap_item(fun, args, c.into(), aref(binding, c), data);
-                    }
+        // An embedded parent.
+        if keymapp(binding) {
+            break;
+        }
+
+        if let Some((car, cdr)) = binding.into() {
+            map_keymap_item(fun, args, car, cdr, data);
+        } else if binding.is_vector() {
+            if let Some(binding_vec) = binding.as_vectorlike() {
+                for c in 0..binding_vec.pseudovector_size() {
+                    map_keymap_item(fun, args, c.into(), aref(binding, c), data);
                 }
-            } else if binding.is_char_table() {
-                let saved = match fun {
-                    Some(f) => make_save_funcptr_ptr_obj(Some(std::mem::transmute(f)), data, args),
-                    None => make_save_funcptr_ptr_obj(None, data, args),
-                };
-                map_char_table(Some(map_keymap_char_table_item), Qnil, binding, saved);
             }
+        } else if binding.is_char_table() {
+            let saved = match fun {
+                Some(f) => make_save_funcptr_ptr_obj(Some(std::mem::transmute(f)), data, args),
+                None => make_save_funcptr_ptr_obj(None, data, args),
+            };
+            map_char_table(Some(map_keymap_char_table_item), Qnil, binding, saved);
         }
 
         parent = tail_cons.cdr();

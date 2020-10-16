@@ -352,7 +352,7 @@ fn env_var(name: &str) -> String {
 
 // What to ignore when walking the list of files
 fn ignore(path: &str, additional_ignored_paths: &[&str]) -> bool {
-    path == "" || path.starts_with('.') || additional_ignored_paths.contains(&path)
+    path.is_empty() || path.starts_with('.') || additional_ignored_paths.contains(&path)
 }
 
 // What files to ignore depending on chosen features

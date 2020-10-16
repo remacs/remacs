@@ -593,9 +593,9 @@ pub fn macroexpand(mut form: LispObject, environment: LispObject) -> LispObject 
         let newform = apply1(expander, body);
         if form.eq(newform) {
             break;
-        } else {
-            form = newform;
         }
+
+        form = newform;
     }
 
     form

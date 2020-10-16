@@ -240,9 +240,9 @@ impl Codepoint {
             let unshifted = cp & !char_bits::CHAR_SHIFT;
             // Shift modifier is valid only with [A-Za-z].
             // Shift modifier for control characters and SPC is ignored.
-            if (ascii >= b'A' && ascii <= b'Z') || ascii <= b' ' {
+            if (b'A'..=b'Z').contains(&ascii) || ascii <= b' ' {
                 cp = unshifted;
-            } else if ascii >= b'a' && ascii <= b'z' {
+            } else if (b'a'..=b'z').contains(&ascii) {
                 cp = unshifted & !0x20;
             }
         }
@@ -253,7 +253,7 @@ impl Codepoint {
                 cp &= !0x7F & !char_bits::CHAR_CTL;
             } else if ascii == b'?' {
                 cp = 0x7F | (cp & !0x7F & !char_bits::CHAR_CTL);
-            } else if ascii >= b'@' && ascii <= b'_' {
+            } else if (b'@'..=b'_').contains(&ascii) {
                 // ASCII control chars are made from letters (both cases),
                 // as well as the non-letters within 0o100...0o137.
                 cp &= 0x1F | (!0x7F & !char_bits::CHAR_CTL);

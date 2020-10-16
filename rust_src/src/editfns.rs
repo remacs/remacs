@@ -445,7 +445,7 @@ pub fn char_to_string(character: Codepoint) -> LispObject {
 /// Convert arg BYTE to a unibyte string containing that byte.
 #[lisp_fn]
 pub fn byte_to_string(byte: EmacsInt) -> LispObject {
-    if byte < 0 || byte > 255 {
+    if !(0..=255).contains(&byte) {
         error!("Invalid byte");
     }
     let byte = byte as libc::c_char;
@@ -1578,7 +1578,7 @@ fn general_insert_function<IF, IFSF>(
     for &val in args {
         if val.is_character() {
             let c = Codepoint::from(val);
-            let mut s = [0 as c_uchar; MAX_MULTIBYTE_LENGTH];
+            let mut s = [0_u8; MAX_MULTIBYTE_LENGTH];
             let multibyte = ThreadState::current_buffer_unchecked().multibyte_characters_enabled();
             let len = if multibyte {
                 c.write_to(&mut s)
