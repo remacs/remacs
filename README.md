@@ -1,5 +1,8 @@
 # Rust :heart: Emacs
 
+This project isn't maintained anymore. If you are looking for a rust based emacs fork, you can take a look at [emacs-ng](https://github.com/emacs-ng/emacs-ng). However this fork is not about replacing the C code base, but to provide additional features using the rich ecosystem of rust.
+
+
 [![Join the chat at https://gitter.im/remacs-discuss/Lobby](https://badges.gitter.im/remacs-discuss/Lobby.svg)](https://gitter.im/remacs-discuss/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/remacs/remacs.svg?branch=master)](https://travis-ci.org/remacs/remacs)
 
