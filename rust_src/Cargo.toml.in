@@ -14,6 +14,7 @@ members = ["remacs-lib", "remacs-macros", "remacs-util"]
 exclude = ["remacs-bindings", "alloc_unexecmacosx"]
 
 [dependencies]
+app_units = { version = "0.7.1", optional = true }
 remacs-lib = { version = "0.1.0", path = "remacs-lib" }
 remacs-macros = { version = "0.1.0", path = "remacs-macros" }
 base64 = "0.10.0"
@@ -22,15 +23,19 @@ cfg-if = "0.1"
 errno = "0.2"
 field-offset = "0.1"
 flate2 = { version = "1.0", features = ["rust_backend"], default-features = false }
+font-kit = { version = "0.5.0", optional = true }
 itertools = "0.8"
 lazy_static = "1.2"
 libc = "0.2"
 line-wrap = "0.1.1"
 md5 = "0.6"
-rand = "0.6.5"
+rand = "0.7.3"
 sha1 = "0.6"
 sha2 = "0.8"
 systemstat = "0.1"
+glutin = { version = "0.24", optional = true }
+gleam = { version = "0.6", optional = true }
+webrender = { version = "0.61", optional = true }
 
 # Only want this local crate as dependency on Mac OS X
 [target.'cfg(target_os = "macos")'.dependencies]
@@ -75,6 +80,8 @@ window-system-x11 = []
 window-system-nextstep = []
 # Use the w32 window system
 window-system-w32 = []
+# Use the webrender window system
+window-system-webrender = ["font-kit", "webrender", "glutin", "gleam", "app_units"]
 # Treat warnings as a build error on Travis.
 strict = []
 

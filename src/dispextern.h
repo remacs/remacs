@@ -73,6 +73,13 @@ typedef Pixmap XImagePtr;
 typedef XImagePtr XImagePtr_or_DC;
 #endif
 
+#ifdef USE_WEBRENDER
+#include "wrgui.h"
+typedef struct wr_display_info Display_Info;
+typedef WRImage *XImagePtr;
+typedef XImagePtr XImagePtr_or_DC;
+#endif
+
 #ifdef HAVE_WINDOW_SYSTEM
 # include <time.h>
 # include "fontset.h"
@@ -1336,7 +1343,7 @@ struct glyph_string
   bool_bf padding_p : 1;
 
   /* The GC to use for drawing this glyph string.  */
-#if defined (HAVE_X_WINDOWS)
+#if defined (HAVE_X_WINDOWS) || (USE_WEBRENDER)
   GC gc;
 #endif
 #if defined (HAVE_NTGUI)

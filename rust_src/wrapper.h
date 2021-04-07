@@ -61,3 +61,6 @@
 #endif
 #include "window.h"
 #include "xgselect.h"
+#ifdef USE_WEBRENDER
+# include "wrterm.h"
+#endif

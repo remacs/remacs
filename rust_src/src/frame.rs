@@ -1,6 +1,7 @@
 //! Generic frame functions.
 
 use libc::c_int;
+use std::ffi::CString;
 
 use remacs_macros::lisp_fn;
 
@@ -11,12 +12,13 @@ use crate::{
     remacs_sys::Vframe_list,
     remacs_sys::{
         candidate_frame, check_minibuf_window, delete_frame as c_delete_frame, frame_dimension,
-        other_frames, output_method, windows_or_buffers_changed,
+        other_frames, output_method, windows_or_buffers_changed, x_default_parameter,
     },
     remacs_sys::{
-        minibuf_window, pvec_type, selected_frame as current_frame, Lisp_Frame, Lisp_Type,
+        face, face_id, minibuf_window, pvec_type, resource_types, selected_frame as current_frame,
+        Lisp_Frame, Lisp_Type,
     },
-    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qx},
+    remacs_sys::{Qframe_live_p, Qframep, Qicon, Qnil, Qns, Qpc, Qt, Qw32, Qwr, Qx},
     vectors::LispVectorlikeRef,
     windows::{select_window_lisp, selected_window, LispWindowRef},
 };
@@ -116,11 +118,55 @@ impl LispFrameRef {
         }
     }
 
+    pub fn top_margin_height(self) -> i32 {
+        self.menu_bar_height + self.tool_bar_height
+    }
+
+    pub fn pixel_to_text_width(self, width: i32) -> i32 {
+        width
+            - self.scroll_bar_area_width()
+            - self.total_fringe_width()
+            - 2 * self.internal_border_width()
+    }
+
+    pub fn pixel_to_text_height(self, height: i32) -> i32 {
+        height
+            - self.top_margin_height()
+            - self.horizontal_scroll_bar_height()
+            - 2 * self.internal_border_width()
+    }
+
+    pub fn face_from_id(self, id: face_id) -> Option<*mut face> {
+        let cache = self.face_cache;
+
+        let faces_map: &[*mut face] =
+            unsafe { std::slice::from_raw_parts_mut((*cache).faces_by_id, (*cache).used as usize) };
+
+        faces_map.get(id as usize).copied()
+    }
+
     pub fn get_param(self, prop: LispObject) -> LispObject {
         match assq(prop, self.param_alist).as_cons() {
             Some(cons) => cons.cdr(),
             None => Qnil,
         }
+    }
+
+    pub fn x_default_parameter(
+        mut self,
+        alist: LispObject,
+        prop: LispObject,
+        default: LispObject,
+        xprop: &str,
+        xclass: &str,
+        res_type: resource_types::Type,
+    ) {
+        let xprop = CString::new(xprop).unwrap().as_ptr();
+        let xclass = CString::new(xclass).unwrap().as_ptr();
+
+        unsafe {
+            x_default_parameter(self.as_mut(), alist, prop, default, xprop, xclass, res_type);
+        };
     }
 }
 
@@ -285,6 +331,7 @@ fn framep_1(frame: LispFrameRef) -> LispObject {
         output_method::output_w32 => Qw32,
         output_method::output_msdos_raw => Qpc,
         output_method::output_ns => Qns,
+        output_method::output_wr => Qwr,
     }
 }
 

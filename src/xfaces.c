@@ -531,6 +531,26 @@ x_free_gc (struct frame *f, GC gc)
 }
 #endif  /* HAVE_NS */
 
+#ifdef USE_WEBRENDER
+/* webrender emulation of GCs */
+
+static GC
+x_create_gc (struct frame *f,
+	     unsigned long mask,
+	     XGCValues *xgcv)
+{
+  GC gc = malloc (sizeof *gc);
+  *gc = *xgcv;
+  return gc;
+}
+
+static void
+x_free_gc (struct frame *f, GC gc)
+{
+  free (gc);
+}
+#endif  /* USE_WEBRENDER */
+
 /***********************************************************************
 			   Frames and faces
  ***********************************************************************/
@@ -912,6 +932,10 @@ defined_color (struct frame *f, const char *color_name, XColor *color_def,
 #ifdef HAVE_NS
   else if (FRAME_NS_P (f))
     return ns_defined_color (f, color_name, color_def, alloc, true);
+#endif
+#ifdef USE_WEBRENDER
+  else if (FRAME_WR_P (f))
+    return wr_defined_color (f, color_name, color_def, alloc);
 #endif
   else
     emacs_abort ();

@@ -68,10 +68,7 @@ fn generate_temporary_filename(name: &mut String) {
     let name_vec = unsafe { &mut name.as_mut_vec() };
 
     let bytes = &mut name_vec[len - 6..len];
-    {
-        let mut rng = OsRng::new().unwrap();
-        rng.fill_bytes(bytes);
-    }
+    OsRng.fill_bytes(bytes);
     for byte in bytes.iter_mut() {
         *byte = match *byte % 62 {
             v @ 0..=9 => v + b'0',

@@ -11,8 +11,8 @@ use crate::{
     lisp::{ExternalPtr, LispObject},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     obarray::intern,
-    remacs_sys::font_match_p as c_font_match_p,
     remacs_sys::font_property_index::FONT_TYPE_INDEX,
+    remacs_sys::{font, font_match_p as c_font_match_p},
     remacs_sys::{font_add_log, font_at, font_list_entities, font_sort_entities},
     remacs_sys::{
         pvec_type, Lisp_Font_Object, Lisp_Font_Spec, Lisp_Type, FONT_ENTITY_MAX, FONT_OBJECT_MAX,
@@ -45,6 +45,10 @@ impl LispFontRef {
 
     pub fn is_font_object(&self) -> bool {
         self.0.pseudovector_size() == EmacsInt::from(FONT_OBJECT_MAX)
+    }
+
+    pub fn as_font_mut(&mut self) -> *mut font {
+        self.0.as_mut() as *mut font
     }
 }
 
@@ -134,6 +138,8 @@ impl LispFontObjectRef {
                 let mut display_info = &mut *(*_frame.output_data.ns).display_info;
                 #[cfg(feature = "window-system-w32")]
                 let mut display_info = &mut *(*_frame.output_data.w32).display_info;
+                #[cfg(feature = "window-system-webrender")]
+                let mut display_info = &mut *(*_frame.output_data.wr).display_info;
                 debug_assert!(display_info.n_fonts > 0);
                 display_info.n_fonts -= 1;
             }
@@ -370,6 +376,8 @@ pub fn frame_font_cache(_frame: LispFrameLiveOrSelected) -> LispObject {
                 let display_info = (*frame.output_data.ns).display_info;
                 #[cfg(feature = "window-system-w32")]
                 let display_info = (*frame.output_data.w32).display_info;
+                #[cfg(feature = "window-system-webrender")]
+                let display_info = (*frame.output_data.wr).display_info;
                 (*display_info).name_list_element
             }
         } else {

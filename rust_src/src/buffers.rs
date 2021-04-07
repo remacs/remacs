@@ -1659,8 +1659,7 @@ pub fn generate_new_buffer_name(name: LispStringRef, ignore: LispObject) -> Lisp
     }
 
     let basename = if name.byte_at(0) == b' ' {
-        let mut rng = OsRng::new().unwrap();
-        let mut s = format!("-{}", rng.gen_range(0, 1_000_000));
+        let mut s = format!("-{}", OsRng.gen_range(0, 1_000_000));
         local_unibyte_string!(suffix, s);
         let genname = lisp_concat!(name, suffix);
         if get_buffer(genname.into()).is_none() {
