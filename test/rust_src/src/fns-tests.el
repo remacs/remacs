@@ -36,6 +36,12 @@
   (should (equal (make-char-table 'syntax-table '(3))
                  (make-char-table 'syntax-table '(3)))))
 
+(ert-deftest test-equal-char-width ()
+  (should (equal (char-width ?a) 1))
+  (should (equal (char-width ?1) 1))
+  (should (equal (char-width ?\n) 0))
+  (should (equal (char-width ?你) 2)))
+
 (ert-deftest test-equal-vector ()
   (should (equal [1 two '(three) "four" [five]]
                  [1 two '(three) "four" [five]])))

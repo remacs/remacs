@@ -95,22 +95,6 @@ char_width (int c, struct Lisp_Char_Table *dp)
 }
 
 
-DEFUN ("char-width", Fchar_width, Schar_width, 1, 1, 0,
-       doc: /* Return width of CHAR when displayed in the current buffer.
-The width is measured by how many columns it occupies on the screen.
-Tab is taken to occupy `tab-width' columns.
-usage: (char-width CHAR)  */)
-  (Lisp_Object ch)
-{
-  int c;
-  ptrdiff_t width;
-
-  CHECK_CHARACTER (ch);
-  c = XINT (ch);
-  width = char_width (c, buffer_display_table ());
-  return make_number (width);
-}
-
 /* Return width of string STR of length LEN when displayed in the
    current buffer.  The width is measured by how many columns it
    occupies on the screen.  If PRECISION > 0, return the width of
@@ -531,7 +515,6 @@ syms_of_character (void)
   staticpro (&Vchar_unify_table);
   Vchar_unify_table = Qnil;
 
-  defsubr (&Schar_width);
   defsubr (&Sstring);
   defsubr (&Sunibyte_string);
   defsubr (&Sget_byte);
