@@ -569,6 +569,12 @@ impl LispWindowRef {
             self.get_frame().right_fringe_width
         }
     }
+
+    pub fn iter(self) -> LispWindowIter {
+        LispWindowIter {
+            current: Some(self),
+        }
+    }
 }
 
 impl From<LispObject> for LispWindowRef {
@@ -636,6 +642,23 @@ impl LispObject {
     }
 }
 
+pub struct LispWindowIter {
+    current: Option<LispWindowRef>,
+}
+
+impl Iterator for LispWindowIter {
+    type Item = LispWindowRef;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.current {
+            None => None,
+            Some(window) => {
+                self.current = window.next.as_valid_window();
+                Some(window)
+            }
+        }
+    }
+}
 pub type LispGlyphMatrixRef = ExternalPtr<glyph_matrix>;
 
 impl LispGlyphMatrixRef {
