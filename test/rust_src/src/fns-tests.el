@@ -85,6 +85,12 @@
     (should (equal [nil nil nil nil nil t t t t t] (vconcat (reverse A))))
     (should (equal A (reverse (reverse A))))))
 
+(ert-deftest test-string ()
+  (should (equal (string ?a) "a"))
+  (should (equal (string ?a ?b ?c) "abc"))
+  (should (equal (string ?こ ?ん) "こん"))
+  (should (equal (string ? ?1) " 1")))
+
 (ert-deftest test-nreverse ()
   (should-error (nreverse))
   (should-error (nreverse 1))
