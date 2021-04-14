@@ -119,7 +119,7 @@ pub fn zlib_decompress_region(start: LispObject, end: LispObject) -> bool {
             }
 
             // Decompress failed.
-            _ => {
+            Err(_) => {
                 // Delete any uncompressed data already inserted on error, but
                 // without calling the change hooks.
 

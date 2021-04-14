@@ -268,7 +268,7 @@ pub unsafe extern "C" fn init_casetab_once() {
     for i in 0..128 {
         // Set up a table for the lower 7 bits of ASCII.
         // All upper case letters are mapped to lower case letters.
-        let c = if i >= 0x41 && i <= 0x5A {
+        let c = if (0x41..=0x5A).contains(&i) {
             i + 32 // 'a' - 'A'
         } else {
             i
@@ -284,7 +284,7 @@ pub unsafe extern "C" fn init_casetab_once() {
     for i in 0..128 {
         // Set up a table for the lower 7 bits of ASCII.
         // All lower case letters are mapped to upper case letters.
-        let c = if i >= 0x61 && i <= 0x7A {
+        let c = if (0x61..=0x7A).contains(&i) {
             i - 32 // 'A' - 'a'
         } else {
             i
@@ -298,9 +298,9 @@ pub unsafe extern "C" fn init_casetab_once() {
         // Set up a table for the lower 7 bits of ASCII.
         // All upper case letters are mapped to lower case letters
         // and vice versa.
-        let c = if i >= 0x41 && i <= 0x5A {
+        let c = if (0x41..=0x5A).contains(&i) {
             i + 32 // 'a' - 'A'
-        } else if i >= 0x61 && i <= 0x7A {
+        } else if (0x61..=0x7A).contains(&i) {
             i - 32 // 'A' - 'a'
         } else {
             i

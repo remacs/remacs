@@ -286,7 +286,7 @@ pub fn font_at_lisp(
             pos
         }
 
-        _ => {
+        None => {
             if w.contents != cur_buf.into() {
                 error!("Specified window is not displaying the current buffer");
             }

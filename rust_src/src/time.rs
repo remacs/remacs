@@ -247,21 +247,21 @@ pub unsafe extern "C" fn decode_time_components(
                 *dresult = t;
             }
             return 1;
-        } else if low.is_nil() {
-            let now = current_timespec();
-            if !result.is_null() {
-                (*result).hi = hi_time(now.tv_sec);
-                (*result).lo = lo_time(now.tv_sec);
-                (*result).us = (now.tv_nsec / 1000) as c_int;
-                (*result).ps = (now.tv_nsec % 1000 * 1000) as c_int;
-            }
-            if !dresult.is_null() {
-                *dresult = (now.tv_sec as f64) + (now.tv_nsec as f64) / 1e9;
-            }
-            return 1;
-        } else {
+        } else if low.is_not_nil() {
             return 0;
         }
+
+        let now = current_timespec();
+        if !result.is_null() {
+            (*result).hi = hi_time(now.tv_sec);
+            (*result).lo = lo_time(now.tv_sec);
+            (*result).us = (now.tv_nsec / 1000) as c_int;
+            (*result).ps = (now.tv_nsec % 1000 * 1000) as c_int;
+        }
+        if !dresult.is_null() {
+            *dresult = (now.tv_sec as f64) + (now.tv_nsec as f64) / 1e9;
+        }
+        return 1;
     }
 
     let mut hi = high.as_fixnum().unwrap();

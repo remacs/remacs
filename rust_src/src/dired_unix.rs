@@ -711,15 +711,14 @@ impl FileAttrs {
 pub fn file_attributes_intro(filename: LispStringRef, id_format: LispObject) -> LispObject {
     let fnexp = expand_file_name(filename, None);
     let handler = find_file_name_handler(fnexp, Qfile_attributes);
-    if handler.is_not_nil() {
-        if id_format.is_not_nil() {
-            return call!(handler, Qfile_attributes, fnexp.into(), id_format);
-        } else {
-            return call!(handler, Qfile_attributes, fnexp.into());
-        }
-    }
 
-    file_attributes_core(fnexp.into(), id_format)
+    if handler.is_nil() {
+        file_attributes_core(fnexp.into(), id_format)
+    } else if id_format.is_nil() {
+        call!(handler, Qfile_attributes, fnexp.into())
+    } else {
+        call!(handler, Qfile_attributes, fnexp.into(), id_format)
+    }
 }
 
 // Used by directory-files-and-attributes

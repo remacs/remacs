@@ -166,7 +166,7 @@ impl TailsIter {
     ) -> Self {
         let errsym = match end_checks {
             LispConsEndChecks::on => Some(ty),
-            _ => None,
+            LispConsEndChecks::off => None,
         };
 
         Self {

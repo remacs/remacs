@@ -170,7 +170,7 @@ impl LispSymbolRef {
                 }
             }
             symbol_redirect::SYMBOL_FORWARDED => do_symval_forwarding(symbol.get_fwd()),
-            _ => unreachable!(),
+            symbol_redirect::SYMBOL_VARALIAS => unreachable!(),
         }
     }
 
@@ -401,7 +401,7 @@ pub fn boundp(mut symbol: LispSymbolRef) -> bool {
             // set to Qunbound.
             return true;
         }
-        _ => unreachable!(),
+        symbol_redirect::SYMBOL_VARALIAS => unreachable!(),
     };
 
     !valcontents.eq(Qunbound)
@@ -537,7 +537,7 @@ pub fn local_variable_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCurrent) 
                 None => false,
             }
         },
-        _ => unreachable!(),
+        symbol_redirect::SYMBOL_VARALIAS => unreachable!(),
     }
 }
 
@@ -579,7 +579,7 @@ pub fn variable_binding_locus(mut symbol: LispSymbolRef) -> LispObject {
             }
         },
         symbol_redirect::SYMBOL_LOCALIZED => localized_handler(symbol),
-        _ => unreachable!(),
+        symbol_redirect::SYMBOL_VARALIAS => unreachable!(),
     }
 }
 
@@ -603,7 +603,7 @@ pub fn local_variable_if_set_p(mut symbol: LispSymbolRef, buffer: LispBufferOrCu
             // All BUFFER_OBJFWD slots become local if they are set.
             unsafe { is_buffer_objfwd(symbol.get_fwd()) }
         }
-        _ => unreachable!(),
+        symbol_redirect::SYMBOL_VARALIAS => unreachable!(),
     }
 }
 
