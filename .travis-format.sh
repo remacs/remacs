@@ -11,6 +11,9 @@ export PATH=$PATH:~/.cargo/bin
 
 RUSTFMT_CONFIG_DIR=$DIR/rust_src
 
+echo "Making simplified Cargo.toml"
+grep -v '@CARGO' ${RUSTFMT_CONFIG_DIR}/Cargo.toml.in > ${RUSTFMT_CONFIG_DIR}/Cargo.toml
+
 echo "Checking formatting"
 cd "$DIR/rust_src"
 cargo fmt -- --version
