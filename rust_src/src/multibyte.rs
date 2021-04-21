@@ -585,6 +585,8 @@ pub struct LispStringRefIterator<'a> {
 
 pub struct LispStringRefCharIterator<'a>(LispStringRefIterator<'a>);
 
+pub struct LispStringRefMultibyteIterator<'a>(LispStringRefIterator<'a>);
+
 // Substitute for FETCH_STRING_CHAR_ADVANCE
 impl<'a> Iterator for LispStringRefIterator<'a> {
     type Item = (usize, Codepoint);
@@ -618,12 +620,31 @@ impl<'a> Iterator for LispStringRefCharIterator<'a> {
     }
 }
 
+// Substitute for FETCH_STRING_CHAR_AS_MULTIBYTE_ADVANCE
+impl<'a> Iterator for LispStringRefMultibyteIterator<'a> {
+    type Item = (usize, Codepoint);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|(i, c)| {
+            if self.0.string_ref.is_multibyte() {
+                (i, c)
+            } else {
+                (i, c.to_multibyte())
+            }
+        })
+    }
+}
+
 impl LispStringRef {
     pub const fn char_indices(&self) -> LispStringRefIterator {
         LispStringRefIterator {
             string_ref: self,
             cur: 0,
         }
+    }
+
+    pub fn char_indices_multibyte(&self) -> LispStringRefMultibyteIterator {
+        LispStringRefMultibyteIterator(self.char_indices())
     }
 
     #[allow(dead_code)]

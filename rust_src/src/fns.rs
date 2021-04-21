@@ -1,27 +1,27 @@
 //! Random utility Lisp functions.
 
-use std::{mem, ptr, slice};
+use std::{cmp, mem, ptr, slice};
 
 use remacs_macros::lisp_fn;
 
 use crate::{
     alloc::record,
-    casefiddle::downcase,
+    casefiddle::{downcase, upcase},
     dispnew::{ding, sleep_for},
     eval::{record_unwind_protect, un_autoload, unbind_to},
     lisp::LispObject,
     lists::{assq, car, get, mapcar1, member, memq, put},
     lists::{LispCons, LispConsCircularChecks, LispConsEndChecks},
     minibuf::read_from_minibuffer,
-    multibyte::{string_char_and_length, LispStringRef},
+    multibyte::{string_char_and_length, Codepoint, LispStringRef},
     numbers::LispNumber,
     obarray::loadhist_attach,
     objects::equal,
     remacs_sys::Vautoload_queue,
     remacs_sys::{
-        concat as lisp_concat, copy_char_table, globals, make_uninit_bool_vector,
-        make_uninit_multibyte_string, make_uninit_string, make_uninit_vector, message1,
-        redisplay_preserve_echo_area,
+        concat as lisp_concat, copy_char_table, globals, make_multibyte_string,
+        make_uninit_bool_vector, make_uninit_multibyte_string, make_uninit_string,
+        make_uninit_vector, message1, redisplay_preserve_echo_area,
     },
     remacs_sys::{EmacsInt, Lisp_Type},
     remacs_sys::{Fdiscard_input, Fload, Fx_popup_dialog},
@@ -444,6 +444,98 @@ pub fn load_average(use_floats: bool) -> Vec<LispNumber> {
             }
         })
         .collect()
+}
+
+/// Compare the contents of two strings, converting to multibyte if needed.
+/// The arguments START1, END1, START2, and END2, if non-nil, are
+/// positions specifying which parts of STR1 or STR2 to compare.  In
+/// string STR1, compare the part between START1 (inclusive) and END1
+/// (exclusive).  If START1 is nil, it defaults to 0, the beginning of
+/// the string; if END1 is nil, it defaults to the length of the string.
+/// Likewise, in string STR2, compare the part between START2 and END2.
+/// Like in `substring', negative values are counted from the end.
+///
+/// The strings are compared by the numeric values of their characters.
+/// For instance, STR1 is "less than" STR2 if its first differing
+/// character has a smaller numeric value.  If IGNORE-CASE is non-nil,
+/// characters are converted to upper-case before comparing them.  Unibyte
+/// strings are converted to multibyte for comparison.
+///
+/// The value is t if the strings (or specified portions) match.
+/// If string STR1 is less, the value is a negative number N;
+/// - 1 - N is the number of characters that match at the beginning.
+/// If string STR1 is greater, the value is a positive number N;
+/// N - 1 is the number of characters that match at the beginning.
+#[lisp_fn(min = "6")]
+pub fn compare_strings(
+    str1: LispStringRef,
+    start1: Option<EmacsInt>,
+    end1: Option<EmacsInt>,
+    str2: LispStringRef,
+    start2: Option<EmacsInt>,
+    end2: Option<EmacsInt>,
+    ignore_case: bool,
+) -> LispObject {
+    let len1 = str1.len_chars();
+    let len2 = str2.len_chars();
+    let end1 = match end1 {
+        None => end1,
+        Some(end) => Some(cmp::min(end, len1 as EmacsInt)),
+    };
+    let end2 = match end2 {
+        None => end2,
+        Some(end) => Some(cmp::min(end, len2 as EmacsInt)),
+    };
+
+    let (from1, to1) = validate_subarray_rust(str1.into(), start1, end1, len1);
+    let (from1, to1) = (from1 as isize, to1 as isize);
+    let (from2, to2) = validate_subarray_rust(str2.into(), start2, end2, len2);
+    let (from2, to2) = (from2 as isize, to2 as isize);
+
+    let iter1 = str1
+        .char_indices_multibyte()
+        .skip(from1 as usize)
+        .take((to1 - from1) as usize);
+    let iter2 = str2
+        .char_indices_multibyte()
+        .skip(from2 as usize)
+        .take((to2 - from2) as usize);
+    let (mut index1, mut index2) = (0, 0);
+    for ((i1, c1), (i2, c2)) in iter1.zip(iter2) {
+        let i1 = i1 as isize;
+        let i2 = i2 as isize;
+        index1 = i1;
+        index2 = i2;
+
+        let to_uppercase = |c: Codepoint| -> LispStringRef {
+            let mut bytes = [0u8; 5];
+            let len = c.write_to(&mut bytes) as isize;
+            let string = unsafe { make_multibyte_string(&bytes as *const u8 as *const i8, 1, len) };
+            upcase(string).force_string()
+        };
+
+        if c1 == c2 {
+            continue;
+        }
+        if ignore_case && to_uppercase(c1).as_slice() == to_uppercase(c2).as_slice() {
+            continue;
+        }
+        if c1 < c2 {
+            return (from1 - i1 - 1).into();
+        } else {
+            return (i1 - from1 + 1).into();
+        }
+    }
+
+    // To is exclusive, so add 1.
+    if index1 + 1 < to1 {
+        return (index1 - from1 + 2).into();
+    }
+    if index2 + 1 < to2 {
+        return (from1 - index1 - 2).into();
+    }
+
+    Qt
 }
 
 /// Return a copy of ALIST.

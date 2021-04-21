@@ -43,89 +43,6 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* Random data-structure functions.  */
 
-DEFUN ("compare-strings", Fcompare_strings, Scompare_strings, 6, 7, 0,
-       doc: /* Compare the contents of two strings, converting to multibyte if needed.
-The arguments START1, END1, START2, and END2, if non-nil, are
-positions specifying which parts of STR1 or STR2 to compare.  In
-string STR1, compare the part between START1 (inclusive) and END1
-\(exclusive).  If START1 is nil, it defaults to 0, the beginning of
-the string; if END1 is nil, it defaults to the length of the string.
-Likewise, in string STR2, compare the part between START2 and END2.
-Like in `substring', negative values are counted from the end.
-
-The strings are compared by the numeric values of their characters.
-For instance, STR1 is "less than" STR2 if its first differing
-character has a smaller numeric value.  If IGNORE-CASE is non-nil,
-characters are converted to upper-case before comparing them.  Unibyte
-strings are converted to multibyte for comparison.
-
-The value is t if the strings (or specified portions) match.
-If string STR1 is less, the value is a negative number N;
-  - 1 - N is the number of characters that match at the beginning.
-If string STR1 is greater, the value is a positive number N;
-  N - 1 is the number of characters that match at the beginning.  */)
-  (Lisp_Object str1, Lisp_Object start1, Lisp_Object end1, Lisp_Object str2,
-   Lisp_Object start2, Lisp_Object end2, Lisp_Object ignore_case)
-{
-  ptrdiff_t from1, to1, from2, to2, i1, i1_byte, i2, i2_byte;
-
-  CHECK_STRING (str1);
-  CHECK_STRING (str2);
-
-  /* For backward compatibility, silently bring too-large positive end
-     values into range.  */
-  if (INTEGERP (end1) && SCHARS (str1) < XINT (end1))
-    end1 = make_number (SCHARS (str1));
-  if (INTEGERP (end2) && SCHARS (str2) < XINT (end2))
-    end2 = make_number (SCHARS (str2));
-
-  validate_subarray (str1, start1, end1, SCHARS (str1), &from1, &to1);
-  validate_subarray (str2, start2, end2, SCHARS (str2), &from2, &to2);
-
-  i1 = from1;
-  i2 = from2;
-
-  i1_byte = string_char_to_byte (str1, i1);
-  i2_byte = string_char_to_byte (str2, i2);
-
-  while (i1 < to1 && i2 < to2)
-    {
-      /* When we find a mismatch, we must compare the
-	 characters, not just the bytes.  */
-      int c1, c2;
-
-      FETCH_STRING_CHAR_AS_MULTIBYTE_ADVANCE (c1, str1, i1, i1_byte);
-      FETCH_STRING_CHAR_AS_MULTIBYTE_ADVANCE (c2, str2, i2, i2_byte);
-
-      if (c1 == c2)
-	continue;
-
-      if (! NILP (ignore_case))
-	{
-	  c1 = XINT (Fupcase (make_number (c1)));
-	  c2 = XINT (Fupcase (make_number (c2)));
-	}
-
-      if (c1 == c2)
-	continue;
-
-      /* Note that I1 has already been incremented
-	 past the character that we are comparing;
-	 hence we don't add or subtract 1 here.  */
-      if (c1 < c2)
-	return make_number (- i1 + from1);
-      else
-	return make_number (i1 - from1);
-    }
-
-  if (i1 < to1)
-    return make_number (i1 - from1 + 1);
-  if (i2 < to2)
-    return make_number (- i1 + from1 - 1);
-
-  return Qt;
-}
-
 DEFUN ("string-version-lessp", Fstring_version_lessp,
        Sstring_version_lessp, 2, 2, 0,
        doc: /* Return non-nil if S1 is less than S2, as version strings.
@@ -2742,7 +2659,6 @@ that disables the use of a file dialog, regardless of the value of
 this variable.  */);
   use_file_dialog = 1;
 
-  defsubr (&Scompare_strings);
   defsubr (&Sstring_version_lessp);
   defsubr (&Sstring_collate_lessp);
   defsubr (&Sstring_collate_equalp);
