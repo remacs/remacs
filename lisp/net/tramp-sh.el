@@ -327,7 +327,6 @@ The string is used in `tramp-methods'.")
 (add-to-list 'tramp-methods
   `("plink"
     (tramp-login-program        "plink")
-    ;; ("%h") must be a single element, see `tramp-compute-multi-hops'.
     (tramp-login-args           (("-l" "%u") ("-P" "%p") ("-ssh") ("-t")
 				 ("%h") ("\"")
 				 (,(format
@@ -1128,8 +1127,10 @@ component is used as the target of the symlink."
 
 (defun tramp-sh-handle-file-truename (filename)
   "Like `file-truename' for Tramp files."
-  (format
-   "%s%s"
+   ;; Preserve trailing "/".
+  (funcall
+   (if (string-equal (file-name-nondirectory filename) "")
+       'file-name-as-directory 'identity)
    (with-parsed-tramp-file-name (expand-file-name filename) nil
      (tramp-make-tramp-file-name
       method user domain host port
@@ -1233,10 +1234,7 @@ component is used as the target of the symlink."
 	    (let (file-name-handler-alist)
 	      (setq result (tramp-compat-file-name-quote result))))
 	  (tramp-message v 4 "True name of `%s' is `%s'" localname result)
-	  result))))
-
-   ;; Preserve trailing "/".
-   (if (string-equal (file-name-nondirectory filename) "") "/" "")))
+	  result))))))
 
 ;; Basic functions.
 
@@ -1303,10 +1301,8 @@ component is used as the target of the symlink."
                ;; On systems which have no quoting style, file names
                ;; with special characters could fail.
                (cond
-                ((tramp-get-ls-command-with-quoting-style vec)
-                 "--quoting-style=c")
-                ((tramp-get-ls-command-with-w-option vec)
-                 "-w")
+                ((tramp-get-ls-command-with vec "--quoting-style=c"))
+                ((tramp-get-ls-command-with vec "-w"))
                 (t ""))
                (tramp-shell-quote-argument localname)))
       ;; Parse `ls -l' output ...
@@ -1340,7 +1336,7 @@ component is used as the target of the symlink."
           (when symlinkp
             (search-forward "-> ")
             (setq res-symlink-target
-                  (if (tramp-get-ls-command-with-quoting-style vec)
+                  (if (looking-at "\"")
                       (read (current-buffer))
                     (buffer-substring (point) (point-at-eol)))))
           ;; Return data gathered.
@@ -1837,10 +1833,8 @@ be non-negative integers."
     ;; On systems which have no quoting style, file names with special
     ;; characters could fail.
     (cond
-     ((tramp-get-ls-command-with-quoting-style vec)
-      "--quoting-style=shell")
-     ((tramp-get-ls-command-with-w-option vec)
-      "-w")
+     ((tramp-get-ls-command-with vec "--quoting-style=shell"))
+     ((tramp-get-ls-command-with vec "-w"))
      (t ""))
     (tramp-get-remote-stat vec)
     tramp-stat-marker tramp-stat-marker
@@ -2641,10 +2635,9 @@ The method used must be an out-of-band method."
 	 filename switches wildcard full-directory-p)
       (when (stringp switches)
         (setq switches (split-string switches)))
-      (when (tramp-get-ls-command-with-quoting-style v)
+      (when (tramp-get-ls-command-with v "--quoting-style=literal")
 	(setq switches (append switches '("--quoting-style=literal"))))
-      (when (and (member "--dired" switches)
-		 (not (tramp-get-ls-command-with-dired v)))
+      (unless (tramp-get-ls-command-with v "--dired")
 	(setq switches (delete "--dired" switches)))
       (when wildcard
         (setq wildcard (tramp-run-real-handler
@@ -4637,25 +4630,24 @@ Goes through the list `tramp-inline-compress-commands'."
 	   "Method `%s' is not supported for multi-hops."
 	   (tramp-file-name-method item)))))
 
-    ;; In case the host name is not used for the remote shell
-    ;; command, the user could be misguided by applying a random
-    ;; host name.
-    (let* ((v (car target-alist))
-	   (method (tramp-file-name-method v))
-	   (host (tramp-file-name-host v)))
-      (unless
-	  (or
-	   ;; There are multi-hops.
-	   (cdr target-alist)
-	   ;; The host name is used for the remote shell command.
-	   (member '("%h") (tramp-get-method-parameter v 'tramp-login-args))
-	   ;; The host is local.  We cannot use `tramp-local-host-p'
-	   ;; here, because it opens a connection as well.
-	   (string-match tramp-local-host-regexp host))
-	(tramp-error
-	 v 'file-error
-	 "Host `%s' looks like a remote host, `%s' can only use the local host"
-	 host method)))
+    ;; Some methods ("su", "sg", "sudo", "doas", "ksu") do not use the
+    ;; host name in their command template.  In this case, the remote
+    ;; file name must use either a local host name (first hop), or a
+    ;; host name matching the previous hop.
+    (let ((previous-host tramp-local-host-regexp))
+      (setq choices target-alist)
+      (while (setq item (pop choices))
+	(let ((host (tramp-file-name-host item)))
+	  (unless
+	      (or
+	       ;; The host name is used for the remote shell command.
+	       (member
+		'("%h") (tramp-get-method-parameter item 'tramp-login-args))
+	       ;; The host name must match previous hop.
+	       (string-match previous-host host))
+	    (tramp-user-error
+	     item "Host name `%s' does not match `%s'" host previous-host))
+	  (setq previous-host (concat "^" (regexp-quote host) "$")))))
 
     ;; Result.
     target-alist))
@@ -5353,36 +5345,18 @@ Nonexistent directories are removed from spec."
 	     (setq dl (cdr dl))))))
      (tramp-error vec 'file-error "Couldn't find a proper `ls' command"))))
 
-(defun tramp-get-ls-command-with-dired (vec)
-  "Check, whether the remote `ls' command supports the --dired option."
+(defun tramp-get-ls-command-with (vec option)
+  "Return OPTION, if the remote `ls' command supports the OPTION option."
   (save-match-data
-    (with-tramp-connection-property vec "ls-dired"
-      (tramp-message vec 5 "Checking, whether `ls --dired' works")
+    (with-tramp-connection-property vec (concat "ls" option)
+      (tramp-message vec 5 "Checking, whether `ls %s' works" option)
       ;; Some "ls" versions are sensible wrt the order of arguments,
       ;; they fail when "-al" is after the "--dired" argument (for
       ;; example on FreeBSD).
-      (tramp-send-command-and-check
-       vec (format "%s --dired -al /dev/null" (tramp-get-ls-command vec))))))
-
-(defun tramp-get-ls-command-with-quoting-style (vec)
-  "Check, whether the remote `ls' command supports the --quoting-style option."
-  (save-match-data
-    (with-tramp-connection-property vec "ls-quoting-style"
-      (tramp-message vec 5 "Checking, whether `ls --quoting-style=shell' works")
-      (tramp-send-command-and-check
-       vec (format "%s --quoting-style=shell -al /dev/null"
-		   (tramp-get-ls-command vec))))))
-
-(defun tramp-get-ls-command-with-w-option (vec)
-  "Check, whether the remote `ls' command supports the -w option."
-  (save-match-data
-    (with-tramp-connection-property vec "ls-w-option"
-      (tramp-message vec 5 "Checking, whether `ls -w' works")
-      ;; Option "-w" is available on BSD systems.  No argument is
-      ;; given, because this could return wrong results in case "ls"
-      ;; supports the "-w NUM" argument, as for busyboxes.
-      (tramp-send-command-and-check
-       vec (format "%s -alw" (tramp-get-ls-command vec))))))
+      (and
+       (tramp-send-command-and-check
+	vec (format "%s %s -al /dev/null" (tramp-get-ls-command vec) option))
+       option))))
 
 (defun tramp-get-test-command (vec)
   "Determine remote `test' command."

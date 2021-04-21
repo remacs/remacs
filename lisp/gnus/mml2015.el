@@ -27,7 +27,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (require 'mm-decode)
 (require 'mm-util)
 (require 'mml)
@@ -237,7 +237,7 @@ If set, it overrides the setting of `mml2015-sign-with-sender'."
       (setq result
 	    (concat
 	     result
-	     (case n-slice
+	     (cl-case n-slice
 	       (1  slice)
 	       (otherwise (concat " " slice))))))
     result))

@@ -1095,7 +1095,7 @@ Marks the function with their arguments, and returns a list of variables."
 	(set-buffer (get-buffer-create docbuf))
 	(insert-file-contents-literally
 	 (expand-file-name internal-doc-file-name doc-directory)))
-      (while (re-search-forward "\\([VF]\\)" nil t)
+      (while (re-search-forward "\^_\\([VF]\\)" nil t)
 	(when (setq sym (intern-soft (buffer-substring (point)
 						       (line-end-position))))
 	  (if (string-equal (match-string 1) "V")
@@ -1104,7 +1104,7 @@ Marks the function with their arguments, and returns a list of variables."
 	      (if (boundp sym) (setq vars (cons sym vars)))
 	    ;; Function.
 	    (when (fboundp sym)
-	      (when (re-search-forward "\\(^(fn.*)\\)?" nil t)
+	      (when (re-search-forward "\\(^(fn.*)\\)?\^_" nil t)
 		(backward-char 1)
 		;; FIXME distinguish no args from not found.
 		(and (setq args (match-string 1))

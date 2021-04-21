@@ -4,7 +4,7 @@
 
 ;; Author: Simon Michael
 ;; Keywords: literate programming, reproducible research, plain text accounting
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;; This file is part of GNU Emacs.
 

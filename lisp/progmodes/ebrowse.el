@@ -457,7 +457,7 @@ members."
 
 
 (defsubst ebrowse-extern-c-p (member)
-  "Value is non-nil if MEMBER.is `extern \"C\"'."
+  "Value is non-nil if MEMBER is `extern \"C\"'."
   (ebrowse-member-bit-set-p member 256))
 
 

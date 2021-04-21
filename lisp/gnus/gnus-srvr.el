@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'gnus)
 (require 'gnus-start)
@@ -969,7 +969,7 @@ how new groups will be entered into the group buffer."
 		(not (eobp))
 		(gnus-browse-unsubscribe-group)
 		(zerop (gnus-browse-next-group ward)))
-      (decf arg))
+      (cl-decf arg))
     (gnus-group-position-point)
     (when (/= 0 arg)
       (gnus-message 7 "No more newsgroups"))

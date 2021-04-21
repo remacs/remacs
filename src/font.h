@@ -942,6 +942,22 @@ extern Lisp_Object font_at (int c, ptrdiff_t pos, struct face *face,
       font_deferred_log ((ACTION), (ARG), (RESULT));	\
   } while (false)
 
+/* FIXME: This is for use in functions that can be called while
+   garbage-collecting, but which assume that Lisp data structures are
+   properly-formed.  This invalid assumption can lead to core dumps
+   (Bug#20890).  */
+INLINE bool
+font_data_structures_may_be_ill_formed (void)
+{
+#ifdef USE_CAIRO
+  /* Although this works around Bug#20890, it is probably not the
+     right thing to do.  */
+  return gc_in_progress;
+#else
+  return false;
+#endif
+}
+
 INLINE_HEADER_END
 
 #endif	/* not EMACS_FONT_H */

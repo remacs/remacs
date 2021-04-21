@@ -644,9 +644,11 @@ are 1value."
   "Analyze a list of FORMS for code coverage using FUNC.
 The list is 1valued if all of its constituent elements are also 1valued."
   (let ((result '1value))
-    (dolist (form forms)
-      (let ((val (funcall func form)))
-        (setq result (testcover-coverage-combine result val))))
+    (while (consp forms)
+      (setq result (testcover-coverage-combine result (funcall func (car forms))))
+      (setq forms (cdr forms)))
+    (when forms
+      (setq result (testcover-coverage-combine result (funcall func forms))))
     result))
 
 (defun testcover-analyze-coverage-backquote (bq-list)

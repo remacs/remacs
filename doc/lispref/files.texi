@@ -582,8 +582,9 @@ with @code{insert-file-contents}, as long as @var{replace} and
 
 @defun insert-file-contents-literally filename &optional visit beg end replace
 This function works like @code{insert-file-contents} except that it
-does not run @code{find-file-hook}, and does not do format decoding,
-character code conversion, automatic uncompression, and so on.
+does not run @code{after-insert-file-functions}, and does not do
+format decoding, character code conversion, automatic uncompression,
+and so on.
 @end defun
 
 If you want to pass a file name to another process so that another

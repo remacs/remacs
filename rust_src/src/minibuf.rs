@@ -13,8 +13,9 @@ use crate::{
     multibyte::LispStringRef,
     obarray::{intern, intern_lisp},
     remacs_sys::{
-        globals, Qbuffer_name_history, Qcommandp, Qcompletion_ignore_case, Qcustom_variable_p,
-        Qfield, Qminibuffer_completion_table, Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
+        globals, Qbuffer_name_history, Qcommandp, Qcompletion_ignore_case,
+        Qcustom_variable_history, Qcustom_variable_p, Qfield, Qminibuffer_completion_table,
+        Qminibuffer_history, Qnil, Qt, Vminibuffer_list,
     },
     remacs_sys::{
         make_buffer_string, make_specified_string, minibuf_level, minibuf_prompt, minibuf_window,
@@ -350,6 +351,7 @@ pub fn read_command_or_variable(
     prompt: LispObject,
     default_value: LispObject,
     symbol: LispObject,
+    history: LispObject,
 ) -> LispObject {
     let default_string = if default_value.is_nil() {
         Qnil
@@ -365,7 +367,7 @@ pub fn read_command_or_variable(
         symbol,
         Qt,
         Qnil,
-        Qnil,
+        history,
         default_string,
         Qnil,
     );
@@ -382,7 +384,7 @@ pub fn read_command_or_variable(
 /// if it is a list.
 #[lisp_fn(min = "1")]
 pub fn read_command(prompt: LispObject, default_value: LispObject) -> LispObject {
-    read_command_or_variable(prompt, default_value, Qcommandp)
+    read_command_or_variable(prompt, default_value, Qcommandp, Qnil)
 }
 
 /// Read the name of a user option and return it as a symbol.
@@ -392,7 +394,12 @@ pub fn read_command(prompt: LispObject, default_value: LispObject) -> LispObject
 /// `custom-variable-p' returns non-nil.
 #[lisp_fn(min = "1")]
 pub fn read_variable(prompt: LispObject, default_value: LispObject) -> LispObject {
-    read_command_or_variable(prompt, default_value, Qcustom_variable_p)
+    read_command_or_variable(
+        prompt,
+        default_value,
+        Qcustom_variable_p,
+        Qcustom_variable_history,
+    )
 }
 
 /// Read a string from the terminal, not allowing blanks.

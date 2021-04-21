@@ -242,7 +242,7 @@ for details.
 It's best to customize this with `\\[customize-variable]' because the choices
 can get pretty complex."
   :group 'auth-source
-  :version "24.1" ;; No Gnus
+  :version "26.1" ;; No Gnus
   :type `(repeat :tag "Authentication Sources"
                  (choice
                   (string :tag "Just a file")
@@ -305,7 +305,8 @@ can get pretty complex."
                                                :tag "Personality/Username"
                                                (const :tag "Any" t)
                                                (string
-                                                :tag "Name")))))))))
+                                                :tag "Name"))))))
+                  (sexp :tag "A data structure (external provider)"))))
 
 (defcustom auth-source-gpg-encrypt-to t
   "List of recipient keys that `authinfo.gpg' encrypted to.
@@ -1496,13 +1497,13 @@ Here's an example that looks for the first item in the `Login'
 Secrets collection:
 
  (let ((auth-sources \\='(\"secrets:Login\")))
-    (auth-source-search :max 1)
+    (auth-source-search :max 1))
 
 Here's another that looks for the first item in the `Login'
 Secrets collection whose label contains `gnus':
 
  (let ((auth-sources \\='(\"secrets:Login\")))
-    (auth-source-search :max 1 :label \"gnus\")
+    (auth-source-search :max 1 :label \"gnus\"))
 
 And this one looks for the first item in the `Login' Secrets
 collection that's a Google Chrome entry for the git.gnus.org site
@@ -1512,9 +1513,6 @@ authentication tokens:
     (auth-source-search :max 1 :signon_realm \"https://git.gnus.org/Git\"))
 "
 
-  ;; TODO
-  (cl-assert (not create) nil
-             "The Secrets API auth-source backend doesn't support creation yet")
   ;; TODO
   ;; (secrets-delete-item coll elt)
   (cl-assert (not delete) nil
@@ -1575,12 +1573,168 @@ authentication tokens:
                                           returned-keys))
                            plist))
                         items)))
+    (cond
+     ;; if we need to create an entry AND none were found to match
+     ((and create
+           (not items))
+
+      ;; create based on the spec and record the value
+      (setq items (or
+                   ;; if the user did not want to create the entry
+                   ;; in the file, it will be returned
+                   (apply (slot-value backend 'create-function) spec)
+                   ;; if not, we do the search again without :create
+                   ;; to get the updated data.
+
+                   ;; the result will be returned, even if the search fails
+                   (apply #'auth-source-secrets-search
+                          (plist-put spec :create nil))))))
     items))
 
-(defun auth-source-secrets-create (&rest spec)
-  ;; TODO
-  ;; (apply 'secrets-create-item (auth-get-source entry) name passwd spec)
-  (debug spec))
+(cl-defun auth-source-secrets-create (&rest spec
+                                      &key backend host port create
+                                      &allow-other-keys)
+  (let* ((base-required '(host user port secret label))
+         ;; we know (because of an assertion in auth-source-search) that the
+         ;; :create parameter is either t or a list (which includes nil)
+         (create-extra (if (eq t create) nil create))
+         (current-data (car (auth-source-search :max 1
+                                                :host host
+                                                :port port)))
+         (required (append base-required create-extra))
+         (collection (oref backend source))
+         ;; `args' are the arguments for `secrets-create-item'.
+         args
+         ;; `valist' is an alist
+         valist
+         ;; `artificial' will be returned if no creation is needed
+         artificial)
+
+    ;; only for base required elements (defined as function parameters):
+    ;; fill in the valist with whatever data we may have from the search
+    ;; we complete the first value if it's a list and use the value otherwise
+    (dolist (br base-required)
+      (let ((val (plist-get spec (auth-source--symbol-keyword br))))
+        (when val
+          (let ((br-choice (cond
+                            ;; all-accepting choice (predicate is t)
+                            ((eq t val) nil)
+                            ;; just the value otherwise
+                            (t val))))
+            (when br-choice
+              (auth-source--aput valist br br-choice))))))
+
+    ;; for extra required elements, see if the spec includes a value for them
+    (dolist (er create-extra)
+      (let ((k (auth-source--symbol-keyword er))
+            (keys (cl-loop for i below (length spec) by 2
+                           collect (nth i spec))))
+        (when (memq k keys)
+          (auth-source--aput valist er (plist-get spec k)))))
+
+    ;; for each required element
+    (dolist (r required)
+      (let* ((data (auth-source--aget valist r))
+             ;; take the first element if the data is a list
+             (data (or (auth-source-netrc-element-or-first data)
+                       (plist-get current-data
+                                  (auth-source--symbol-keyword r))))
+             ;; this is the default to be offered
+             (given-default (auth-source--aget
+                             auth-source-creation-defaults r))
+             ;; the default supplementals are simple:
+             ;; for the user, try `given-default' and then (user-login-name);
+             ;; for the label, try `given-default' and then user@host;
+             ;; otherwise take `given-default'
+             (default (cond
+                       ((and (not given-default) (eq r 'user))
+                        (user-login-name))
+                       ((and (not given-default) (eq r 'label))
+                        (format "%s@%s"
+                                (or (auth-source-netrc-element-or-first
+                                     (auth-source--aget valist 'user))
+                                    (plist-get artificial :user))
+                                (or (auth-source-netrc-element-or-first
+                                     (auth-source--aget valist 'host))
+                                    (plist-get artificial :host))))
+                       (t given-default)))
+             (printable-defaults (list
+                                  (cons 'user
+                                        (or
+                                         (auth-source-netrc-element-or-first
+                                          (auth-source--aget valist 'user))
+                                         (plist-get artificial :user)
+                                         "[any user]"))
+                                  (cons 'host
+                                        (or
+                                         (auth-source-netrc-element-or-first
+                                          (auth-source--aget valist 'host))
+                                         (plist-get artificial :host)
+                                         "[any host]"))
+                                  (cons 'port
+                                        (or
+                                         (auth-source-netrc-element-or-first
+                                          (auth-source--aget valist 'port))
+                                         (plist-get artificial :port)
+                                         "[any port]"))
+                                  (cons 'label
+                                        (or
+                                         (auth-source-netrc-element-or-first
+                                          (auth-source--aget valist 'label))
+                                         (plist-get artificial :label)
+                                         "[any label]"))))
+             (prompt (or (auth-source--aget auth-source-creation-prompts r)
+                         (cl-case r
+                           (secret "%p password for %u@%h: ")
+                           (user "%p user name for %h: ")
+                           (host "%p host name for user %u: ")
+                           (port "%p port for %u@%h: ")
+                           (label "Enter label for %u@%h: "))
+                         (format "Enter %s (%%u@%%h:%%p): " r)))
+             (prompt (auth-source-format-prompt
+                      prompt
+                      `((?u ,(auth-source--aget printable-defaults 'user))
+                        (?h ,(auth-source--aget printable-defaults 'host))
+                        (?p ,(auth-source--aget printable-defaults 'port))))))
+
+        ;; Store the data, prompting for the password if needed.
+        (setq data (or data
+                       (if (eq r 'secret)
+                           (or (eval default) (read-passwd prompt))
+                         (if (stringp default)
+                             (read-string (if (string-match ": *\\'" prompt)
+                                              (concat (substring prompt 0 (match-beginning 0))
+                                                      " (default " default "): ")
+                                            (concat prompt "(default " default ") "))
+                                          nil nil default)
+                           (eval default)))))
+
+        (when data
+          (setq artificial (plist-put artificial
+                                      (auth-source--symbol-keyword r)
+                                      (if (eq r 'secret)
+                                          (let ((data data))
+                                            (lambda () data))
+                                        data))))
+
+        ;; When r is not an empty string...
+        (when (and (stringp data)
+                   (< 0 (length data))
+                   (not (member r '(secret label))))
+          ;; append the key (the symbol name of r)
+          ;; and the value in r
+          (setq args (append args (list (auth-source--symbol-keyword r) data))))))
+
+    (plist-put
+     artificial
+     :save-function
+     (let* ((collection collection)
+            (item (plist-get artificial :label))
+            (secret (plist-get artificial :secret))
+            (secret (if (functionp secret) (funcall secret) secret)))
+       (lambda () (apply 'secrets-create-item collection item secret args))))
+
+    (list artificial)))
 
 ;;; Backend specific parsing: Mac OS Keychain (using /usr/bin/security) backend
 

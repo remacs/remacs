@@ -89,10 +89,14 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
 #include "getpagesize.h"
 #include "gnutls.h"
 
-#if (defined PROFILING \
-     && (defined __FreeBSD__ || defined GNU_LINUX || defined __MINGW32__))
+#ifdef PROFILING
 # include <sys/gmon.h>
 extern void moncontrol (int mode);
+# ifdef __MINGW32__
+extern unsigned char etext asm ("etext");
+# else
+extern char etext;
+# endif
 #endif
 
 #ifdef HAVE_SETLOCALE
@@ -1628,22 +1632,14 @@ Using an Emacs configured with --with-x-toolkit=lucid does not have this problem
      GNU/Linux and MinGW.  It might work on some other systems too.
      Give it a try and tell us if it works on your system.  To compile
      for profiling, use the configure option --enable-profiling.  */
-#if defined (__FreeBSD__) || defined (GNU_LINUX) || defined (__MINGW32__)
 #ifdef PROFILING
   if (initialized)
     {
-#ifdef __MINGW32__
-      extern unsigned char etext asm ("etext");
-#else
-      extern char etext;
-#endif
-
       atexit (_mcleanup);
       monstartup ((uintptr_t) __executable_start, (uintptr_t) &etext);
     }
   else
     moncontrol (0);
-#endif
 #endif
 
   initialized = 1;

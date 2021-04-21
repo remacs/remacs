@@ -24,7 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'smime)
 (require 'mm-decode)
@@ -238,7 +238,7 @@ Whether the passphrase is cached at all is controlled by
   ;; todo: try dns/ldap automatically first, before prompting user
   (let (certs done)
     (while (not done)
-      (ecase (read (gnus-completing-read
+      (cl-ecase (read (gnus-completing-read
 		    "Fetch certificate from"
 		    '("dns" "ldap" "file") t nil nil
                     "ldap"))

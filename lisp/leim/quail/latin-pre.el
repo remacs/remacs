@@ -361,13 +361,14 @@ Key translation rules are:
  "german-prefix" "German" "DE>" t
  "German (Deutsch) input method with prefix modifiers
 Key translation rules are:
- \"A -> Ä ->   \"O -> Ö   \"U -> Ü   \"s -> ß
+ \"A -> Ä ->   \"O -> Ö   \"S -> ẞ   \"U -> Ü   \"s -> ß
 " nil t nil nil nil nil nil nil nil nil t)
 
 (quail-define-rules
  ("\"A" ?Ä)
  ("\"O" ?Ö)
  ("\"U" ?Ü)
+ ("\"S" ?ẞ)
  ("\"a" ?ä)
  ("\"o" ?ö)
  ("\"u" ?ü)
@@ -1175,6 +1176,7 @@ of characters from a single Latin-N charset.
  ("\"E" ?Ë)
  ("\"I" ?Ï)
  ("\"O" ?Ö)
+ ("\"S" ?ẞ)
  ("\"U" ?Ü)
  ("\"W" ?Ẅ)
  ("\"Y" ?Ÿ)

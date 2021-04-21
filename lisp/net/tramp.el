@@ -689,7 +689,7 @@ Used in user option `tramp-syntax'.  There are further variables
 to be set, depending on VALUE."
   ;; Check allowed values.
   (unless (memq value (tramp-syntax-values))
-    (tramp-compat-user-error "Wrong `tramp-syntax' %s" tramp-syntax))
+    (tramp-user-error "Wrong `tramp-syntax' %s" tramp-syntax))
   ;; Cleanup existing buffers.
   (unless (eq (symbol-value symbol) value)
     (tramp-cleanup-all-buffers))
@@ -1348,7 +1348,7 @@ to their default values. For the other file name parts, no
 default values are used."
   (save-match-data
     (unless (tramp-tramp-file-p name)
-      (tramp-compat-user-error nil "Not a Tramp file name: \"%s\"" name))
+      (tramp-user-error nil "Not a Tramp file name: \"%s\"" name))
     (if (not (string-match (nth 0 tramp-file-name-structure) name))
         (error "`tramp-file-name-structure' didn't match!")
       (let ((method    (match-string (nth 1 tramp-file-name-structure) name))
@@ -1608,12 +1608,12 @@ ARGUMENTS to actually emit the message (if applicable)."
 		    (regexp-opt
 		     '("tramp-backtrace"
 		       "tramp-compat-funcall"
-		       "tramp-compat-user-error"
 		       "tramp-condition-case-unless-debug"
 		       "tramp-debug-message"
 		       "tramp-error"
 		       "tramp-error-with-buffer"
-		       "tramp-message")
+		       "tramp-message"
+		       "tramp-user-error")
 		     t)
 		    "$")
 		   fn)))
@@ -1691,10 +1691,11 @@ applicable)."
   "Dump a backtrace into the debug buffer.
 If VEC-OR-PROC is nil, the buffer *debug tramp* is used.  This
 function is meant for debugging purposes."
-  (if vec-or-proc
-      (tramp-message vec-or-proc 10 "\n%s" (with-output-to-string (backtrace)))
-    (if (>= tramp-verbose 10)
-	(with-output-to-temp-buffer "*debug tramp*" (backtrace)))))
+  (when (>= tramp-verbose 10)
+    (if vec-or-proc
+	(tramp-message
+	 vec-or-proc 10 "\n%s" (with-output-to-string (backtrace)))
+      (with-output-to-temp-buffer "*debug tramp*" (backtrace)))))
 
 (defsubst tramp-error (vec-or-proc signal fmt-string &rest arguments)
   "Emit an error.
@@ -1751,6 +1752,31 @@ an input event arrives.  The other arguments are passed to `tramp-error'."
 	    (sit-for 30)))
 	;; Reset timestamp.  It would be wrong after waiting for a while.
 	(when (tramp-file-name-equal-p vec (car tramp-current-connection))
+	  (setcdr tramp-current-connection (current-time)))))))
+
+;; We must make it a defun, because it is used earlier already.
+(defun tramp-user-error (vec-or-proc fmt-string &rest arguments)
+  "Signal a pilot error."
+  (unwind-protect
+      (apply
+       'tramp-error vec-or-proc
+       ;; `user-error' has appeared in Emacs 24.3.
+       (if (fboundp 'user-error) 'user-error 'error) fmt-string arguments)
+    ;; Save exit.
+    (when (and tramp-message-show-message
+	       (not (zerop tramp-verbose))
+	       ;; Do not show when flagged from outside.
+	       (not (tramp-completion-mode-p))
+	       ;; Show only when Emacs has started already.
+	       (current-message))
+      (let ((enable-recursive-minibuffers t))
+	;; `tramp-error' does not show messages.  So we must do it ourselves.
+	(apply 'message fmt-string arguments)
+	(discard-input)
+	(sit-for 30)
+	;; Reset timestamp.  It would be wrong after waiting for a while.
+	(when
+	    (tramp-file-name-equal-p vec-or-proc (car tramp-current-connection))
 	  (setcdr tramp-current-connection (current-time)))))))
 
 (defmacro tramp-with-demoted-errors (vec-or-proc format &rest body)
@@ -3208,17 +3234,18 @@ User is always nil."
 
 (defun tramp-handle-file-truename (filename)
   "Like `file-truename' for Tramp files."
-  (let ((result (expand-file-name filename))
-	(numchase 0)
-	;; Don't make the following value larger than
-	;; necessary.  People expect an error message in a
-	;; timely fashion when something is wrong;
-	;; otherwise they might think that Emacs is hung.
-	;; Of course, correctness has to come first.
-	(numchase-limit 20)
-	symlink-target)
-    (format
-     "%s%s"
+  ;; Preserve trailing "/".
+  (funcall
+   (if (string-equal (file-name-nondirectory filename) "")
+       'file-name-as-directory 'identity)
+   (let ((result (expand-file-name filename))
+	 (numchase 0)
+	 ;; Don't make the following value larger than necessary.
+	 ;; People expect an error message in a timely fashion when
+	 ;; something is wrong; otherwise they might think that Emacs
+	 ;; is hung.  Of course, correctness has to come first.
+	 (numchase-limit 20)
+	 symlink-target)
      (with-parsed-tramp-file-name result v1
        (with-tramp-file-property v1 v1-localname "file-truename"
 	 (while (and (setq symlink-target (file-symlink-p result))
@@ -3243,10 +3270,7 @@ User is always nil."
 	     (tramp-error
 	      v1 'file-error
 	      "Maximum number (%d) of symlinks exceeded" numchase-limit)))
-	 (directory-file-name result)))
-
-     ;; Preserve trailing "/".
-     (if (string-equal (file-name-nondirectory filename) "") "/" ""))))
+	 (directory-file-name result))))))
 
 (defun tramp-handle-find-backup-file-name (filename)
   "Like `find-backup-file-name' for Tramp files."
@@ -3505,7 +3529,7 @@ support symbolic links."
     (when p
       (if (yes-or-no-p "A command is running.  Kill it? ")
 	  (ignore-errors (kill-process p))
-	(tramp-compat-user-error p "Shell command in progress")))
+	(tramp-user-error p "Shell command in progress")))
 
     (if current-buffer-p
 	(progn

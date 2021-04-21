@@ -24,9 +24,6 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
-
 (require 'mm-util)
 (require 'gnus-util)
 (require 'gnus)

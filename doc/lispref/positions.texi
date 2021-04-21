@@ -569,9 +569,9 @@ The optional argument @var{cur-col} specifies the current column when
 the function is called.  This is the window-relative horizontal
 coordinate of point, measured in units of font width of the frame's
 default face.  Providing it speeds up the function, especially in very
-long lines, because it doesn't have to go back in the buffer in order
-to determine the current column.  Note that @var{cur-col} is also
-counted from the visual start of the line.
+long lines, because the function doesn't have to go back in the buffer
+in order to determine the current column.  Note that @var{cur-col} is
+also counted from the visual start of the line.
 @end defun
 
 @defun count-screen-lines &optional beg end count-final-newline window

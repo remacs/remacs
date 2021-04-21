@@ -1508,6 +1508,9 @@ syms_of_minibuf (void)
   staticpro (&last_minibuf_string);
   last_minibuf_string = Qnil;
 
+  DEFSYM (Qcustom_variable_history, "custom-variable-history");
+  Fset (Qcustom_variable_history, Qnil);
+
   DEFSYM (Qminibuffer_history, "minibuffer-history");
   DEFSYM (Qbuffer_name_history, "buffer-name-history");
   Fset (Qbuffer_name_history, Qnil);

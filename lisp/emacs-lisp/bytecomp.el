@@ -2737,15 +2737,12 @@ If FORM is a lambda or a macro, byte-compile it as a function."
 		   (macroexp--const-symbol-p arg t))
 	       (error "Invalid lambda variable %s" arg))
 	      ((eq arg '&rest)
-	       (unless (cdr list)
-		 (error "&rest without variable name"))
 	       (when (cddr list)
-		 (error "Garbage following &rest VAR in lambda-list")))
+		 (error "Garbage following &rest VAR in lambda-list"))
+               (when (memq (cadr list) '(&optional &rest))
+                 (error "%s following &rest in lambda-list" (cadr list))))
 	      ((eq arg '&optional)
-	       (when (or (null (cdr list))
-                         (memq (cadr list) '(&optional &rest)))
-		 (error "Variable name missing after &optional"))
-               (when (memq '&optional (cddr list))
+               (when (memq '&optional (cdr list))
                  (error "Duplicate &optional")))
 	      ((memq arg vars)
 	       (byte-compile-warn "repeated variable %s in lambda-list" arg))
@@ -4164,7 +4161,7 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
       ;; to be non-nil for generating tags for all cases. Since
       ;; `byte-compile-depth' will increase by at most 1 after compiling
       ;; all of the clause (which is further enforced by cl-assert below)
-      ;; it should be safe to preserve it's value.
+      ;; it should be safe to preserve its value.
       (let ((byte-compile-depth byte-compile-depth))
         (byte-compile-goto 'byte-goto default-tag))
 
@@ -4182,7 +4179,7 @@ Return a list of the form ((TEST . VAR)  ((VALUE BODY) ...))"
         (let ((byte-compile-depth byte-compile-depth)
               (init-depth byte-compile-depth))
           ;; Since `byte-compile-body' might increase `byte-compile-depth'
-          ;; by 1, not preserving it's value will cause it to potentially
+          ;; by 1, not preserving its value will cause it to potentially
           ;; increase by one for every clause body compiled, causing
           ;; depth/tag conflicts or violating asserts down the road.
           ;; To make sure `byte-compile-body' itself doesn't violate this,

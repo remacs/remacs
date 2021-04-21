@@ -184,10 +184,10 @@ Possible properties are:
 Example:
 
    (setq org-protocol-project-alist
-       \\='((\"http://orgmode.org/worg/\"
+       \\='((\"https://orgmode.org/worg/\"
           :online-suffix \".php\"
           :working-suffix \".org\"
-          :base-url \"http://orgmode.org/worg/\"
+          :base-url \"https://orgmode.org/worg/\"
           :working-directory \"/home/user/org/Worg/\")
          (\"http://localhost/org-notes/\"
           :online-suffix \".html\"
@@ -688,7 +688,7 @@ the cdr of an element in `org-publish-project-alist', reuse
   (let ((working-dir (expand-file-name
 		      (or (plist-get project-plist :base-directory)
 			  default-directory)))
-        (base-url "http://orgmode.org/worg/")
+        (base-url "https://orgmode.org/worg/")
         (strip-suffix (or (plist-get project-plist :html-extension) ".html"))
         (working-suffix (if (plist-get project-plist :base-extension)
                             (concat "." (plist-get project-plist :base-extension))

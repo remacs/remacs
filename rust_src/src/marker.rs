@@ -9,7 +9,7 @@ use crate::{
     buffers::{current_buffer, LispBufferRef},
     hashtable::LispHashTableRef,
     lisp::{ExternalPtr, LispMiscRef, LispObject, LispStructuralEqual},
-    remacs_sys::{allocate_misc, set_point_both, Fmake_marker},
+    remacs_sys::{allocate_misc, set_point_both, Fmake_marker, Qnil},
     remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type},
     remacs_sys::{Qinteger_or_marker_p, Qmarkerp},
     threads::ThreadState,
@@ -495,6 +495,14 @@ pub extern "C" fn marker_position(marker: LispObject) -> ptrdiff_t {
 pub extern "C" fn marker_byte_position(marker: LispObject) -> ptrdiff_t {
     let m: LispMarkerRef = marker.into();
     m.bytepos_or_error()
+}
+
+/// Detach a marker so that it no longer points anywhere and no longer
+/// slows down editing.  Do not free the marker, though, as a change
+/// function could have inserted it into an undo list (Bug#30931).
+#[no_mangle]
+pub extern "C" fn detach_marker(marker: LispMarkerRef) {
+    set_marker(marker, Qnil, Qnil);
 }
 
 impl LispObject {

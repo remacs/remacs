@@ -4,7 +4,7 @@
 
 ;; Author: Eric Schulte
 ;; Keywords: literate programming, reproducible research, comint
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;; This file is part of GNU Emacs.
 

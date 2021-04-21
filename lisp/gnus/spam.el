@@ -38,8 +38,6 @@
 
 ;;{{{ compilation directives and autoloads/requires
 
-(eval-when-compile (require 'cl))
-
 (require 'message)              ;for the message-fetch-field functions
 (require 'gnus-sum)
 (require 'gnus-uu)                      ; because of key prefix issues
@@ -50,6 +48,8 @@
 
 ;; for nnimap-split-download-body-default
 (eval-when-compile (require 'nnimap))
+
+(eval-when-compile (require 'cl-lib))
 
 ;; autoload query-dig
 (autoload 'query-dig "dig")
@@ -1164,12 +1164,12 @@ backends)."
 (defun spam-article-sort-by-spam-status (h1 h2)
   "Sort articles by score."
   (let (result)
-    (dolist (header (spam-necessary-extra-headers))
+    (cl-dolist (header (spam-necessary-extra-headers))
       (let ((s1 (spam-summary-score h1 header))
             (s2 (spam-summary-score h2 header)))
       (unless (= s1 s2)
         (setq result (< s1 s2))
-        (return))))
+        (cl-return))))
     result))
 
 (defvar spam-spamassassin-score-regexp
@@ -1205,14 +1205,14 @@ Note this has to be fast."
 With SPECIFIC-HEADER, returns only that header's score.
 Will not return a nil score."
   (let (score)
-    (dolist (header
+    (cl-dolist (header
              (if specific-header
                  (list specific-header)
                (spam-necessary-extra-headers)))
       (setq score
             (spam-extra-header-to-number header headers))
       (when score
-        (return)))
+        (cl-return)))
     (or score 0)))
 
 (defun spam-generic-score (&optional recheck)
@@ -1661,10 +1661,10 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
          article-cannot-be-faked)
 
 
-    (dolist (backend methods)
+    (cl-dolist (backend methods)
       (when (spam-backend-statistical-p backend)
         (setq article-cannot-be-faked t)
-        (return)))
+        (cl-return)))
 
     (when (memq 'default methods)
       (setq article-cannot-be-faked t))
@@ -1749,7 +1749,7 @@ See the Info node `(gnus)Fancy Mail Splitting' for more details."
           ;; eliminate duplicates
           (dolist (article (copy-sequence ulist))
             (when (memq article rlist)
-              (incf delcount)
+              (cl-incf delcount)
               (setq rlist (delq article rlist))
               (setq ulist (delq article ulist))))
 
@@ -2299,10 +2299,10 @@ With a non-nil REMOVE, remove the ADDRESSES."
   (when (stringp from)
     (spam-filelist-build-cache type)
     (let (found)
-      (dolist (address (gethash type spam-caches))
+      (cl-dolist (address (gethash type spam-caches))
         (when (and address (string-match address from))
           (setq found t)
-          (return)))
+          (cl-return)))
       found)))
 
 ;;; returns t if the sender is in the whitelist, nil or

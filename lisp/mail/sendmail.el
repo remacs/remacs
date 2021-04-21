@@ -55,7 +55,7 @@
   :type 'file)
 
 ;;;###autoload
-(defcustom mail-from-style 'default
+(defcustom mail-from-style 'angles
   "Specifies how \"From:\" fields look.
 
 If nil, they contain just the return address like:
@@ -72,8 +72,11 @@ Otherwise, most addresses look like `angles', but they look like
 		 (const parens)
 		 (const angles)
 		 (const default))
-  :version "20.3"
+  :version "27.1"
   :group 'sendmail)
+(make-obsolete-variable
+ 'mail-from-style
+ "Only the `angles' value is valid according to RFC2822" "27.1")
 
 ;;;###autoload
 (defcustom mail-specify-envelope-from nil

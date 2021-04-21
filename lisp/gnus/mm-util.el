@@ -882,6 +882,19 @@ gzip, bzip2, etc. are allowed."
 	(when decomp
 	  (kill-buffer (current-buffer)))))))
 
+(defun mm-images-in-region-p (start end)
+  (let ((found nil))
+    (save-excursion
+      (goto-char start)
+      (while (and (not found)
+		  (< (point) end))
+	(let ((display (get-text-property (point) 'display)))
+	  (when (and (consp display)
+		     (eq (car display) 'image))
+	    (setq found t)))
+	(forward-char 1)))
+    found))
+
 (provide 'mm-util)
 
 ;;; mm-util.el ends here

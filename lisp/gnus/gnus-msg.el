@@ -25,7 +25,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'gnus)
 (require 'message)
@@ -535,7 +535,7 @@ instead."
       (progn
 	(message "Gnus not running; using plain Message mode")
 	(message-mail to subject other-headers continue
-		      nil yank-action send-actions return-action))
+                      switch-action yank-action send-actions return-action))
     (let ((buf (current-buffer))
 	  ;; Don't use posting styles corresponding to any existing group.
 	  (group-name gnus-newsgroup-name)
@@ -1113,11 +1113,11 @@ If SILENT, don't prompt the user."
      ((and (eq gnus-post-method 'current)
 	   (not (memq (car group-method) gnus-discouraged-post-methods))
 	   (gnus-get-function group-method 'request-post t))
-      (assert (not arg))
+      (cl-assert (not arg))
       group-method)
      ;; Use gnus-post-method.
      ((listp gnus-post-method)		;A method...
-      (assert (not (listp (car gnus-post-method)))) ;... not a list of methods.
+      (cl-assert (not (listp (car gnus-post-method)))) ;... not a list of methods.
       gnus-post-method)
      ;; Use the normal select method (nil or native).
      (t gnus-select-method))))

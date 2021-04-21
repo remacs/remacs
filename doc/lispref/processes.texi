@@ -676,7 +676,9 @@ a default sentinel will be used, which can be overridden later.
 @item :stderr @var{stderr}
 Associate @var{stderr} with the standard error of the process.  A
 non-@code{nil} value should be either a buffer or a pipe process
-created with @code{make-pipe-process}, described below.
+created with @code{make-pipe-process}, described below.  If
+@var{stderr} is @code{nil}, standard error is mixed with standard
+output, and both are sent to @var{buffer} or @var{filter}.
 @end table
 
 The original argument list, modified with the actual connection

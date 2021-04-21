@@ -4,7 +4,7 @@
 
 ;; Author: Benjamin Andresen
 ;; Keywords: literate programming, interactive shell
-;; Homepage: http://orgmode.org
+;; Homepage: https://orgmode.org
 
 ;; This file is part of GNU Emacs.
 

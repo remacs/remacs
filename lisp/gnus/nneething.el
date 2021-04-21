@@ -25,7 +25,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'mailcap)
 (require 'nnheader)
@@ -101,7 +101,7 @@ included.")
 	    (nneething-insert-head file)
 	    (insert ".\n"))
 
-	  (incf count)
+	  (cl-incf count)
 
 	  (and large
 	       (zerop (% count 20))

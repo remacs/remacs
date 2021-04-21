@@ -571,13 +571,6 @@ if it has the file suffix @file{.z}, @file{.gz}, @file{.Z},
 hard-coded, and cannot be altered by customizing
 @code{jka-compr-compression-info-list}.)
 
-@defopt url-directory-index-file
-This option specifies the filename to look for when a @code{file} or
-@code{ftp} URL specifies a directory.  The default is
-@file{index.html}.  If this file exists and is readable, it is viewed.
-Otherwise, Emacs visits the directory using Dired.
-@end defopt
-
 @node info
 @section info
 @cindex Info
@@ -1290,6 +1283,20 @@ It may also be a list of the types of messages to be logged.
 @defopt url-personal-mail-address
 @end defopt
 @defopt url-privacy-level
+@end defopt
+@defopt url-lastloc-privacy-level
+Provided @code{lastloc} is not prohibited by @code{url-privacy-level},
+this determines who we send our last location to.  @code{none} means
+we include our last location in every outgoing request.
+@code{domain-match} means we send it only if the domain of our last
+location matches the domain of the URI we are requesting.
+@code{host-match} means we only send our last location back to the
+same host.  The default is @code{domain-match}.
+
+Using @code{domain-match} for this option requires emacs to make one
+or more DNS requests each time a new host is contacted, to determine
+the domain of the host.  Results of these lookups are cached, so
+repeated visits do not require repeated domain lookups.
 @end defopt
 @defopt url-uncompressor-alist
 @end defopt

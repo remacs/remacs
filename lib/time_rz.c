@@ -286,6 +286,21 @@ revert_tz (timezone_t tz)
 struct tm *
 localtime_rz (timezone_t tz, time_t const *t, struct tm *tm)
 {
+#ifdef HAVE_LOCALTIME_INFLOOP_BUG
+  /* The -67768038400665599 comes from:
+     https://lists.gnu.org/r/bug-gnulib/2017-07/msg00142.html
+     On affected platforms the greatest POSIX-compatible time_t value
+     that could return nonnull is 67768036191766798 (when
+     TZ="XXX24:59:59" it resolves to the year 2**31 - 1 + 1900, on
+     12-31 at 23:59:59), so test for that too while we're in the
+     neighborhood.  */
+  if (! (-67768038400665599 <= *t && *t <= 67768036191766798))
+    {
+      errno = EOVERFLOW;
+      return NULL;
+    }
+#endif
+
   if (!tz)
     return gmtime_r (t, tm);
   else

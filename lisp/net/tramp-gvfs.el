@@ -47,13 +47,12 @@
 ;; discovered during development time, is given in respective
 ;; comments.
 
-;; The custom option `tramp-gvfs-methods' contains the list of
-;; supported connection methods.  Per default, these are "afp", "dav",
-;; "davs", "gdrive", "obex", "owncloud", "sftp" and "synce".  Note
-;; that with "obex" it might be necessary to pair with the other
-;; bluetooth device, if it hasn't been done already.  There might be
-;; also some few seconds delay in discovering available bluetooth
-;; devices.
+;; The user option `tramp-gvfs-methods' contains the list of supported
+;; connection methods.  Per default, these are "afp", "dav", "davs",
+;; "gdrive", "obex", "owncloud", "sftp" and "synce".  Note that with
+;; "obex" it might be necessary to pair with the other bluetooth
+;; device, if it hasn't been done already.  There might be also some
+;; few seconds delay in discovering available bluetooth devices.
 
 ;; "gdrive" and "owncloud" connection methods require a respective
 ;; account in GNOME Online Accounts, with enabled "Files" service.
@@ -77,6 +76,8 @@
 ;;    :session tramp-gvfs-service-daemon tramp-gvfs-path-mounttracker
 ;;    tramp-gvfs-interface-mounttracker "ListMountableInfo")))
 
+;; See also /usr/share/gvfs/mounts
+
 ;; Note that all other connection methods are not tested, beside the
 ;; ones offered for customization in `tramp-gvfs-methods'.  If you
 ;; request an additional connection method to be supported, please
@@ -87,7 +88,7 @@
 ;; "synce" method), or from the zeroconf daemon (for the "afp", "dav",
 ;; "davs", and "sftp" methods).  The zeroconf daemon is pre-configured
 ;; to discover services in the "local" domain.  If another domain
-;; shall be used for discovering services, the custom option
+;; shall be used for discovering services, the user option
 ;; `tramp-gvfs-zeroconf-domain' can be set accordingly.
 
 ;; Restrictions:
@@ -751,7 +752,7 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 First arg specifies the OPERATION, second arg is a list of arguments to
 pass to the OPERATION."
   (unless tramp-gvfs-enabled
-    (tramp-compat-user-error nil "Package `tramp-gvfs' not supported"))
+    (tramp-user-error nil "Package `tramp-gvfs' not supported"))
   (let ((fn (assoc operation tramp-gvfs-file-name-handler-alist)))
     (if fn
 	(save-match-data (apply (cdr fn) args))
@@ -2365,7 +2366,7 @@ They are retrieved from the hal daemon."
 ;; * (Customizable) unmount when exiting Emacs.  See tramp-archive.el.
 
 ;; * Host name completion for existing mount points (afp-server,
-;;   smb-server, google-drive, owncloud) or via smb-network.
+;;   smb-server, google-drive, owncloud) or via smb-network or network.
 ;;
 ;; * Check, how two shares of the same SMB server can be mounted in
 ;;   parallel.
@@ -2374,5 +2375,7 @@ They are retrieved from the hal daemon."
 ;;   capability.
 ;;
 ;; * Implement obex for other serial communication but bluetooth.
+;;
+;; * What's up with ftps dns-sd afc admin computer?
 
 ;;; tramp-gvfs.el ends here

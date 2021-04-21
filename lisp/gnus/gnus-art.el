@@ -24,8 +24,7 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
+(eval-when-compile (require 'cl-lib))
 (defvar tool-bar-map)
 (defvar w3m-minor-mode-map)
 
@@ -1798,7 +1797,7 @@ Initialized from `text-mode-syntax-table'.")
       (if (looking-at (car list))
 	  (setq list nil)
 	(setq list (cdr list))
-	(incf i)))
+	(cl-incf i)))
       i))
 
 (defun article-hide-headers (&optional _arg _delete)
@@ -2208,7 +2207,7 @@ unfolded."
       (dolist (elem gnus-article-image-alist)
 	(gnus-delete-images (car elem))))))
 
-(autoload 'w3m-toggle-inline-images "w3m")
+(declare-function w3m-toggle-inline-images "w3m")
 
 (defun gnus-article-show-images ()
   "Show any images that are in the HTML-rendered article buffer.
@@ -2218,10 +2217,12 @@ This only works if the article in question is HTML."
     (save-restriction
       (widen)
       (if (eq mm-text-html-renderer 'w3m)
-	  (w3m-toggle-inline-images)
+	  (progn
+	    (require 'w3m)
+	    (w3m-toggle-inline-images))
 	(dolist (region (gnus-find-text-property-region (point-min) (point-max)
 							'image-displayer))
-	  (destructuring-bind (start end function) region
+	  (cl-destructuring-bind (start end function) region
 	    (funcall function (get-text-property start 'image-url)
 		     start end)))))))
 
@@ -3002,9 +3003,6 @@ articles to verify whether you have read the message.  As
 `gnus-article-browse-html-article' passes the HTML content to the
 browser without eliminating these \"web bugs\" you should only
 use it for mails from trusted senders.
-
-If you always want to display HTML parts in the browser, set
-`mm-text-html-renderer' to nil.
 
 This command creates temporary files to pass HTML contents including
 images if any to the browser, and deletes them when exiting the group
@@ -4698,6 +4696,11 @@ If ALL-HEADERS is non-nil, no headers are hidden."
 	      (forward-line -1))
 	    (set-window-point (get-buffer-window (current-buffer)) (point))
 	    (gnus-configure-windows 'article)
+	    ;; Make sure the article begins with the top of the header.
+	    (let ((window (get-buffer-window gnus-article-buffer)))
+	      (when window
+		(with-current-buffer (window-buffer window)
+		  (set-window-point window (point-min)))))
 	    (gnus-run-hooks 'gnus-article-prepare-hook)
 	    t))))))
 
@@ -8211,7 +8214,7 @@ url is put as the `gnus-button-url' overlay property on the button."
 
 (defun gnus-button-handle-news (url)
   "Fetch a news URL."
-  (destructuring-bind (_scheme server port group message-id _articles)
+  (cl-destructuring-bind (_scheme server port group message-id _articles)
       (gnus-parse-news-url url)
     (cond
      (message-id

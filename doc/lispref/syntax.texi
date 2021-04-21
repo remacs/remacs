@@ -1018,7 +1018,7 @@ corresponds to each syntax flag.
 @item
 @samp{3} @tab @code{(lsh 1 18)} @tab @samp{n} @tab @code{(lsh 1 22)}
 @item
-@samp{4} @tab @code{(lsh 1 19)}
+@samp{4} @tab @code{(lsh 1 19)} @tab @samp{c} @tab @code{(lsh 1 23)}
 @end multitable
 
 @defun string-to-syntax desc

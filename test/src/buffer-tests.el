@@ -50,4 +50,14 @@ with parameters from the *Messages* buffer modification."
                             (progn (get-buffer-create "nil")
                                    (generate-new-buffer-name "nil")))))
 
+(ert-deftest test-buffer-base-buffer-indirect ()
+  (with-temp-buffer
+    (let* ((ind-buf-name (generate-new-buffer-name "indbuf"))
+           (ind-buf (make-indirect-buffer (current-buffer) ind-buf-name)))
+      (should (eq (buffer-base-buffer ind-buf) (current-buffer))))))
+
+(ert-deftest test-buffer-base-buffer-non-indirect ()
+  (with-temp-buffer
+    (should (eq (buffer-base-buffer (current-buffer)) nil))))
+
 ;;; buffer-tests.el ends here

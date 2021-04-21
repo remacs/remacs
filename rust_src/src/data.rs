@@ -23,7 +23,7 @@ use crate::{
         aset_multibyte_string, bool_vector_binop_driver, buffer_defaults, build_string, globals,
         rust_count_one_bits, set_default_internal, set_internal, string_to_number,
         symbol_trapped_write, valid_lisp_object_p, wrong_choice, wrong_range, CHAR_TABLE_SET,
-        CHECK_IMPURE,
+        CHECK_IMPURE, S2N_IGNORE_TRAILING, S2N_OVERFLOW_TO_FLOAT,
     },
     remacs_sys::{per_buffer_default, symbol_redirect},
     remacs_sys::{pvec_type, BoolVectorOp, EmacsInt, Lisp_Misc_Type, Lisp_Type, Set_Internal_Bind},
@@ -847,7 +847,9 @@ pub fn string_to_number_lisp(mut string: LispStringRef, base: Option<EmacsInt>) 
         }
     }
 
-    match unsafe { string_to_number(p, b as i32, true) } {
+    let flags = S2N_IGNORE_TRAILING | S2N_OVERFLOW_TO_FLOAT;
+
+    match unsafe { string_to_number(p, b as i32, flags as i32) } {
         Qnil => LispObject::from(0),
         n => n,
     }

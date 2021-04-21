@@ -281,6 +281,8 @@ fn run_bindgen(path: &str) {
                 .constified_enum("EMACS_INT_WIDTH")
                 .constified_enum("BOOL_VECTOR_BITS_PER_CHAR")
                 .constified_enum("BITS_PER_BITS_WORD")
+                .constified_enum("S2N_IGNORE_TRAILING")
+                .constified_enum("S2N_OVERFLOW_TO_FLOAT")
                 // TODO(db48x): verify that these enums meet Rust's requirements (primarily that they have no duplicate variants)
                 .rustified_enum("Lisp_Misc_Type")
                 .rustified_enum("Lisp_Type")

@@ -380,4 +380,24 @@ Each element has the format:
   (should (string= "211" (replace-tests--query-replace-undo)))
   (should (string= "211" (replace-tests--query-replace-undo 'comma))))
 
+(ert-deftest query-replace-undo-bug31073 ()
+  "Test for https://debbugs.gnu.org/31073 ."
+  (let ((text "aaa aaa")
+        (count 0))
+    (with-temp-buffer
+      (insert text)
+      (goto-char 1)
+      (cl-letf (((symbol-function 'read-event)
+                 (lambda (&rest args)
+                   (cl-incf count)
+                   (let ((val (pcase count
+                                ((or 1 2 3) ?\s) ; replace current and go next
+                                (4 ?U) ; undo-all
+                                (_ ?q)))) ; exit
+                     val))))
+        (perform-replace "a" "B" t nil nil))
+      ;; After undo text must be the same.
+      (should (string= text (buffer-string))))))
+
+
 ;;; replace-tests.el ends here

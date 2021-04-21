@@ -32,8 +32,7 @@
 
 ;;; Code:
 
-(eval-when-compile
-  (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'time-date)
 
@@ -1408,7 +1407,7 @@ SPEC is a predicate specifier that contains stuff like `or', `and',
                                  (symbol-value history) collection))
                        filtered-choices)
                    (dolist (x choices)
-                     (setq filtered-choices (adjoin x filtered-choices)))
+                     (setq filtered-choices (cl-adjoin x filtered-choices)))
                    (nreverse filtered-choices))))))
     (unwind-protect
         (progn
@@ -1616,8 +1615,7 @@ empty directories from OLD-PATH."
   "Rescale IMAGE to SIZE if possible.
 SIZE is in format (WIDTH . HEIGHT). Return a new image.
 Sizes are in pixels."
-  (if (or (not (fboundp 'imagemagick-types))
-	  (not (get-buffer-window (current-buffer))))
+  (if (not (fboundp 'imagemagick-types))
       image
     (let ((new-width (car size))
           (new-height (cdr size)))

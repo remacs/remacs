@@ -91,9 +91,13 @@
 
 (defmacro inline--leteval (_var-exp &rest _body)
   (declare (indent 1) (debug (sexp &rest body)))
+  ;; BEWARE: if we're here it's presumably via macro-expansion of
+  ;; inline-letevals, so signal the error in terms of the user's code.
   (error "inline-letevals can only be used within define-inline"))
 (defmacro inline--letlisteval (_list &rest _body)
   (declare (indent 1) (debug (sexp &rest body)))
+  ;; BEWARE: if we're here it's presumably via macro-expansion of
+  ;; inline-letevals, so signal the error in terms of the user's code.
   (error "inline-letevals can only be used within define-inline"))
 
 (defmacro inline-letevals (vars &rest body)

@@ -295,7 +295,8 @@ gnutls-boot (as returned by `gnutls-boot-parameters')."
 	(if (gnutls-available-p)
 	    (let ((cert (network-stream-certificate host service parameters)))
 	      (condition-case nil
-		  (gnutls-negotiate :process stream :hostname host
+		  (gnutls-negotiate :process stream
+                                    :hostname (puny-encode-domain host)
 				    :keylist (and cert (list cert)))
 		;; If we get a gnutls-specific error (for instance if
 		;; the certificate the server gives us is completely

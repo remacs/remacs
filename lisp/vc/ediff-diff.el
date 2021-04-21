@@ -909,7 +909,7 @@ delimiter regions"))
 (defun ediff-get-diff3-group (file)
   ;; This save-excursion allows ediff-get-diff3-group to be called for the
   ;; various groups of lines (1, 2, 3) in any order, and for the lines to
-  ;; appear in any order.  The reason this is necessary is that Gnu diff3
+  ;; appear in any order.  The reason this is necessary is that GNU diff3
   ;; can produce the groups in the order 1, 2, 3 or 1, 3, 2.
   (save-excursion
     (re-search-forward

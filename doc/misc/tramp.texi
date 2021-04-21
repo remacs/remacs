@@ -1408,8 +1408,10 @@ Opening @file{@trampfn{sudo,randomhost.your.domain,}} first connects
 to @samp{randomhost.your.domain} via @code{ssh} under your account
 name, and then performs @code{sudo -u root} on that host.
 
-It is key for the sudo method in the above example to be applied on
-the host after reaching it and not on the local host.
+It is key for the @option{sudo} method in the above example to be
+applied on the host after reaching it and not on the local host.
+@value{tramp} checks therefore, that the host name for such hops
+matches the host name of the previous hop.
 
 @var{host}, @var{user} and @var{proxy} can also take Lisp forms.  These
 forms when evaluated must return either a string or @code{nil}.

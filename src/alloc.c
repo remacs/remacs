@@ -3724,15 +3724,6 @@ free_save_value (Lisp_Object save)
 
 
 
-/* Put MARKER back on the free list after using it temporarily.  */
-
-void
-free_marker (Lisp_Object marker)
-{
-  unchain_marker (XMARKER (marker));
-  free_misc (marker);
-}
-
 
 /* Return a newly created vector or string with specified arguments as
    elements.  If all the arguments are characters that can fit
@@ -6171,12 +6162,8 @@ mark_localized_symbol (struct Lisp_Symbol *ptr)
 {
   struct Lisp_Buffer_Local_Value *blv = SYMBOL_BLV (ptr);
   Lisp_Object where = blv->where;
-  /* If the value is set up for a killed buffer or deleted
-     frame, restore its global binding.  If the value is
-     forwarded to a C variable, either it's not a Lisp_Object
-     var, or it's staticpro'd already.  */
-  if ((BUFFERP (where) && !BUFFER_LIVE_P (XBUFFER (where)))
-      || (FRAMEP (where) && !FRAME_LIVE_P (XFRAME (where))))
+  /* If the value is set up for a killed buffer restore its global binding.  */
+  if ((BUFFERP (where) && !BUFFER_LIVE_P (XBUFFER (where))))
     swap_in_global_binding (ptr);
   mark_object (blv->where);
   mark_object (blv->valcell);
@@ -6924,7 +6911,9 @@ sweep_misc (void)
           if (!mblk->markers[i].m.u_any.gcmarkbit)
             {
               if (mblk->markers[i].m.u_any.type == Lisp_Misc_Marker)
-                unchain_marker (&mblk->markers[i].m.u_marker);
+                /* Make sure markers have been unchained from their buffer
+                   in sweep_buffer before we collect them.  */
+                eassert (!mblk->markers[i].m.u_marker.buffer);
               else if (mblk->markers[i].m.u_any.type == Lisp_Misc_Finalizer)
                 unchain_finalizer (&mblk->markers[i].m.u_finalizer);
 #ifdef HAVE_MODULES
@@ -6971,6 +6960,23 @@ sweep_misc (void)
   total_free_markers = num_free;
 }
 
+/* Remove BUFFER's markers that are due to be swept.  This is needed since
+   we treat BUF_MARKERS and markers's `next' field as weak pointers.  */
+static void
+unchain_dead_markers (struct buffer *buffer)
+{
+  struct Lisp_Marker *this, **prev = &BUF_MARKERS (buffer);
+
+  while ((this = *prev))
+    if (this->gcmarkbit)
+      prev = &this->next;
+    else
+      {
+        this->buffer = NULL;
+        *prev = this->next;
+      }
+}
+
 NO_INLINE /* For better stack traces */
 static void
 sweep_buffers (void)
@@ -6989,6 +6995,7 @@ sweep_buffers (void)
         VECTOR_UNMARK (buffer);
         /* Do not use buffer_(set|get)_intervals here.  */
         buffer->text->intervals = balance_intervals (buffer->text->intervals);
+        unchain_dead_markers (buffer);
         total_buffers++;
         bprev = &buffer->next;
       }
@@ -7008,8 +7015,8 @@ gc_sweep (void)
   sweep_floats ();
   sweep_intervals ();
   sweep_symbols ();
-  sweep_misc ();
   sweep_buffers ();
+  sweep_misc ();
   sweep_vectors ();
   check_string_bytes (!noninteractive);
 }

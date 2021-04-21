@@ -158,7 +158,7 @@
 (defvar secrets-enabled nil
   "Whether there is a daemon offering the Secret Service API.")
 
-(defvar secrets-debug t
+(defvar secrets-debug nil
   "Write debug messages")
 
 (defconst secrets-service "org.freedesktop.secrets"
@@ -539,6 +539,18 @@ For the time being, only the alias \"default\" is supported."
    secrets-interface-service "SetAlias"
    alias :object-path secrets-empty-path))
 
+(defun secrets-lock-collection (collection)
+  "Lock collection labeled COLLECTION.
+If successful, return the object path of the collection."
+  (let ((collection-path (secrets-collection-path collection)))
+    (unless (secrets-empty-path collection-path)
+      (secrets-prompt
+       (cadr
+	(dbus-call-method
+	 :session secrets-service secrets-path secrets-interface-service
+	 "Lock" `(:array :object-path ,collection-path)))))
+    collection-path))
+
 (defun secrets-unlock-collection (collection)
   "Unlock collection labeled COLLECTION.
 If successful, return the object path of the collection."
@@ -612,9 +624,9 @@ The object labels of the found items are returned as list."
           (error 'wrong-type-argument (cadr attributes)))
 	(setq props (append
 		     props
-		     (list :dict-entry
-			   (substring (symbol-name (car attributes)) 1)
-			   (cadr attributes)))
+		     `((:dict-entry
+			,(substring (symbol-name (car attributes)) 1)
+			,(cadr attributes))))
 	      attributes (cddr attributes)))
       ;; Search.  The result is a list of object paths.
       (setq result
@@ -650,9 +662,9 @@ The object path of the created item is returned."
             (error 'wrong-type-argument (cadr attributes)))
 	  (setq props (append
 		       props
-		       (list :dict-entry
-			     (substring (symbol-name (car attributes)) 1)
-			     (cadr attributes)))
+		       `((:dict-entry
+			  ,(substring (symbol-name (car attributes)) 1)
+			  ,(cadr attributes))))
 		attributes (cddr attributes)))
 	;; Create the item.
 	(setq result

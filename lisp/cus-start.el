@@ -277,9 +277,10 @@ Leaving \"Default\" unchecked is equivalent with specifying a default of
 		     ((eq system-type 'darwin)
 		      (or (getenv "TMPDIR") (getenv "TMP") (getenv "TEMP")
 			  ;; See bug#7135.
-			  (let ((tmp (ignore-errors
-				       (shell-command-to-string
-					"getconf DARWIN_USER_TEMP_DIR"))))
+			  (let* (file-name-handler-alist
+				 (tmp (ignore-errors
+				        (shell-command-to-string
+					 "getconf DARWIN_USER_TEMP_DIR"))))
 			    (and (stringp tmp)
 				 (setq tmp (replace-regexp-in-string
 					    "\n\\'" "" tmp))

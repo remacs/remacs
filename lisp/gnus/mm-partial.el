@@ -24,8 +24,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
-
 (require 'gnus-sum)
 (require 'mm-util)
 (require 'mm-decode)

@@ -41,8 +41,15 @@
 (defvar dbus-message-type-method-return)
 (defvar dbus-message-type-error)
 (defvar dbus-message-type-signal)
-(defvar dbus-debug)
 (defvar dbus-registered-objects-table)
+
+;; The following symbols are defined in dbusbind.c.  We need them also
+;; when Emacs is compiled without D-Bus support.
+(unless (boundp 'dbus-error)
+  (define-error 'dbus-error "D-Bus error"))
+
+(unless (boundp 'dbus-debug)
+  (defvar dbus-debug nil))
 
 ;; Pacify byte compiler.
 (eval-when-compile (require 'cl-lib))

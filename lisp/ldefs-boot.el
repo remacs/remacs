@@ -570,10 +570,6 @@ With value nil, inhibit any automatic allout-mode activation.")
 
 (put 'allout-layout 'safe-local-variable (lambda (x) (or (numberp x) (listp x) (memq x '(: * + -)))))
 
-(put 'allout-passphrase-verifier-string 'safe-local-variable 'stringp)
-
-(put 'allout-passphrase-hint-string 'safe-local-variable 'stringp)
-
 (autoload 'allout-mode-p "allout" "\
 Return t if `allout-mode' is active in current buffer.
 
@@ -2646,8 +2642,10 @@ used instead of `browse-url-new-window-flag'.
 
 (autoload 'browse-url-emacs "browse-url" "\
 Ask Emacs to load URL into a buffer and show it in another window.
+Optional argument SAME-WINDOW non-nil means show the URL in the
+currently selected window instead.
 
-\(fn URL &optional NEW-WINDOW)" t nil)
+\(fn URL &optional SAME-WINDOW)" t nil)
 
 (autoload 'browse-url-gnome-moz "browse-url" "\
 Ask Mozilla/Netscape to load URL via the GNOME program `gnome-moz-remote'.
@@ -5233,11 +5231,6 @@ The function receives one argument, the name of the major mode of the
 compilation buffer.  It should return a string.
 If nil, compute the name with `(concat \"*\" (downcase major-mode) \"*\")'.")
 
-(defvar compilation-finish-function nil "\
-Function to call when a compilation process finishes.
-It is called with two arguments: the compilation buffer, and a string
-describing how the process finished.")
-
 (defvar compilation-finish-functions nil "\
 Functions to call when a compilation process finishes.
 Each function is called with two arguments: the compilation buffer,
@@ -7194,14 +7187,6 @@ This function is a no-op when Emacs is running in batch mode.
 It returns t if a desktop file was loaded, nil otherwise.
 
 \(fn &optional DIRNAME)" t nil)
-
-(autoload 'desktop-load-default "desktop" "\
-Load the `default' start-up library manually.
-Also inhibit further loading of it.
-
-\(fn)" nil nil)
-
-(make-obsolete 'desktop-load-default 'desktop-save-mode '"22.1")
 
 (autoload 'desktop-change-dir "desktop" "\
 Change to desktop saved in DIRNAME.
@@ -14921,8 +14906,6 @@ Use \\[describe-mode] for more info.
 ;;;### (autoloads nil "goto-addr" "net/goto-addr.el" (0 0 0 0))
 ;;; Generated autoloads from net/goto-addr.el
 
-(define-obsolete-function-alias 'goto-address-at-mouse 'goto-address-at-point "22.1")
-
 (autoload 'goto-address-at-point "goto-addr" "\
 Send to the e-mail address or load the URL at point.
 Send mail to address at point.  See documentation for
@@ -15012,7 +14995,7 @@ List of hook functions run by `grep-process-setup' (see `run-hooks').")
 
 (custom-autoload 'grep-setup-hook "grep" t)
 
-(defconst grep-regexp-alist `((,(concat "^\\(?:" "\\(?1:[^ \n]+\\)\\(?3: \\)\\(?2:[0-9]+\\):" "\\|" "\\(?1:[^\n:]+?[^\n/:]\\):[	 ]*\\(?2:[1-9][0-9]*\\)[	 ]*:" "\\)") 1 2 (,(lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face))) (when mbeg (- mbeg beg))))) \, (lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face)) (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end)))) (when mend (- mend beg)))))) nil nil (3 '(face nil display ":"))) ("^Binary file \\(.+\\) matches$" 1 nil nil 0 1)) "\
+(defconst grep-regexp-alist `((,(concat "^\\(?:" "\\(?1:[^\0\n]+\\)\\(?3:\0\\)\\(?2:[0-9]+\\):" "\\|" "\\(?1:[^\n:]+?[^\n/:]\\):[\11 ]*\\(?2:[1-9][0-9]*\\)[\11 ]*:" "\\)") 1 2 (,(lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face))) (when mbeg (- mbeg beg))))) \, (lambda nil (when grep-highlight-matches (let* ((beg (match-end 0)) (end (save-excursion (goto-char beg) (line-end-position))) (mbeg (text-property-any beg end 'font-lock-face 'grep-match-face)) (mend (and mbeg (next-single-property-change mbeg 'font-lock-face nil end)))) (when mend (- mend beg)))))) nil nil (3 '(face nil display ":"))) ("^Binary file \\(.+\\) matches$" 1 nil nil 0 1)) "\
 Regexp used to match grep hits.
 See `compilation-error-regexp-alist' for format details.")
 
@@ -18664,7 +18647,7 @@ Key map for ispell menu.")
 
 (if ispell-menu-map-needed (progn (define-key ispell-menu-map [ispell-region] `(menu-item ,(purecopy "Spell-Check Region") ispell-region :enable mark-active :help ,(purecopy "Spell-check text in marked region"))) (define-key ispell-menu-map [ispell-message] `(menu-item ,(purecopy "Spell-Check Message") ispell-message :visible (eq major-mode 'mail-mode) :help ,(purecopy "Skip headers and included message text"))) (define-key ispell-menu-map [ispell-buffer] `(menu-item ,(purecopy "Spell-Check Buffer") ispell-buffer :help ,(purecopy "Check spelling of selected buffer"))) (fset 'ispell-menu-map (symbol-value 'ispell-menu-map))))
 
-(defvar ispell-skip-region-alist `((ispell-words-keyword forward-line) (ispell-dictionary-keyword forward-line) (ispell-pdict-keyword forward-line) (ispell-parsing-keyword forward-line) (,(purecopy "^---*BEGIN PGP [A-Z ]*--*") \, (purecopy "^---*END PGP [A-Z ]*--*")) (,(purecopy "^begin [0-9][0-9][0-9] [^ 	]+$") \, (purecopy "\nend\n")) (,(purecopy "^%!PS-Adobe-[123].0") \, (purecopy "\n%%EOF\n")) (,(purecopy "^---* \\(Start of \\)?[Ff]orwarded [Mm]essage") \, (purecopy "^---* End of [Ff]orwarded [Mm]essage"))) "\
+(defvar ispell-skip-region-alist `((ispell-words-keyword forward-line) (ispell-dictionary-keyword forward-line) (ispell-pdict-keyword forward-line) (ispell-parsing-keyword forward-line) (,(purecopy "^---*BEGIN PGP [A-Z ]*--*") \, (purecopy "^---*END PGP [A-Z ]*--*")) (,(purecopy "^begin [0-9][0-9][0-9] [^ \11]+$") \, (purecopy "\nend\n")) (,(purecopy "^%!PS-Adobe-[123].0") \, (purecopy "\n%%EOF\n")) (,(purecopy "^---* \\(Start of \\)?[Ff]orwarded [Mm]essage") \, (purecopy "^---* End of [Ff]orwarded [Mm]essage"))) "\
 Alist expressing beginning and end of regions not to spell check.
 The alist key must be a regular expression.
 Valid forms include:
@@ -18673,7 +18656,7 @@ Valid forms include:
   (KEY REGEXP) - skip to end of REGEXP.  REGEXP must be a string.
   (KEY FUNCTION ARGS) - FUNCTION called with ARGS returns end of region.")
 
-(defvar ispell-tex-skip-alists (purecopy '((("\\\\addcontentsline" ispell-tex-arg-end 2) ("\\\\add\\(tocontents\\|vspace\\)" ispell-tex-arg-end) ("\\\\\\([aA]lph\\|arabic\\)" ispell-tex-arg-end) ("\\\\cref" ispell-tex-arg-end) ("\\\\bibliographystyle" ispell-tex-arg-end) ("\\\\makebox" ispell-tex-arg-end 0) ("\\\\e?psfig" ispell-tex-arg-end) ("\\\\document\\(class\\|style\\)" . "\\\\begin[ 	\n]*{[ 	\n]*document[ 	\n]*}")) (("\\(figure\\|table\\)\\*?" ispell-tex-arg-end 0) ("list" ispell-tex-arg-end 2) ("program" . "\\\\end[ 	\n]*{[ 	\n]*program[ 	\n]*}") ("verbatim\\*?" . "\\\\end[ 	\n]*{[ 	\n]*verbatim\\*?[ 	\n]*}")))) "\
+(defvar ispell-tex-skip-alists (purecopy '((("\\\\addcontentsline" ispell-tex-arg-end 2) ("\\\\add\\(tocontents\\|vspace\\)" ispell-tex-arg-end) ("\\\\\\([aA]lph\\|arabic\\)" ispell-tex-arg-end) ("\\\\cref" ispell-tex-arg-end) ("\\\\bibliographystyle" ispell-tex-arg-end) ("\\\\makebox" ispell-tex-arg-end 0) ("\\\\e?psfig" ispell-tex-arg-end) ("\\\\document\\(class\\|style\\)" . "\\\\begin[ \11\n]*{[ \11\n]*document[ \11\n]*}")) (("\\(figure\\|table\\)\\*?" ispell-tex-arg-end 0) ("list" ispell-tex-arg-end 2) ("program" . "\\\\end[ \11\n]*{[ \11\n]*program[ \11\n]*}") ("verbatim\\*?" . "\\\\end[ \11\n]*{[ \11\n]*verbatim\\*?[ \11\n]*}")))) "\
 Lists of regions to be skipped in TeX mode.
 First list is used raw.
 Second list has key placed inside \\begin{}.
@@ -18681,7 +18664,7 @@ Second list has key placed inside \\begin{}.
 Delete or add any regions you want to be automatically selected
 for skipping in latex mode.")
 
-(defconst ispell-html-skip-alists '(("<[cC][oO][dD][eE]\\>[^>]*>" "</[cC][oO][dD][eE]*>") ("<[sS][cC][rR][iI][pP][tT]\\>[^>]*>" "</[sS][cC][rR][iI][pP][tT]>") ("<[aA][pP][pP][lL][eE][tT]\\>[^>]*>" "</[aA][pP][pP][lL][eE][tT]>") ("<[vV][eE][rR][bB]\\>[^>]*>" "<[vV][eE][rR][bB]\\>[^>]*>") ("<[tT][tT]/" "/") ("<[^ 	\n>]" ">") ("&[^ 	\n;]" "[; 	\n]")) "\
+(defconst ispell-html-skip-alists '(("<[cC][oO][dD][eE]\\>[^>]*>" "</[cC][oO][dD][eE]*>") ("<[sS][cC][rR][iI][pP][tT]\\>[^>]*>" "</[sS][cC][rR][iI][pP][tT]>") ("<[aA][pP][pP][lL][eE][tT]\\>[^>]*>" "</[aA][pP][pP][lL][eE][tT]>") ("<[vV][eE][rR][bB]\\>[^>]*>" "<[vV][eE][rR][bB]\\>[^>]*>") ("<[tT][tT]/" "/") ("<[^ \11\n>]" ">") ("&[^ \11\n;]" "[; \11\n]")) "\
 Lists of start and end keys to skip in HTML buffers.
 Same format as `ispell-skip-region-alist'.
 Note - substrings of other matches must come last
@@ -22448,7 +22431,7 @@ This command does not work if you use short group names.
 ;;;### (autoloads nil "nnimap" "gnus/nnimap.el" (0 0 0 0))
 ;;; Generated autoloads from gnus/nnimap.el
 
-(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "nnimap" '("nnimap")))
+(if (fboundp 'register-definition-prefixes) (register-definition-prefixes "nnimap" '("nnimap-")))
 
 ;;;***
 
@@ -22572,8 +22555,6 @@ Generate NOV databases in all nnml directories.
 ;;;### (autoloads nil "novice" "novice.el" (0 0 0 0))
 ;;; Generated autoloads from novice.el
 
-(define-obsolete-variable-alias 'disabled-command-hook 'disabled-command-function "22.1")
-
 (defvar disabled-command-function 'disabled-command-function "\
 Function to call to handle disabled commands.
 If nil, the feature is disabled, i.e., all commands work normally.")
@@ -22693,11 +22674,10 @@ The Emacs commands that normally operate on balanced expressions will
 operate on XML markup items.  Thus \\[forward-sexp] will move forward
 across one markup item; \\[backward-sexp] will move backward across
 one markup item; \\[kill-sexp] will kill the following markup item;
-\\[mark-sexp] will mark the following markup item.  By default, each
-tag each treated as a single markup item; to make the complete element
-be treated as a single markup item, set the variable
-`nxml-sexp-element-flag' to t.  For more details, see the function
-`nxml-forward-balanced-item'.
+\\[mark-sexp] will mark the following markup item.  By default, the
+complete element is treated as a single markup item; to make each tag be
+treated as a separate markup item, set the variable `nxml-sexp-element-flag'
+to nil.  For more details, see the function `nxml-forward-balanced-item'.
 
 \\[nxml-backward-up-element] and \\[nxml-down-element] move up and down the element structure.
 
@@ -23254,7 +23234,7 @@ Coloring:
 
 ;;;### (autoloads nil "org" "org/org.el" (0 0 0 0))
 ;;; Generated autoloads from org/org.el
-(push (purecopy '(org 9 1 6)) package--builtin-versions)
+(push (purecopy '(org 9 1 9)) package--builtin-versions)
 
 (autoload 'org-babel-do-load-languages "org" "\
 Load the languages defined in `org-babel-load-languages'.
@@ -23463,7 +23443,7 @@ information about your Org version and configuration.
 \(fn)" t nil)
 
 (autoload 'org-reload "org" "\
-Reload all org lisp files.
+Reload all Org Lisp files.
 With prefix arg UNCOMPILED, load the uncompiled versions.
 
 \(fn &optional UNCOMPILED)" t nil)
@@ -24403,13 +24383,17 @@ See the command `outline-mode' for more information on this mode.
 (push (purecopy '(package 1 1 0)) package--builtin-versions)
 
 (defvar package-enable-at-startup t "\
-Whether to activate installed packages when Emacs starts.
-If non-nil, packages are activated after reading the init file
-and before `after-init-hook'.  Activation is not done if
-`user-init-file' is nil (e.g. Emacs was started with \"-q\").
+Whether to make installed packages available when Emacs starts.
+If non-nil, packages are made available before reading the init
+file (but after reading the early init file).  This means that if
+you wish to set this variable, you must do so in the early init
+file.  Regardless of the value of this variable, packages are not
+made available if `user-init-file' is nil (e.g. Emacs was started
+with \"-q\").
 
 Even if the value is nil, you can type \\[package-initialize] to
-activate the package system at any time.")
+make installed packages available at any time, or you can
+call (package-initialize) in your init-file.")
 
 (custom-autoload 'package-enable-at-startup "package" t)
 
@@ -24420,11 +24404,25 @@ If optional arg NO-ACTIVATE is non-nil, don't activate packages.
 If called as part of loading `user-init-file', set
 `package-enable-at-startup' to nil, to prevent accidentally
 loading packages twice.
+
 It is not necessary to adjust `load-path' or `require' the
 individual packages after calling `package-initialize' -- this is
 taken care of by `package-initialize'.
 
+If `package-initialize' is called twice during Emacs startup,
+signal a warning, since this is a bad idea except in highly
+advanced use cases.  To suppress the warning, remove the
+superfluous call to `package-initialize' from your init-file.  If
+you have code which must run before `package-initialize', put
+that code in the early init-file.
+
 \(fn &optional NO-ACTIVATE)" t nil)
+
+(autoload 'package-activate-all "package" "\
+Activate all installed packages.
+The variable `package-load-list' controls which packages to load.
+
+\(fn)" nil nil)
 
 (autoload 'package-import-keyring "package" "\
 Import keys from FILE.
@@ -26828,7 +26826,7 @@ While this input method is active, the variable
 ;;;### (autoloads nil "quickurl" "net/quickurl.el" (0 0 0 0))
 ;;; Generated autoloads from net/quickurl.el
 
-(defconst quickurl-reread-hook-postfix "\n;; Local Variables:\n;; eval: (progn (require 'quickurl) (add-hook 'local-write-file-hooks (lambda () (quickurl-read) nil)))\n;; End:\n" "\
+(defconst quickurl-reread-hook-postfix "\n;; Local Variables:\n;; eval: (progn (require 'quickurl) (add-hook 'write-file-functions (lambda () (quickurl-read) nil) nil t))\n;; End:\n" "\
 Example `quickurl-postfix' text that adds a local variable to the
 `quickurl-url-file' so that if you edit it by hand it will ensure that
 `quickurl-urls' is updated with the new URL list.
@@ -29668,7 +29666,7 @@ instead of no action.")
 
 (custom-autoload 'mail-citation-hook "sendmail" t)
 
-(defvar mail-citation-prefix-regexp (purecopy "\\([ 	]*\\(\\w\\|[_.]\\)+>+\\|[ 	]*[]>|]\\)+") "\
+(defvar mail-citation-prefix-regexp (purecopy "\\([ \11]*\\(\\w\\|[_.]\\)+>+\\|[ \11]*[]>|]\\)+") "\
 Regular expression to match a citation prefix plus whitespace.
 It should match whatever sort of citation prefixes you want to handle,
 with whitespace before and after; it should also match just whitespace.
@@ -34316,7 +34314,7 @@ Discard Tramp from loading remote files.
 (defvar tramp-archive-enabled (featurep 'dbusbind) "\
 Non-nil when file archive support is available.")
 
-(defconst tramp-archive-suffixes '("7z" "apk" "ar" "cab" "CAB" "cpio" "deb" "depot" "exe" "iso" "jar" "lzh" "LZH" "msu" "MSU" "mtree" "pax" "rar" "rpm" "shar" "tar" "tbz" "tgz" "tlz" "txz" "warc" "xar" "xpi" "xps" "zip" "ZIP") "\
+(defconst tramp-archive-suffixes '("7z" "apk" "ar" "cab" "CAB" "cpio" "deb" "depot" "exe" "iso" "jar" "lzh" "LZH" "msu" "MSU" "mtree" "odb" "odf" "odg" "odp" "ods" "odt" "pax" "rar" "rpm" "shar" "tar" "tbz" "tgz" "tlz" "txz" "warc" "xar" "xpi" "xps" "zip" "ZIP") "\
 List of suffixes which indicate a file archive.
 It must be supported by libarchive(3).")
 
@@ -38017,7 +38015,7 @@ Call `insert' with ARGS even if surrounding text is read only.
 
 \(fn &rest ARGS)" nil nil)
 
-(defvar widget-keymap (let ((map (make-sparse-keymap))) (define-key map "	" 'widget-forward) (define-key map "	" 'widget-backward) (define-key map [(shift tab)] 'widget-backward) (put 'widget-backward :advertised-binding [(shift tab)]) (define-key map [backtab] 'widget-backward) (define-key map [down-mouse-2] 'widget-button-click) (define-key map [down-mouse-1] 'widget-button-click) (define-key map [(control 109)] 'widget-button-press) map) "\
+(defvar widget-keymap (let ((map (make-sparse-keymap))) (define-key map "\11" 'widget-forward) (define-key map "\33\11" 'widget-backward) (define-key map [(shift tab)] 'widget-backward) (put 'widget-backward :advertised-binding [(shift tab)]) (define-key map [backtab] 'widget-backward) (define-key map [down-mouse-2] 'widget-button-click) (define-key map [down-mouse-1] 'widget-button-click) (define-key map [(control 109)] 'widget-button-press) map) "\
 Keymap containing useful binding for buffers containing widgets.
 Recommended as a parent keymap for modes using widgets.
 Note that such modes will need to require wid-edit.")

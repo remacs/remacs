@@ -318,7 +318,7 @@ If nil, ask confirmation.  Any other value prevents any trimming."
 
 (defcustom kept-new-versions 2
   "Number of newest versions to keep when a new numbered backup is made.
-Includes the new backup.  Must be > 0"
+Includes the new backup.  Must be greater than 0."
   :type 'integer
   :group 'backup)
 (put 'kept-new-versions 'safe-local-variable 'integerp)
@@ -436,8 +436,9 @@ and toggle it if ARG is `toggle'."
            auto-save-visited-interval :repeat
            #'save-some-buffers :no-prompt
            (lambda ()
-             (not (and buffer-auto-save-file-name
-                       auto-save-visited-file-name)))))))
+             (and buffer-file-name
+                  (not (and buffer-auto-save-file-name
+                            auto-save-visited-file-name))))))))
 
 ;; The 'set' part is so we don't get a warning for using this variable
 ;; above, while still catching code that _sets_ the variable to get
@@ -2349,10 +2350,15 @@ and local variable specifications in the file are ignored.
 Automatic uncompression and adding a newline at the end of the
 file due to `require-final-newline' is also disabled.
 
-You cannot absolutely rely on this function to result in
-visiting the file literally.  If Emacs already has a buffer
-which is visiting the file, you get the existing buffer,
-regardless of whether it was created literally or not.
+If Emacs already has a buffer which is visiting the file,
+this command asks you whether to visit it literally instead.
+
+In non-interactive use, the value is the buffer where the file is
+visited literally.  If the file was visited in a buffer before
+this command was invoked, it will reuse the existing buffer,
+regardless of whether it was created literally or not; however,
+the contents of that buffer will be the literal text of the file
+without any conversions.
 
 In a Lisp program, if you want to be sure of accessing a file's
 contents literally, you should create a temporary buffer and then read
@@ -2546,7 +2552,7 @@ since only a single case-insensitive search through the alist is made."
 	     ("\\.make\\'" . makefile-bsdmake-mode)
 	     ("GNUmakefile\\'" . makefile-gmake-mode)
 	     ("[Mm]akefile\\'" . makefile-bsdmake-mode))
-	 '(("\\.mk\\'" . makefile-gmake-mode)	; Might be any make, give Gnu the host advantage
+	 '(("\\.mk\\'" . makefile-gmake-mode)	; Might be any make, give GNU the host advantage
 	   ("\\.make\\'" . makefile-gmake-mode)
 	   ("[Mm]akefile\\'" . makefile-gmake-mode)))
      ("\\.am\\'" . makefile-automake-mode)
@@ -3627,7 +3633,8 @@ local variables, but directory-local variables may still be applied."
 				 (push (cons (if (eq var 'eval)
 						 'eval
 					       (indirect-variable var))
-					     val) result))))))
+					     val)
+                                       result))))))
 		    (forward-line 1))))))))
       ;; Now we've read all the local variables.
       ;; If HANDLE-MODE is t, return whether the mode was specified.

@@ -3809,7 +3809,7 @@ the thread are to be displayed."
 	    1)
 	   (t 0))))
     (when (and level (zerop level) gnus-tmp-new-adopts)
-      (incf number
+      (cl-incf number
 	    (apply '+ (mapcar
 		       'gnus-summary-number-of-articles-in-thread
 		       gnus-tmp-new-adopts))))
@@ -4411,7 +4411,7 @@ Returns HEADER if it was entered in the DEPENDENCIES.  Returns nil otherwise."
 	    (setq end (1+ (point)))
 	    (when (search-backward "<" nil t)
 	      (setq new-child (buffer-substring (point) end))
-	      (push (list (incf generation)
+	      (push (list (cl-incf generation)
 			  child (setq child new-child)
 			  subject date)
 		    relations)))
@@ -4432,7 +4432,7 @@ Returns HEADER if it was entered in the DEPENDENCIES.  Returns nil otherwise."
 	(push gnus-reffed-article-number gnus-newsgroup-sparse)
 	(push (cons gnus-reffed-article-number gnus-sparse-mark)
 	      gnus-newsgroup-reads)
-	(decf gnus-reffed-article-number)))
+	(cl-decf gnus-reffed-article-number)))
     (gnus-message 7 "Making sparse threads...done")))
 
 (defun gnus-build-old-threads ()
@@ -4725,7 +4725,7 @@ If LINE, insert the rebuilt thread starting on line LINE."
 			     (setq parent (gnus-parent-id references)))
 			(car (gnus-id-to-thread parent))
 		      nil))
-      (decf generation))
+      (cl-decf generation))
     (and (not (eq headers in-headers))
 	 headers)))
 
@@ -5469,7 +5469,7 @@ or a straight list of headers."
 		      (nthcdr 1 thread))
 		stack))
 	(push (if (nth 1 thread) 1 0) tree-stack)
-	(incf gnus-tmp-level)
+	(cl-incf gnus-tmp-level)
 	(setq threads (if thread-end nil (cdar thread)))
 	(if gnus-summary-display-while-building
 	    (if building-count
@@ -6117,7 +6117,7 @@ If SELECT-ARTICLES, only select those articles from GROUP."
       (let ((i 5))
 	(while (and (> i 2)
 		    (not (nth i info)))
-	  (when (nthcdr (decf i) info)
+	  (when (nthcdr (cl-decf i) info)
 	    (setcdr (nthcdr i info) nil)))))))
 
 (defun gnus-set-mode-line (where)
@@ -6657,7 +6657,7 @@ current article will be taken into consideration."
 		   (if backward
 		       (gnus-summary-find-prev nil article)
 		     (gnus-summary-find-next nil article)))
-	    (decf n)))
+	    (cl-decf n)))
 	(nreverse articles)))
      ((and (and transient-mark-mode mark-active) (mark))
       (message "region active")
@@ -7067,7 +7067,12 @@ buffer."
 	 'only-article
        'article)
      t)
-    (select-window (get-buffer-window gnus-article-buffer))))
+    (select-window (get-buffer-window gnus-article-buffer))
+    ;; If we've just selected the message, place point at the start of
+    ;; the body because that's probably where we want to be.
+    (when (bobp)
+      (article-goto-body)
+      (forward-char -1))))
 
 (defun gnus-summary-universal-argument (arg)
   "Perform any operation on all articles that are process/prefixed."
@@ -7349,7 +7354,7 @@ If FORCE (the prefix), also save the .newsrc file(s)."
       (setq gnus-newsgroup-name nil)
       (unless (gnus-ephemeral-group-p group)
 	(gnus-group-update-group group nil t))
-      (when (equal (gnus-group-group-name) group)
+      (when (gnus-group-goto-group group)
 	(gnus-group-next-unread-group 1))
       (gnus-article-stop-animations)
       (when quit-config
@@ -7802,7 +7807,8 @@ If BACKWARD, the previous article is selected instead of the next."
       (cond
        ((or (not gnus-auto-select-next)
 	    (not cmd))
-	(gnus-message 7 "No more%s articles" (if unread " unread" "")))
+	(unless (eq gnus-auto-select-next 'quietly)
+	  (gnus-message 6 "No more%s articles" (if unread " unread" ""))))
        ((or (eq gnus-auto-select-next 'quietly)
 	    (and (eq gnus-auto-select-next 'slightly-quietly)
 		 push)
@@ -7811,10 +7817,11 @@ If BACKWARD, the previous article is selected instead of the next."
 	;; Select quietly.
 	(if (gnus-ephemeral-group-p gnus-newsgroup-name)
 	    (gnus-summary-exit)
-	  (gnus-message 7 "No more%s articles (%s)..."
-			(if unread " unread" "")
-			(if group (concat "selecting " group)
-			  "exiting"))
+	  (unless (eq gnus-auto-select-next 'quietly)
+	    (gnus-message 6 "No more%s articles (%s)..."
+			  (if unread " unread" "")
+			  (if group (concat "selecting " group)
+			    "exiting")))
 	  (gnus-summary-next-group nil group backward)))
        (t
 	(when (numberp last-input-event)
@@ -8561,14 +8568,22 @@ Returns how many articles were removed."
 	(gnus-summary-limit articles))
     (gnus-summary-position-point)))
 
-(defun gnus-summary-limit-to-score (score)
-  "Limit to articles with score at or above SCORE."
-  (interactive "NLimit to articles with score of at least: ")
+(defun gnus-summary-limit-to-score (score &optional below)
+  "Limit to articles with score at or above SCORE.
+
+With a prefix argument, limit to articles with score at or below
+SCORE."
+  (interactive (list (string-to-number
+                      (read-string
+                       (format "Limit to articles with score of at %s: "
+                               (if current-prefix-arg "most" "least"))))))
   (let ((data gnus-newsgroup-data)
-	articles)
+        (compare (if (or below current-prefix-arg) #'<= #'>=))
+        articles)
     (while data
-      (when (>= (gnus-summary-article-score (gnus-data-number (car data)))
-		score)
+      (when (funcall compare (gnus-summary-article-score
+                              (gnus-data-number (car data)))
+                     score)
 	(push (gnus-data-number (car data)) articles))
       (setq data (cdr data)))
     (prog1
@@ -8761,7 +8776,7 @@ If ALL, mark even excluded ticked and dormants as read."
   (let ((num 0))
     (while threads
       (when (memq (mail-header-number (caar threads)) gnus-newsgroup-limit)
-	(incf num))
+	(cl-incf num))
       (pop threads))
     (< num 2)))
 
@@ -8893,7 +8908,7 @@ fetch-old-headers verbiage, and so on."
 			  gnus-summary-expunge-below))
 	      ;; We increase the expunge-tally here, but that has
 	      ;; nothing to do with the limits, really.
-	      (incf gnus-newsgroup-expunged-tally)
+	      (cl-incf gnus-newsgroup-expunged-tally)
 	      ;; We also mark as read here, if that's wanted.
 	      (when (and gnus-summary-mark-below
 			 (< score gnus-summary-mark-below))
@@ -8918,7 +8933,7 @@ fetch-old-headers verbiage, and so on."
 (defun gnus-expunge-thread (thread)
   "Mark all articles in THREAD as read."
   (let* ((number (mail-header-number (car thread))))
-    (incf gnus-newsgroup-expunged-tally)
+    (cl-incf gnus-newsgroup-expunged-tally)
     ;; We also mark as read here, if that's wanted.
     (setq gnus-newsgroup-unreads
 	  (delq number gnus-newsgroup-unreads))
@@ -8970,7 +8985,7 @@ The difference between N and the number of articles fetched is returned."
 	(gnus-message 1 "No references in article %d"
 		      (gnus-summary-article-number))
 	(setq error t))
-      (decf n))
+      (cl-decf n))
     (gnus-summary-position-point)
     n))
 
@@ -8986,7 +9001,7 @@ Return the number of articles fetched."
 	(error "No References in the current article")
       ;; For each Message-ID in the References header...
       (while (string-match "<[^>]*>" ref)
-	(incf n)
+	(cl-incf n)
 	;; ... fetch that article.
 	(gnus-summary-refer-article
 	 (prog1 (match-string 0 ref)
@@ -11148,7 +11163,7 @@ If NO-EXPIRE, auto-expiry will be inhibited."
     (re-search-backward "[\n\r]" (point-at-bol) 'move-to-limit)
     (when forward
       (when (looking-at "\r")
-	(incf forward))
+	(cl-incf forward))
       (when (<= (+ forward (point)) (point-max))
 	;; Go to the right position on the line.
 	(goto-char (+ forward (point)))
@@ -11728,7 +11743,7 @@ will not be hidden."
     (let ((end nil)
           (count 0))
       (while (not end)
-        (incf count)
+        (cl-incf count)
         (when (zerop (mod count 1000))
           (message "Hiding all threads... %d" count))
 	(when (or (not predicate)
@@ -11800,7 +11815,7 @@ If SILENT, don't output messages."
 	(n (abs n)))
     (while (and (> n 0)
 		(gnus-summary-go-to-next-thread backward))
-      (decf n))
+      (cl-decf n))
     (unless silent
       (gnus-summary-position-point))
     (when (and (not silent) (/= 0 n))
@@ -11987,7 +12002,8 @@ Argument REVERSE means reverse order."
 
 (defun gnus-summary-sort (predicate reverse)
   "Sort summary buffer by PREDICATE.  REVERSE means reverse order."
-  (let* ((thread (intern (format "gnus-thread-sort-by-%s" predicate)))
+  (let* ((current (gnus-summary-article-number))
+	 (thread (intern (format "gnus-thread-sort-by-%s" predicate)))
 	 (article (intern (format "gnus-article-sort-by-%s" predicate)))
 	 (gnus-thread-sort-functions
 	  (if (not reverse)
@@ -12006,7 +12022,9 @@ Argument REVERSE means reverse order."
     ;; We do the sorting by regenerating the threads.
     (gnus-summary-prepare)
     ;; Hide subthreads if needed.
-    (gnus-summary-maybe-hide-threads)))
+    (gnus-summary-maybe-hide-threads)
+    ;; Restore point.
+    (gnus-summary-goto-subject current)))
 
 ;; Summary saving commands.
 
@@ -12371,7 +12389,7 @@ If REVERSE, save parts that do not match TYPE."
 			      (cdr gnus-article-current)
 			      gnus-summary-save-parts-counter))))
 		   dir)))
-	(incf gnus-summary-save-parts-counter)
+	(cl-incf gnus-summary-save-parts-counter)
 	(unless (file-exists-p file)
 	  (mm-save-part-to-file handle file))))))
 
@@ -12544,7 +12562,7 @@ If REVERSE, save parts that do not match TYPE."
 	      ;; article numbers for this article.
 	      (mail-header-set-number header gnus-reffed-article-number))
 	    (with-current-buffer gnus-summary-buffer
-	      (decf gnus-reffed-article-number)
+	      (cl-decf gnus-reffed-article-number)
 	      (gnus-remove-header (mail-header-number header))
 	      (push header gnus-newsgroup-headers)
 	      (setq gnus-current-headers header)
@@ -13019,7 +13037,7 @@ If ALL is a number, fetch this number of articles."
 	  gnus-newsgroup-highest i)
     (while (> i old-high)
       (push i new)
-      (decf i))
+      (cl-decf i))
     (if (not new)
 	(message "No gnus is bad news")
       (gnus-summary-insert-articles new)

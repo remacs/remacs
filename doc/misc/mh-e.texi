@@ -2589,13 +2589,6 @@ centers the output and wraps long lines more than most. It does not
 always handle special characters like @samp{&reg;} or @samp{&ndash;}.
 It does not download images.
 @c -------------------------
-@item @samp{nil}
-This choice obviously requires an external browser. With this setting,
-HTML messages have a button for the body part which you can view with
-@kbd{K v} (@code{mh-folder-toggle-mime-part}). Rendering of special
-characters and handling of remote images depends on your choice of
-browser.
-@c -------------------------
 @item @samp{shr}
 @cindex @samp{shr}
 This choice does not require an external program, but it does require

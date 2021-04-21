@@ -764,6 +764,13 @@ ftfont_spec_pattern (Lisp_Object spec, char *otlayout, struct OpenTypeSpec **ots
   if (scalable >= 0
       && ! FcPatternAddBool (pattern, FC_SCALABLE, scalable ? FcTrue : FcFalse))
     goto err;
+#if defined HAVE_XFT && defined FC_COLOR
+  /* We really don't like color fonts, they cause Xft crashes.  See
+     Bug#30874.  */
+  if (Vxft_ignore_color_fonts
+      && ! FcPatternAddBool (pattern, FC_COLOR, FcFalse))
+    goto err;
+#endif
 
   goto finish;
 
@@ -1235,9 +1242,8 @@ ftfont_open (struct frame *f, Lisp_Object entity, int pixel_size)
 void
 ftfont_close (struct font *font)
 {
-  /* FIXME: Although this function can be called while garbage-collecting,
-     the function assumes that Lisp data structures are properly-formed.
-     This invalid assumption can lead to core dumps (Bug#20890).  */
+  if (font_data_structures_may_be_ill_formed ())
+    return;
 
   struct ftfont_info *ftfont_info = (struct ftfont_info *) font;
   Lisp_Object val, cache;

@@ -24,7 +24,6 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
 (require 'mm-util)			; for mm-universal-coding-system
 (require 'gnus-util)			; for gnus-pp, gnus-run-mode-hooks
 

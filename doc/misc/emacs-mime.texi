@@ -404,12 +404,12 @@ variable will cause @samp{text/html} parts to be treated as attachments.
 
 @item mm-text-html-renderer
 @vindex mm-text-html-renderer
-This selects the function used to render @acronym{HTML}.  The predefined
-renderers are selected by the symbols @code{shr}, @code{gnus-w3m},
-@code{w3m}@footnote{See @uref{http://emacs-w3m.namazu.org/} for more
-information about emacs-w3m}, @code{links}, @code{lynx},
-@code{w3m-standalone} or @code{html2text}.  If @code{nil} use an
-external viewer.  You can also specify a function, which will be
+This selects the function used to render @acronym{HTML}.  The
+predefined renderers are selected by the symbols @code{shr},
+@code{gnus-w3m}, @code{w3m}@footnote{See
+@uref{http://emacs-w3m.namazu.org/} for more information about
+emacs-w3m}, @code{links}, @code{lynx}, @code{w3m-standalone} or
+@code{html2text}.  You can also specify a function, which will be
 called with a @acronym{MIME} handle as the argument.
 
 @item mm-html-inhibit-images
@@ -1845,10 +1845,22 @@ Interface functions:
 @table @code
 @item mailcap-parse-mailcaps
 @findex mailcap-parse-mailcaps
+@vindex mailcap-prefer-mailcap-viewers
 Parse the @file{~/.mailcap} file.
 
 @item mailcap-mime-info
 Takes a @acronym{MIME} type as its argument and returns the matching viewer.
+
+The @code{mailcap-prefer-mailcap-viewers} variable controls which
+viewer is chosen.  The default non-@code{nil} value means that
+settings from @file{~/.mailcap} is preferred over system-wide or
+Emacs-provided viewer settings.
+
+If @code{nil}, Emacs-provided viewer settings have precedence.  Next,
+the most specific viewer has precedence over less specific settings,
+no matter if they're system-provided or private, so @samp{image/gif}
+in @file{/etc/mailcap} will ``win'' over a @samp{image/*} setting in
+@file{~/.mailcap}.
 
 @end table
 

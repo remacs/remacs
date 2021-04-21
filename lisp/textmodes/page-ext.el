@@ -699,7 +699,7 @@ to the same line in the pages buffer."
 (defun pages-directory-goto (&optional event)
   "Go to the corresponding line in the pages buffer."
   ;; This function is mostly a copy of `occur-mode-goto-occurrence'
-  (interactive "@e")
+  (interactive (list last-nonmenu-event))
   (if event (mouse-set-point event))
   (if (or (not pages-buffer)
 	  (not (buffer-name pages-buffer)))

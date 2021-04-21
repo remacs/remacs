@@ -130,7 +130,7 @@ Templates are stored in buffer-local variable
 function installs the following ones: \"property\",
 \"time\". and, if the buffer is associated to a file,
 \"input-file\" and \"modification-time\"."
-  (let* ((templates (org-macro--collect-macros))
+  (let* ((templates nil)
 	 (update-templates
 	  (lambda (cell)
 	    (let ((old-template (assoc (car cell) templates)))
@@ -164,7 +164,7 @@ function installs the following ones: \"property\",
     (org-macro--counter-initialize)
     (funcall update-templates
 	     (cons "n" "(eval (org-macro--counter-increment \"$1\" \"$2\"))"))
-    (setq org-macro-templates templates)))
+    (setq org-macro-templates (nconc (org-macro--collect-macros) templates))))
 
 (defun org-macro-expand (macro templates)
   "Return expanded MACRO, as a string.

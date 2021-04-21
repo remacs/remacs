@@ -25,7 +25,7 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl-lib))
 
 (require 'gnus)
 (require 'gnus-sum)
@@ -1751,8 +1751,7 @@ score in `gnus-newsgroup-scored' by SCORE."
 	    (mm-display-inline handle)
 	    (goto-char (point-max))))))
 
-    (let (		      ;(mm-text-html-renderer 'w3m-standalone)
-	  (handles (mm-dissect-buffer t)))
+    (let ((handles (mm-dissect-buffer t)))
       (save-excursion
 	(article-goto-body)
 	(delete-region (point) (point-max))
@@ -3077,7 +3076,7 @@ If ADAPT, return the home adaptive file instead."
 	      (setq score (or (nth 1 kill)
 			      gnus-score-interactive-default-score)
 		    n times)
-	      (while (natnump (decf n))
+	      (while (natnump (cl-decf n))
 		(setq score (funcall gnus-decay-score-function score)))
 	      (setcdr kill (cons score
 				 (cdr (cdr kill)))))))))
