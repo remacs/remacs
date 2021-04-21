@@ -29,6 +29,7 @@ extern crate lazy_static;
 extern crate base64 as base64_crate;
 extern crate libc;
 extern crate md5;
+extern crate num;
 extern crate rand;
 extern crate sha1;
 extern crate sha2;
@@ -124,7 +125,6 @@ mod terminal;
 mod textprop;
 mod threads;
 mod time;
-mod util;
 mod vectors;
 mod window_configuration;
 mod windows;
@@ -133,6 +133,9 @@ mod xfaces;
 mod xml;
 #[cfg(feature = "window-system-x11")]
 mod xsettings;
+
+// C exports
+mod utils_ffi;
 
 #[cfg(all(not(test), target_os = "macos", feature = "unexecmacosx"))]
 use alloc_unexecmacosx::OsxUnexecAlloc;

@@ -5,6 +5,7 @@ use std::ops::{Add, Sub};
 use std::ptr;
 
 use libc::{c_char, c_int, c_uchar, ptrdiff_t};
+use num;
 
 use remacs_macros::lisp_fn;
 
@@ -41,7 +42,6 @@ use crate::{
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
     time::{lisp_time_struct, time_overflow, LispTime},
-    util::clip_to_bounds,
     windows::{selected_window, LispWindowRef},
 };
 
@@ -134,7 +134,7 @@ fn region_limit(beginningp: bool) -> EmacsInt {
     if ((current_buf.pt as EmacsInt) < num) == beginningp {
         current_buf.pt as EmacsInt
     } else {
-        clip_to_bounds(current_buf.begv, num, current_buf.zv) as EmacsInt
+        num::clamp(num as isize, current_buf.begv, current_buf.zv) as EmacsInt
     }
 }
 
@@ -184,7 +184,7 @@ pub fn goto_char(position: LispObject) -> LispObject {
         set_point_from_marker(position);
     } else if let Some(num) = position.as_fixnum() {
         let cur_buf = ThreadState::current_buffer_unchecked();
-        let pos = clip_to_bounds(cur_buf.begv, num, cur_buf.zv);
+        let pos = num::clamp(num as isize, cur_buf.begv, cur_buf.zv);
         let bytepos = cur_buf.charpos_to_bytepos(pos);
         unsafe { set_point_both(pos, bytepos) };
     } else {
@@ -520,7 +520,11 @@ pub fn line_end_position(n: Option<EmacsInt>) -> EmacsInt {
 
     let n = n.unwrap_or(1);
 
-    let clipped_n = clip_to_bounds(ptrdiff_t::min_value() + 1, n, ptrdiff_t::max_value());
+    let clipped_n = num::clamp(
+        n as isize,
+        ptrdiff_t::min_value() + 1,
+        ptrdiff_t::max_value(),
+    );
     let end_pos = unsafe {
         find_before_next_newline(
             orig as isize,

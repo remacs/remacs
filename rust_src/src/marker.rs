@@ -1,7 +1,9 @@
 //! marker support
 
-use libc::{c_void, ptrdiff_t};
 use std::ptr;
+
+use libc::{c_void, ptrdiff_t};
+use num;
 
 use remacs_macros::lisp_fn;
 
@@ -13,7 +15,6 @@ use crate::{
     remacs_sys::{equal_kind, EmacsInt, Lisp_Buffer, Lisp_Marker, Lisp_Misc_Type, Lisp_Type},
     remacs_sys::{Qinteger_or_marker_p, Qmarkerp},
     threads::ThreadState,
-    util::clip_to_bounds,
 };
 
 pub type LispMarkerRef = ExternalPtr<Lisp_Marker>;
@@ -254,20 +255,16 @@ pub fn point_max_marker() -> LispMarkerRef {
 pub extern "C" fn set_point_from_marker(marker: LispObject) {
     let marker: LispMarkerRef = marker.into();
     let cur_buf = ThreadState::current_buffer_unchecked();
-    let charpos = clip_to_bounds(
-        cur_buf.begv,
-        marker.charpos_or_error() as EmacsInt,
-        cur_buf.zv,
-    );
+    let charpos = num::clamp(marker.charpos_or_error(), cur_buf.begv, cur_buf.zv);
 
     // Don't trust the byte position if the marker belongs to a
     // different buffer.
     let bytepos = if marker.buffer().map_or(false, |b| b != cur_buf) {
         cur_buf.charpos_to_bytepos(charpos)
     } else {
-        clip_to_bounds(
+        num::clamp(
+            marker.bytepos_or_error(),
             cur_buf.begv_byte,
-            marker.bytepos_or_error() as EmacsInt,
             cur_buf.zv_byte,
         )
     };
@@ -330,7 +327,7 @@ pub fn copy_marker(marker: LispObject, itype: LispObject) -> LispObject {
 #[lisp_fn]
 pub fn buffer_has_markers_at(position: EmacsInt) -> bool {
     let cur_buf = ThreadState::current_buffer_unchecked();
-    let position = clip_to_bounds(cur_buf.begv, position, cur_buf.zv);
+    let position = num::clamp(position as isize, cur_buf.begv, cur_buf.zv);
 
     cur_buf.markers().map_or(false, |marker| {
         marker
@@ -471,9 +468,8 @@ pub extern "C" fn set_marker_restricted_both(
         .or_else(|| current_buffer().as_live_buffer())
     {
         let cur_buf = ThreadState::current_buffer_unchecked();
-        let clipped_charpos = clip_to_bounds(cur_buf.begv, charpos as EmacsInt, cur_buf.zv);
-        let clipped_bytepos =
-            clip_to_bounds(cur_buf.begv_byte, bytepos as EmacsInt, cur_buf.zv_byte);
+        let clipped_charpos = num::clamp(charpos, cur_buf.begv, cur_buf.zv);
+        let clipped_bytepos = num::clamp(bytepos, cur_buf.begv_byte, cur_buf.zv_byte);
         attach_marker(m.as_mut(), b.as_mut(), clipped_charpos, clipped_bytepos);
     } else {
         unchain_marker(m.as_mut());
@@ -555,7 +551,7 @@ fn set_marker_internal_else(
     }
     let beg = buf.buffer_beg(restricted);
     let end = buf.buffer_end(restricted);
-    charpos = clip_to_bounds(beg, charpos as EmacsInt, end);
+    charpos = num::clamp(charpos, beg, end);
 
     // Don't believe BYTEPOS if it comes from a different buffer,
     // since that buffer might have a very different correspondence
@@ -567,9 +563,9 @@ fn set_marker_internal_else(
     {
         buf.charpos_to_bytepos(charpos)
     } else {
-        clip_to_bounds(
+        num::clamp(
+            bytepos,
             buf.buffer_beg_byte(restricted),
-            bytepos as EmacsInt,
             buf.buffer_end_byte(restricted),
         )
     };
