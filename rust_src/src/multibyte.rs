@@ -848,31 +848,30 @@ pub unsafe extern "C" fn str_to_multibyte(
 /// Same as `MULTIBYTE_LENGTH` macro in C.
 #[allow(clippy::if_same_then_else)]
 fn multibyte_length(slice: &[c_uchar], allow_encoded_raw: bool) -> Option<usize> {
-    let len = slice.len();
-    if len < 1 {
-        None
-    } else if slice[0] & 0x80 == 0 {
-        Some(1)
-    } else if len < 2 || slice[1] & 0xC0 != 0x80 {
-        None
-    } else if !allow_encoded_raw && slice[0] & 0xFE == 0xC0 {
-        None
-    } else if slice[0] & 0xE0 == 0xC0 {
-        Some(2)
-    } else if len < 3 || slice[2] & 0xC0 != 0x80 {
-        None
-    } else if slice[0] & 0xF0 == 0xE0 {
-        Some(3)
-    } else if len < 4 || slice[3] & 0xC0 != 0x80 {
-        None
-    } else if slice[0] & 0xF8 == 0xF0 {
-        Some(4)
-    } else if len < 5 || slice[4] & 0xC0 != 0x80 {
-        None
-    } else if slice[0] == 0xF8 && slice[1] & 0xF0 == 0x80 {
-        Some(5)
-    } else {
-        None
+    // The bits a byte "starts" with are the most significant ones in these comments
+    match slice {
+        // true if a starts with 0
+        &[a, ..] if a & 0x80 == 0 => Some(1),
+        // true if a starts with 110, and b starts with 10. If byte8 encoding is not allowed, a is
+        // not allowed to start with 1100 000
+        &[a, b, ..]
+            if (allow_encoded_raw || a & 0xFE != 0xC0) && a & 0xE0 == 0xC0 && b & 0xC0 == 0x80 =>
+        {
+            Some(2)
+        }
+        // true if a starts with 1110, b and c starts with 10
+        &[a, b, c, ..] if a & 0xF0 == 0xE0 && (b & 0xC0) | (c & 0xC0) == 0x80 => Some(3),
+        // true if a starts with 11110, b, c, and d start with 10
+        &[a, b, c, d, ..] if a & 0xF8 == 0xF0 && (b & 0xC0) | (c & 0xC0) | (d & 0xC0) == 0x80 => {
+            Some(4)
+        }
+        // true if a is 1111 1000, b starts with 1000, c, d, and e starts with 10
+        &[a, b, c, d, e, ..]
+            if a == 0xF8 && b & 0xF0 == 0x80 && (c & 0xC0) | (d & 0xC0) | (e & 0xC0) == 0x80 =>
+        {
+            Some(5)
+        }
+        _ => None,
     }
 }
 
@@ -1204,4 +1203,43 @@ pub extern "C" fn lisp_string_width(
         }
     };
     width as isize
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn multibyte_length() {
+        use super::multibyte_length;
+
+        // Tests have excess continuation bytes at the end to ensure they get ignored
+        // Test single byte
+        assert_eq!(multibyte_length(&[0x50, 0xA8], true), Some(1));
+        // Test two bytes
+        assert_eq!(multibyte_length(&[0xD4, 0xA4, 0x91], true), Some(2));
+        assert_eq!(multibyte_length(&[0xD4], true), None);
+        // Test byte8 encoding
+        assert_eq!(multibyte_length(&[0xC0, 0xA4], false), None);
+        assert_eq!(multibyte_length(&[0xC1, 0xA4], false), None);
+        assert_eq!(multibyte_length(&[0xC0, 0xA4], true), Some(2));
+        assert_eq!(multibyte_length(&[0xC1, 0xA4], true), Some(2));
+        // Test three bytes
+        assert_eq!(multibyte_length(&[0xE4, 0x94, 0x89, 0xB9], true), Some(3));
+        assert_eq!(multibyte_length(&[0xE4, 0x94], true), None);
+        // Test four bytes
+        assert_eq!(
+            multibyte_length(&[0xF5, 0xB5, 0x84, 0xBF, 0x81], true),
+            Some(4)
+        );
+        assert_eq!(multibyte_length(&[0xF5, 0xB5, 0x84], true), None);
+        // Test five bytes
+        assert_eq!(
+            multibyte_length(&[0xF8, 0x85, 0xA0, 0x90, 0x88, 0x82], true),
+            Some(5)
+        );
+        assert_eq!(
+            multibyte_length(&[0xF8, 0xA0, 0xA0, 0x90, 0x88], true),
+            None
+        );
+        assert_eq!(multibyte_length(&[0xF8, 0x85, 0xA0, 0x90], true), None);
+    }
 }
