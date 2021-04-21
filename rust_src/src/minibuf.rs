@@ -23,7 +23,12 @@ use crate::{
     symbols::symbol_value,
     textprop::get_char_property,
     threads::{c_specpdl_index, ThreadState},
+    windows::LispWindowRef,
 };
+
+pub fn minibuffer_window() -> LispWindowRef {
+    unsafe { minibuf_window }.into()
+}
 
 /// Return t if BUFFER is a minibuffer.
 /// No argument or nil as argument means use current buffer as BUFFER.
