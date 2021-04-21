@@ -3339,6 +3339,7 @@ extern Lisp_Object x_find_image_file (Lisp_Object);
 
 void x_kill_gs_process (Pixmap, struct frame *);
 struct image_cache *make_image_cache (void);
+struct image_type *lookup_image_type (Lisp_Object);
 void free_image_cache (struct frame *);
 void clear_image_caches (Lisp_Object);
 void mark_image_cache (struct image_cache *);
